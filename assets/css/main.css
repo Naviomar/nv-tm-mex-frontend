@@ -1,0 +1,249 @@
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+}
+
+@layer utilities {
+
+  @keyframes dash-moving {
+    0% { background-position: 200% 0; }
+    100% { background-position: 0 0; }
+  }
+
+  .animate-dash-moving {
+    background-image: linear-gradient(90deg, transparent 50%, yellow 50%);
+    background-size: 200% 100%;
+    animation: dash-moving 0.5s linear infinite;
+  }
+
+  .chip-gradient {
+    background-image: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899) !important;
+    color: white !important;
+  }
+
+  .chip-sunset {
+    background-image: linear-gradient(to right, #ff7e5f, #feb47b) !important;
+    color: black !important;
+  }
+
+  .chip-ocean {
+    background-image: linear-gradient(to right, #36d1dc, #5b86e5) !important;
+    color: white !important;
+  }
+
+  .chip-purple {
+    background-image: linear-gradient(to right, #8e2de2, #4a00e0) !important;
+    color: white !important;
+  }
+
+  .chip-aurora {
+    background-image: linear-gradient(to right, #11998e, #38ef7d) !important;
+    color: black !important;
+  }
+
+  .chip-neon {
+    background-image: linear-gradient(to right, #ff00ff, #00ffff) !important;
+    color: black !important;
+  }
+
+  .chip-gradient, .chip-sunset, .chip-ocean, .chip-purple, .chip-aurora, .chip-neon {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+
+  .chip-blush {
+    background-image: linear-gradient(to right, #f9c5d1, #f6a3b2) !important;
+    color: black !important;
+  }
+  
+  .chip-peach {
+    background-image: linear-gradient(to right, #ffb88c, #ff6b81) !important;
+    color: black !important;
+  }
+  
+  .chip-mint {
+    background-image: linear-gradient(to right, #a8e6cf, #dcedc1) !important;
+    color: black !important;
+  }
+  
+  .chip-cloud {
+    background-image: linear-gradient(to right, #e0eafc, #cfdef3) !important;
+    color: black !important;
+  }
+  
+  .chip-horizon {
+    background-image: linear-gradient(to right, #ff9a9e, #fad0c4) !important;
+    color: black !important;
+  }
+  
+  .chip-velvet {
+    background-image: linear-gradient(to right, #d4a5a5, #e4b0b0) !important;
+    color: black !important;
+  }
+  
+  .chip-midnight {
+    background-image: linear-gradient(to right, #232526, #414345) !important;
+    color: white !important;
+  }
+  
+  .chip-ice {
+    background-image: linear-gradient(to right, #deecff, #accbee) !important;
+    color: black !important;
+  }
+  
+  .chip-rose {
+    background-image: linear-gradient(to right, #ff758c, #ff7eb3) !important;
+    color: white !important;
+  }
+  
+  .chip-glacier {
+    background-image: linear-gradient(to right, #89f7fe, #66a6ff) !important;
+    color: white !important;
+  }
+  
+  .chip-sand {
+    background-image: linear-gradient(to right, #f6d365, #fda085) !important;
+    color: black !important;
+  }
+  
+  .chip-cotton {
+    background-image: linear-gradient(to right, #fdfbfb, #ebedee) !important;
+    color: black !important;
+  }
+
+
+  .btn-sparkle {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-sparkle::before {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 10%, transparent 20%);
+    background-size: 50% 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .btn-sparkle:hover::before {
+    opacity: 1;
+    animation: sparkle-animation 1s infinite;
+  }
+
+  @keyframes sparkle-animation {
+    0% { transform: translateX(-100%) translateY(-100%); }
+    100% { transform: translateX(100%) translateY(100%); }
+  }
+
+  .btn-glow {
+    transition: box-shadow 0.3s ease-in-out;
+  }
+
+  .btn-glow:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+  }
+
+
+  .btn-bg-fade {
+    transition: background-color 0.4s, color 0.4s;
+  }
+
+  .btn-bg-fade:hover {
+    background-color: #4a00e0; /* Deep purple */
+    color: #ffffff; /* White text */
+  }
+
+
+  .btn-icon-spin {
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.4s;
+  }
+
+  .btn-icon-spin:hover .btn-icon {
+    transform: rotate(360deg);
+  }
+
+
+  .btn-border-slide {
+    position: relative;
+    overflow: hidden;
+    transition: color 0.4s;
+  }
+
+  .btn-border-slide::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 150%;
+    height: 2px;
+    background-color: currentColor;
+    transition: transform 0.4s;
+    transform: translateX(-50%) scaleX(0);
+  }
+
+  .btn-border-slide:hover::before {
+    transform: translateX(-50%) scaleX(1);
+  }
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 4px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #4a8bdf;
+  border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.tabs1 {
+  .v-tab--selected {
+    background-color: #acc8e5;
+    font-weight: bold;
+    color: #424656;
+  }
+}
+
+.scroll-bold ::-webkit-scrollbar {
+  width: 15px;
+  height: 20px;
+}

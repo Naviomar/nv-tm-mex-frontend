@@ -1,0 +1,59 @@
+@use "colors";
+
+.bg-main {
+  background-color: colors.$main-background-color-light; // Default (light mode)
+}
+
+.dark .bg-main,
+.v-theme--dark .bg-main {
+  background-color: colors.$main-background-color-dark; // Dark mode
+}
+
+// Apply background color for light and dark mode
+.v-card {
+  background-color: colors.$card-background-color-light; // Default (light mode)
+}
+
+// When Tailwind's dark mode is active or Vuetify's dark theme is applied
+.dark .v-card,
+.v-theme--dark .v-card {
+  background-color: colors.$card-background-color-dark; // Dark mode
+}
+
+// nested v-card set to card2Background
+.v-card .v-card {
+  background-color: colors.$card2-background-color-light; // Default (light mode)
+}
+
+.dark .v-card .v-card,
+.v-theme--dark .v-card .v-card {
+  background-color: colors.$card2-background-color-dark; // Dark mode
+}
+
+
+table thead th {
+  background-color: colors.$table-header-background-color-light; // Default (light mode)
+}
+
+.dark table thead th,
+.v-theme--dark table thead th {
+  background-color: colors.$table-header-background-color-dark; // Dark mode
+}
+
+table tbody tr {
+  background-color: colors.$table-body-background-color-light; // Default (light mode)
+}
+
+.dark table tbody tr,
+.v-theme--dark table tbody tr {
+  background-color: colors.$table-body-background-color-dark; // Dark mode
+}
+
+.deleted-row {
+  background-color: colors.$deleted-row-color-light; // Default (light mode)
+}
+
+.dark .deleted-row,
+.v-theme--dark .deleted-row {
+  background-color: colors.$deleted-row-color-dark; // Dark mode
+}

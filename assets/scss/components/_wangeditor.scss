@@ -1,0 +1,7 @@
+@use "colors";
+
+.wang-editor-styles {
+  table tbody tr {
+    background-color: colors.$table-body-background-color-light !important; // Default (light mode)
+  }
+}

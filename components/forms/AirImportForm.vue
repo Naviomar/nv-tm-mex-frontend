@@ -1,0 +1,646 @@
+<template>
+  <div>
+    <v-card class="mb-4">
+      <v-card-title><div class="font-bold">Air Import information</div></v-card-title>
+      <v-card-text>
+        <div v-if="isNextYearClose">
+          <v-alert density="compact" color="blue-lighten-3" icon="mdi-skip-forward-outline" border class="my-4">
+            <div class="font-bold">
+              The year {{ nextYear }} is close, select if you want to use the next year for the reference.
+            </div>
+            <InputCheckbox
+              color="primary"
+              name="next_year"
+              density="compact"
+              label="Create reference for next year"
+              hide-details
+            />
+            <div class="italic">
+              Current reference year
+              <span class="font-bold">{{ values.next_year ? nextYear : new Date().getFullYear() }}</span>
+            </div>
+          </v-alert>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+          <div>
+            <InputText name="master_awb" density="compact" label="Master AWB *" />
+          </div>
+          <div>
+            <InputText name="house_awb" density="compact" label="House AWB *" />
+          </div>
+
+          <div>
+            <InputText name="origin" density="compact" label="Origin *" />
+          </div>
+          <div>
+            <InputText name="destination" density="compact" label="Destination *" />
+          </div>
+          <div>
+            <InputAutocomplete
+              name="airline_id"
+              density="compact"
+              label="Airline *"
+              :items="catalogs.airlines"
+              item-title="name"
+              item-value="id"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <div class="col-span-3">
+            <AGlobalSearch
+              :onSearch="searchCustomers"
+              validate-key="consignee_id"
+              label="Consignee *"
+              :set-id="values.consignee_id || undefined"
+              @update:model-value="onConsigneeChange"
+            />
+          </div>
+          <div>
+            <v-text-field v-model="executive" readonly density="compact" label="Executive" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div>
+            <InputText name="shipper" density="compact" label="Shipper *" />
+          </div>
+
+          <div>
+            <AGlobalSearch
+              :onSearch="searchFfs"
+              validate-key="origin_ff_id"
+              label="Origin freight Forwarder *"
+              :set-id="values.origin_ff_id || undefined"
+            />
+          </div>
+        </div>
+
+        <v-card density="compact" class="mb-2">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div class="flex items-center">
+                <v-icon size="x-small">mdi-airplane</v-icon>
+                <div class="ml-2 font-bold">Routes</div>
+              </div>
+              <div>
+                <v-btn icon="mdi-plus" size="x-small" color="success" @click="addRoute"></v-btn>
+              </div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+            <div v-for="(route, index) in routes" :key="`route-${index}`">
+              <div class="grid grid-cols-3 gap-5">
+                <div>
+                  <v-autocomplete
+                    v-model="route.departure_country_id"
+                    :items="catalogs.countries"
+                    item-title="name"
+                    item-value="id"
+                    density="compact"
+                    label="Departure Country"
+                  />
+                </div>
+                <div>
+                  <v-autocomplete
+                    v-model="route.departure_airport_id"
+                    :items="departureAirports(route)"
+                    item-title="full_name"
+                    item-value="id"
+                    density="compact"
+                    label="Departure airport"
+                  />
+                </div>
+                <div>
+                  <v-text-field
+                    v-model="route.departure_date"
+                    density="compact"
+                    label="Departure date"
+                    type="date"
+                    prepend-icon="mdi-airplane-takeoff"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <v-autocomplete
+                    v-model="route.arrival_country_id"
+                    :items="catalogs.countries"
+                    item-title="name"
+                    item-value="id"
+                    density="compact"
+                    label="Arrival Country"
+                  />
+                </div>
+                <div>
+                  <v-autocomplete
+                    v-model="route.arrival_airport_id"
+                    :items="arrivalAirports(route)"
+                    item-title="full_name"
+                    item-value="id"
+                    density="compact"
+                    label="Arrival airport"
+                  />
+                </div>
+
+                <div>
+                  <v-text-field
+                    v-model="route.arrival_date"
+                    type="date"
+                    density="compact"
+                    label="Arrival date"
+                    prepend-icon="mdi-airplane-landing"
+                  />
+                </div>
+
+                <div class="flex items-start gap-2">
+                  <v-text-field v-model="route.flight_number" density="compact" label="Flight number" />
+                  <v-btn
+                    icon="mdi-delete-outline"
+                    size="x-small"
+                    color="red"
+                    class="mt-2"
+                    @click="removeRoute(index)"
+                  ></v-btn>
+                </div>
+                <div v-if="index === routes.length - 1">
+                  <v-text-field v-model="route.destination" density="compact" label="Destination" />
+                </div>
+              </div>
+            </div>
+            <div class="totals">
+              <div class="flex justify-end">
+                <div class="font-bold">Transit days: {{ totalTransitDays }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-card-text>
+    </v-card>
+    <v-card class="mb-4">
+      <v-card-title>
+        <div class="flex items-center">
+          <v-icon size="x-small">mdi-package-variant-closed</v-icon>
+          <div class="ml-2 font-bold">Cargo information</div>
+        </div>
+      </v-card-title>
+      <v-card-text>
+        <v-card density="compact" class="mb-2">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div class="flex items-center">
+                <v-icon size="x-small">mdi-multicast</v-icon>
+                <div class="ml-2 font-bold">CBM</div>
+              </div>
+              <div>
+                <v-btn icon="mdi-plus" size="x-small" color="success" @click="addCbm"></v-btn>
+              </div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+            <div v-for="(cbm, index) in cbms" :key="`cbm-${index}`" class="grid grid-cols-5 gap-5">
+              <div>
+                <v-text-field v-model="cbm.num_packages" type="number" density="compact" label="Packages" />
+              </div>
+              <div>
+                <v-text-field
+                  v-model="cbm.gross_weight"
+                  type="number"
+                  density="compact"
+                  variant="solo-filled"
+                  label="Gross weight"
+                />
+              </div>
+              <div>
+                <v-text-field v-model="cbm.length" type="number" density="compact" label="Largo" />
+              </div>
+              <div>
+                <v-text-field v-model="cbm.width" type="number" density="compact" label="Ancho" />
+              </div>
+              <div class="flex items-start gap-2">
+                <v-text-field v-model="cbm.height" type="number" density="compact" label="Alto" />
+
+                <v-btn
+                  icon="mdi-delete-outline"
+                  size="x-small"
+                  color="red"
+                  class="mt-2"
+                  @click="removeCbm(index)"
+                ></v-btn>
+              </div>
+            </div>
+            <div class="totals">
+              <div class="flex justify-end">
+                <div class="font-bold">Chargeable weight: {{ cbm.total_m3 }}</div>
+              </div>
+              <div class="flex justify-end">
+                <div class="font-bold">CBM: {{ cbm.total_cbm }}</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-5 p-2">
+              <div class="col-span-3 font-bold">Totals</div>
+              <div>
+                <v-text-field
+                  v-model="totals.packages"
+                  type="number"
+                  density="compact"
+                  variant="outlined"
+                  readonly
+                  label="Total packages"
+                />
+              </div>
+              <div>
+                <v-text-field
+                  v-model="totals.gross_weight"
+                  type="number"
+                  density="compact"
+                  variant="outlined"
+                  readonly
+                  label="Total gross weight"
+                />
+              </div>
+              <div>
+                <v-text-field
+                  v-model="cbm.total_m3"
+                  type="number"
+                  density="compact"
+                  variant="outlined"
+                  readonly
+                  label="Total chargeable weight"
+                />
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+        <v-card density="compact" class="mb-2">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div class="flex items-center">
+                <v-icon size="x-small">mdi-shipping-pallet</v-icon>
+                <div class="ml-2 font-bold">Cargo</div>
+              </div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <InputText name="commodity" density="compact" variant="solo-filled" label="Commodity" />
+              </div>
+              <div class="flex items-start gap-2">
+                <InputText
+                  name="rate"
+                  type="text"
+                  density="compact"
+                  variant="solo-filled"
+                  label="Rate"
+                  @change="validateNumber"
+                />
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-card-text>
+    </v-card>
+
+    <v-card class="mb-4">
+      <v-card-title>
+        <div class="flex items-center">
+          <v-icon size="x-small">mdi-check-network-outline</v-icon>
+          <div class="ml-2 font-bold">Release information</div>
+        </div>
+      </v-card-title>
+      <v-card-text>
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-2">
+          <div>
+            <InputText name="release_date" type="date" density="compact" label="Release date" />
+          </div>
+          <div>
+            <InputText name="release_airline_date" type="date" density="compact" label="Release airline" />
+          </div>
+          <div>
+            <InputAutocomplete
+              name="release_agent_id"
+              :items="catalogs.custom_agents"
+              item-title="name"
+              item-value="id"
+              density="compact"
+              label="A.A."
+            />
+          </div>
+          <div>
+            <InputAutocomplete
+              name="handler_id"
+              density="compact"
+              label="Handler"
+              :items="catalogs.handlers"
+              item-title="full_name"
+              item-value="id"
+            />
+          </div>
+          <div>
+            <InputAutocomplete
+              name="warehouse_id"
+              density="compact"
+              label="Warehouse"
+              :items="catalogs.warehouses"
+              item-title="name"
+              item-value="id"
+            />
+          </div>
+          <div>
+            <InputTextArea name="release_notes" density="compact" label="Notes" />
+          </div>
+          <div>Release who</div>
+        </div>
+
+        <div class="flex gap-4">
+          <AirHandlersSmart @refresh="getCatalogs" />
+          <AirWarehousesSmart @refresh="getCatalogs" />
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <div class="fixed bottom-14 right-0 m-4 bg-red-100 p-2">
+      <div class="col-span-12 flex justify-end items-center">
+        <v-btn class="mr-4" color="secondary" to="/air/import"> Cancel </v-btn>
+        <v-btn color="primary" @click="onSaveAirImportClick"> Save </v-btn>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { schema } from '~/forms/airImportForm'
+
+const router = useRouter()
+const { $api } = useNuxtApp()
+const snackbar = useSnackbar()
+const loadingStore = useLoadingStore()
+
+const isNextYearClose = computed(() => {
+  const today = new Date()
+  const nextYear = new Date(today.getFullYear() + 1, 0, 1)
+  const diff = nextYear.getTime() - today.getTime()
+  const days = diff / (1000 * 60 * 60 * 24)
+  return days <= 180 // TODO change to 60
+})
+
+const nextYear = computed(() => {
+  const today = new Date()
+  return today.getFullYear() + 1
+})
+
+const catalogs = ref<any>({
+  airlines: [],
+  consignees: [],
+  freights: [],
+  countries: [],
+  shippers: [],
+  destinations: [],
+  custom_agents: [],
+  handlers: [],
+  warehouses: [],
+  airports: [],
+})
+
+const creditDebitNotes = ref<any>([])
+
+const consigneeInfo = ref<any>(null)
+
+const cbms = ref<any>([])
+const routes = ref<any>([])
+
+const charges = ref<any>([])
+
+const cbm = computed(() => {
+  let total_cbm = ''
+  let total_m3 = cbms.value.reduce((acc: any, cbm: any) => {
+    return (
+      acc +
+      ((parseFloat(cbm.length) * parseFloat(cbm.width) * parseFloat(cbm.height)) / 6000) * parseInt(cbm.num_packages)
+    )
+  }, 0)
+  let total_packages = cbms.value.reduce((acc: any, cbm: any) => {
+    return acc + parseInt(cbm.num_packages)
+  }, 0)
+
+  total_m3 = isNaN(total_m3) ? 0 : parseFloat(total_m3).toFixed(2)
+  total_packages = isNaN(total_packages) ? 0 : parseInt(total_packages)
+  total_cbm = (total_m3 / 167).toFixed(2)
+
+  return {
+    total_m3,
+    total_packages,
+    total_cbm,
+  }
+})
+
+const totals = computed(() => {
+  let packages = cbms.value.reduce((acc: any, cbm: any) => {
+    return acc + parseFloat(cbm.num_packages)
+  }, 0)
+  let gross_weight = cbms.value.reduce((acc: any, cbm: any) => {
+    return acc + parseFloat(cbm.gross_weight)
+  }, 0)
+
+  gross_weight = parseFloat(gross_weight.toFixed(2))
+
+  return {
+    packages,
+    gross_weight,
+  }
+})
+
+const validateNumber = (event: any) => {
+  const value = event.target.value.trim()
+
+  if (value !== '' && Number.isNaN(Number(value))) {
+    snackbar.add({
+      type: 'error',
+      text: 'Rate must be a number',
+    })
+    event.target.value = ''
+    setValues({
+      rate: null,
+    })
+  }
+}
+
+const mexicoAirports = computed(() => {
+  return catalogs.value.airports.filter((airport: any) => airport.country_id === 140)
+})
+
+const departureAirports = (route: any) => {
+  return catalogs.value.airports.filter((airport: any) => airport.country_id === route.departure_country_id)
+}
+
+const arrivalAirports = (route: any) => {
+  return catalogs.value.airports.filter((airport: any) => airport.country_id === route.arrival_country_id)
+}
+
+const totalTransitDays = computed(() => {
+  // get departure date from first route and arrival date from last route and calculate difference
+  if (routes.value.length > 0) {
+    const departureDate = new Date(routes.value[0].departure_date)
+    const arrivalDate = new Date(routes.value[routes.value.length - 1].arrival_date)
+    let diff = arrivalDate.getTime() - departureDate.getTime()
+    // add 1 day to include the departure day
+    diff += 1000 * 60 * 60 * 24
+    return diff / (1000 * 60 * 60 * 24)
+  }
+
+  return 0
+})
+
+const executive = computed(() => {
+  if (consigneeInfo.value?.executive_active?.executive) {
+    const name = consigneeInfo.value?.executive_active?.executive?.name
+    let validTo = consigneeInfo.value?.executive_active?.valid_to
+    if (consigneeInfo.value?.executive_active?.undefined_time === 1) {
+      validTo = 'Indefinite'
+    }
+
+    return `${name} (Valid to: ${validTo})`
+  }
+  return ''
+})
+
+const { handleSubmit, values, errors, meta, setValues } = useForm({
+  validationSchema: schema,
+})
+
+interface SearchParams {
+  name?: string
+  id?: number
+  [key: string]: any // Allow additional keys, but we will filter them
+}
+
+const searchCustomers = async (search: SearchParams) => {
+  try {
+    search.is_air_import = 1
+    const response = await $api.consignees.searchConsignees({
+      query: search,
+    })
+    return response
+  } catch (error) {
+    snackbar.add({
+      type: 'error',
+      text: 'Error fetching customers',
+    })
+  }
+}
+
+const searchFfs = async (params: SearchParams) => {
+  try {
+    const response = await $api.freightForwarders.searchFfs({
+      query: params,
+    })
+    return response
+  } catch (error) {
+    snackbar.add({
+      type: 'error',
+      text: 'Error fetching freight forwarders',
+    })
+  }
+}
+
+const onConsigneeChange = async (value: any) => {
+  console.log(value)
+  if (!value) return
+  try {
+    loadingStore.loading = true
+    const response = await $api.consignees.getDetailsForExportReference(value)
+
+    consigneeInfo.value = response
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const getCatalogs = async () => {
+  const response = await $api.airImport.getFormCatalogs()
+
+  catalogs.value = response as any
+}
+
+await getCatalogs()
+
+const onSuccess = async () => {
+  try {
+    loadingStore.loading = true
+    const body = {
+      ...values,
+      cbms: cbms.value,
+      routes: routes.value,
+      charges: charges.value,
+      credit_debit_notes: creditDebitNotes.value,
+    }
+    console.log('body')
+    console.log(body)
+    const response = (await $api.airImport.createReferencia(body)) as any
+
+    snackbar.add({
+      type: 'success',
+      text: 'Air import reference created',
+    })
+    router.push(`/air/import/operations-${response.id}`)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 500)
+  }
+}
+
+function onInvalidSubmit({ values, errors, results }: any) {
+  console.log(values) // current form values
+  console.log(errors) // a map of field names and their first error message
+  console.log(results) // a detailed map of field names and their validation results
+  snackbar.add({ type: 'error', text: 'Validate form before submit' })
+}
+
+const addRoute = () => {
+  // if exists previous route, add destination as departure airport for new route
+  let lastArrivalAirport = null
+  let lastArrivalCountry = null
+  if (routes.value.length > 0) {
+    lastArrivalAirport = routes.value[routes.value.length - 1].arrival_airport_id
+    lastArrivalCountry = routes.value[routes.value.length - 1].arrival_country_id
+  }
+  routes.value.push({
+    departure_country_id: lastArrivalCountry,
+    departure_airport_id: lastArrivalAirport,
+    departure_date: null,
+    arrival_airport_id: null,
+    destination: null,
+    arrival_date: null,
+    flight_number: null,
+  })
+}
+
+const removeRoute = (index: number) => {
+  routes.value.splice(index, 1)
+}
+
+const addCbm = () => {
+  cbms.value.push({
+    num_packages: 0,
+    length: 0,
+    width: 0,
+    height: 0,
+  })
+}
+
+const removeCbm = (index: number) => {
+  cbms.value.splice(index, 1)
+}
+
+const onSaveAirImportClick = handleSubmit(onSuccess, onInvalidSubmit)
+</script>

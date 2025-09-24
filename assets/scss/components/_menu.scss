@@ -1,0 +1,10 @@
+.submenu-ps-naviomar {
+    padding-inline-start: calc(-26px + var(--indent-padding)) !important;
+}
+
+.v-table > .v-table__wrapper > table > thead > tr > th {
+    // background-color: #eef0f5 !important;
+    box-shadow: none !important;
+    font-weight: bold !important;
+    white-space: nowrap !important;
+}
