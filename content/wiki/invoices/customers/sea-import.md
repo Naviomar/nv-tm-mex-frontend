@@ -39,7 +39,7 @@ El módulo incluye:
 
 # Funcionalidades principales
 - Visualización de referencias mediante la tabla `InvoiceSeaImportTable`.  
-- Opción **View reference** para acceder al detalle (`/view-{id}`).  
+- Opción **View reference** para acceder al detalle.  
 - Uso de filtros heredados del módulo principal de facturación.  
 - Integración con procesos de búsqueda y consulta de facturas.  
 

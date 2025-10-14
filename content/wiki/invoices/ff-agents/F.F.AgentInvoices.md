@@ -69,3 +69,69 @@ Se muestra tabla paginada con información clave, botones de acciones y acceso a
 - Visualización rápida de pagos y estado de bloqueo.  
 - Descarga e impresión de notas en PDF.  
 - Búsqueda avanzada por múltiples criterios y folios.
+
+# Layout del Componente – User Info Badge
+
+Este componente es un badge interactivo de información de usuario que se puede añadir junto a cualquier contenido (slot). 
+Su objetivo es mostrar, de manera rápida y accesible, los datos de quién creó, actualizó o eliminó un registro dentro del sistema.
+
+Este componente funciona como un accesorio visual para mostrar la información de los usuarios que han interactuado con un registro del sistema (por ejemplo: quién lo creó, quién lo actualizó y quién lo eliminó).
+
+# Funcionamiento general
+
+- El componente tiene un slot de contenido principal, es decir, puedes colocar dentro cualquier información o elemento que quieras, y este contenido se mostrará acompañado de un pequeño ícono flotante de ayuda.
+
+- Ese ícono abre un modal emergente con los detalles de los usuarios vinculados al registro.
+
+# Botón flotante con tooltip
+
+- Al lado del contenido aparece un ícono de usuario con un signo de interrogación.
+ 
+- Si el usuario pasa el cursor por encima, aparece un tooltip que indica que ahí puede consultar los detalles del registro.
+
+- Al hacer clic en el ícono, se abre una ventana modal con la información de los usuarios.
+
+# Ventana modal de detalles
+
+Dentro del modal se presenta una tarjeta con tres posibles secciones:
+
+1. Created by (Creado por):
+
+- Muestra el nombre y correo de la persona que creó el registro.
+
+- Incluye un ícono verde como referencia visual.
+
+- También muestra la fecha exacta en que se creó.
+
+2. Last updated by (Última actualización por):
+
+- Indica quién fue la última persona que modificó el registro.
+
+- Se acompaña de un ícono ámbar.
+
+- Muestra tanto el correo como la fecha de actualización.
+
+3. Deleted by (Eliminado por):
+
+- Solo aparece si el registro tiene fecha de eliminación.
+
+- Muestra el nombre y correo de la persona que lo eliminó.
+
+- Se marca con un ícono rojo.
+
+- También se despliega la fecha en que se eliminó.
+
+# Lógica interna
+
+- El componente recibe como propiedades el objeto del registro, donde vienen los identificadores de usuarios (created_by, updated_by, deleted_by).
+
+- Con esos datos consulta en el store de usuarios para obtener la información completa (nombre, correo, etc.).
+
+- Se asegura de que, si no existe alguno de esos campos, esa sección no aparezca.
+
+# Comportamiento
+
+- El estado del modal se maneja con una variable booleana que alterna entre abierto y cerrado cuando se hace clic en el ícono.
+
+- La información se carga automáticamente cuando el componente se monta, garantizando que los usuarios estén disponibles en el store.
+

@@ -75,7 +75,6 @@ Un analista financiero necesita validar si ciertas referencias de importación a
   - **v-chip** para visualización de referencias múltiples y estados.
   - **v-pagination** para manejo de páginas.
   - **ServiceNumberLabel** y **UserInfoBadge** para etiquetas dinámicas.
-- El consumo de datos se realiza vía `$api.invoices.getAirImportReferencias`.
 
 # Estado Actual
 - Versión inicial del módulo.

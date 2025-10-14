@@ -21,9 +21,6 @@ Incluye:
 - Paginación de resultados y gestión de estado eliminado.
 
 # Prerrequisitos
-- Permisos necesarios:  
-  - `refunds.view`  
-  - `refunds.manage`  
 - Catálogos relacionados: **Suppliers**, **Clientes**, **Agentes aduanales**, **Monedas**.
 
 # Navegación
@@ -56,8 +53,11 @@ Incluye:
 4. Botón **Close** para cerrar sin acción.  
 
 # Cálculos
-- **Total de devolución:** Suma de `refund_payments.amount`.  
-- Se actualiza automáticamente en listado y detalle de devolución.
+El Total de devolución representa la suma de todos los pagos registrados como reembolsos dentro del sistema. 
+Este valor se calcula automáticamente y refleja el importe global devuelto en un proceso determinado.
+
+Además, el total se mantiene actualizado de manera dinámica tanto en los listados como en los detalles de cada devolución. 
+Esto permite al usuario consultar de forma inmediata y confiable el monto acumulado, facilitando la conciliación contable, la validación de operaciones financieras y el seguimiento preciso de cada reembolso realizado.
 
 # Validaciones
 - Comentarios obligatorios para cancelar devolución.  

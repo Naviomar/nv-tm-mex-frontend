@@ -53,17 +53,25 @@ Centralizar la administración de notas de crédito relacionadas con facturas de
 - Notas eliminadas se destacan visualmente en la tabla.
 
 # Consideraciones técnicas
-- Uso de componentes:
-  - `v-autocomplete` para selección de líneas.
-  - `v-text-field` para captura de número y fechas.
-  - `v-table` para listado de notas de crédito.
-  - `v-pagination` para navegar entre páginas.
-  - Botones con íconos para acciones de usuario (`ViewButton`, `TrashButton`).
-- Métodos principales:
-  - `getData()`: Obtiene notas de crédito paginadas según filtros.
-  - `getCatalogs()`: Carga catálogos de líneas de flete.
-  - `onClickFilters()`, `onClickPagination()`, `clearFilters()`: Gestión de filtros y navegación.
-  - `viewCreditNote()`, `viewLineInvoice()`, `showConfirmDelete()`: Acciones sobre notas de crédito.
+En esta sección se describen los aspectos técnicos más relevantes del módulo de notas de crédito, explicando la forma en que está construido y cómo funciona internamente:
+
+- Interfaz de usuario y componentes visuales
+El módulo está diseñado para facilitar la consulta, búsqueda y administración de las notas de crédito. Se utilizan campos de selección, entradas de texto y controles de paginación que permiten al usuario interactuar de manera clara y ordenada. La interfaz ofrece además botones de acción para visualizar detalles o eliminar registros de manera rápida.
+
+- Gestión de datos y filtros
+El sistema permite aplicar filtros personalizados para localizar notas de crédito específicas, ya sea por número de documento, línea de transporte, fechas de emisión o cualquier otro criterio habilitado. Estos filtros se combinan con un esquema de paginación que optimiza la navegación, evitando que el usuario tenga que desplazarse por listados extensos de información.
+
+- Catálogos de referencia
+Las notas de crédito están vinculadas a catálogos maestros, como el de líneas de flete. Esto garantiza consistencia en la información y reduce el riesgo de errores al momento de asociar registros. Los catálogos se cargan automáticamente para que estén disponibles durante la creación o consulta de documentos.
+
+- Procesos principales
+El flujo técnico contempla la recuperación de notas de crédito desde la base de datos, aplicando los filtros y condiciones de búsqueda definidos por el usuario. Una vez obtenidos los resultados, estos se presentan en un listado ordenado y navegable. Además, se contemplan acciones puntuales como la visualización detallada de la nota y la eliminación de registros que ya no sean necesarios.
+
+- Seguridad y validaciones
+Para garantizar la integridad de la información, el módulo implementa validaciones en los campos de entrada y controles en las operaciones sensibles, como la eliminación de notas. Esto asegura que únicamente los datos correctos puedan ser procesados y que las acciones críticas estén protegidas.
+
+- Escalabilidad del diseño
+La arquitectura del módulo está pensada para crecer. Esto significa que pueden añadirse nuevos filtros, catálogos o acciones sin necesidad de reestructurar el sistema completo. Así, se asegura que la herramienta pueda adaptarse a futuras necesidades del negocio.
 
 # Beneficios
 - Centralización de notas de crédito por línea de flete.
