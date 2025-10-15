@@ -103,9 +103,6 @@
             <div class="col-span-2">
               Please confirm the cancellation of the advance payment #{{ formDelete.advPayment?.id }}
             </div>
-            <div class="col-span-2">
-              <v-textarea v-model="formDelete.comments" label="Comments" />
-            </div>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -186,22 +183,11 @@ const onClickPagination = async (page: number) => {
 
 const deleteAdvPayment = async () => {
   try {
-    if (!formDelete.value.comments) {
-      snackbar.add({
-        type: 'warning',
-        text: 'Please add comments',
-      })
-      return
-    }
     loadingStore.start()
-    const body = {
-      comments: formDelete.value.comments,
-      adv_payment_id: formDelete.value.advPayment.id,
-    }
-    await $api.advancePayments.cancelAdvPayment(body)
+    await $api.advancePayments.cancelAdvRequest(formDelete.value.advPayment.id)
     snackbar.add({
       type: 'success',
-      text: 'Advance payment deleted successfully',
+      text: 'Advance payment cancelled successfully',
     })
     closeFormDelete()
     await getAdvancePayments()

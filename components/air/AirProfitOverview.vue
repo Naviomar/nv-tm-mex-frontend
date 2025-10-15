@@ -12,7 +12,7 @@
       <v-card-text>
         <div v-if="!hasPermission(permissions.AirProfitTotals)">
           <v-alert density="compact" type="warning" icon="mdi-alert">
-            You lack permission to see this module ({{ permissions.AirProfitTotals }})
+            You lack permission to see this module ({{ permissions.AirProfitTotals }}).
           </v-alert>
         </div>
         <div v-if="hasPermission(permissions.AirProfitTotals)">
