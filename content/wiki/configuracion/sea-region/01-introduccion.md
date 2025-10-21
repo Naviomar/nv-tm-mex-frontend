@@ -1,139 +1,81 @@
 ---
-title: Catálogo de Sea Regions
-summary: Catálogo de regiones marítimas utilizadas para clasificar rutas y operaciones en el módulo marítimo.
-order: 1
+title: Sea Regions – Introducción
+summary: Catálogo de regiones marítimas para organización de rutas y operaciones.
+order: 8
 status: stable
 version: 1.0.0
-updatedAt: 2025-09-09
+updatedAt: 2025-09-18
 module: configuration-sea-regions
-roles: [Administrador, Operaciones]
-tags: [configuracion, maritimo, catalogos]
+roles: [Administrador, Operaciones, Logística]
+tags: [configuracion, sea-regions, catalogos, rutas, permisos]
 ---
 
-# Objetivo 
-El catálogo de **Sea Regions** permite registrar y administrar las regiones marítimas que se utilizan para organizar y clasificar operaciones en el sistema.  
+# Objetivo
+Contar con un catálogo de regiones marítimas estandarizadas que facilite la clasificación, búsqueda y gestión de rutas en operaciones logísticas internacionales.
 
 # Alcance
-Sirven como referencia en otros módulos de transporte marítimo.
-
----
+- Permite crear, editar, buscar, inhabilitar y reactivar regiones marítimas.
+- Incluye validaciones para evitar duplicados mediante comparación de nombres similares.
+- El acceso está regulado mediante permisos específicos.
+- Se mantiene un historial de auditoría de todas las acciones realizadas.
 
 # Prerrequisitos
-- **Permisos**:
-  - Rol: `Administrador` o `Operaciones`
-  - Acceso a la ruta `/configuration/sea-regions`
-- Usuario con sesión iniciada.
-- Conocer la nomenclatura o código asignado a cada región.
+- Contar con permisos para acceder al módulo de regiones marítimas.
+
+# Navegación
+- Menú principal: **Configuration → Sea Regions**
+- Ruta directa: `/configuration/sea-regions`
+
+# Flujo general de uso
+1. Ingresa al módulo de Sea Regions.
+2. Haz clic en **Nueva región** para crear un registro.
+3. Completa los campos requeridos: nombre y código.
+4. Antes de guardar, el sistema buscará posibles coincidencias.
+5. Si no hay duplicados, confirma y guarda el registro.
+6. Edita o inhabilita regiones desde el listado según necesidad.
+7. Las regiones inhabilitadas pueden reactivarse en cualquier momento.
+
+> **Recomendación:** Antes de crear una región nueva, utiliza la búsqueda de similares para evitar duplicados.
 
 ---
 
-# Navegación en la app
-- **Ruta de menú**: `Configuración → Sea Regions`
-- **URL**: `/configuration/sea-regions`
-- **Secciones/pestañas**:
-  1. Listado de regiones.
-  2. Formulario de creación/edición.
-  3. Búsqueda de regiones similares.
+## Vistas principales
+- **Listado:** Todas las regiones registradas, con filtros de búsqueda.
+- **Formulario:** Crear o editar regiones con validación en tiempo real.
+- **Detalle:** Muestra información completa y asociaciones relevantes.
+
+## Campos y validaciones
+- **Name:** Obligatorio. Texto único.
+- **Code:** Obligatorio. Alfanumérico corto.
 
 ---
 
-# Conceptos clave
-- **Sea Region**: Área geográfica marítima definida para la operación logística.
-- **Code**: Abreviatura o identificador único de la región.
-- **Regiones similares**: Regiones con coincidencia parcial en el nombre, detectadas para evitar duplicados.
+## Casos de uso
+- **Crear región:** Completar campos requeridos y validar duplicados.
+- **Editar región:** Modificar datos de una región existente.
+- **Inhabilitar región:** Marcarla como inactiva sin perder historial.
+- **Reactivar región:** Recuperar una región previamente inhabilitada.
+- **Buscar región:** Filtrar por nombre o código.
 
 ---
 
-# Flujo de negocio (E2E)
-1. El usuario ingresa a `Configuración → Sea Regions`.
-2. Consulta el listado existente.
-3. Para agregar una región:
-   - Presiona **Nuevo**.
-   - Completa los campos `Region name` y `Code`.
-4. El sistema verifica si existen regiones con nombres similares.
-5. Si hay coincidencias, muestra una lista y solicita confirmación.
-6. Al confirmar, guarda la nueva región y la asocia al usuario creador.
-
-:::tip
-Si la región ya existía pero estaba eliminada, se restaurará en lugar de crear una nueva.
-:::
+## Permisos necesarios
+- **Ver regiones:** `sea-regions-view`
+- **Crear región:** `sea-regions-create`
+- **Editar región:** `sea-regions-edit`
+- **Eliminar o restaurar región:** `sea-regions-delete`
 
 ---
 
-# Pantallas y campos
-
-## 6.1 Listado de Sea Regions
-**Propósito**: Consultar, filtrar y administrar las regiones marítimas.
-**Campos visibles**:
-- **ID** — Identificador único.
-- **Region name** — Nombre de la región.
-- **Code** — Código único de la región.
-- **Estado** — Activo / Eliminado.
-- **Creado por** — Usuario creador.
-- **Eliminado por** — Usuario que eliminó (si aplica).
-**Acciones**:
-- Editar
-- Eliminar / Restaurar
+## Errores comunes
+- **Nombre requerido:** Campo obligatorio vacío.
+- **Duplicado:** Existe otra región con el mismo nombre.
+- **Permisos insuficientes:** El usuario no tiene acceso.
+- **Error de servidor:** No se pudo procesar la solicitud.
 
 ---
 
-## Formulario de creación/edición
-**Propósito**: Crear o modificar una región marítima.
-**Campos**:
-- `Region name` (obligatorio) — Nombre de la región.
-- `Code` (obligatorio) — Identificador único de la región.
-**Validaciones**:
-- `Region name` y `Code` no pueden estar vacíos.
-- Antes de guardar, se verifica si existe una región con nombre similar.
-**Acciones**:
-- Guardar — Valida y confirma creación/edición.
-- Cancelar — Regresa al listado.
-**Mensajes del sistema**:
-- Éxito: "Sea region created" / "Sea region updated".
-- Advertencia: "Name is required".
-- Error: "Please fill in all required fields".
-
----
-
-# Procedimientos
-
-## Crear una región marítima
-**Precondiciones**:
-- Tener permisos de creación.
-- Conocer el código de la región.
-**Entradas**:
-- Nombre (`Region name`).
-- Código (`Code`).
-**Pasos**:
-1. Ingresar al formulario de creación.
-2. Completar los campos obligatorios.
-3. Guardar.
-4. Confirmar creación si se detectan coincidencias.
-**Resultado esperado**:
-- Registro creado y visible en el listado.
-**Postcondiciones**:
-- La región queda disponible para su uso en otros módulos.
-
----
-
-## Editar una región marítima
-**Precondiciones**:
-- Permisos de edición.
-**Entradas**:
-- ID de la región.
-**Pasos**:
-1. Abrir el registro desde el listado.
-2. Modificar campos requeridos.
-3. Guardar cambios.
-**Resultado esperado**:
-- Datos actualizados en la base de datos.
-**Postcondiciones**:
-- Cambios reflejados en el listado.
-
----
-
-# Reglas de negocio
-- El campo `Region name` es obligatorio.
-- El campo `Code` es obligatorio y único.
-- Si existe coincidencia parcial en el nombre, se debe confirmar antes de guardar.
-- Al crear una región ya eliminada, se restaura.
+## Auditoría
+El sistema registra:
+- Usuario que creó, editó o inhabilitó cada región.
+- Fechas de creación, actualización e inhabilitación.

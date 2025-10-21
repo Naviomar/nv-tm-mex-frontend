@@ -21,6 +21,7 @@ Incluye:
 - Paginación de resultados y gestión de estado eliminado.
 
 # Prerrequisitos
+
 - Catálogos relacionados: **Suppliers**, **Clientes**, **Agentes aduanales**, **Monedas**.
 
 # Navegación
