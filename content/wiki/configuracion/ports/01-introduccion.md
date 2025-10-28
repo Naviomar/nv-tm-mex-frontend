@@ -1,83 +1,47 @@
 ---
 title: Ports – Introducción
-summary: Catálogo de puertos.
-order: 7
+summary: Catálogo de puertos para operaciones marítimas.
+order: 1
 status: stable
 version: 1.0.0
-updatedAt: 2025-09-18
+updatedAt: 2025-09-09
 module: configuration-ports
 roles: [Administrador, Operaciones]
-tags: [configuracion, ports, catalogos, operaciones, permisos]
+tags: [configuracion, logistica, catalogos]
 ---
 
 # Objetivo
-Contar con un catálogo de puertos centralizado, que permita registrar y administrar información estandarizada de los puertos para operaciones de transporte y logística.
+Mantener el catálogo de puertos con código, ubicación y país.
 
 # Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar puertos.
-- Cada puerto se asocia a un país y puede incluir datos adicionales como ciudad o código.
-- Acceso y acciones controladas por permisos de usuario.
+Incluye alta, edición, búsqueda y validaciones básicas.
 
 # Prerrequisitos
-- Contar con permisos de acceso al sistema.
-- Tener el catálogo de países actualizado.
+- Permisos: `catalogs.ports.manage`
+- Catálogos relacionados: **Countries**
 
 # Navegación
-- Menú principal: **Configuration → Ports**
-- Ruta directa: `/configuration/ports`
+- Menú: `Configuration → Ports`
+- Ruta: `/configuration/ports`
 
-# Flujo general de uso
-1. Ingresa al módulo de Ports.
-2. Haz clic en **Nuevo port** para crear uno nuevo.
-3. Completa los campos obligatorios: nombre, código y país.
-4. Guarda el registro. El sistema validará que no haya duplicados.
-5. Para editar o inhabilitar un puerto, selecciona la acción correspondiente en el listado.
-6. Los puertos inhabilitados pueden reactivarse en cualquier momento.
+# Flujo general
+1. Crear/editar puerto
+2. Validar código y país
+3. Guardar y notificar
+4. Usar en operaciones marítimas y tracking
 
-> **Recomendación:** Mantén actualizada la información del puerto para evitar inconsistencias en operaciones posteriores.
-
----
+> **Nota:** evita duplicados; usa búsqueda antes de crear un nuevo puerto.
 
 ## Vistas principales
-- **Listado:** Todos los puertos registrados, con filtros de búsqueda.
-- **Formulario:** Crear o editar puertos con validación en tiempo real.
-- **Detalle:** Información completa de un puerto.
+- **Listado** con filtros por código, nombre y país.
+- **Formulario** de alta/edición.
+- **Detalle** con relaciones (vessels, shipments)
 
-## Campos y validaciones
-- **Country:** Obligatorio. Seleccionado de catálogo.
-- **Port name (Name):** Obligatorio. Texto único.
-- **Code:** Obligatorio. Texto, máximo 10 caracteres.
-- **City:** Opcional.
-- **Address:** Opcional (si aplica).
-
----
-
-## Casos de uso
-- **Crear port:** Completar los campos obligatorios y guardar.
-- **Editar port:** Modificar datos de un puerto existente.
-- **Inhabilitar port:** Marcar un puerto como inactivo.
-- **Reactivar port:** Recuperar un puerto previamente inhabilitado.
-- **Buscar port:** Filtrar por nombre, país o código.
-
----
-
-## Permisos necesarios
-- **Ver ports:** `ports-view`
-- **Crear port:** `ports-create`
-- **Editar port:** `ports-edit`
-- **Eliminar o restaurar port:** `ports-delete`
-
----
+## Campos y validaciones (resumen)
+- **Nombre** *(obligatorio)*  
+- **Código** *(opcional)*  
+- **País** *(obligatorio)*  
 
 ## Errores comunes
-- **Nombre o código vacío:** Campos obligatorios faltantes.
-- **Duplicado:** Ya existe un puerto con el mismo nombre o código.
-- **Permisos insuficientes:** El usuario no tiene autorización.
-- **Error de servidor:** No se pudo procesar la solicitud.
-
----
-
-## Auditoría
-El sistema registra:
-- Usuario que creó, editó o inhabilitó el puerto.
-- Fechas de creación, actualización e inhabilitación.
+- Código duplicado.
+- Nombre inválido.

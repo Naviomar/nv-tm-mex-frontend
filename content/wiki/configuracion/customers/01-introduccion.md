@@ -1,37 +1,34 @@
 ---
 title: Customers – Introducción
-summary: Catálogo de clientes (consignatarios) para facturación y operaciones.
-order: 3
+summary: Catálogo de clientes para operaciones logísticas y comerciales.
+order: 1
 status: stable
 version: 1.0.0
 updatedAt: 2025-09-29
 module: configuration-customers
-roles: [Administrador, Operaciones, Finanzas]
-tags: [configuracion, clientes, catalogos, facturacion, permisos]
+roles: [Administrador, Ventas, Operaciones]
+tags: [configuracion, clientes, catalogos]
 ---
 
 # Objetivo
-Contar con un catálogo centralizado de **clientes** para garantizar la correcta facturación, trazabilidad de operaciones y relaciones comerciales dentro del sistema.
+Mantener el catálogo de clientes con datos de contacto y referencias comerciales.
 
 ---
 
 # Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar clientes.
-- Valida que no existan duplicados en **Nombre/Razón Social** y **RFC**.
-- Controla accesos mediante permisos específicos.
-- Registra todas las acciones de creación, edición e inhabilitación.
+Incluye alta, edición, búsqueda, inhabilitación y validaciones básicas.
 
 ---
 
 # Prerrequisitos
-- Debes contar con permisos de acceso al sistema.
-- Tener configurados previamente catálogos de **Countries** y **Agents**.
+- Permisos: `catalogs.customers.manage`
+- Catálogos relacionados: **Executives**, **Countries**
 
 ---
 
 # Navegación
-- Menú principal: **Configuration → Customers**
-- Ruta directa: `/configuration/customers`
+- Menú: `Configuration → Customers`
+- Ruta: `/configuration/customers`
 
 ---
 
@@ -43,14 +40,12 @@ Contar con un catálogo centralizado de **clientes** para garantizar la correcta
 5. Si necesitas editar o inhabilitar un cliente, selecciona la opción correspondiente en la lista.
 6. Los clientes inhabilitados pueden reactivarse en cualquier momento.
 
-> **Recomendación:** Siempre verifica duplicados antes de guardar un nuevo cliente.
-
----
+> **Nota:** evita duplicados; usa búsqueda antes de crear un nuevo cliente.
 
 ## Vistas principales
-- **Listado:** Muestra todos los clientes registrados, con opciones de filtro y búsqueda.
-- **Formulario:** Permite agregar o editar clientes, con validaciones en tiempo real.
-- **Detalle:** Visualiza información completa y relaciones con facturas y agentes.
+- **Listado** con filtros por nombre, país y ejecutivo asignado.
+- **Formulario** de alta/edición.
+- **Detalle** con relaciones (ejecutivo, contratos, líneas)
 
 ---
 

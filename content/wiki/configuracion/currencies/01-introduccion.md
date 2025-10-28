@@ -1,88 +1,83 @@
 ---
-title: Currencies – Introducción
-summary: Catálogo de monedas utilizadas en operaciones, contratos y facturación.
-order: 5
+title: Catálogo de Monedas (Currencies)
+summary: Administración de las monedas disponibles en el sistema para operaciones y facturación.
+order: 3
 status: stable
 version: 1.0.0
-updatedAt: 2025-09-18
+updatedAt: 2025-09-09
 module: configuration-currencies
-roles: [Administrador, Finanzas]
-tags: [configuracion, monedas, catalogos, finanzas, facturacion, permisos]
+roles: [Administrador, Operaciones, Facturación]
+tags: [configuracion, monedas, divisas, catalogos]
 ---
 
-# Objetivo
-Contar con un catálogo centralizado de monedas con su código ISO y símbolo, que sirva como referencia para seleccionar monedas en otros módulos del sistema. Este catálogo facilita la selección de monedas en formularios, contratos y registros de facturación, asegurando que la información esté actualizada y sea consistente en todo el sistema.
+# 1. Objetivo y alcance
+El **Catálogo de Monedas (Currencies)** permite administrar las divisas que serán utilizadas en el sistema.  
+Desde aquí se registran, actualizan y eliminan las monedas, garantizando la consistencia en operaciones comerciales y procesos de facturación.
 
-# Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar monedas.  
-- Valida que no existan códigos ISO duplicados y que los campos obligatorios estén completos.  
-- El acceso a las funciones está controlado por permisos específicos.  
-- Se registra quién crea, edita o elimina cada moneda para mayor seguridad y control.  
+# 2. Prerrequisitos
+- Permisos: acceso al módulo **Configuración → Monedas**.
+- Rol sugerido: Administrador del sistema o usuario con permisos de configuración.
+- Conocimiento básico de los códigos internacionales de divisas (ISO 4217).
 
-# Prerrequisitos
-- Debes contar con permisos de acceso al sistema.  
-- Es recomendable tener un catálogo de países actualizado, ya que algunas monedas pueden estar asociadas a países específicos.  
+# 3. Navegación en la app
+- Ruta de menú: `Configuración → Monedas`
+- URL: `/configuration/currencies`
+- Secciones principales:
+  - Listado de monedas
+  - Creación/edición de una moneda
+  - Eliminación o restauración de registros
 
-# Navegación
-- Menú principal: **Configuration → Currencies**  
-- Ruta directa: `/configuration/currencies`  
+# 4. Conceptos clave
+- **Currency (Divisa):** Registro que define una moneda dentro del sistema.
+- **Code:** Código corto asociado a la divisa (ej. MXN, USD, EUR).
+- **Soft Delete:** Las monedas eliminadas se mantienen en base de datos y pueden restaurarse.
 
-# Flujo general de uso
-1. Ingresa al módulo de Monedas desde el menú de configuración.  
-2. Para agregar una moneda, haz clic en **"Nueva moneda"** y completa los campos requeridos.  
-3. Antes de guardar, el sistema validará que no exista una moneda con el mismo código ISO.  
-4. Puedes buscar monedas existentes usando los filtros por nombre o código ISO.  
-5. Si necesitas editar o inhabilitar una moneda, selecciona la opción correspondiente en la lista.  
-6. Las monedas inhabilitadas pueden reactivarse en cualquier momento.  
+# 5. Flujo de negocio (E2E)
+1. El usuario accede a **Configuración → Monedas**.
+2. Consulta el listado de divisas existentes o selecciona *Nueva moneda*.
+3. Captura el **nombre** y **código** de la moneda.
+4. Guarda los cambios.  
+   → La moneda queda disponible para ser utilizada en operaciones y facturación.
 
-> **Recomendación:** Antes de crear una nueva moneda, utiliza la búsqueda para evitar duplicados.
+:::tip
+Se recomienda mantener actualizado este catálogo conforme a las divisas aceptadas por la empresa para evitar errores de cálculo o facturación.
+:::
 
----
+# 6. Pantallas y campos
+## 6.1 Formulario de moneda
+**Propósito:** Crear o modificar una moneda.
 
-## Vistas principales
-- **Listado:** Muestra todas las monedas registradas, con opciones de filtro y búsqueda.  
-- **Formulario:** Permite agregar o editar monedas, con validaciones en tiempo real.  
-- **Detalle:** Visualiza información completa y relaciones de la moneda con contratos, cargos y facturación.  
+**Campos principales:**
+- `Name` (obligatorio) — nombre de la divisa.
+- `Code` (obligatorio) — código de la divisa.
 
-## Campos y validaciones
-- **Código ISO:** Obligatorio, único y de 3 caracteres.  
-- **Nombre:** Obligatorio.  
-- **Símbolo:** Opcional.  
+**Acciones disponibles:**
+- Guardar cambios
+- Cancelar
+- Restaurar moneda eliminada
 
----
+_(Figura 1 — Pantalla de creación/edición de moneda)_
 
-## Casos de uso
-- **Crear moneda:** Ingresa código ISO, nombre y símbolo. El sistema valida duplicados antes de guardar.  
-- **Editar moneda:** Modifica los datos de una moneda existente con las mismas validaciones.  
-- **Inhabilitar moneda:** Marca la moneda como inactiva, pero conserva su historial.  
-- **Reactivar moneda:** Permite volver a habilitar una moneda previamente inhabilitada.  
-- **Buscar moneda:** Utiliza los filtros para encontrar monedas por código ISO o nombre.  
+# 7. Procedimientos
+## 7.1 Crear una moneda nueva
+**Precondiciones:** Acceso al módulo Configuración.  
+**Entradas:** Nombre y código de la moneda.  
+**Pasos:**
+1. Ingresar al menú **Configuración → Monedas → Nuevo**.
+2. Capturar los campos requeridos.
+3. Guardar el registro.
+**Resultado esperado:** La nueva divisa aparece en el listado con estatus activo.
 
----
+## 7.2 Eliminar o restaurar una moneda
+**Pasos:**
+1. En el listado de monedas, seleccionar la opción *Eliminar* sobre el registro deseado.
+2. Confirmar la acción.  
+   → El sistema marca la moneda como eliminada (soft delete).  
+3. Para restaurar, repetir la acción y confirmar la restauración.  
+**Resultado esperado:** La moneda queda nuevamente disponible.
 
-## Permisos necesarios
-Para realizar acciones en el módulo de Monedas, necesitas los siguientes permisos:  
-- **Ver monedas:** `currencies-view`  
-- **Crear moneda:** `currencies-create`  
-- **Editar moneda:** `currencies-edit`  
-- **Eliminar o restaurar moneda:** `currencies-delete`  
-
-Si no cuentas con alguno de estos permisos, solicita acceso a tu administrador del sistema.  
-
----
-
-## Errores comunes
-- **Código duplicado:** Ya existe una moneda con ese código ISO.  
-- **Código vacío o inválido:** El código ISO debe tener 3 caracteres y no puede estar vacío.  
-- **Nombre no ingresado:** Debes ingresar un nombre para la moneda.  
-- **Permisos insuficientes:** No tienes autorización para realizar esta acción.  
-- **Error de servidor:** No fue posible procesar tu solicitud, inténtalo más tarde.  
-
----
-
-## Auditoría
-El sistema registra automáticamente:  
-- Quién creó, editó o inhabilitó cada moneda.  
-- Fechas de creación, actualización e inhabilitación.  
-
-Esto permite mantener un historial claro y seguro de todas las acciones realizadas en el catálogo de monedas.
+# 8. Reglas de negocio
+- El nombre (`name`) y código (`code`) son obligatorios.
+- El código debe ser único y preferentemente cumplir con el estándar ISO 4217.
+- Las monedas eliminadas se manejan con **soft delete** y pueden restaurarse.
+- Una divisa puede ser referenciada por otros catálogos y operaciones, por lo que debe validarse antes de su eliminación definitiva.

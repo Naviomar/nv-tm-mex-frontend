@@ -1,82 +1,61 @@
 ---
-title: Freight Forwarders – Introducción
-summary: Catálogo de agentes de carga (freight forwarders) para operaciones de transporte.
-order: 13
+title: Freight Forwarders – Catálogo
+summary: Catálogo de freight forwarders utilizados en operaciones de import/export.
+order: 4
 status: stable
 version: 1.0.0
-updatedAt: 2025-09-18
+updatedAt: 2025-09-10
 module: configuration-freight-forwarders
 roles: [Administrador, Operaciones, Logística]
-tags: [configuracion, freight, forwarders, catalogos, transporte, agentes, permisos]
+tags: [configuracion, logistica, catalogos]
 ---
 
 # Objetivo
-Contar con un catálogo centralizado de agentes de carga (freight forwarders), que permita registrar y consultar información fiscal, de contacto y logística de cada uno para las operaciones de transporte.
+Mantener el catálogo de freight forwarders con información de contacto, RFC, país, grupo de freight y dirección.
 
 # Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar agentes de carga.
-- Valida que no existan duplicados por nombre o RFC.
-- El acceso está controlado por permisos específicos.
-- Se registra quién realiza cada acción para mayor trazabilidad.
+Incluye alta, edición, búsqueda de freight forwarders similares, asociación a país y grupo de freight, y restauración de registros eliminados.
 
 # Prerrequisitos
-- Debes contar con permisos de acceso al sistema.
-- Es necesario tener los catálogos de países y grupos de carga actualizados.
+- Permisos: `catalogs.freightForwarders.manage`
+- Catálogos relacionados: **Countries**, **Freight Groups**, **Banks**, **Currencies**
 
 # Navegación
-- Menú principal: **Configuration → Freight Forwarders**
-- Ruta directa: `/configuration/freight-forwarders`
+- Menú: `Configuration → Freight Forwarders`
+- Ruta: `/configuration/freight-forwarders`
 
-# Flujo general de uso
-1. Ingresa al módulo de Freight Forwarders desde el menú de configuración.
-2. Para agregar un agente, haz clic en "Nuevo freight forwarder" y completa los campos requeridos.
-3. Antes de guardar, el sistema validará que no exista un agente con el mismo nombre o RFC.
-4. Puedes buscar agentes existentes usando filtros por nombre, RFC, país o grupo de carga.
-5. Si necesitas editar o inhabilitar un freight forwarder, selecciona la opción correspondiente en la lista.
-6. Los agentes inhabilitados pueden reactivarse en cualquier momento.
+# Flujo general
+1. Crear/editar un freight forwarder
+2. Validar nombre, RFC y datos de contacto
+3. Buscar freight forwarders con nombre similar para evitar duplicados
+4. Asociar país y grupo de freight si aplica
+5. Guardar y notificar
+6. Usar en módulos de import/export
 
-> **Recomendación:** Usa siempre la búsqueda de similares antes de crear un nuevo agente de carga.
-
----
+> **Nota:** antes de crear un nuevo freight forwarder, revisa nombres similares para mantener consistencia y evitar duplicados.
 
 ## Vistas principales
-- **Listado:** Muestra todos los agentes registrados, con filtros por nombre, RFC, país y grupo.
-- **Formulario:** Permite agregar o editar freight forwarders con validaciones.
-- **Detalle:** Visualiza información completa y sus relaciones con clientes, países y operaciones.
+- **Listado** con filtros por nombre, RFC y país.
+- **Formulario** de alta/edición:
+  - Campos: Nombre, RFC, Contact Name, Contact Phone, País, Freight Group, Dirección, Estado, Código Postal
+  - Botones: Guardar, Cancelar, Buscar similares
+- **Detalle** con relaciones (bancos, emails, grupo de freight)
 
-## Campos y validaciones
-- **Nombre:** Obligatorio y único.
-- **RFC / Tax number:** Opcional, alfanumérico y validado según formato fiscal.
-- **Nombre de contacto:** Obligatorio, máximo 100 caracteres.
-- **Teléfono de contacto:** Opcional, numérico con formato internacional.
-- **País:** Obligatorio, seleccionado del catálogo de países.
-- **Grupo de carga (Freight group):** Opcional, seleccionado del catálogo de grupos.
-- **Dirección:** Opcional, máximo 250 caracteres.
-- **Estado / Provincia:** Opcional.
-- **Código postal:** Opcional, numérico.
-- **Estatus:** Activo/Inactivo.
+## Campos y validaciones (resumen)
+- **Nombre** *(obligatorio)*  
+- **RFC** *(opcional)*  
+- **Contact Name** *(obligatorio)*  
+- **Contact Phone** *(obligatorio)*  
+- **País** *(opcional, selección de catálogo)*  
+- **Freight Group** *(opcional, selección de catálogo)*  
+- **Dirección** *(opcional)*  
+- **Estado** *(opcional)*  
+- **Código Postal** *(opcional)*  
 
----
-
-## Casos de uso
-- **Crear freight forwarder:** Ingresa nombre, RFC y país. El sistema valida duplicados antes de guardar.
-- **Editar freight forwarder:** Modifica datos existentes con las mismas validaciones.
-- **Inhabilitar freight forwarder:** Marca al agente como inactivo pero conserva su historial.
-- **Reactivar freight forwarder:** Permite volver a habilitar un agente previamente inhabilitado.
-- **Buscar freight forwarder:** Usa los filtros por nombre, RFC, país o grupo de carga.
-
----
-
-## Permisos necesarios
-Para realizar acciones en el módulo de Freight Forwarders, necesitas los siguientes permisos:
-- **Ver freight forwarders:** `freightForwarders-view`
-- **Crear freight forwarder:** `freightForwarders-create`
-- **Editar freight forwarder:** `freightForwarders-edit`
-- **Eliminar o restaurar freight forwarder:** `freightForwarders-delete`
-
-Si no cuentas con alguno de estos permisos, solicita acceso a tu administrador del sistema.
-
----
+## Acciones especiales
+- **Buscar similares**: muestra freight forwarders con nombres parecidos antes de guardar
+- **Soft delete**: permite eliminar y restaurar freight forwarders y sus emails
+- **Gestión de emails**: agregar/eliminar emails asociados
 
 ## Errores comunes
 - **Nombre duplicado:** Ya existe un freight forwarder con este nombre.

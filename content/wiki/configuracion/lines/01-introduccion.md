@@ -1,89 +1,75 @@
 ---
-title: Lines – Introducción
-summary: Catálogo de líneas y agentes de carga (Freight Lines y Freight Agents).
+title: Lines – Catálogo
+summary: Catálogo de líneas de transporte (Freight Lines) y agentes (Freight Agents) para operaciones de import/export.
 order: 6
 status: stable
 version: 1.0.0
-updatedAt: 2025-09-18
+updatedAt: 2025-09-10
 module: configuration-lines
-roles: [Administrador, Operaciones, Comercial]
-tags: [configuracion, lines, freight, catalogos, permisos]
+roles: [Administrador, Operaciones, Logística]
+tags: [configuracion, logistica, catalogos]
 ---
 
 # Objetivo
-Contar con un catálogo centralizado de líneas y agentes de carga, que permita registrar, buscar y gestionar la información de cada línea de manera organizada.  
-Este catálogo asegura consistencia de datos para operaciones comerciales y logísticas.
+Mantener el catálogo de líneas de transporte y agentes, incluyendo información de contacto, país, dirección y códigos asociados.
 
 # Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar líneas o agentes de carga.
-- Incluye validaciones contra registros duplicados mediante búsqueda de nombres similares.
-- El acceso está controlado por permisos de usuario.
-- Registra automáticamente todas las acciones para auditoría.
+Incluye alta, edición, búsqueda de líneas similares, gestión de direcciones, bancos, emails y cargos automáticos, así como restauración de registros eliminados.
 
 # Prerrequisitos
-- Contar con permisos de acceso al sistema.
-- Tener el catálogo de países actualizado (para asociar cada línea a un país).
+- Permisos: `catalogs.lines.manage`
+- Catálogos relacionados: **Countries**, **Charges**, **Banks**, **Currencies**
 
 # Navegación
-- Menú principal: **Configuration → Lines**
-- Ruta directa: `/configuration/lines`
+- Menú: `Configuration → Lines`
+- Ruta: `/configuration/lines`
 
-# Flujo general de uso
-1. Ingresa al módulo de Lines.
-2. Selecciona **Nuevo line** para crear un registro.
-3. Completa los campos requeridos (tipo, nombre, nombre comercial).
-4. El sistema validará nombres similares antes de confirmar el guardado.
-5. Guarda el registro. Si ya existe un nombre parecido, el sistema mostrará coincidencias.
-6. Para editar o inhabilitar un registro, usa las opciones en el listado.
-7. Los registros inhabilitados pueden reactivarse en cualquier momento.
+# Flujo general
+1. Crear/editar una línea o agente
+2. Validar nombre, tipo y datos de contacto
+3. Buscar líneas con nombre similar para evitar duplicados
+4. Asociar país, dirección, banco y cargos automáticos
+5. Guardar y notificar
+6. Usar en módulos de import/export
 
-> **Recomendación:** Antes de crear una línea nueva, usa la función **Search similar** para evitar duplicados.
-
----
+> **Nota:** revisa nombres similares antes de crear uno nuevo para mantener consistencia y evitar duplicados.
 
 ## Vistas principales
-- **Listado:** Muestra todas las líneas registradas con filtros de búsqueda.
-- **Formulario:** Permite crear o editar registros con validación en tiempo real.
-- **Detalle:** Presenta información ampliada de la línea.
+- **Listado** con filtros por nombre, país y tipo (Freight Line o Freight Agent)
+- **Formulario** de alta/edición:
+  - Campos: Type, Name, Commercial Name, Contact Name, Country, Address, Zip Code, Amacarga Code
+  - Botones: Guardar, Cancelar, Buscar similares
+- **Detalle** con relaciones:
+  - Emails asociados
+  - Bancos y cuentas
+  - Notas
+  - Direcciones
+  - Archivos de tránsito interno
+  - Cargos automáticos
 
-## Campos y validaciones
-- **Type:** Obligatorio. Selección entre `Freight Lines` o `Freight Agents`.
-- **Name:** Obligatorio. Texto único.
-- **Commercial name:** Obligatorio. Texto.
-- **Contact name:** Opcional.
-- **Country:** Opcional, catálogo desplegable.
-- **Address:** Opcional.
-- **Zip code:** Opcional.
-- **Amacarga Code:** Opcional. Uso exclusivo para fines de Amacarga.
+## Campos y validaciones (resumen)
+- **Type** *(obligatorio, selección entre Freight Line o Freight Agent)*  
+- **Name** *(obligatorio)*  
+- **Commercial Name** *(obligatorio)*  
+- **Contact Name** *(opcional)*  
+- **Country** *(opcional, selección de catálogo)*  
+- **Address** *(opcional)*  
+- **Zip Code** *(opcional)*  
+- **Amacarga Code** *(opcional, solo para fines internos de Amacarga)*  
 
----
-
-## Casos de uso
-- **Crear line:** Completa los campos obligatorios y valida duplicados antes de guardar.
-- **Editar line:** Permite modificar la información existente.
-- **Inhabilitar line:** Desactiva un registro, conservando historial.
-- **Reactivar line:** Vuelve a habilitar un registro previamente inhabilitado.
-- **Buscar line:** Por tipo, nombre, país o coincidencias similares.
-
----
-
-## Permisos necesarios
-- **Ver lines:** `lines-view`
-- **Crear line:** `lines-create`
-- **Editar line:** `lines-edit`
-- **Eliminar o restaurar line:** `lines-delete`
-
----
+## Acciones especiales
+- **Buscar similares**: muestra líneas con nombres parecidos antes de guardar
+- **Soft delete**: permite eliminar y restaurar líneas y sus relaciones
+- **Gestión de direcciones**: agregar, actualizar o eliminar direcciones
+- **Gestión de emails**: agregar/eliminar emails asociados
+- **Gestión de bancos**: agregar/eliminar cuentas bancarias asociadas
+- **Cargos automáticos**: crear, actualizar o eliminar cargos automáticos asociados
+- **Archivos de tránsito interno**: cargar y asociar archivos
+- **Generación automática de código**: cada línea recibe un código único basado en nombre y fecha
 
 ## Errores comunes
-- **Nombre requerido:** El campo `Name` no puede estar vacío.
-- **Nombre duplicado:** Ya existe una línea con nombre similar.
-- **Permisos insuficientes:** No tienes autorización para la acción.
-- **Error de servidor:** No se pudo procesar la solicitud.
-
----
-
-## Auditoría
-El sistema registra:
-- Usuario que creó, editó o inhabilitó el registro.
-- Fechas de creación, actualización e inhabilitación.
+- Nombre duplicado
+- Código generado duplicado
+- Datos de contacto incompletos
+- Intentar eliminar línea con relaciones activas sin revisar
+- Formulario enviado con campos obligatorios vacíos
