@@ -1,34 +1,37 @@
 ---
 title: Customers – Introducción
-summary: Catálogo de clientes para operaciones logísticas y comerciales.
-order: 1
+summary: Catálogo de clientes (consignatarios) para facturación y operaciones.
+order: 3
 status: stable
 version: 1.0.0
 updatedAt: 2025-09-29
 module: configuration-customers
-roles: [Administrador, Ventas, Operaciones]
-tags: [configuracion, clientes, catalogos]
+roles: [Administrador, Operaciones, Finanzas]
+tags: [configuracion, clientes, catalogos, facturacion, permisos]
 ---
 
 # Objetivo
-Mantener el catálogo de clientes con datos de contacto y referencias comerciales.
+Contar con un catálogo centralizado de **clientes** para garantizar la correcta facturación, trazabilidad de operaciones y relaciones comerciales dentro del sistema.
 
 ---
 
 # Alcance
-Incluye alta, edición, búsqueda, inhabilitación y validaciones básicas.
+- Permite crear, editar, buscar, inhabilitar y reactivar clientes.
+- Valida que no existan duplicados en **Nombre/Razón Social** y **RFC**.
+- Controla accesos mediante permisos específicos.
+- Registra todas las acciones de creación, edición e inhabilitación.
 
 ---
 
 # Prerrequisitos
-- Permisos: `catalogs.customers.manage`
-- Catálogos relacionados: **Executives**, **Countries**
+- Debes contar con permisos de acceso al sistema.
+- Tener configurados previamente catálogos de **Countries** y **Agents**.
 
 ---
 
 # Navegación
-- Menú: `Configuration → Customers`
-- Ruta: `/configuration/customers`
+- Menú principal: **Configuration → Customers**
+- Ruta directa: `/configuration/customers`
 
 ---
 
@@ -40,12 +43,14 @@ Incluye alta, edición, búsqueda, inhabilitación y validaciones básicas.
 5. Si necesitas editar o inhabilitar un cliente, selecciona la opción correspondiente en la lista.
 6. Los clientes inhabilitados pueden reactivarse en cualquier momento.
 
-> **Nota:** evita duplicados; usa búsqueda antes de crear un nuevo cliente.
+> **Recomendación:** Siempre verifica duplicados antes de guardar un nuevo cliente.
+
+---
 
 ## Vistas principales
-- **Listado** con filtros por nombre, país y ejecutivo asignado.
-- **Formulario** de alta/edición.
-- **Detalle** con relaciones (ejecutivo, contratos, líneas)
+- **Listado:** Muestra todos los clientes registrados, con opciones de filtro y búsqueda.
+- **Formulario:** Permite agregar o editar clientes, con validaciones en tiempo real.
+- **Detalle:** Visualiza información completa y relaciones con facturas y agentes.
 
 ---
 
@@ -90,33 +95,38 @@ El sistema registra automáticamente:
 
 ---
 
-# Catálogo de Consignee Groups
+# Catálogo de Customers Groups
 
 ## Objetivo
-Administrar **grupos de consignatarios** que permiten agrupar clientes en función de criterios operativos o comerciales, facilitando búsquedas y segmentaciones dentro del módulo de Customers.
+Administrar **grupos de clientes** que permiten agrupar usuarios en función de criterios operativos o comerciales, facilitando búsquedas, segmentaciones y análisis dentro del módulo de Customers.
 
 ---
 
 ## Navegación
-- Menú principal: **Configuration → Customers → Consignee Groups**
+- Menú principal: **Configuration → Customers Groups**
 - Ruta directa: `/configuration/customers/groups`
 
 ---
 
 ## Vistas principales
-- **Listado:** Presenta todos los grupos con nombre, fecha de creación y acciones disponibles.
+- **Listado:** Muestra todos los grupos de clientes con su nombre, fecha de creación y acciones disponibles.
 - **Acciones rápidas:** Ver detalle del grupo o eliminarlo.
-- **Búsqueda:** Filtro por nombre del grupo.
+- **Búsqueda:** Permite filtrar por nombre del grupo.
 
 ---
 
 ## Flujo de uso
-1. Ingresa al submódulo **Consignee Groups**.
-2. Usa el filtro por nombre y presiona **Search** para localizar un grupo.
-3. Selecciona **View** para consultar el detalle de clientes asignados.
-4. En caso de ser necesario, utiliza la opción **Eliminar** para inactivar un grupo.
-5. Puedes limpiar los filtros en cualquier momento con **Clear**.
-6. Navega entre páginas mediante la **paginación** inferior.
+1. Ingresa al submódulo Customers Groups.
+
+2. Utiliza el filtro por nombre y presiona Search para localizar un grupo.
+
+3. Selecciona View para consultar el detalle de clientes asociados.
+
+4. Si es necesario, usa la opción Eliminar para inactivar un grupo.
+
+5. Puedes limpiar los filtros en cualquier momento con Clear.
+
+6. Navega entre páginas mediante la paginación inferior.
 
 ---
 
@@ -138,26 +148,29 @@ Administrar **grupos de consignatarios** que permiten agrupar clientes en funci�
 ## Crear Consignee Group
 
 ### Objetivo
-Facilitar la creación de **nuevos grupos de consignatarios**, validando datos y evitando duplicados mediante búsqueda de similitudes.
+Facilitar la creación de **nuevos grupos de clientes**, validando la información y evitando duplicados mediante búsqueda de similitudes.
 
 ---
 
 ### Flujo de creación
-1. Ingresa a **Customers → Consignee Groups → Nuevo grupo**.
+1. Ingresa a **Customers → Customers Groups → Nuevo grupo**.
 2. Completa los campos obligatorios:
-   - **Name Group***
+   - **Name Group**
    - **Code** (opcional).
-3. Haz clic en **Save** para validar la información.
+3. Haz clic en Save para validar la información.
+
 4. El sistema buscará grupos similares y mostrará coincidencias.
+
 5. Si confirmas, el grupo se registrará y se mostrará un mensaje de éxito.
+
 6. Si cancelas, podrás modificar la información antes de guardar.
 
 ---
 
 ### Funciones adicionales
-- **Search similar:** Busca grupos con nombres parecidos y muestra resultados en pantalla o en un cuadro de diálogo.
+- **Search similar:** Busca grupos con nombres parecidos y muestra los resultados en pantalla o en un cuadro de diálogo.
 - **Cancel:** Regresa al listado de grupos sin guardar cambios.
-- **Save:** Valida y crea el grupo, siempre que no existan duplicados.
+- **Save:** Valida y crea el grupo siempre que no existan duplicados.
 
 ---
 
@@ -169,10 +182,10 @@ Facilitar la creación de **nuevos grupos de consignatarios**, validando datos y
 ---
 
 ## Permisos necesarios
-- **Ver grupos:** `consigneegroups-view`
-- **Crear grupo:** `consigneegroups-create`
-- **Editar grupo:** `consigneegroups-edit`
-- **Eliminar o restaurar grupo:** `consigneegroups-delete`
+- **Ver grupos:** `customersgroups-view`
+- **Crear grupo:** `customersgroups-create`
+- **Editar grupo:** `customersgroups-edit`
+- **Eliminar o restaurar grupo:** `customersgroups-delete`
 
 ---
 

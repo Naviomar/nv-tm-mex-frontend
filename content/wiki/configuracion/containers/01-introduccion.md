@@ -1,97 +1,97 @@
 ---
-title: Catálogo de Contenedores (Containers)
-summary: Administración de los tipos de contenedores utilizados en operaciones logísticas y marítimas.
-order: 5
-status: stable
+title: Containers – Introducción
+summary: Catálogo de contenedores.
+order: 12
+status: draft
 version: 1.0.0
-updatedAt: 2025-09-10
+updatedAt: 2025-09-18
 module: configuration-containers
 roles: [Administrador, Operaciones]
-tags: [configuracion, maritimo, contenedores, catalogos]
+tags: [configuracion, contenedores, catalogo, permisos]
 ---
 
-# Objetivo y alcance
-El **Catálogo de Contenedores (Containers)** permite administrar los tipos de contenedores disponibles para operaciones logísticas.  
-Se utiliza para clasificar, identificar y gestionar capacidades en operaciones de transporte marítimo y multimodal.
+# Objetivo
+Gestionar un catálogo centralizado de **contenedores**, permitiendo registrar su nombre, código, capacidad en TEUs y si son refrigerados (*reefer*).  
+Este catálogo facilita la selección en procesos operativos y garantiza que la información sea consistente en todo el sistema.
+
+# Alcance
+- Creación, edición, búsqueda, inhabilitación y reactivación de contenedores.  
+- Validación en tiempo real de campos obligatorios y de posibles duplicados mediante búsqueda de similares.  
+- Control de acceso a las funciones mediante permisos específicos.  
+- Relación directa con operaciones logísticas que requieran selección de contenedores.  
 
 # Prerrequisitos
-- Permisos: acceso al módulo **Configuración → Contenedores**.  
-- Rol sugerido: Administrador del sistema o usuario de operaciones.  
-- Conocimiento de los estándares de contenedores (ej. 20’, 40’, High Cube, Reefer).  
+- Debes contar con permisos de acceso al sistema.  
+- Permisos específicos requeridos:  
+  - `containers.view`  
+  - `containers.create`  
+  - `containers.update`  
+  - `containers.delete`  
 
-# Navegación en la app
-- Ruta de menú: `Configuración → Contenedores`  
-- URL: `/configuration/containers`  
-- Secciones principales:
-  - Listado de contenedores  
-  - Creación de nuevo contenedor  
-  - Edición de contenedor existente  
-  - Búsqueda de contenedores similares  
+# Navegación
+- Menú principal: **Configuración → Containers**  
+- Ruta directa: `/configuration/containers`  
 
-# Conceptos clave
-- **Container Type:** Registro que identifica un tipo de contenedor con sus atributos.  
-- **TEUs (Twenty-foot Equivalent Unit):** Medida estandarizada para capacidad de contenedores (ej. 20’ = 1 TEU, 40’ = 2 TEUs).  
-- **Reefer:** Contenedor refrigerado (Yes/No).  
+# Flujo general de uso
+1. Ingresa al módulo de **Containers** desde el menú de configuración.  
+2. Para agregar un nuevo contenedor, haz clic en **Nuevo contenedor** y completa los campos requeridos.  
+3. Utiliza el botón **Search similar** para validar si existen registros con nombre parecido.  
+4. Si hay coincidencias, el sistema mostrará un panel y/o modal de similares para confirmar.  
+5. Guarda el registro.  
+6. El contenedor quedará disponible en procesos de operaciones.  
 
-# Flujo de negocio (E2E)
-1. El usuario accede a **Configuración → Contenedores**.  
-2. Consulta el listado de contenedores existentes o crea uno nuevo.  
-3. Ingresa nombre, código, TEUs y si es refrigerado o no.  
-4. Valida si existen nombres similares antes de guardar.  
-5. Confirma la creación o actualización.  
-   → El contenedor queda disponible en catálogos y operaciones logísticas.  
+> **Recomendación:** antes de guardar un contenedor, usa la búsqueda de similares para evitar duplicados.  
 
-:::tip
-La validación de nombres similares ayuda a evitar duplicidades en la configuración de contenedores.
-:::
+---
 
-# Pantallas y campos
-## Edición / Creación de contenedor
-**Propósito:** Crear o modificar un tipo de contenedor.  
+## Vistas principales
+- **Listado:** muestra todos los contenedores registrados, con opciones de filtro y búsqueda.  
+- **Formulario:** permite alta/edición de contenedores, con validaciones en tiempo real.  
+- **Panel de similares:** muestra coincidencias detectadas antes de confirmar el guardado.  
+- **Modal de similares:** confirmación final antes de guardar.  
 
-**Campos principales:**
-- `Name` (obligatorio, texto) — nombre del contenedor (ej. "40’ High Cube").  
-- `Code` (opcional, texto) — código identificador interno.  
-- `TEUs` (obligatorio, numérico) — capacidad en TEUs.  
-- `Reefer` (opcional, selección Yes/No) — indica si el contenedor es refrigerado.  
+## Campos y validaciones
+- **Container name:** Obligatorio, no puede estar vacío.  
+- **Code:** Obligatorio, alfanumérico, máximo 10 caracteres.  
+- **Teus:** Obligatorio, numérico, define la capacidad del contenedor.  
+- **Reefer:** Obligatorio (Sí/No), indica si el contenedor es refrigerado.  
 
-**Acciones disponibles:**
-- Guardar cambios  
-- Cancelar  
-- Buscar contenedores con nombre similar (`Search similar`)  
-- Eliminar/restaurar contenedor (soft delete)  
+---
 
-_(Figura 1 — Pantalla de edición de contenedor)_
+## Casos de uso
+- **Crear contenedor:** Ingresa nombre, código, TEUs y reefer → valida similares → guarda.  
+- **Editar contenedor:** Modifica los datos de un registro existente con las mismas validaciones.  
+- **Inhabilitar contenedor:** Marca el registro como inactivo, conservando historial.  
+- **Reactivar contenedor:** Permite habilitar nuevamente un contenedor inhabilitado.  
+- **Buscar contenedor:** Usa filtros en el listado o el botón **Search similar**.  
 
-# Procedimientos
-## Crear un contenedor nuevo
-**Precondiciones:** Acceso al módulo Configuración.  
-**Entradas:** Nombre, TEUs (obligatorio), código y reefer (opcionales).  
-**Pasos:**
-1. Ingresar al menú **Configuración → Contenedores → Nuevo**.  
-2. Capturar el nombre, código, TEUs y si es refrigerado.  
-3. Presionar **Search similar** para validar coincidencias.  
-4. Confirmar la creación.  
-**Resultado esperado:** El nuevo contenedor aparece en el listado activo.  
+---
 
-## Editar un contenedor
-**Pasos:**
-1. Seleccionar un contenedor en el listado.  
-2. Modificar los campos permitidos.  
-3. Guardar cambios.  
-**Resultado esperado:** La información se actualiza en el catálogo.  
+## Permisos necesarios
+Para operar en el módulo de Containers, necesitas los siguientes permisos:  
+- **Ver contenedores:** `containers.view`  
+- **Crear contenedor:** `containers.create`  
+- **Editar contenedor:** `containers.update`  
+- **Eliminar o restaurar contenedor:** `containers.delete`  
 
-## Eliminar / restaurar un contenedor
-**Pasos:**
-1. En el listado, seleccionar **Eliminar**.  
-2. Confirmar la acción.  
-**Resultado esperado:** El contenedor se marca como eliminado (soft delete).  
-3. Para restaurar, seleccionar **Restaurar** en el mismo registro.  
+Si no cuentas con alguno de estos permisos, solicita acceso a tu administrador del sistema.  
 
-# Reglas de negocio
-- El campo `name` es obligatorio y debe ser único.  
-- El campo `teus` es obligatorio y debe ser numérico positivo.  
-- Antes de crear un contenedor, el sistema busca coincidencias de nombre (`searchByName`).  
-- El campo `reefer` solo acepta valores 1 (Yes) o 0 (No).  
-- Los registros eliminados se manejan con **soft delete** y pueden restaurarse.  
-- Todas las operaciones quedan asociadas al usuario autenticado (`created_by`, `deleted_by`).  
+---
+
+## Errores comunes
+- **Nombre vacío:** "Name is required".  
+- **Similares encontrados:** "Containers with similar name".  
+- **Formulario inválido:** "Please fill in all required fields".  
+- **Permisos insuficientes:** No tienes autorización para realizar esta acción.  
+- **Error de servidor:** No fue posible procesar tu solicitud, inténtalo más tarde.  
+
+---
+
+## Auditoría
+El sistema registra automáticamente:  
+- **created_by**: usuario que creó el contenedor.  
+- **updated_by**: usuario que lo modificó.  
+- **deleted_by**: usuario que lo inhabilitó.  
+- Fechas de creación, actualización e inhabilitación.  
+
+Esto asegura **trazabilidad, control y seguridad** en la administración del catálogo de contenedores.  
