@@ -1,88 +1,105 @@
 ---
-title: Suppliers – Introducción
-summary: Catálogo de proveedores.
-order: 4
-status: stable
+title: Catálogo de Suppliers (Proveedores)
+summary: Administración de proveedores, incluyendo alta, edición, direcciones, correos electrónicos, bancos y validación de duplicados.
+roles: [Administrador, Operaciones, Facturación]
+tags: [configuración, suppliers, proveedores, catálogo]
+order: 10
+status: draft
 version: 1.0.0
-updatedAt: 2025-09-18
+updatedAt: 2025-09-10
 module: configuration-suppliers
-roles: [Administrador, Finanzas, Operaciones]
-tags: [configuracion, suppliers, proveedores, catalogos, finanzas]
+permalink: /manual/suppliers
 ---
 
-# Objetivo
-Mantener un catálogo centralizado de proveedores, incluyendo tipo de proveedor, condiciones de crédito, RFC y datos relacionados. Este catálogo se utiliza en operaciones financieras y logísticas.
+# 1. Objetivo y alcance
+Gestionar proveedores del sistema, permitiendo registrar información básica (nombre, RFC, tipo, días de crédito) y asociar direcciones, bancos y correos electrónicos.  
+Incluye validación para evitar duplicados.
 
-# Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar proveedores.
-- Valida duplicados por nombre.
-- Integra formularios relacionados: cuentas bancarias, direcciones y correos electrónicos.
-- Registra plazos de crédito y RFC.
+# 2. Prerrequisitos
+- Permisos: `suppliers.create`, `suppliers.update`, `suppliers.view`, `suppliers.delete`
+- Datos maestros: Catálogo de **Tipos de proveedores**
+- Integraciones: CFDI (SAT), Bancos
 
-# Prerrequisitos
-- Permisos: `suppliers-manage`
-- Catálogos auxiliares cargados (tipos de proveedores, países).
+# 3. Navegación en la app
+- Ruta de menú: `Configuración > Catálogos > Proveedores`
+- URL: `/configuration/suppliers`
+- Secciones/pestañas:
+  - Datos básicos
+  - Bancos
+  - Direcciones
+  - Correos electrónicos
 
-# Navegación
-- Menú principal: **Configuration → Suppliers**
-- Ruta directa: `/configuration/suppliers`
+# 4. Conceptos clave
+- **RFC (Tax Number):** Identificador fiscal del proveedor.
+- **Credit Days:** Plazo de pago acordado con el proveedor.
+- **Supplier Type:** Clasificación del proveedor (ej. servicios, transporte, insumos).
+- **Similar Suppliers:** Proveedores con nombres similares detectados al intentar un alta.
 
-# Flujo general de uso
-1. Ingresar al módulo de Suppliers.
-2. Registrar proveedor con nombre, tipo, días de crédito y RFC.
-3. Validar duplicados por nombre antes de guardar.
-4. Asociar cuentas bancarias, direcciones y correos electrónicos.
-5. Guardar y habilitar para uso en órdenes y pagos.
+# 5. Flujo de negocio (E2E)
+1. Usuario accede al módulo de **Suppliers**.
+2. Ingresa los datos básicos obligatorios (Nombre, RFC, Tipo, Días de crédito).
+3. El sistema valida si existen proveedores similares.
+4. Si hay coincidencias:
+   - Muestra un listado de proveedores similares.
+   - El usuario puede cancelar o confirmar el alta.
+5. Una vez confirmado, el proveedor queda registrado.
+6. Se habilitan las secciones adicionales (direcciones, bancos, correos).
+7. El proveedor queda disponible en todo el sistema.
 
-> **Recomendación:** Usa los catálogos de tipos de proveedor antes de dar de alta nuevos.
+:::tip
+El sistema realiza una búsqueda de similares antes de confirmar el alta para evitar duplicados.
+:::
 
----
+# 6. Pantallas y campos
+## 6.1 Formulario de Proveedores
+**Propósito**: Registrar o editar proveedores.
 
-## Vistas principales
-- **Listado:** Todos los proveedores, con filtros por nombre, tipo y RFC.
-- **Formulario:** Alta/edición con validación en tiempo real.
-- **Detalle:** Información completa más relaciones (bancos, direcciones, emails).
+**Campos**:
+- `Name` (obligatorio) — Nombre del proveedor.
+- `Supplier type` (obligatorio) — Catálogo de tipos de proveedor.
+- `Credit days` (obligatorio) — Número de días de crédito (entero).
+- `RFC` (obligatorio) — Registro Federal de Contribuyentes.
 
-## Campos y validaciones
-- **Nombre:** Obligatorio, único.
-- **Tipo de proveedor:** Obligatorio (selección de catálogo).
-- **Días de crédito:** Obligatorio, valor numérico.
-- **RFC / Tax number:** Obligatorio.
-- **Cuentas bancarias:** Opcionales, gestionadas en formulario relacionado.
-- **Direcciones:** Opcionales, gestionadas en formulario relacionado.
-- **Correos electrónicos:** Opcionales, gestionados en formulario relacionado.
-- **Estatus:** Activo/Inactivo.
+**Acciones**:  
+- Guardar  
+- Cancelar  
+- Buscar similares  
 
----
+**Mensajes del sistema**:
+- **Éxito:** "Supplier created" / "Supplier updated"
+- **Advertencia:** "Name is required", "Validate form before submit"
+- **Confirmación:** "Suppliers with similar name"
 
-## Casos de uso
-- **Crear proveedor:** Completar datos básicos y opcionales.
-- **Editar proveedor:** Actualizar datos con validaciones.
-- **Inhabilitar proveedor:** Inactivo, pero mantiene historial.
-- **Reactivar proveedor:** Puede volver a usarse.
-- **Buscar proveedor:** Por nombre, tipo o RFC.
+_(Figura X — Captura del formulario de alta de proveedor)_
 
----
+## 6.2 Subformularios asociados
+- **Bancos:** Alta/edición de cuentas bancarias.
+- **Direcciones:** Registro de direcciones del proveedor.
+- **Correos electrónicos:** Registro y validación de emails de contacto.
 
-## Permisos necesarios
-- **Ver proveedores:** `suppliers-view`
-- **Crear proveedor:** `suppliers-create`
-- **Editar proveedor:** `suppliers-edit`
-- **Eliminar/Inhabilitar:** `suppliers-delete`
+# 7. Procedimientos
+## 7.1 Alta de Proveedor
+**Precondiciones**: Usuario con permiso `suppliers.create`.  
+**Entradas**: Nombre, RFC, Tipo, Días de crédito.  
 
----
+**Pasos**:
+1. Abrir el formulario en `Configuración > Proveedores > Nuevo`.
+2. Completar los campos obligatorios.
+3. Presionar **Guardar**.
+4. Revisar la ventana de proveedores similares.
+5. Confirmar la creación.
 
-## Errores comunes
-- **Nombre duplicado:** Ya existe un proveedor con este nombre.
-- **RFC inválido:** No cumple formato requerido.
-- **Crédito inválido:** Días de crédito no numéricos o negativos.
-- **Permisos insuficientes:** No autorizado.
-- **Error de servidor:** No se pudo guardar.
+**Resultado esperado**: El proveedor queda registrado.  
+**Postcondiciones**: El proveedor aparece en el listado y está disponible para ser vinculado a operaciones.
 
----
+# 8. Reglas de negocio
+- El campo **Name** no puede estar vacío.
+- El **RFC** debe ser único. En caso de eliminar un proveedor, se agrega sufijo `_deleted_<timestamp>`.
+- Solo un **Address** puede estar marcado como `is_default`.
+- Los correos electrónicos se administran con validación de duplicados.
+- La eliminación/restauración es lógica (SoftDelete).
 
-## Auditoría
-El sistema registra:
-- Usuario que creó, editó o inhabilitó.
-- Fechas de creación, edición e inhabilitación.
-- Relación con formularios vinculados (bancos, direcciones, correos).
+# 9. Integraciones
+- **CFDI/SAT:** Validación de RFC y CFDI asociados al proveedor.
+- **Bancos:** Alta de cuentas bancarias vinculadas al proveedor.
+- **Interno:** Relación con módulos de Compras y Facturación.

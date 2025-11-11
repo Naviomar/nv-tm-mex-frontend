@@ -1,14 +1,13 @@
 ---
-title: Dashboard de operaciones
-summary: Pantalla de control para importaciones, exportaciones y métricas clave del módulo marítimo.
-roles: [Operaciones, Logística, Administrador]
-tags: [maritimo, importacion, exportacion, dashboard, indicadores]
-order: 3
-status: draft
+title: Home – Introducción
+summary: Pantalla principal con accesos rápidos y resumen de indicadores clave.
+order: 1
+status: stable
 version: 1.0.0
-updatedAt: 2025-09-23
-module: maritime
-permalink: /manual/maritime-dashboard
+updatedAt: 2025-09-09
+module: home
+roles: [Todos]
+tags: [modulos, dashboard]
 ---
 
 # Objetivo y alcance

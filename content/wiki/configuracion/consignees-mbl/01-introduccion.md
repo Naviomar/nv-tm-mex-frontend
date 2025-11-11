@@ -1,93 +1,98 @@
 ---
-title: Consignees MBL – Introducción
-summary: Catálogo de consignees asociados a Master Bill of Lading (MBL).
+title: Catálogo de Consignees MBL
+summary: Administración de consignees asociados a Master Bill of Lading (MBL), con opción de habilitar el proceso de demurrages.
+roles: [Administrador, Operaciones]
+tags: [configuración, consignees, mbl, catálogo]
 order: 11
 status: draft
 version: 1.0.0
-updatedAt: 2025-09-17
+updatedAt: 2025-09-11
 module: configuration-consignees-mbl
-roles: [Administrador, Operaciones]
-tags: [configuracion, consignees, mbl, catalogo, permisos]
+permalink: /manual/consignees-mbl
 ---
 
-# Objetivo
-Contar con un catálogo centralizado de **consignees asociados a Master Bill of Lading (MBL)**, que permita registrar su nombre y definir si generan procesos de **demurrages**.  
-Este catálogo facilita la trazabilidad en operaciones logísticas, evitando duplicados mediante validación de similares y asegurando consistencia en el sistema.
+# 1. Objetivo y alcance
+Gestionar consignees vinculados a Master Bill of Lading (MBL), permitiendo registrar su información básica y definir si generan procesos de demurrages.
 
-# Alcance
-- Permite crear, editar, buscar, inhabilitar y reactivar consignees MBL.  
-- Valida en tiempo real campos obligatorios y coincidencias similares.  
-- El acceso a las funciones está controlado por permisos específicos.  
-- Se integra directamente con procesos de **demurrages**.  
+# 2. Prerrequisitos
+- Permisos: `consignees_mbl.create`, `consignees_mbl.update`, `consignees_mbl.view`, `consignees_mbl.delete`
+- Datos maestros: Ninguno (solo se requiere nombre)
+- Integraciones: Procesos de **Demurrages**
 
-# Prerrequisitos
-- Debes contar con permisos de acceso al sistema.  
-- Permisos específicos requeridos:  
-  - `consignees_mbl.view`  
-  - `consignees_mbl.create`  
-  - `consignees_mbl.update`  
-  - `consignees_mbl.delete`  
+# 3. Navegación en la app
+- Ruta de menú: `Configuración > Catálogos > Consignees MBL`
+- URL: `/configuration/consignees-mbl`
+- Secciones/pestañas:
+  - Datos básicos
+  - Similares (búsqueda y validación)
 
-# Navegación
-- Menú principal: **Configuración → Consignees MBL**  
-- Ruta directa: `/configuration/consignees-mbl`  
+# 4. Conceptos clave
+- **Consignee MBL:** Cliente consignatario asociado al documento MBL.
+- **Has Demurrages:** Indicador para iniciar procesos de demurrages automáticamente si el consignee está vinculado.
+- **Similar Consignees:** Validación automática que detecta nombres similares antes de guardar.
 
-# Flujo general de uso
-1. Ingresa al módulo de **Consignees MBL** desde el menú de configuración.  
-2. Haz clic en **Nuevo consignee** y completa los campos requeridos.  
-3. Usa el botón **Search similar** para verificar posibles duplicados.  
-4. Si existen coincidencias, el sistema mostrará un panel y/o modal de confirmación.  
-5. Guarda el registro.  
-6. El consignee quedará disponible en **operaciones MBL** y **procesos de demurrages**.  
+# 5. Flujo de negocio (E2E)
+1. Usuario accede al módulo de **Consignees MBL**.
+2. Ingresa el nombre y define si activa el proceso de demurrages.
+3. El sistema busca consignees con nombres similares.
+4. Si existen coincidencias:
+   - Se muestran en un panel lateral y/o en un modal de confirmación.
+   - El usuario puede cancelar o confirmar la creación.
+5. Si no hay conflictos, se guarda el registro.
+6. El consignee queda disponible en operaciones MBL y procesos de demurrages.
 
-> **Recomendación:** antes de guardar, revisa siempre la lista de similares para evitar duplicados.  
+:::tip
+El campo **has_demurrages** permite controlar desde el alta si el consignee disparará procesos de cobro por demurrages.
+:::
 
----
+# 6. Pantallas y campos
+## 6.1 Formulario de Consignee MBL
+**Propósito**: Registrar o editar consignees asociados al MBL.
 
-## Vistas principales
-- **Listado:** muestra todos los consignees con opciones de filtro y búsqueda.  
-- **Formulario:** permite agregar o editar consignees, con validaciones en tiempo real.  
-- **Panel de similares:** lista de coincidencias detectadas antes de confirmar.  
-- **Modal de similares:** confirmación final para proceder con el guardado.  
+**Campos**:
+- `Name` (obligatorio) — Nombre del consignee.
+- `Init demurrages?` (obligatorio) — Sí/No, define si el consignee activa procesos de demurrages.
 
-## Campos y validaciones
-- **Nombre:** Obligatorio, no puede estar vacío.  
-- **Init demurrages?:** Obligatorio (Sí/No), define si el consignee dispara procesos de demurrages.  
+**Acciones**:  
+- Guardar  
+- Cancelar  
+- Buscar similares  
 
----
+**Mensajes del sistema**:
+- **Éxito:** "Consignee MBL created" / "Consignee MBL updated"
+- **Advertencia:** "Name is required", "Validate form before submit"
+- **Confirmación:** "Consignees with similar name"
 
-## Casos de uso
-- **Crear consignee:** Ingresa nombre y define si activa demurrages → valida similares → guarda.  
-- **Editar consignee:** Modifica datos de un registro existente con las mismas validaciones.  
-- **Inhabilitar consignee:** Marca el registro como inactivo, conservando historial.  
-- **Reactivar consignee:** Permite volver a habilitar un consignee previamente inhabilitado.  
-- **Buscar consignee:** Usa filtros en el listado o el botón **Search similar**.  
+_(Figura X — Captura del formulario de alta de Consignee MBL)_
 
----
+## 6.2 Panel de similares
+- Botón: `Search similar`
+- Sección lateral con listado de coincidencias
+- Modal de confirmación antes de guardar
 
-## Permisos necesarios
-Para realizar acciones en el módulo de Consignees MBL, necesitas los siguientes permisos:  
-- **Ver consignees:** `consignees_mbl.view`  
-- **Crear consignee:** `consignees_mbl.create`  
-- **Editar consignee:** `consignees_mbl.update`  
-- **Eliminar o restaurar consignee:** `consignees_mbl.delete`  
+# 7. Procedimientos
+## 7.1 Alta de Consignee MBL
+**Precondiciones**: Usuario con permiso `consignees_mbl.create`.  
+**Entradas**: Nombre, Init demurrages (Sí/No).  
 
-Si no cuentas con alguno de estos permisos, solicita acceso a tu administrador del sistema.  
+**Pasos**:
+1. Abrir el formulario en `Configuración > Consignees MBL > Nuevo`.
+2. Completar los campos obligatorios.
+3. Presionar **Guardar**.
+4. El sistema ejecuta búsqueda de similares.
+5. Confirmar creación en caso de coincidencias.
 
----
+**Resultado esperado**: El consignee queda registrado.  
+**Postcondiciones**: El consignee aparece en el listado y puede ser utilizado en operaciones MBL.
 
-## Errores comunes
-- **Nombre vacío:** el campo nombre es obligatorio.  
-- **Similares encontrados:** ya existen consignees con un nombre parecido.  
-- **Formulario inválido:** el formulario no puede enviarse sin validar todos los campos.  
-- **Permisos insuficientes:** no tienes autorización para realizar esta acción.  
-- **Error de servidor:** no fue posible procesar tu solicitud, inténtalo más tarde.  
+# 8. Reglas de negocio
+- El campo **Name** no puede estar vacío.
+- El campo **Init demurrages?** es obligatorio (true/false).
+- El sistema realiza búsqueda de similares por `name` antes de permitir guardar.
+- La eliminación/restauración es lógica (SoftDelete).
+- Si el consignee tiene `has_demurrages = true`, los servicios asociados al MBL disparan procesos de demurrages automáticamente.
 
----
-
-## Auditoría
-El sistema registra automáticamente:  
-- Quién creó, editó o inhabilitó cada consignee.  
-- Fechas de creación, actualización e inhabilitación.  
-
-Esto permite mantener un historial claro y seguro de todas las acciones realizadas en el catálogo de consignees MBL.  
+# 9. Integraciones
+- **Demurrages:** Uso directo del indicador `has_demurrages` para activar procesos de cobro.
+- **Operaciones MBL:** Relación directa con documentos Master Bill of Lading (MBL).
+- **Usuarios internos:** Campos `created_by` y `deleted_by` registrados automáticamente.
