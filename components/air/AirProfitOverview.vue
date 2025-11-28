@@ -129,7 +129,47 @@
               <div class="bg-slate-200 text-right">
                 <TotalsInUsd :amounts="getSupplierInvoices" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">Profit (USD)</div>
+              <div class="bg-slate-300 text-center font-bold">
+                <v-tooltip location="top" open-delay="300">
+                  <template #activator="{ props }">
+                    <span v-bind="props"
+                      >Profit (USD)
+                      <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
+                    </span>
+                  </template>
+                  <span>
+                    <b>Profit</b> representa la utilidad neta de la referencia aérea, considerando los ingresos y
+                    egresos principales.<br /><br />
+                    <b>¿Cómo se calcula?</b><br />
+                    <ul style="padding-left: 1em">
+                      <li><b>+ Total sell</b></li>
+                      <li><b>+ Credit notes</b> (notas de crédito a favor)</li>
+                      <li><b>+ Debit notes</b> (notas de débito a favor)</li>
+                      <li><b>- Supplier invoice</b> (facturas de proveedores)</li>
+                      <li>
+                        <b>- Total buy</b> (suma de todos los cargos de compra, solo si <b>no</b> hay Supplier invoice)
+                      </li>
+                    </ul>
+                    <br />
+                    <b>Fórmula:</b><br />
+                    <ul style="padding-left: 1em">
+                      <li>
+                        <b>Con Supplier invoice:</b>
+                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice)</code>
+                      </li>
+                      <li>
+                        <b>Sin Supplier invoice:</b>
+                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Total buy)</code>
+                      </li>
+                    </ul>
+                    <br />
+                    <b>Notas:</b>
+                    <ul style="padding-left: 1em">
+                      <li>Todos los montos se agrupan por moneda.</li>
+                    </ul>
+                  </span>
+                </v-tooltip>
+              </div>
               <div class="bg-slate-200 text-right">
                 <TotalsInUsd :amounts="getTotalProfit" />
               </div>
@@ -411,11 +451,15 @@ const getTotalBuy = computed(() => {
 const getTotalProfit = computed(() => {
   const totals: Record<number, number> = {}
 
+  const hasSupplierInvoices = (profitAirReference.value.supplierInvoices || []).length > 0
+
   addToTotals(totals, getProfitSell.value)
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getSupplierInvoices.value, true)
-  addToTotals(totals, getTotalBuy.value, true)
+  if (!hasSupplierInvoices) {
+    addToTotals(totals, getTotalBuy.value, true)
+  }
 
   return totals
 })

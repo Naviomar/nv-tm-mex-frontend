@@ -153,14 +153,24 @@
                       <li><b>+ Debit notes</b> (notas de débito a favor)</li>
                       <li><b>- Supplier invoice</b> (facturas de proveedores)</li>
                       <li>
-                        <b>- Total buy</b> (suma de todos los cargos de compra, incluyendo solamente Prepaid + IVA)
+                        <b>- Total buy</b> (suma de todos los cargos de compra, incluyendo solamente Prepaid + IVA,
+                        solo si <b>no</b> hay Supplier invoice)
                       </li>
                       <li><b>- Rebate</b> (rebates aplicados)</li>
                     </ul>
                     <br />
                     <b>Fórmula:</b><br />
-                    <code> (Total sell + Credit notes + Debit notes) - (Supplier invoice + Total buy + Rebate) </code>
-                    <br /><br />
+                    <ul style="padding-left: 1em">
+                      <li>
+                        <b>Con Supplier invoice:</b>
+                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice + Rebate)</code>
+                      </li>
+                      <li>
+                        <b>Sin Supplier invoice:</b>
+                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Total buy + Rebate)</code>
+                      </li>
+                    </ul>
+                    <br />
                     <b>Notas:</b>
                     <ul style="padding-left: 1em">
                       <li>Todos los montos se agrupan por moneda.</li>
@@ -449,11 +459,15 @@ const getTotalBuy = computed(() => {
 const getTotalProfit = computed(() => {
   const totals: Record<number, number> = {}
 
+  const hasSupplierInvoices = (profitSeaExportRef.value.supplierInvoices || []).length > 0
+
   addToTotals(totals, getSellTotalPrepaid.value)
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getSupplierInvoices.value, true)
-  addToTotals(totals, getBuyTotalPrepaid.value, true)
+  if (!hasSupplierInvoices) {
+    addToTotals(totals, getBuyTotalPrepaid.value, true)
+  }
   addToTotals(totals, getRebate.value, true)
 
   return totals
