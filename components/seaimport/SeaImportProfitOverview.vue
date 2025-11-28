@@ -335,7 +335,7 @@
                   <span>
                     <b>Profit Total</b> representa la utilidad neta de la referencia, sumando el
                     <b>Profit Operativo</b> y el <b>Profit de Demoras</b>.<br /><br />
-                    <b>Fórmula:</b><br />
+                    <b>Fórmula general:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
                         <b>Profit Total = Profit Operativo + Profit Demoras</b>
@@ -349,7 +349,7 @@
                       <li><b>+ Debit notes</b></li>
                       <li><b>- Warranty deposit</b></li>
                       <li><b>- Supplier invoice</b></li>
-                      <li><b>- Total buy</b></li>
+                      <li><b>- Total buy</b> (solo si <b>no</b> hay Supplier invoice)</li>
                       <li><b>- Rebate</b></li>
                     </ul>
                     <b>Profit Demoras</b> incluye:<br />
@@ -359,11 +359,27 @@
                       </li>
                     </ul>
                     <br />
+                    <b>Detalle de la lógica:</b><br />
+                    <ul style="padding-left: 1em">
+                      <li>
+                        Si <b>hay Supplier invoice</b>: se usan esas facturas como costo real y
+                        <b>no se descuenta</b> el <b>Total buy</b> para evitar restar dos veces la compra.
+                      </li>
+                      <li>
+                        Si <b>no hay Supplier invoice</b>: se utiliza <b>Total buy</b> como costo estimado de compra.
+                      </li>
+                    </ul>
+                    <br />
                     <b>Fórmula completa:</b><br />
                     <code>
                       (Total sell + Credit notes + Debit notes - Warranty deposit - Supplier invoice - Total buy -
                       Rebate) + ((Total Sell Demurrages + IVA) - (Total Buy Demurrages + IVA))
                     </code>
+                    <br />
+                    <span>
+                      Nota: en esta fórmula, <b>Total buy</b> solo se descuenta cuando <b>no</b> hay Supplier invoice; si
+                      hay Supplier invoice, ese término no se aplica para evitar restar dos veces la compra.
+                    </span>
                   </span>
                 </v-tooltip>
               </div>
@@ -755,12 +771,16 @@ const getTotalBuy = computed(() => {
 const getTotalProfit = computed(() => {
   const totals: Record<number, number> = {}
 
+  const hasSupplierInvoices = (profitSeaImportRef.value.supplierInvoices || []).length > 0
+
   addToTotals(totals, getProfitSell.value)
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getWarrantyDepositConcepts.value, true)
   addToTotals(totals, getSupplierInvoices.value, true)
-  addToTotals(totals, getTotalBuy.value, true)
+  if (!hasSupplierInvoices) {
+    addToTotals(totals, getTotalBuy.value, true)
+  }
   addToTotals(totals, getRebate.value, true)
 
   return totals

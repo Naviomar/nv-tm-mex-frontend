@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Chat Drawer -->
-    <v-navigation-drawer v-model="drawer" name="drawer-chat" location="right" width="300" temporary persistent>
+    <v-navigation-drawer v-model="drawer" name="drawer-chat" location="right" width="300" class="p-4 m-4 mb-8 rounded-lg" style="height: calc(100% - 120px); bottom: 20px;" persistent>
       <div class="text-center font-bold">Online Chat</div>
       <Broadcast :is-open="drawer" @new-message="emit('new-message', $event)" />
     </v-navigation-drawer>
