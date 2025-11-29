@@ -33,7 +33,7 @@
         placeholder="Enter your password"
         prepend-inner-icon="mdi-lock-outline"
         variant="outlined"
-        @click:append-inner="visible = visible!"
+        @click:append-inner="visible = !visible"
         @keyup.enter="handleLogin"
       />
 
