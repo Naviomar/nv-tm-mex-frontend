@@ -12,9 +12,21 @@
       <v-icon v-if="isSoaModule">mdi-circle-double</v-icon>
       SOA module
     </v-btn>
-    <v-btn color="lime" size="small" to="/payments/agents/payments">
-      <v-icon v-if="isPaymentsModule">mdi-circle-double</v-icon>
-      Payments module
+    <v-btn
+      color="lime"
+      size="small"
+      :to="{ path: '/payments/agents/payments', query: { status: 'pending' } }"
+    >
+      <v-icon v-if="isPendingPaymentsTab">mdi-circle-double</v-icon>
+      Pending Payments module
+    </v-btn>
+    <v-btn
+      color="lime"
+      size="small"
+      :to="{ path: '/payments/agents/payments', query: { status: 'paid' } }"
+    >
+      <v-icon v-if="isAllPaymentsTab">mdi-circle-double</v-icon>
+      Paid Payments module
     </v-btn>
     <v-btn color="purple" size="small" to="/payments/agents/reports">
       <v-icon v-if="isReportModule">mdi-circle-double</v-icon>
@@ -30,5 +42,11 @@ const route = useRoute()
 const isCheckModule = computed(() => route.path === '/payments/agents/check')
 const isSoaModule = computed(() => route.path === '/payments/agents/soa')
 const isPaymentsModule = computed(() => route.path === '/payments/agents/payments')
+const isPendingPaymentsTab = computed(
+  () => isPaymentsModule.value && (!route.query.status || route.query.status === 'pending')
+)
+const isAllPaymentsTab = computed(
+  () => isPaymentsModule.value && route.query.status === 'paid'
+)
 const isReportModule = computed(() => route.path === '/payments/agents/reports')
 </script>

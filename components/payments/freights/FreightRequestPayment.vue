@@ -175,9 +175,24 @@
           density="compact"
           @update:model-value="onClickPagination"
         ></v-pagination>
-        <div class="text-xs">
+        <div class="text-xs mb-2">
           Showing {{ ffPayments.from }} to {{ ffPayments.to }} from {{ ffPayments.total }} total records
         </div>
+
+        <v-table density="compact" class="mt-2">
+          <thead>
+            <tr>
+              <th class="text-left">Currency</th>
+              <th class="text-left">Total amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in totalsByCurrency" :key="`total-${idx}`">
+              <td>{{ item.currencyName }}</td>
+              <td>{{ item.currencyName }} {{ formatToCurrency(item.total) }}</td>
+            </tr>
+          </tbody>
+        </v-table>
       </v-card-text>
     </v-card>
     <v-dialog v-model="sendPayment.show" max-width="800">
@@ -208,6 +223,7 @@ const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
 const router = useRouter()
+const route = useRoute()
 
 const loadingStore = useLoadingStore()
 
@@ -218,8 +234,20 @@ const filters = ref<any>({
   freightId: '',
   freightGroupId: '',
   deleted_status: 'active',
-  status: 'pending',
+  status: (route.query.status as string) || 'pending',
 })
+
+watch(
+  () => route.query.status,
+  async (newStatus) => {
+    const status = (newStatus as string) || 'pending'
+    if (['pending', 'paid', 'all'].includes(status)) {
+      filters.value.status = status
+      ffPayments.value.current_page = 1
+      await getFreightPayments()
+    }
+  }
+)
 
 let catalogs = reactive({
   freights: [],
@@ -241,6 +269,26 @@ const ffPayments = ref({
   from: 1,
   to: 1,
   total: 0,
+})
+
+const totalsByCurrency = computed(() => {
+  const totals: Record<string, { total: number; currencyName: string }> = {}
+
+  ffPayments.value.data.forEach((ffpayment: any) => {
+    const currencyId = ffpayment.currency_id
+    const amount = parseFloat(ffpayment.amount) || 0
+
+    if (!totals[currencyId]) {
+      totals[currencyId] = {
+        total: 0,
+        currencyName: getCurrencyName(currencyId),
+      }
+    }
+
+    totals[currencyId].total += amount
+  })
+
+  return Object.values(totals)
 })
 
 const agentHasToPay = computed(() => {

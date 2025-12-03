@@ -134,9 +134,9 @@
                     </span>
                   </template>
                   <span>
-                    Suma de <b>pagos realizados</b> (amount_paid) sobre los cargos facturados.<br />
+                    Sum of <b>payments made</b> (amount_paid) over the invoiced charges.<br />
                     <br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <code>amount_paid</code>
                   </span>
                 </v-tooltip>
@@ -150,10 +150,10 @@
                     </span>
                   </template>
                   <span>
-                    Suma: <b>total de cargos</b> (amount_total)<br />
-                    Resta: <b>pagos realizados</b> (amount_paid) y <b>reembolsos</b> (refunds).<br />
+                    Sum: <b>total charges</b> (amount_total)<br />
+                    Minus: <b>payments made</b> (amount_paid) and <b>refunds</b> (refunds).<br />
                     <br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <code>(amount_total - amount_paid - refunds)</code>
                   </span>
                 </v-tooltip>
@@ -179,14 +179,14 @@
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
-                      >Profit Flete (USD)
+                      >Freight Profit (USD)
                       <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
                     </span>
                   </template>
                   <span>
-                    <b>Profit Flete</b> muestra la utilidad generada únicamente por los conceptos de flete (freight),
-                    excluyendo demoras y otros cargos.<br /><br />
-                    <b>¿Cómo se calcula?</b><br />
+                    <b>Freight Profit</b> shows the profit generated only by freight concepts,
+                    excluding demurrages and other charges.<br /><br />
+                    <b>How is it calculated?</b><br />
                     <ul style="padding-left: 1em">
                       <li><b>+ Sell Prepaid Within BL</b></li>
                       <li><b>+ Sell Collect Within BL</b></li>
@@ -194,13 +194,13 @@
                       <li><b>- Buy Collect Within BL</b></li>
                     </ul>
                     <br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <code>
                       (Sell Prepaid Within BL + Sell Collect Within BL) - (Buy Prepaid Within BL + Buy Collect Within
                       BL)
                     </code>
                     <br /><br />
-                    <b>Nota:</b> Solo se consideran los conceptos de flete dentro del BL (Bill of Lading).
+                    <b>Note:</b> Only freight concepts within the BL (Bill of Lading) are considered.
                   </span>
                 </v-tooltip>
               </div>
@@ -242,10 +242,10 @@
                     </span>
                   </template>
                   <span>
-                    Suma: <b>total de cargos</b> (amount_total)<br />
-                    Resta: <b>pagos realizados</b> (amount_paid) y <b>reembolsos</b> (refunds).<br />
+                    Sum: <b>total charges</b> (amount_total)<br />
+                    Minus: <b>payments made</b> (amount_paid) and <b>refunds</b> (refunds).<br />
                     <br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <code>(amount_total - amount_paid - refunds)</code>
                   </span>
                 </v-tooltip>
@@ -258,12 +258,12 @@
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
-                      >Profit Operativo sin Demoras (USD)
+                      >Operating Profit without Demurrages (USD)
                       <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
                     </span>
                   </template>
                   <span>
-                    <b>Profit</b> se calcula sumando y restando los siguientes conceptos:<br />
+                    <b>Profit</b> is calculated by adding and subtracting the following concepts:<br />
                     <ul style="padding-left: 1em">
                       <li><b>+ Total sell</b></li>
                       <li><b>+ Credit notes</b></li>
@@ -274,7 +274,7 @@
                       <li><b>- Rebate</b></li>
                     </ul>
                     <br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <code
                       >(Total sell + Credit notes + Debit notes - Warranty deposit - Supplier invoice - Total buy -
                       Rebate)</code
@@ -290,33 +290,33 @@
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
-                      >Profit demoras (USD)
+                      >Demurrages Profit (USD)
                       <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
                     </span>
                   </template>
                   <span>
-                    <b>Profit demoras</b> muestra la utilidad generada únicamente por los conceptos de demoras
+                    <b>Demurrages Profit</b> shows the profit generated only by demurrage concepts<br />
                     (demurrages).<br /><br />
-                    <b>Fórmula:</b><br />
+                    <b>Formula:</b><br />
                     <ul style="padding-left: 1em">
-                      <li><b>Profit demoras = (Total Sell Demurrages + IVA) - (Total Buy Demurrages + IVA)</b></li>
+                      <li><b>Demurrages Profit = (Total Sell Demurrages + VAT) - (Total Buy Demurrages + VAT)</b></li>
                     </ul>
                     <br />
-                    <b>Detalle:</b><br />
+                    <b>Details:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <b>Total Sell Demurrages:</b> Suma de los montos facturados al cliente por demoras
+                        <b>Total Sell Demurrages:</b> Sum of amounts invoiced to the customer for demurrages
                         (<code>amount</code>)
                       </li>
-                      <li><b>IVA Sell:</b> Suma de IVA facturado al cliente por demoras (<code>amount_iva</code>)</li>
+                      <li><b>VAT Sell:</b> Sum of VAT invoiced to the customer for demurrages (<code>amount_iva</code>)</li>
                       <li>
-                        <b>Total Buy Demurrages:</b> Suma de los costos pagados al proveedor por demoras
+                        <b>Total Buy Demurrages:</b> Sum of costs paid to the supplier for demurrages
                         (<code>line_cost</code>)
                       </li>
-                      <li><b>IVA Buy:</b> Suma de IVA pagado al proveedor por demoras (<code>line_iva</code>)</li>
+                      <li><b>VAT Buy:</b> Sum of VAT paid to the supplier for demurrages (<code>line_iva</code>)</li>
                     </ul>
                     <br />
-                    <b>Profit demoras</b> = (amount + amount_iva) - (line_cost + line_iva)
+                    <b>Demurrages Profit</b> = (amount + amount_iva) - (line_cost + line_iva)
                   </span>
                 </v-tooltip>
               </div>
@@ -333,52 +333,52 @@
                     </span>
                   </template>
                   <span>
-                    <b>Profit Total</b> representa la utilidad neta de la referencia, sumando el
-                    <b>Profit Operativo</b> y el <b>Profit de Demoras</b>.<br /><br />
-                    <b>Fórmula general:</b><br />
+                    <b>Total Profit</b> represents the net profit of the reference, adding
+                    <b>Operational Profit</b> and <b>Demurrages Profit</b>.<br /><br />
+                    <b>General formula:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <b>Profit Total = Profit Operativo + Profit Demoras</b>
+                        <b>Total Profit = Operational Profit + Demurrages Profit</b>
                       </li>
                     </ul>
                     <br />
-                    <b>Profit Operativo</b> incluye:<br />
+                    <b>Operational Profit</b> includes:<br />
                     <ul style="padding-left: 1em">
                       <li><b>+ Total sell</b></li>
                       <li><b>+ Credit notes</b></li>
                       <li><b>+ Debit notes</b></li>
                       <li><b>- Warranty deposit</b></li>
                       <li><b>- Supplier invoice</b></li>
-                      <li><b>- Total buy</b> (solo si <b>no</b> hay Supplier invoice)</li>
+                      <li><b>- Total buy</b> (only if there is <b>no</b> Supplier invoice)</li>
                       <li><b>- Rebate</b></li>
                     </ul>
-                    <b>Profit Demoras</b> incluye:<br />
+                    <b>Demurrages Profit</b> includes:<br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <b>(Total Sell Demurrages + IVA) - (Total Buy Demurrages + IVA)</b>
+                        <b>(Total Sell Demurrages + VAT) - (Total Buy Demurrages + VAT)</b>
                       </li>
                     </ul>
                     <br />
-                    <b>Detalle de la lógica:</b><br />
+                    <b>Logic details:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        Si <b>hay Supplier invoice</b>: se usan esas facturas como costo real y
-                        <b>no se descuenta</b> el <b>Total buy</b> para evitar restar dos veces la compra.
+                        If there <b>is a Supplier invoice</b>: those invoices are used as the real cost and
+                        <b>Total buy is not deducted</b> to avoid subtracting the purchase twice.
                       </li>
                       <li>
-                        Si <b>no hay Supplier invoice</b>: se utiliza <b>Total buy</b> como costo estimado de compra.
+                        If there <b>is no Supplier invoice</b>: <b>Total buy</b> is used as the estimated purchase cost.
                       </li>
                     </ul>
                     <br />
-                    <b>Fórmula completa:</b><br />
+                    <b>Full formula:</b><br />
                     <code>
                       (Total sell + Credit notes + Debit notes - Warranty deposit - Supplier invoice - Total buy -
                       Rebate) + ((Total Sell Demurrages + IVA) - (Total Buy Demurrages + IVA))
                     </code>
                     <br />
                     <span>
-                      Nota: en esta fórmula, <b>Total buy</b> solo se descuenta cuando <b>no</b> hay Supplier invoice; si
-                      hay Supplier invoice, ese término no se aplica para evitar restar dos veces la compra.
+                      Note: in this formula, <b>Total buy</b> is only deducted when there is <b>no</b> Supplier invoice;
+                      if there is a Supplier invoice, that term is not applied to avoid subtracting the purchase twice.
                     </span>
                   </span>
                 </v-tooltip>

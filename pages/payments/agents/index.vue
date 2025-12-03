@@ -11,7 +11,20 @@
               <v-btn v-if="false" color="primary" to="/payments/agents/check" class="mb-4">Check module</v-btn>
 
               <v-btn color="primary" to="/payments/agents/soa" class="mb-4">SOA module</v-btn>
-              <v-btn color="lime" to="/payments/agents/payments" class="mb-4">Payments module</v-btn>
+              <v-btn
+                color="lime"
+                :to="{ path: '/payments/agents/payments', query: { status: 'pending' } }"
+                class="mb-4"
+              >
+                Pending Payments module
+              </v-btn>
+              <v-btn
+                color="lime"
+                :to="{ path: '/payments/agents/payments', query: { status: 'paid' } }"
+                class="mb-4"
+              >
+                Paid Payments module
+              </v-btn>
               <v-btn color="orange" to="/payments/agents/reports" class="mb-4">Report module</v-btn>
             </div>
           </v-card-text>

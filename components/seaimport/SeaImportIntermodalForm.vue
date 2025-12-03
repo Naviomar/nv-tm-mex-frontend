@@ -60,10 +60,7 @@
 
     <v-alert v-if="!canDoIntermodal" color="red-lighten-1" variant="tonal">
       <v-icon>mdi-alert-circle-outline</v-icon>
-      <span
-        >Intermodal information cannot be modified. Reference should have arrival notification and revalidation process
-        completed.</span
-      >
+      <span>{{ intermodalBlockReason }}</span>
     </v-alert>
 
     <div v-if="hasIntermodal && canDoIntermodal">
@@ -592,7 +589,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { mailNotifications } from '~/utils/data/systemData'
+import { mailNotifications, LIVERPOOL_MBL_CONSIGNEE_IDS } from '~/utils/data/systemData'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -722,8 +719,35 @@ const hasIntermodalRail = computed(() => {
   return referencia.value.transportation_mode_id === 1 || referencia.value.transportation_mode_id === 3
 })
 
+const isLiverpoolMbl = computed(() => {
+  if (!referencia.value?.master_bls) {
+    return false
+  }
+  return referencia.value.master_bls.some((mbl: any) =>
+    LIVERPOOL_MBL_CONSIGNEE_IDS.includes(Number(mbl.consignee_mbl_id))
+  )
+})
+
 const canDoIntermodal = computed(() => {
-  return referencia.value?.arrival_notys?.length > 0 && referencia.value?.revalidation != null
+  const hasArrival = referencia.value?.arrival_notys?.length > 0
+  if (!hasArrival) {
+    return false
+  }
+  if (isLiverpoolMbl.value) {
+    return true
+  }
+  return referencia.value?.revalidation != null
+})
+
+const intermodalBlockReason = computed(() => {
+  const hasArrival = referencia.value?.arrival_notys?.length > 0
+  if (!hasArrival) {
+    return 'Intermodal information cannot be modified. Reference should have arrival notification completed.'
+  }
+  if (!isLiverpoolMbl.value && referencia.value?.revalidation == null) {
+    return 'Intermodal information cannot be modified. Revalidation process should be completed.'
+  }
+  return ''
 })
 
 const canIntermodalTransit = computed(() => {
