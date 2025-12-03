@@ -1,5 +1,43 @@
 <template>
   <div class="mb-4">
+    <!-- Dialog for customs agent change confirmation -->
+    <v-dialog v-model="showAgentChangeDialog" max-width="600" persistent>
+      <v-card>
+        <v-card-title class="text-lg font-semibold bg-orange-500 text-white">
+          <v-icon class="mr-2">mdi-alert</v-icon>
+          Customs agent change confirmation
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <div class="mb-4">
+            <p class="text-base">Will the customs agent change in this new revalidation?</p>
+          </div>
+          <v-alert v-if="showAgentChangeWarning" type="warning" variant="tonal" class="mb-4" border="start" prominent>
+            <div class="font-bold mb-2">Important notice</div>
+            <p>
+              Changing the customs agent will generate an additional charge of <strong>$150 USD</strong> (depending on the
+              shipping line for the service).
+            </p>
+            <p class="mt-2">
+              The concept "Customs Agent Change" will be automatically added to Local Charges and an invoice/proforma
+              will be generated for the customer.
+            </p>
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="justify-end pa-4">
+          <v-btn variant="outlined" @click="cancelRedoRevalidation">Cancel</v-btn>
+          <v-btn v-if="!showAgentChangeWarning" color="grey" variant="flat" @click="confirmNoAgentChange">
+            No, same agent
+          </v-btn>
+          <v-btn v-if="!showAgentChangeWarning" color="orange-darken-2" variant="flat" @click="confirmAgentChange">
+            Yes, the agent will change
+          </v-btn>
+          <v-btn v-if="showAgentChangeWarning" color="red-darken-2" variant="flat" @click="executeRedoRevalidation">
+            Confirm and continue
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-card density="compact">
       <v-toolbar density="compact" color="primary">
         <v-toolbar-title>
@@ -10,16 +48,29 @@
         </v-toolbar-title>
       </v-toolbar>
 
-      <div v-if="!hasArrivalNotification">
-        <v-card-text>
-          <p>
-            The arrival notification has not been completed. Please complete the arrival notification to start the
-            revalidation process.
-          </p>
-        </v-card-text>
-      </div>
-      <div v-if="hasArrivalNotification">
-        <v-tabs v-model="tab" class="tabs1">
+      <v-card-text v-if="isLiverpoolMbl">
+        <v-alert type="info" variant="tonal" border="start" prominent>
+          <div class="font-bold mb-1">Revalidation notice</div>
+          <div>Electronic revalidation is not applicable for master BL customers related to Liverpool.</div>
+        </v-alert>
+      </v-card-text>
+
+      <div class="relative">
+        <div
+          :class="{
+            'pointer-events-none opacity-40 blur-sm': isLiverpoolMbl,
+          }"
+        >
+          <div v-if="!hasArrivalNotification">
+            <v-card-text>
+              <p>
+                The arrival notification has not been completed. Please complete the arrival notification to start the
+                revalidation process.
+              </p>
+            </v-card-text>
+          </div>
+          <div v-if="hasArrivalNotification">
+            <v-tabs v-model="tab" class="tabs1">
           <v-tab value="option-0">
             <v-icon start> mdi-help-circle-outline </v-icon>
             About
@@ -108,14 +159,19 @@
             </v-card>
           </v-window-item>
         </v-window>
+          </div>
+        </div>
       </div>
     </v-card>
   </div>
 </template>
 <script setup lang="ts">
-const { $api } = useNuxtApp()
+import { LIVERPOOL_MBL_CONSIGNEE_IDS } from '~/utils/data/systemData'
+
+const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const snackbar = useSnackbar()
 
 const props = defineProps({
   reference: {
@@ -137,14 +193,59 @@ const hasSentRevalidation = computed(() => {
   return props.reference.revalidation?.sent_at != null
 })
 
+const isLiverpoolMbl = computed(() => {
+  if (!props.reference.master_bls) return false
+  return props.reference.master_bls.some((mbl: any) =>
+    LIVERPOOL_MBL_CONSIGNEE_IDS.includes(Number(mbl.consignee_mbl_id))
+  )
+})
+
+const showAgentChangeDialog = ref(false)
+const showAgentChangeWarning = ref(false)
+const willChangeAgent = ref(false)
+
 const refresh = () => {
   emits('updateReference')
 }
 
-const onClickRedoRevalidation = async () => {
+const onClickRedoRevalidation = () => {
+  showAgentChangeDialog.value = true
+  showAgentChangeWarning.value = false
+  willChangeAgent.value = false
+}
+
+const cancelRedoRevalidation = () => {
+  showAgentChangeDialog.value = false
+  showAgentChangeWarning.value = false
+  willChangeAgent.value = false
+}
+
+const confirmNoAgentChange = () => {
+  willChangeAgent.value = false
+  executeRedoRevalidation()
+}
+
+const confirmAgentChange = () => {
+  willChangeAgent.value = true
+  showAgentChangeWarning.value = true
+}
+
+const executeRedoRevalidation = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.referencias.redoRevalidation(props.reference.id)
+    const response = await $api.referencias.redoRevalidation(props.reference.id, {
+      will_change_agent: willChangeAgent.value,
+    })
+    showAgentChangeDialog.value = false
+    showAgentChangeWarning.value = false
+
+    if (willChangeAgent.value) {
+      snackbar.add({
+        type: 'warning',
+        text: 'The customs agent change has been registered. The corresponding charge will be generated.',
+      })
+    }
+
     emits('updateReference')
   } catch (e) {
     console.error(e)

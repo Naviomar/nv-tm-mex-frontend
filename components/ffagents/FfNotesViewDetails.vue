@@ -63,13 +63,13 @@
             <v-chip v-if="!ffNote.note_payment" size="small" color="orange"> Pending req. payment </v-chip>
             <v-chip
               v-if="ffNote.note_payment"
-              :color="ffNote.note_payment.invoice?.is_paid == 1 ? 'green' : 'red'"
+              :color="ffNote.note_payment.payment?.invoice?.is_paid == 1 ? 'green' : 'red'"
               size="small"
             >
               <div class="flex gap-2">
                 <v-icon @click="viewFfReqPayment(ffNote.note_payment)">mdi-eye-outline</v-icon>
                 {{
-                  ffNote.note_payment.invoice?.is_paid == 1
+                  ffNote.note_payment.payment?.invoice?.is_paid == 1
                     ? `Paid Req #${ffNote.note_payment.ff_payment_id}`
                     : `Pending payment #${ffNote.note_payment.ff_payment_id}`
                 }}
@@ -151,6 +151,18 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+})
+
+onMounted(() => {
+  console.log(
+    'FFNotesViewDetails - payment invoice is_paid status:',
+    props.ffNotes?.map((note: any) => ({
+      id: note.id,
+      ff_payment_id: note.note_payment?.ff_payment_id,
+      is_paid: note.note_payment?.payment?.invoice?.is_paid,
+      invoice_id: note.note_payment?.id,
+    })),
+  )
 })
 
 const pdfServerViewer = ref<any>(null)

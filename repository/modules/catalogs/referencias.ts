@@ -334,7 +334,12 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/checklist-information`, fetchOptions)
   }
 
-  async redoRevalidation(id: string, fetchOptions?: FetchOptions) {
+  async redoRevalidation(id: string, form?: any, fetchOptions?: FetchOptions) {
+    const body = form ? JSON.stringify(form) : undefined
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/redo-revalidation`, fetchOptions)
   }
 

@@ -865,6 +865,8 @@ const ticketCatalogs = {
   ],
 }
 
+const LIVERPOOL_MBL_CONSIGNEE_IDS = [2, 5, 6, 7]
+
 export {
   bankAccounts,
   systemCompanies,
@@ -882,4 +884,5 @@ export {
   ticketCatalogs,
   systemCountries,
   mailNotifications,
+  LIVERPOOL_MBL_CONSIGNEE_IDS,
 }
