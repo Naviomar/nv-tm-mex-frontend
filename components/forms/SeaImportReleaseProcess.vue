@@ -22,6 +22,15 @@
               will be generated for the customer.
             </p>
           </v-alert>
+          <div v-if="showAgentChangeWarning && canSkipAgentChangeCharge" class="mt-2">
+            <v-checkbox
+              v-model="skipAgentChangeCharge"
+              density="compact"
+              color="primary"
+              hide-details
+              label="This is a data entry correction. Do not generate the customs agent change charge (supervisor only)."
+            />
+          </div>
         </v-card-text>
         <v-card-actions class="justify-end pa-4">
           <v-btn variant="outlined" @click="cancelRedoRevalidation">Cancel</v-btn>
@@ -71,94 +80,94 @@
           </div>
           <div v-if="hasArrivalNotification">
             <v-tabs v-model="tab" class="tabs1">
-          <v-tab value="option-0">
-            <v-icon start> mdi-help-circle-outline </v-icon>
-            About
-          </v-tab>
-          <v-tab value="option-1">
-            <v-icon start> mdi-file </v-icon>
-            Checklist revalidation
-          </v-tab>
-          <v-tab value="option-2">
-            <v-icon start> mdi-transit-connection </v-icon>
-            Release in transit
-          </v-tab>
-          <v-tab value="option-3">
-            <v-icon start> mdi-transfer </v-icon>
-            Release
-          </v-tab>
+              <v-tab value="option-0">
+                <v-icon start> mdi-help-circle-outline </v-icon>
+                About
+              </v-tab>
+              <v-tab value="option-1">
+                <v-icon start> mdi-file </v-icon>
+                Checklist revalidation
+              </v-tab>
+              <v-tab value="option-2">
+                <v-icon start> mdi-transit-connection </v-icon>
+                Release in transit
+              </v-tab>
+              <v-tab value="option-3">
+                <v-icon start> mdi-transfer </v-icon>
+                Release
+              </v-tab>
 
-          <v-tab value="option-4">
-            <v-icon start> mdi-key-link </v-icon>
-            Electronic revalidation
-          </v-tab>
-        </v-tabs>
-        <v-window v-model="tab">
-          <v-window-item value="option-0">
-            <v-card flat>
-              <v-card-text>
-                <div class="font-bold">About</div>
-                <div class="mb-2">
-                  The revalidation process is a series of steps that must be completed to release the cargo from the
-                  customs warehouse.
-                </div>
-                <div class="mb-2">
-                  The process includes the following steps:
-                  <ul>
-                    <li>Checklist revalidation</li>
-                    <li>Release in transit</li>
-                    <li>Release</li>
-                    <li>Electronic revalidation</li>
-                  </ul>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-window-item>
-          <v-window-item value="option-1">
-            <v-card flat>
-              <v-card-text>
-                <SeaImportCheckListRevalidation :reference="reference" />
-              </v-card-text>
-            </v-card>
-          </v-window-item>
-          <v-window-item value="option-2">
-            <v-card flat>
-              <v-card-text>
-                <SeaImportReleaseTransitForm :referenceId="reference.id" />
-              </v-card-text>
-            </v-card>
-          </v-window-item>
-          <v-window-item value="option-3">
-            <v-card flat>
-              <v-card-text>
-                <SeaImportReleaseForm :referenceId="reference.id" />
-              </v-card-text>
-            </v-card>
-          </v-window-item>
-          <v-window-item value="option-4">
-            <v-card v-if="tab === 'option-4'" flat>
-              <v-card-text>
-                <div v-if="!hasSentRevalidation">
-                  <SeaImportValidateElectronicRev :referenceId="reference.id" @update-reference="refresh" />
-                </div>
-                <div v-if="hasSentRevalidation">
-                  <div class="flex flex-col">
-                    <div class="font-bold">Electronic revalidation</div>
-                    <div class="mb-2">The electronic revalidation has been sent to the consignee.</div>
-                    <div class="flex justify-start">
-                      <v-btn size="small" color="red-darken-4" @click="onClickRedoRevalidation"
-                        >Redo revalidation</v-btn
-                      >
+              <v-tab value="option-4">
+                <v-icon start> mdi-key-link </v-icon>
+                Electronic revalidation
+              </v-tab>
+            </v-tabs>
+            <v-window v-model="tab">
+              <v-window-item value="option-0">
+                <v-card flat>
+                  <v-card-text>
+                    <div class="font-bold">About</div>
+                    <div class="mb-2">
+                      The revalidation process is a series of steps that must be completed to release the cargo from the
+                      customs warehouse.
                     </div>
-                    <div class="pt-4">
-                      <SeaImportRevalidationDetails :reference="reference" />
+                    <div class="mb-2">
+                      The process includes the following steps:
+                      <ul>
+                        <li>Checklist revalidation</li>
+                        <li>Release in transit</li>
+                        <li>Release</li>
+                        <li>Electronic revalidation</li>
+                      </ul>
                     </div>
-                  </div>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-window-item>
-        </v-window>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+              <v-window-item value="option-1">
+                <v-card flat>
+                  <v-card-text>
+                    <SeaImportCheckListRevalidation :reference="reference" />
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+              <v-window-item value="option-2">
+                <v-card flat>
+                  <v-card-text>
+                    <SeaImportReleaseTransitForm :referenceId="reference.id" />
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+              <v-window-item value="option-3">
+                <v-card flat>
+                  <v-card-text>
+                    <SeaImportReleaseForm :referenceId="reference.id" />
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+              <v-window-item value="option-4">
+                <v-card v-if="tab === 'option-4'" flat>
+                  <v-card-text>
+                    <div v-if="!hasSentRevalidation">
+                      <SeaImportValidateElectronicRev :referenceId="reference.id" @update-reference="refresh" />
+                    </div>
+                    <div v-if="hasSentRevalidation">
+                      <div class="flex flex-col">
+                        <div class="font-bold">Electronic revalidation</div>
+                        <div class="mb-2">The electronic revalidation has been sent to the consignee.</div>
+                        <div class="flex justify-start">
+                          <v-btn size="small" color="red-darken-4" @click="onClickRedoRevalidation"
+                            >Redo revalidation</v-btn
+                          >
+                        </div>
+                        <div class="pt-4">
+                          <SeaImportRevalidationDetails :reference="reference" />
+                        </div>
+                      </div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+            </v-window>
           </div>
         </div>
       </div>
@@ -172,6 +181,7 @@ const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 const snackbar = useSnackbar()
+const { user } = useCheckUser()
 
 const props = defineProps({
   reference: {
@@ -203,6 +213,11 @@ const isLiverpoolMbl = computed(() => {
 const showAgentChangeDialog = ref(false)
 const showAgentChangeWarning = ref(false)
 const willChangeAgent = ref(false)
+const skipAgentChangeCharge = ref(false)
+
+const canSkipAgentChangeCharge = computed(() => {
+  return user.value?.roles?.some((role: any) => role.name === 'Importacion Maritima Admin') ?? false
+})
 
 const refresh = () => {
   emits('updateReference')
@@ -212,12 +227,14 @@ const onClickRedoRevalidation = () => {
   showAgentChangeDialog.value = true
   showAgentChangeWarning.value = false
   willChangeAgent.value = false
+  skipAgentChangeCharge.value = false
 }
 
 const cancelRedoRevalidation = () => {
   showAgentChangeDialog.value = false
   showAgentChangeWarning.value = false
   willChangeAgent.value = false
+  skipAgentChangeCharge.value = false
 }
 
 const confirmNoAgentChange = () => {
@@ -235,15 +252,23 @@ const executeRedoRevalidation = async () => {
     loadingStore.loading = true
     const response = await $api.referencias.redoRevalidation(props.reference.id, {
       will_change_agent: willChangeAgent.value,
+      skip_agent_change_charge: skipAgentChangeCharge.value,
     })
     showAgentChangeDialog.value = false
     showAgentChangeWarning.value = false
 
     if (willChangeAgent.value) {
-      snackbar.add({
-        type: 'warning',
-        text: 'The customs agent change has been registered. The corresponding charge will be generated.',
-      })
+      if (response?.agent_change_charge_created) {
+        snackbar.add({
+          type: 'warning',
+          text: 'The customs agent change has been registered. The corresponding charge will be generated.',
+        })
+      } else if (response?.agent_change_charge_skipped) {
+        snackbar.add({
+          type: 'info',
+          text: 'The customs agent change has been registered without generating the additional charge (supervisor override).',
+        })
+      }
     }
 
     emits('updateReference')
