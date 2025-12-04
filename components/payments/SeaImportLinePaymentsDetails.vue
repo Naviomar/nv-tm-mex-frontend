@@ -16,7 +16,16 @@
           <tbody>
             <tr v-for="(refSchedule, index) in payments.ref_schedules" :key="`pay-data-${index}`">
               <td>
-                <v-chip color="warning" size="small">Pending</v-chip>
+                
+                <div v-if="paidLineSchedule(refSchedule).line_paid == 0">
+                  <v-chip color="warning" size="small">Pending</v-chip>
+                </div>
+                <div v-if="paidLineSchedule(refSchedule).line_paid == 1">
+                  <v-chip color="success" size="small"
+                    >Paid @ {{ formatDateString(refSchedule.schedule.sent_at) }}</v-chip
+                  >
+                </div>
+
               </td>
               <td class="whitespace-nowrap">
                 {{ getCurrencyName(refSchedule.currency_id) }} {{ formatToCurrency(refSchedule.amount) }}
@@ -120,6 +129,29 @@ const viewLineCreditNote = (note: any) => {
       target: '_blank',
     },
   })
+}
+
+const paidLineSchedule = (refSchedule: any) => {
+  let data_reference_line = refSchedule.line_invoice_refs
+  let is_paid_line=0;
+  let array_paid = new Array();
+
+  if(typeof data_reference_line === 'object' && data_reference_line !== 'null'){
+    ///iteramos
+    let sizeData=Object.keys(data_reference_line).length;
+    
+    for(var i=0; i<sizeData; i++){
+      is_paid_line = data_reference_line[i].invoice.is_paid;
+      array_paid.push(is_paid_line);
+    }
+  }
+
+  if(array_paid.includes(0) === true){
+    return {line_paid: 0};
+  }else{
+    return {line_paid: 1};
+  }
+  
 }
 
 const getReferenciaLinePayments = async () => {
