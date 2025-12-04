@@ -39,6 +39,16 @@ const authorizeResources = {
     resource: 'sea-import-demurrage-discount',
     description: 'Demurrage Discount',
     redirect: null,
+  },
+  DemurrageRevertToPartial: {
+    resource: 'sea-import-demurrage-revert-to-partial',
+    description: 'Revert Demurrage to Partial',
+    redirect: null,
+  },
+  CancelCustomerCreditNote: {
+    resource: 'cancel-customer-credit-note',
+    description: 'Cancel Customer Credit Note',
+    redirect: null,
   }
 }
 

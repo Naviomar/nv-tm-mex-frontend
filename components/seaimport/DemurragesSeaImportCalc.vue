@@ -384,9 +384,32 @@
                         label="Calculation type"
                         density="compact"
                       />
+                      
+                      <!-- Mostrar advertencia y solicitud de autorización si se intenta cambiar de Total a Parcial -->
+                      <div v-if="requiresRevertToPartialAuth" class="mb-4">
+                        <v-alert type="warning" density="compact" class="mb-2">
+                          <div class="text-sm">
+                            Some selected containers are already totaled.
+                            Authorization is required to return to partial.
+                          </div>
+                        </v-alert>
+                        <AuthorizeProcessSmart
+                          ref="authorizeRevertToPartial"
+                          label="Request authorization to return to partial"
+                          :resource="authorizeResources.DemurrageRevertToPartial.resource"
+                          :resourceId="referencia.id"
+                          :refresh="refreshAuthReqs"
+                        >
+                          <template #auth>
+                            <v-chip color="success" size="small">
+                              <v-icon>mdi-check</v-icon> Authorized - proceed
+                            </v-chip>
+                          </template>
+                        </AuthorizeProcessSmart>
+                      </div>
                       <v-checkbox
                         v-model="form.is_con_iva"
-                        label="+ IVA (desmarcar si las demoras no llevan IVA)"
+                        label="+ IVA (uncheck if demurrages do not have IVA)"
                         density="compact"
                         hide-details
                       />
@@ -703,6 +726,7 @@ const props = defineProps({
 })
 
 const authorizeProcess = ref<any>(null)
+const authorizeRevertToPartial = ref<any>(null)
 
 const form = reactive({
   notes: '',
@@ -753,6 +777,18 @@ const hasAvailableDiscount = computed(() => {
 
 const availableDiscounts = computed(() => {
   return referencia.value?.demurrage_discounts.filter((discount: any) => discount.is_applied == 0)
+})
+
+// Computed para verificar si se requiere autorización para regresar de Total a Parcial
+const requiresRevertToPartialAuth = computed(() => {
+  // Solo mostrar si el tipo de cálculo seleccionado es Parcial
+  if (form.type_calculation !== 'Parcial') {
+    return false
+  }
+  
+  // Verificar si algún contenedor seleccionado ya está en Total (is_parcial = 0)
+  const selectedContainers = referencia.value?.containers?.filter((container: any) => container.selected_days) || []
+  return selectedContainers.some((container: any) => container.demurrage?.is_parcial === 0)
 })
 
 const getContainerTotalLineCost = (container: any) => {
