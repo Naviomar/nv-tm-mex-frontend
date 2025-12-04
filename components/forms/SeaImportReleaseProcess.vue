@@ -216,7 +216,13 @@ const willChangeAgent = ref(false)
 const skipAgentChangeCharge = ref(false)
 
 const canSkipAgentChangeCharge = computed(() => {
-  return user.value?.roles?.some((role: any) => role.name === 'Importacion Maritima Admin') ?? false
+  // Check if user has the specific permission (directly or via role)
+  const permissionName = 'revalidation-skip-agent-change-charge'
+  const hasDirectPermission = user.value?.permissions?.some((p: any) => p.name === permissionName) ?? false
+  const hasRolePermission = user.value?.roles?.some((role: any) =>
+    role.permissions?.some((p: any) => p.name === permissionName)
+  ) ?? false
+  return hasDirectPermission || hasRolePermission
 })
 
 const refresh = () => {
