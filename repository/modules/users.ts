@@ -127,6 +127,18 @@ class UsersModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/roles`, fetchOptions)
   }
 
+  async getRoleUsers(roleId: string | number, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/roles/${roleId}/users`, fetchOptions)
+  }
+
+  async syncRolePermissions(roleId: string | number, permissionIds: number[], fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify({ permission_ids: permissionIds }),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/roles/${roleId}/sync-permissions`, fetchOptions)
+  }
+
   async createRole(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

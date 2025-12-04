@@ -1,175 +1,331 @@
 <template>
-  <v-card>
-    <v-card-text>
-      <div class="flex gap-5 mb-4">
-        <v-btn color="primary" @click="onClickCreateRole">Create role</v-btn>
-        <v-btn color="primary" @click="onClickCreatePermission">Create permission</v-btn>
+  <div class="space-y-6">
+    <!-- Header Actions -->
+    <div class="flex flex-wrap gap-3 items-center justify-between">
+      <div class="flex gap-3">
+        <v-btn color="primary" prepend-icon="mdi-shield-plus" @click="onClickCreateRole">
+          Create Role
+        </v-btn>
+        <v-btn color="secondary" variant="outlined" prepend-icon="mdi-key-plus" @click="onClickCreatePermission">
+          Create Permission
+        </v-btn>
       </div>
+      <v-text-field
+        v-model="filters.roleName"
+        prepend-inner-icon="mdi-magnify"
+        placeholder="Search roles..."
+        density="compact"
+        hide-details
+        clearable
+        class="max-w-xs"
+        variant="outlined"
+      />
+    </div>
 
-      <div>
-        <div class="font-bold text-lg">Roles</div>
-        <div>
-          <div>
-            <v-text-field
-              v-model="filters.roleName"
-              type="text"
-              label="Filter by role name"
-              density="compact"
-              class="w-full md:w-1/3"
-            />
+    <!-- Roles Section -->
+    <v-card>
+      <v-card-title class="bg-primary text-white d-flex align-center">
+        <v-icon class="mr-2">mdi-shield-account</v-icon>
+        Roles ({{ filterRoles.length }})
+      </v-card-title>
+      <v-card-text class="pa-0">
+        <v-table density="comfortable" hover>
+          <thead>
+            <tr class="bg-grey-lighten-4">
+              <th class="text-left" style="width: 250px">Role Name</th>
+              <th class="text-center" style="width: 120px">Permissions</th>
+              <th class="text-center" style="width: 200px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(role, index) in filterRoles" :key="`role-${role.id}`">
+              <td>
+                <div class="d-flex align-center">
+                  <v-icon size="small" color="primary" class="mr-2">mdi-shield</v-icon>
+                  <span class="font-weight-medium">{{ role.name }}</span>
+                  <v-chip v-if="index === 0" size="x-small" color="amber" class="ml-2">Super</v-chip>
+                </div>
+              </td>
+              <td class="text-center">
+                <v-chip size="small" :color="role.permissions?.length > 0 ? 'success' : 'grey'">
+                  {{ role.permissions?.length || 0 }}
+                </v-chip>
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-center gap-1">
+                  <v-tooltip text="Edit Permissions" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        size="small"
+                        variant="tonal"
+                        color="primary"
+                        icon="mdi-key-variant"
+                        :disabled="index === 0"
+                        @click="openEditPermissionsModal(role)"
+                      />
+                    </template>
+                  </v-tooltip>
+                  <v-tooltip :text="roleUsersTooltip(role)" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        size="small"
+                        variant="tonal"
+                        color="info"
+                        icon="mdi-account-group"
+                        @click="showRoleUsers(role)"
+                        :loading="loadingUsers === role.id"
+                      />
+                    </template>
+                  </v-tooltip>
+                  <v-tooltip v-if="canDeleteRoles" text="Delete Role" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        size="small"
+                        variant="tonal"
+                        color="error"
+                        icon="mdi-delete"
+                        :disabled="index === 0"
+                        @click="confirmDeleteRole(role)"
+                      />
+                    </template>
+                  </v-tooltip>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="filterRoles.length === 0">
+              <td colspan="3" class="text-center py-8 text-grey">
+                <v-icon size="48" color="grey-lighten-1">mdi-shield-off</v-icon>
+                <div class="mt-2">No roles found</div>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card-text>
+    </v-card>
+
+    <!-- Permissions Section -->
+    <v-card>
+      <v-card-title class="bg-secondary d-flex align-center justify-space-between">
+        <div class="d-flex align-center">
+          <v-icon class="mr-2">mdi-key</v-icon>
+          Permissions ({{ filterPermissions.length }})
+        </div>
+        <v-text-field
+          v-model="filters.permissionName"
+          prepend-inner-icon="mdi-magnify"
+          placeholder="Search permissions..."
+          density="compact"
+          hide-details
+          clearable
+          class="max-w-xs"
+          variant="solo"
+          bg-color="white"
+        />
+      </v-card-title>
+      <v-card-text class="pa-4">
+        <div class="d-flex flex-wrap gap-2">
+          <v-chip
+            v-for="perm in filterPermissions"
+            :key="perm.id"
+            size="small"
+            variant="outlined"
+            color="primary"
+          >
+            <v-icon start size="small">mdi-key-variant</v-icon>
+            {{ perm.name }}
+          </v-chip>
+          <div v-if="filterPermissions.length === 0" class="text-center w-100 py-4 text-grey">
+            No permissions found
           </div>
         </div>
-        <v-table density="compact" fixed-header>
-          <thead>
-            <tr>
-              <th width="50">Actions</th>
-              <th>Role Name</th>
-              <td>Attached permission(s)</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(role, index) in filterRoles" :key="`role-${index}`">
-              <td>
-                <div v-if="false">
-                  <div v-if="index !== 0">
-                    <v-chip color="red" text-color="white" small @click="confirmDeleteRole(role)"
-                      ><v-icon>mdi-delete-outline</v-icon></v-chip
-                    >
-                  </div>
-                </div>
-              </td>
-              <td>{{ role.name }}</td>
-              <td>
-                <div v-if="index == 0">Super Admin have all access.</div>
-                <div v-if="index !== 0">
-                  <v-chip v-for="(permission, index) in role.permissions" :key="`permission-${index}`">
-                    <v-icon size="small" color="red" @click="confirmDeleteRolePermission(role, permission)"
-                      >mdi-close</v-icon
-                    >{{ permission.name }}
-                  </v-chip>
-                  <v-btn
-                    color="primary"
-                    density="compact"
-                    variant="outlined"
-                    size="small"
-                    @click="showRoleAddPermission(role)"
-                    >Add permission</v-btn
-                  >
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-pagination rounded="circle" density="compact"></v-pagination>
-      </div>
-      <div>
-        <div class="font-bold text-lg">Permissions</div>
-        <div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Modal: Create Role -->
+    <v-dialog v-model="showDialogRole" max-width="600" persistent>
+      <v-card>
+        <v-toolbar color="primary" density="compact">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-shield-plus</v-icon>
+            Create New Role
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="showDialogRole = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pt-6">
           <v-text-field
-            v-model="filters.permissionName"
-            type="text"
-            label="Filter by permission name"
-            density="compact"
-            class="w-full md:w-1/3"
+            v-model="role.name"
+            label="Role Name"
+            variant="outlined"
+            prepend-inner-icon="mdi-shield"
+            :rules="[v => !!v || 'Role name is required']"
           />
-        </div>
+          <v-autocomplete
+            v-model="role.permissions"
+            label="Initial Permissions (optional)"
+            :items="permissions"
+            item-value="id"
+            item-title="name"
+            multiple
+            chips
+            closable-chips
+            variant="outlined"
+            prepend-inner-icon="mdi-key-variant"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showDialogRole = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" @click="saveRole" :disabled="!role.name">
+            Create Role
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-        <v-table density="compact" fixed-header>
-          <thead>
-            <tr>
-              <th width="50">Actions</th>
-              <th>Permission Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(permission, index) in filterPermissions" :key="`permission-${index}`">
-              <td>
-                <v-chip v-if="false" color="red" text-color="white" small @click="confirmDeletePermission(permission)"
-                  ><v-icon>mdi-delete-outline</v-icon></v-chip
-                >
-              </td>
-              <td>{{ permission?.name }}</td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-pagination rounded="circle" density="compact"></v-pagination>
-      </div>
-      <v-dialog v-model="showDialogRole" fullscreen>
-        <v-card>
-          <v-toolbar color="primary">
-            <v-btn icon @click="showDialogRole = false">
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-            <v-toolbar-title>Create rol</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-toolbar-items>
-              <v-btn variant="text" @click="saveRole"> Save </v-btn>
-            </v-toolbar-items>
-          </v-toolbar>
-          <v-card-title>
-            <span class="text-h5">Add role</span>
-          </v-card-title>
-          <v-card-text>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="col-span-1">
-                <v-text-field v-model="role.name" label="Rol name" />
-              </div>
-              <div class="col-span-1">
-                <v-autocomplete
-                  v-model="role.permissions"
-                  label="Permission(s)"
-                  :items="permissions"
-                  item-value="id"
-                  item-title="name"
-                  multiple
-                  return-object
+    <!-- Modal: Create Permission -->
+    <v-dialog v-model="showDialogPermission" max-width="500" persistent>
+      <v-card>
+        <v-toolbar color="secondary" density="compact">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-key-plus</v-icon>
+            Create New Permission
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="showDialogPermission = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pt-6">
+          <v-text-field
+            v-model="permission.name"
+            label="Permission Name"
+            variant="outlined"
+            prepend-inner-icon="mdi-key"
+            placeholder="e.g., users-create"
+            :rules="[v => !!v || 'Permission name is required']"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="showDialogPermission = false">Cancel</v-btn>
+          <v-btn color="secondary" variant="flat" @click="savePermission" :disabled="!permission.name">
+            Create Permission
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Edit Role Permissions -->
+    <v-dialog v-model="editPermissionsModal.show" max-width="700" persistent scrollable>
+      <v-card>
+        <v-toolbar color="primary" density="compact">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-key-variant</v-icon>
+            Edit Permissions: {{ editPermissionsModal.role?.name }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="editPermissionsModal.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pa-0" style="max-height: 60vh">
+          <v-text-field
+            v-model="editPermissionsModal.search"
+            prepend-inner-icon="mdi-magnify"
+            placeholder="Search permissions..."
+            density="compact"
+            hide-details
+            clearable
+            class="ma-4"
+            variant="outlined"
+          />
+          <v-list density="compact" class="py-0">
+            <v-list-item
+              v-for="perm in filteredEditPermissions"
+              :key="perm.id"
+              class="border-b"
+            >
+              <v-list-item-title>{{ perm.name }}</v-list-item-title>
+              <template #append>
+                <v-switch
+                  :model-value="editPermissionsModal.selectedIds.includes(perm.id)"
+                  color="primary"
+                  hide-details
+                  density="compact"
+                  inset
+                  @update:model-value="togglePermission(perm.id)"
                 />
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-dialog>
-      <v-dialog v-model="showDialogPermission" max-width="500px">
-        <v-card>
-          <v-card-title>
-            <span class="text-h5">Create permission</span>
-          </v-card-title>
-          <v-card-text>
-            <v-text-field label="Name" v-model="permission.name" />
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" @click="showDialogPermission = false">Close</v-btn>
-            <v-btn color="primary" @click="savePermission">Save</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+              </template>
+            </v-list-item>
+            <v-list-item v-if="filteredEditPermissions.length === 0">
+              <v-list-item-title class="text-center text-grey py-4">
+                No permissions match your search
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <div class="text-caption text-grey">
+            {{ editPermissionsModal.selectedIds.length }} permission(s) selected
+          </div>
+          <v-spacer />
+          <v-btn variant="text" @click="editPermissionsModal.show = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" @click="saveRolePermissionsSync" :loading="savingPermissions">
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-      <v-dialog v-model="showFormRoleAddPermission.show" max-width="500px">
-        <v-card>
-          <v-card-title>
-            <span class="text-h5">Role {{ showFormRoleAddPermission.role?.name }}</span>
-          </v-card-title>
-          <v-card-text>
-            <div>Add more permissions</div>
-            <v-autocomplete
-              v-model="showFormRoleAddPermission.permissions"
-              label="Permission(s)"
-              :items="roleAvailablePermissions"
-              item-value="id"
-              item-title="name"
-              multiple
-              return-object
-            />
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" @click="showFormRoleAddPermission.show = false">Close</v-btn>
-            <v-btn color="primary" @click="saveRolePermissions">Save</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-card-text>
-  </v-card>
+    <!-- Modal: View Role Users -->
+    <v-dialog v-model="usersModal.show" max-width="600" scrollable>
+      <v-card>
+        <v-toolbar color="info" density="compact">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-account-group</v-icon>
+            Users with role: {{ usersModal.role?.name }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="usersModal.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pa-0" style="max-height: 50vh">
+          <v-list v-if="usersModal.users.length > 0" density="compact">
+            <v-list-item v-for="user in usersModal.users" :key="user.id" class="border-b">
+              <template #prepend>
+                <v-avatar size="36" color="primary">
+                  <span class="text-white text-caption">{{ getInitials(user.name) }}</span>
+                </v-avatar>
+              </template>
+              <v-list-item-title>{{ user.name }}</v-list-item-title>
+              <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+          <div v-else class="text-center py-8 text-grey">
+            <v-icon size="48" color="grey-lighten-1">mdi-account-off</v-icon>
+            <div class="mt-2">No users have this role</div>
+          </div>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <div class="text-caption text-grey">
+            {{ usersModal.users.length }} user(s) found
+          </div>
+          <v-spacer />
+          <v-btn variant="text" @click="usersModal.show = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
+
 <script setup lang="ts">
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -179,25 +335,34 @@ const loadingStore = useLoadingStore()
 const roles = ref<any[]>([])
 const permissions = ref<any[]>([])
 
-const permission = ref({ name: null })
-const role = ref({ name: null, permissions: [] })
+const permission = ref({ name: '' })
+const role = ref<{ name: string; permissions: any[] }>({ name: '', permissions: [] })
 
 const filters = ref({
   roleName: '',
   permissionName: '',
 })
 
-let showDialogRole = ref(false)
-let showDialogPermission = ref(false)
-const showFormRoleAddPermission = ref({ show: false, role: null as any, permissions: [] as any })
+const showDialogRole = ref(false)
+const showDialogPermission = ref(false)
+const loadingUsers = ref<number | null>(null)
+const savingPermissions = ref(false)
+const roleUserCounts = ref<Record<number, number>>({})
 
-const onClickCreateRole = async () => {
-  showDialogRole.value = true
-}
+// Edit Permissions Modal
+const editPermissionsModal = ref({
+  show: false,
+  role: null as any,
+  selectedIds: [] as number[],
+  search: '',
+})
 
-const onClickCreatePermission = async () => {
-  showDialogPermission.value = true
-}
+// Users Modal
+const usersModal = ref({
+  show: false,
+  role: null as any,
+  users: [] as any[],
+})
 
 const filterRoles = computed(() => {
   if (!filters.value.roleName) return roles.value
@@ -213,181 +378,189 @@ const filterPermissions = computed(() => {
   })
 })
 
+const filteredEditPermissions = computed(() => {
+  if (!editPermissionsModal.value.search) return permissions.value
+  return permissions.value.filter((p) =>
+    p.name.toLowerCase().includes(editPermissionsModal.value.search.toLowerCase())
+  )
+})
+
+const { user } = useCheckUser()
+
+const canDeleteRoles = computed(() => {
+  const permissionName = 'roles-delete'
+  const hasDirectPermission = user.value?.permissions?.some((p: any) => p.name === permissionName) ?? false
+  const hasRolePermission = user.value?.roles?.some((role: any) =>
+    role.permissions?.some((p: any) => p.name === permissionName)
+  ) ?? false
+  return hasDirectPermission || hasRolePermission
+})
+
+const roleUsersTooltip = (role: any) => {
+  const count = roleUserCounts.value[role.id] ?? 0
+  return `View Users (${count})`
+}
+
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+const onClickCreateRole = () => {
+  role.value = { name: '', permissions: [] }
+  showDialogRole.value = true
+}
+
+const onClickCreatePermission = () => {
+  permission.value = { name: '' }
+  showDialogPermission.value = true
+}
+
+const openEditPermissionsModal = (roleData: any) => {
+  editPermissionsModal.value = {
+    show: true,
+    role: roleData,
+    selectedIds: roleData.permissions?.map((p: any) => p.id) || [],
+    search: '',
+  }
+}
+
+const togglePermission = (permId: number) => {
+  const idx = editPermissionsModal.value.selectedIds.indexOf(permId)
+  if (idx >= 0) {
+    editPermissionsModal.value.selectedIds.splice(idx, 1)
+  } else {
+    editPermissionsModal.value.selectedIds.push(permId)
+  }
+}
+
+const showRoleUsers = async (roleData: any) => {
+  try {
+    loadingUsers.value = roleData.id
+    const users = await $api.users.getRoleUsers(roleData.id)
+    roleUserCounts.value[roleData.id] = users?.length || 0
+    usersModal.value = {
+      show: true,
+      role: roleData,
+      users: users || [],
+    }
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading users' })
+  } finally {
+    loadingUsers.value = null
+  }
+}
+
 const savePermission = async () => {
   try {
     loadingStore.start()
     await $api.users.createPermission(permission.value)
-
-    snackbar.add({ type: 'success', text: 'Permission created' })
-
-    permission.value = { name: null }
+    snackbar.add({ type: 'success', text: 'Permission created successfully' })
+    permission.value = { name: '' }
     await getRolesAndPermissions()
     showDialogPermission.value = false
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error creating permission' })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    loadingStore.stop()
   }
 }
 
 const saveRole = async () => {
   try {
     loadingStore.start()
-    await $api.users.createRole(role.value)
-
-    snackbar.add({ type: 'success', text: 'Role created' })
-
-    role.value = { name: null, permissions: [] }
+    await $api.users.createRole({
+      name: role.value.name,
+      permissions: role.value.permissions,
+    })
+    snackbar.add({ type: 'success', text: 'Role created successfully' })
+    role.value = { name: '', permissions: [] }
     await getRolesAndPermissions()
     showDialogRole.value = false
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error creating role' })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    loadingStore.stop()
   }
 }
 
-const saveRolePermissions = async () => {
+const saveRolePermissionsSync = async () => {
+  if (!editPermissionsModal.value.role) return
   try {
-    if (!showFormRoleAddPermission.value.role || !showFormRoleAddPermission.value.permissions.length) {
-      snackbar.add({ type: 'warning', text: 'Role not selected or permissions not selected' })
-      return
-    }
-    loadingStore.start()
-
-    await $api.users.addRolePermissions(showFormRoleAddPermission.value.role?.id, {
-      permissions: showFormRoleAddPermission.value.permissions,
-    })
-
-    snackbar.add({ type: 'success', text: 'Role permission updated' })
-
+    savingPermissions.value = true
+    await $api.users.syncRolePermissions(
+      editPermissionsModal.value.role.id,
+      editPermissionsModal.value.selectedIds
+    )
+    snackbar.add({ type: 'success', text: 'Permissions updated successfully' })
     await getRolesAndPermissions()
-    showFormRoleAddPermission.value = { show: false, role: null, permissions: [] }
+    editPermissionsModal.value.show = false
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error updating permissions' })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    savingPermissions.value = false
   }
 }
 
 const confirmDeleteRole = async (rol: any) => {
   const result = await confirm({
-    title: 'Are you sure?',
-    confirmationText: 'Update',
-    content: 'Please confirm this action.',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
+    title: 'Delete Role?',
+    confirmationText: 'Delete',
+    content: `Are you sure you want to delete the role "${rol.name}"? This action cannot be undone.`,
+    dialogProps: { persistent: true, maxWidth: 400 },
+    confirmationButtonProps: { color: 'error' },
   })
 
   if (result) {
     try {
       loadingStore.start()
       await $api.users.deleteRole(rol.id)
-      snackbar.add({ type: 'success', text: 'Role deleted' })
+      snackbar.add({ type: 'success', text: 'Role deleted successfully' })
       await getRolesAndPermissions()
     } catch (e) {
       console.error(e)
+      snackbar.add({ type: 'error', text: 'Error deleting role' })
     } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
+      loadingStore.stop()
     }
   }
-}
-
-const confirmDeleteRolePermission = async (role: any, permission: any) => {
-  const result = await confirm({
-    title: 'Are you sure?',
-    confirmationText: 'Update',
-    content: 'Please confirm this action.',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
-  })
-
-  if (result) {
-    try {
-      loadingStore.start()
-      await $api.users.deleteRolePermission(role.id, permission.id)
-      snackbar.add({ type: 'success', text: 'Permission deleted' })
-      await getRolesAndPermissions()
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
-    }
-  }
-}
-
-const confirmDeletePermission = async (permission: any) => {
-  const result = await confirm({
-    title: 'Are you sure?',
-    confirmationText: 'Update',
-    content: 'Please confirm this action.',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
-  })
-
-  if (result) {
-    try {
-      loadingStore.start()
-      await $api.users.deletePermission(permission.id)
-      snackbar.add({ type: 'success', text: 'Permission deleted' })
-      await getRolesAndPermissions()
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
-    }
-  }
-}
-
-const showRoleAddPermission = (role: any) => {
-  showFormRoleAddPermission.value = { show: true, role, permissions: [] }
 }
 
 const getRolesAndPermissions = async () => {
-  const [rolesApi, permissionsApi] = await Promise.all([$api.users.getRoles(), $api.users.getPermissions()])
-
-  // console.log('roles', rolesApi)
-  // console.log('permissions', permissionsApi)
-
-  roles.value = rolesApi
-  permissions.value = permissionsApi
-  console.log('roles', roles.value)
+  try {
+    const [rolesApi, permissionsApi] = await Promise.all([
+      $api.users.getRoles(),
+      $api.users.getPermissions(),
+    ])
+    roles.value = rolesApi || []
+    permissions.value = permissionsApi || []
+    
+    // Preload user counts for all roles
+    roles.value.forEach(async (role) => {
+      try {
+        const users = await $api.users.getRoleUsers(role.id)
+        roleUserCounts.value[role.id] = users?.length || 0
+      } catch (e) {
+        roleUserCounts.value[role.id] = 0
+      }
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading data' })
+  }
 }
 
-const roleAvailablePermissions = computed(() => {
-  if (!showFormRoleAddPermission.value.role) return []
-  const rolePermissionsIds = showFormRoleAddPermission.value.role.permissions.map((p: any) => p.id)
-  return permissions.value.filter((p: any) => !rolePermissionsIds.includes(p.id))
-})
-
 onMounted(async () => {
+  loadingStore.start()
   await getRolesAndPermissions()
+  loadingStore.stop()
 })
 </script>
