@@ -30,6 +30,50 @@
         <v-btn color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
     </div>
+
+    <!-- Dialog para solicitar autorización de cancelación -->
+    <v-dialog v-model="showCancelDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="text-h6">
+          <v-icon>mdi-file-cancel-outline</v-icon> Cancel Credit Note
+        </v-card-title>
+        <v-card-text>
+          <div class="mb-4">
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Credit Note: <strong>#{{ selectedCreditNote?.id }}</strong>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Customer: <strong>{{ selectedCreditNote?.consignee?.name }}</strong>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Amount: <strong>{{ formatToCurrency(selectedCreditNote?.amount) }}</strong>
+            </div>
+          </div>
+          <AuthorizeProcessSmart
+            ref="authorizeCancelCN"
+            label="Request authorization to cancel"
+            :resource="authorizeResources.CancelCustomerCreditNote.resource"
+            :resourceId="String(selectedCreditNote?.id || '')"
+            :refresh="refreshAuthReqs"
+          >
+            <template #auth>
+              <div class="flex flex-col gap-2">
+                <v-chip color="success" size="small">
+                  <v-icon>mdi-check</v-icon> Authorized
+                </v-chip>
+                <v-btn color="error" size="small" @click="confirmCancelCreditNote">
+                  <v-icon>mdi-delete</v-icon> Confirm Cancelation
+                </v-btn>
+              </div>
+            </template>
+          </AuthorizeProcessSmart>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" @click="closeCancelDialog">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <div>
       <v-pagination
         v-model="creditNotes.current_page"
@@ -66,7 +110,7 @@
               <div class="flex gap-2">
                 <ViewButton :item="creditNote" @click="viewCreditNote(creditNote)" />
                 <EditButton :item="creditNote" @click="editCreditNote(creditNote)" />
-                <TrashButton :item="creditNote" @click="showConfirmDelete" />
+                <TrashButton :item="creditNote" @click="showConfirmDelete(creditNote)" />
               </div>
             </td>
             <td>#{{ creditNote.id }}</td>
@@ -97,11 +141,19 @@
 </template>
 <script setup lang="ts">
 import { formatToCurrency } from '@/utils/formatters'
+import { authorizeResources } from '~/utils/data/system'
+
 const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 const snackbar = useSnackbar()
+
+// Variables para el sistema de autorización de cancelación
+const showCancelDialog = ref(false)
+const selectedCreditNote = ref<any>(null)
+const refreshAuthReqs = ref(false)
+const authorizeCancelCN = ref<any>(null)
 
 const filters = ref({
   id: '',
@@ -192,36 +244,39 @@ const clearFilters = async () => {
   await getData()
 }
 
+// Abrir el diálogo de autorización para cancelar
 const showConfirmDelete = async (item: any) => {
-  const result = await confirm({
-    title: 'Please confirm this action.',
-    confirmationText: 'Yes, I confirm',
-    content: 'Deleting the credit note will release everything related to it..',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
-  })
+  selectedCreditNote.value = item
+  showCancelDialog.value = true
+  refreshAuthReqs.value = !refreshAuthReqs.value
+}
 
-  if (result) {
-    try {
-      loadingStore.start()
-      const body = {
-        ...item,
-      }
-      await $api.consigneeCreditNotes.deleteCustomerCreditNote(body)
-      snackbar.add({ type: 'success', text: 'Customer Credit Note deleted' })
-      await getData()
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
+// Cerrar el diálogo de cancelación
+const closeCancelDialog = () => {
+  showCancelDialog.value = false
+  selectedCreditNote.value = null
+}
+
+// Confirmar la cancelación después de tener autorización
+const confirmCancelCreditNote = async () => {
+  if (!selectedCreditNote.value) return
+  
+  try {
+    loadingStore.start()
+    const body = {
+      ...selectedCreditNote.value,
     }
+    await $api.consigneeCreditNotes.deleteCustomerCreditNote(body)
+    snackbar.add({ type: 'success', text: 'Credit note canceled successfully' })
+    closeCancelDialog()
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.data?.message || 'Error canceling credit note' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
   }
 }
 

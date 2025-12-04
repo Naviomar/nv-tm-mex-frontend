@@ -49,9 +49,26 @@
         Generar reporte
       </v-btn>
     </div>
-    <div v-if="hasResults" class="flex gap-2">
-      <v-btn color="primary" class="" @click="exportFfNoteReport" prepend-icon="mdi-file-excel">
-        Exportar a Excel
+    <div v-if="hasResults" class="flex flex-wrap gap-2">
+      <v-btn color="primary" @click="exportSummaryReport" prepend-icon="mdi-file-excel">
+        Exportar Resumen (Matriz)
+      </v-btn>
+      <v-btn 
+        v-if="selectedAgentIds.length > 0" 
+        color="success" 
+        @click="exportDetailedNotesReport" 
+        prepend-icon="mdi-file-document-multiple"
+      >
+        Exportar Notas Detalladas ({{ selectedAgentIds.length }} agente{{ selectedAgentIds.length > 1 ? 's' : '' }})
+      </v-btn>
+      <v-btn 
+        v-if="selectedAgentIds.length === 0" 
+        color="info" 
+        variant="outlined"
+        disabled
+        prepend-icon="mdi-file-document-multiple"
+      >
+        Selecciona agente(s) para ver notas
       </v-btn>
     </div>
 
@@ -121,15 +138,26 @@
     </v-expansion-panels>
 
     <div class="font-bold text-lg">📊 Matriz de Agentes vs Semanas</div>
-    <v-text-field
-      v-model="agentSearch"
-      label="Buscar Agente"
-      prepend-icon="mdi-magnify"
-      class="w-1/2 mb-2"
-      clearable
-      density="compact"
-    />
-    <div class="overflow-auto">
+    <div class="flex flex-wrap gap-4 items-end mb-2">
+      <v-text-field
+        v-model="agentSearch"
+        label="Buscar Agente"
+        prepend-icon="mdi-magnify"
+        class="w-64"
+        clearable
+        density="compact"
+        hide-details
+      />
+      <div class="text-sm text-gray-600">
+        <span v-if="selectedAgentIds.length > 0" class="font-semibold text-primary">
+          {{ selectedAgentIds.length }} agente(s) seleccionado(s)
+        </span>
+        <span v-else>Selecciona agentes para exportar notas individuales</span>
+      </div>
+    </div>
+    
+    <!-- Contenedor con scrollbars mejorados -->
+    <div class="table-scroll-container">
       <table class="min-w-full table-auto border border-gray-300 text-sm">
         <thead>
           <tr class="bg-gray-100">
@@ -145,9 +173,10 @@
             <th class="border p-2 text-left">Freight Forwarder</th>
             <th class="border p-2 text-left">Group</th>
             <th class="border p-2 text-right">Summary</th>
-            <th v-for="week in pivotTable.weeks" :key="week" class="border p-2 text-center">
+            <th v-for="week in pivotTable.weeks" :key="week" class="border p-2 text-center whitespace-nowrap">
               {{ week }}
             </th>
+            <th class="border p-2 text-center sticky right-0 bg-gray-100">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -170,6 +199,16 @@
               <span v-if="agent.totals[week]">
                 {{ formatToCurrency(agent.totals[week]) }}
               </span>
+            </td>
+            <td class="border p-2 text-center sticky right-0 bg-white">
+              <v-btn
+                size="x-small"
+                color="success"
+                variant="tonal"
+                icon="mdi-file-excel"
+                @click="exportSingleAgentReport(agent)"
+                title="Exportar notas de este agente"
+              />
             </td>
           </tr>
         </tbody>
@@ -412,18 +451,17 @@ const getWeeklyTotal = (group: any) => {
   return formatToCurrency(total)
 }
 
-const exportFfNoteReport = async () => {
+// Exportar solo el resumen (matriz de agentes vs semanas)
+const exportSummaryReport = async () => {
   try {
     loadingStore.start()
-    const selectedIds =
-      selectedAgentIds.value.length > 0
-        ? selectedAgentIds.value
-        : pivotTable.value.agents.map((a: any) => a.freight_forwarder_id)
+    const allIds = pivotTable.value.agents.map((a: any) => a.freight_forwarder_id)
 
     const response = (await $api.ffNotes.exportXlsxReport({
       query: {
         ...flattenArraysToCommaSeparatedString(filters.value),
-        ff_ids: selectedIds.join(','),
+        ff_ids: allIds.join(','),
+        export_type: 'summary',
       },
     })) as any
 
@@ -432,12 +470,20 @@ const exportFfNoteReport = async () => {
     })
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
-    // agrega timestamp to filename
     const timestamp = new Date().toISOString().replace(/[-:.]/g, '')
-    link.download = `reporte-ff-notes-weekly30-${timestamp}.xlsx`
+    link.download = `resumen-agentes-${timestamp}.xlsx`
     link.click()
+
+    snackbar.add({
+      text: 'Resumen exportado correctamente.',
+      type: 'success',
+    })
   } catch (e) {
     console.error(e)
+    snackbar.add({
+      text: 'Error al exportar el resumen.',
+      type: 'error',
+    })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
@@ -450,5 +496,266 @@ const getFreightCatalogs = async () => {
   freights.value = response as any
 }
 
+// Exportar notas detalladas de UN agente (botón por fila)
+const exportSingleAgentReport = async (agent: any) => {
+  try {
+    loadingStore.start()
+    const response = (await $api.ffNotes.exportXlsxReport({
+      query: {
+        ...flattenArraysToCommaSeparatedString(filters.value),
+        ff_ids: agent.freight_forwarder_id.toString(),
+        export_type: 'detail',
+      },
+    })) as any
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    const timestamp = new Date().toISOString().replace(/[-:.]/g, '')
+    const safeName = agent.freight_forwarder_name.replace(/[^a-zA-Z0-9]/g, '_')
+    link.download = `notas-detalle-${safeName}-${timestamp}.xlsx`
+    link.click()
+
+    snackbar.add({
+      text: `Notas de ${agent.freight_forwarder_name} exportadas correctamente.`,
+      type: 'success',
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({
+      text: 'Error al exportar las notas.',
+      type: 'error',
+    })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+// Exportar notas detalladas de agentes SELECCIONADOS (botón principal)
+const exportDetailedNotesReport = async () => {
+  if (selectedAgentIds.value.length === 0) {
+    snackbar.add({
+      text: 'Por favor selecciona al menos un agente.',
+      type: 'warning',
+    })
+    return
+  }
+
+  try {
+    loadingStore.start()
+    const response = (await $api.ffNotes.exportXlsxReport({
+      query: {
+        ...flattenArraysToCommaSeparatedString(filters.value),
+        ff_ids: selectedAgentIds.value.join(','),
+        export_type: 'detail',
+      },
+    })) as any
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    const timestamp = new Date().toISOString().replace(/[-:.]/g, '')
+    link.download = `notas-detalle-seleccionados-${timestamp}.xlsx`
+    link.click()
+
+    snackbar.add({
+      text: `Notas de ${selectedAgentIds.value.length} agente(s) exportadas correctamente.`,
+      type: 'success',
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({
+      text: 'Error al exportar las notas.',
+      type: 'error',
+    })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
 await getFreightCatalogs()
 </script>
+
+<style scoped>
+/* Contenedor con scrollbars mejorados */
+.table-scroll-container {
+  max-height: 70vh;
+  overflow: auto;
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+/* Scrollbars personalizados - más gruesos y siempre visibles */
+.table-scroll-container::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b, #475569);
+}
+
+.table-scroll-container::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox */
+.table-scroll-container {
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #f1f5f9;
+}
+
+/* Tabla base */
+.table-scroll-container table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Header sticky */
+.table-scroll-container table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f3f4f6;
+  white-space: nowrap;
+}
+
+/* Columna checkbox - sticky left */
+.table-scroll-container table thead th:first-child,
+.table-scroll-container table tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  background: #f3f4f6;
+  min-width: 50px;
+  max-width: 50px;
+}
+
+.table-scroll-container table tbody td:first-child {
+  background: white;
+  z-index: 5;
+}
+
+/* Columna Freight Forwarder - sticky */
+.table-scroll-container table thead th:nth-child(2),
+.table-scroll-container table tbody td:nth-child(2) {
+  position: sticky;
+  left: 50px;
+  z-index: 15;
+  background: #f3f4f6;
+  min-width: 180px;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-scroll-container table tbody td:nth-child(2) {
+  background: white;
+  z-index: 5;
+}
+
+/* Columna Group - sticky */
+.table-scroll-container table thead th:nth-child(3),
+.table-scroll-container table tbody td:nth-child(3) {
+  position: sticky;
+  left: 230px;
+  z-index: 15;
+  background: #f3f4f6;
+  min-width: 120px;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-scroll-container table tbody td:nth-child(3) {
+  background: white;
+  z-index: 5;
+}
+
+/* Columna Summary - sticky con sombra */
+.table-scroll-container table thead th:nth-child(4),
+.table-scroll-container table tbody td:nth-child(4) {
+  position: sticky;
+  left: 350px;
+  z-index: 15;
+  background: #f3f4f6;
+  min-width: 120px;
+  box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.15);
+}
+
+.table-scroll-container table tbody td:nth-child(4) {
+  background: white;
+  z-index: 5;
+}
+
+/* Header en esquina superior izquierda - mayor z-index */
+.table-scroll-container table thead th:first-child,
+.table-scroll-container table thead th:nth-child(2),
+.table-scroll-container table thead th:nth-child(3),
+.table-scroll-container table thead th:nth-child(4) {
+  z-index: 25;
+}
+
+/* Columna Acciones - sticky derecha */
+.table-scroll-container table thead th:last-child,
+.table-scroll-container table tbody td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 15;
+  background: #f3f4f6;
+  min-width: 80px;
+  box-shadow: -4px 0 8px -2px rgba(0, 0, 0, 0.15);
+}
+
+.table-scroll-container table tbody td:last-child {
+  background: white;
+  z-index: 5;
+}
+
+/* Header en esquina superior derecha - mayor z-index */
+.table-scroll-container table thead th:last-child {
+  z-index: 25;
+}
+
+/* Hover en filas */
+.table-scroll-container table tbody tr:hover td {
+  background: #f0f9ff !important;
+}
+
+/* Asegurar que sticky cells mantengan el hover */
+.table-scroll-container table tbody tr:hover td:first-child,
+.table-scroll-container table tbody tr:hover td:nth-child(2),
+.table-scroll-container table tbody tr:hover td:nth-child(3),
+.table-scroll-container table tbody tr:hover td:nth-child(4),
+.table-scroll-container table tbody tr:hover td:last-child {
+  background: #f0f9ff !important;
+}
+
+/* Celdas de datos de semanas */
+.table-scroll-container table tbody td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)):not(:last-child) {
+  white-space: nowrap;
+  text-align: right;
+}
+</style>
