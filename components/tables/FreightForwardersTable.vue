@@ -120,6 +120,8 @@
 </template>
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -127,12 +129,24 @@ const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
-const filters = ref<any>({
+// Initial filter values
+const initialFilters = {
   name: '',
   zip: '',
   state: '',
   rfc: '',
   deleted_status: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'freight-forwarders-filters',
 })
 
 const freightSelected = ref(null)
@@ -146,19 +160,28 @@ const freightForwarders = ref<any>({
   last_page: 1,
 })
 
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/configuration/freight-forwarders'))
+provide('catalogBackUrl', backUrl)
+
 const onClickSearch = async () => {
+  currentPage.value = 1
   freightForwarders.value.current_page = 1
+  await syncToUrl()
   await getFreightForwarders()
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
+  currentPage.value = 1
   freightForwarders.value.current_page = 1
+  await syncToUrl()
   await getFreightForwarders()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   freightForwarders.value.current_page = page
+  await syncToUrl()
   await getFreightForwarders()
 }
 
@@ -210,13 +233,14 @@ const getFreightForwarders = async () => {
     loadingStore.start()
     const response = await $api.freightForwarders.getFreightForwarders({
       query: {
-        page: freightForwarders.value.current_page,
+        page: currentPage.value,
         perPage: freightForwarders.value.perPage,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     freightForwarders.value = response as any
+    freightForwarders.value.current_page = currentPage.value
   } catch (e) {
     console.error(e)
   } finally {
@@ -227,13 +251,8 @@ const getFreightForwarders = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    name: '',
-    zip: '',
-    state: '',
-    rfc: '',
-    deleted_status: '',
-  }
+  await resetFiltersComposable()
+  freightForwarders.value.current_page = 1
   await getFreightForwarders()
 }
 
@@ -242,7 +261,8 @@ const acceptMessageWarningEdit = () => {
   if (freight) router.push(`/configuration/freight-forwarders/edit-${freight.id}`)
 }
 
-onMounted(async () => {
-  await getFreightForwarders()
+onMounted(() => {
+  freightForwarders.value.current_page = currentPage.value
+  getFreightForwarders()
 })
 </script>

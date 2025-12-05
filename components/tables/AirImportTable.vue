@@ -18,7 +18,19 @@
             label="Add reference #"
             hint="Press Enter to add numbers"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field
@@ -226,11 +238,12 @@
 import { prefixYears } from '~/utils/date'
 import { sourceSystems, deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const route = useRoute()
 
 const catalogs = ref<any>({
   customers: [],
@@ -238,11 +251,12 @@ const catalogs = ref<any>({
   airlines: [],
 })
 
-const filters = ref<any>({
+// Initial filter values
+const initialFilters = {
   year: '',
   referencia: '',
-  referencias: [],
-  has_arrival_noty: null,
+  referencias: [] as string[],
+  has_arrival_noty: null as number | null,
   masterAwb: '',
   houseAwb: '',
   consignee_id: '',
@@ -253,6 +267,18 @@ const filters = ref<any>({
   source_system_id: '',
   trackerRef: '',
   deleted_status: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'air-import-filters',
+  arrayFields: ['referencias'],
 })
 
 const references = ref({
@@ -264,6 +290,10 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/air/import'))
+provide('catalogBackUrl', backUrl)
 
 const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
@@ -281,42 +311,44 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
   await getAirImportReferences()
 }
 
 const onClickFilters = async () => {
+  // Add any pending reference before searching
+  addReferencia()
   // set current page to 1
+  currentPage.value = 1
   references.value.current_page = 1
+  await syncToUrl()
   await getAirImportReferences()
 }
 
 const getAirImportReferences = async () => {
   try {
     loadingStore.start()
-    // set filters on route query params
-    router.push({
-      query: {
-        ...route.query,
-        ...filters.value,
-      },
-    })
     const response = await $api.airImport.getReferences({
       query: {
-        page: references.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
+    references.value.current_page = currentPage.value
     if (references.value.data.length === 0) {
       snackbar.add({
         type: 'info',
@@ -381,22 +413,8 @@ const getAirExportFilters = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    year: '',
-    referencia: '',
-    referencias: [],
-    masterAwb: '',
-    houseAwb: '',
-    consignee_id: '',
-    origin_ff_id: '',
-    destination_ff_id: '',
-    airline_id: '',
-    flightNum: '',
-    source_system_id: '',
-    deleted_status: '',
-    trackerRef: '',
-    has_arrival_noty: null,
-  }
+  await resetFiltersComposable()
+  references.value.current_page = 1
   await getAirImportReferences()
 }
 
@@ -411,13 +429,8 @@ const confirmDeletion = (item: any) => {
 
 onMounted(async () => {
   await getAirExportFilters()
-
-  const queryFilters = route.query
-  Object.keys(filters.value).forEach((key) => {
-    if (queryFilters[key]) {
-      filters.value[key] = queryFilters[key]
-    }
-  })
+  // Sync current page from composable after URL is loaded
+  references.value.current_page = currentPage.value
   getAirImportReferences()
 })
 </script>

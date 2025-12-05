@@ -12,7 +12,19 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
@@ -267,6 +279,8 @@
 import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '~/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
@@ -280,10 +294,11 @@ const catalogs = ref({
   lines: [] as any,
 })
 
-const filters = ref({
+// Initial filter values
+const initialFilters = {
   year: '',
   referencia: '',
-  referencias: [] as any,
+  referencias: [] as string[],
   masterBl: '',
   houseBl: '',
   consignee_id: '',
@@ -295,10 +310,22 @@ const filters = ref({
   eta: '',
   containerNumber: '',
   bookingNum: '',
-  bookingTm: null,
+  bookingTm: null as string | null,
   line_id: '',
-  has_sailed: null,
+  has_sailed: null as number | null,
   deleted_status: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'maritime-export-filters',
+  arrayFields: ['referencias'],
 })
 
 const references = ref({
@@ -310,6 +337,10 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/maritime/export'))
+provide('catalogBackUrl', backUrl)
 
 const containerViewer = ref(false)
 
@@ -337,21 +368,29 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const onClickFilters = async () => {
+  // Add any pending reference before searching
+  addReferencia()
   // set current page to 1
+  currentPage.value = 1
   references.value.current_page = 1
+  await syncToUrl()
   await getSeaExportReferences()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
   await getSeaExportReferences()
 }
 
@@ -360,12 +399,13 @@ const getSeaExportReferences = async () => {
     loadingStore.loading = true
     const response = await $api.referenciasExport.getSeaExportReferencias({
       query: {
-        page: references.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
+    references.value.current_page = currentPage.value
     if (references.value.data.length === 0) {
       snackbar.add({
         type: 'info',
@@ -386,30 +426,15 @@ const getSeaExportFilters = async () => {
   catalogs.value = response as any
 }
 
-await getSeaExportFilters()
-await getSeaExportReferences()
+onMounted(() => {
+  getSeaExportFilters()
+  references.value.current_page = currentPage.value
+  getSeaExportReferences()
+})
 
 const clearFilters = async () => {
-  filters.value = {
-    year: '',
-    referencia: '',
-    referencias: [],
-    masterBl: '',
-    houseBl: '',
-    consignee_id: '',
-    freight_forwarder_id: '',
-    vessel_id: '',
-    voyage_id: '',
-    origin: '',
-    destination: '',
-    eta: '',
-    containerNumber: '',
-    bookingNum: '',
-    bookingTm: null,
-    line_id: '',
-    has_sailed: null,
-    deleted_status: '',
-  }
+  await resetFiltersComposable()
+  references.value.current_page = 1
   await getSeaExportReferences()
 }
 

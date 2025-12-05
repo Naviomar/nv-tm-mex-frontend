@@ -36,7 +36,19 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -270,6 +282,7 @@ import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '@/utils/data/systemData'
 import { formatToCurrency } from '@/utils/formatters'
 import { currencies } from '@/utils/data/systemData'
+import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -279,22 +292,35 @@ const router = useRouter()
 const proformaDialog = ref<any>({ type: null, show: false })
 const pdfViewer = ref<any>(null)
 
-const filters = ref<any>({
+// Initial filter values
+const initialFilters = {
   from: '',
   to: '',
   year: '',
   referencia: '',
-  referencias: [],
-  isProforma: null,
-  multipleid: null,
-  ids: [],
+  referencias: [] as string[],
+  isProforma: null as number | null,
+  multipleid: null as string | null,
+  ids: [] as string[],
   masterBl: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
   deleted_status: '',
-  paymentStatus: null,
-  cfdi: null,
+  paymentStatus: null as string | null,
+  cfdi: null as string | null,
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'invoices-tm-filters',
+  arrayFields: ['referencias', 'ids'],
 })
 
 const tmInvoices = ref<any>({
@@ -304,6 +330,10 @@ const tmInvoices = ref<any>({
   perPage: 10,
   last_page: 1,
 })
+
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/invoices/search/sea-import-tm'))
+provide('catalogBackUrl', backUrl)
 
 const catalogs = ref<any>({
   consignees: [],
@@ -348,13 +378,17 @@ const viewCreditNote = (creditNote: any) => {
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   tmInvoices.value.current_page = page
+  await syncToUrl()
   await getData()
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
+  addReferencia()
+  currentPage.value = 1
   tmInvoices.value.current_page = 1
+  await syncToUrl()
   await getData()
 }
 
@@ -370,23 +404,8 @@ const getCurrenciesTotal = (invoice: any) => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    from: '',
-    to: '',
-    year: '',
-    referencia: '',
-    referencias: [],
-    isProforma: null,
-    multipleid: null,
-    ids: [],
-    masterBl: '',
-    houseBl: '',
-    consigneeId: '',
-    freight_forwarder_id: '',
-    deleted_status: '',
-    paymentStatus: null,
-    cfdi: null,
-  }
+  await resetFiltersComposable()
+  tmInvoices.value.current_page = 1
   await getData()
 }
 
@@ -402,11 +421,13 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const viewService = (service: any) => {
@@ -512,13 +533,14 @@ const getData = async () => {
     loadingStore.loading = true
     const response = (await $api.tmInvoices.getPaged({
       query: {
-        page: tmInvoices.value.current_page,
+        page: currentPage.value,
         perPage: tmInvoices.value.perPage,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })) as any
 
     tmInvoices.value = response
+    tmInvoices.value.current_page = currentPage.value
 
     if (response.data.length === 0) {
       snackbar.add({
@@ -535,8 +557,11 @@ const getData = async () => {
   }
 }
 
-await getData()
-await getCatalogs()
+onMounted(() => {
+  tmInvoices.value.current_page = currentPage.value
+  getData()
+  getCatalogs()
+})
 
 const viewInvoice = (invoice: any) => {
   router.push(`/invoices/search/tm-view-${invoice.id}`)

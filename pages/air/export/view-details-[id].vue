@@ -1,8 +1,6 @@
 <template>
   <v-container fluid>
-    <div>
-      <v-btn color="slate" size="small" variant="outlined" @click="$router.back()" class="mb-4">Back</v-btn>
-    </div>
+    <CatalogBackButton fallback-url="/air/export" />
     <div>
       <AirExportMovementDetail :airReference="airReference" />
     </div>

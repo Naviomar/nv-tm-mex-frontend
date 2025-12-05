@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-btn color="slate" size="small" variant="outlined" class="mb-4" @click="goBack">Back</v-btn>
+    <CatalogBackButton fallback-url="/configuration/freight-forwarders" />
     <v-card>
       <v-card-title>
         <h3>Edit freight forwarder</h3>
@@ -12,9 +12,4 @@
   </v-container>
 </template>
 <script setup lang="ts">
-const router = useRouter()
-
-const goBack = () => {
-  router.back()
-}
 </script>

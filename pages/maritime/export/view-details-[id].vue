@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-btn color="slate" size="small" variant="outlined" @click="goBack"> <v-icon>mdi-arrow-left</v-icon> Back </v-btn>
+    <CatalogBackButton fallback-url="/maritime/export" />
     <v-card>
       <v-card-text>
         <SeaExportViewDetails :id="id" />
@@ -10,7 +10,6 @@
 </template>
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
 
 const id = route.params.id!.toString()
 
@@ -18,8 +17,4 @@ definePageMeta({
   title: `View Maritime Reference #`,
   layout: 'default',
 })
-
-const goBack = () => {
-  router.go(-1)
-}
 </script>

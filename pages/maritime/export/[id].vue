@@ -1,8 +1,6 @@
 <template>
   <v-container fluid>
-    <v-btn to="/maritime/export" color="slate" size="small" variant="outlined" class="mb-2">
-      <v-icon>mdi-arrow-left</v-icon> Back
-    </v-btn>
+    <CatalogBackButton fallback-url="/maritime/export" />
     <MaritimeExportOperationsForm :id="id" />
   </v-container>
 </template>

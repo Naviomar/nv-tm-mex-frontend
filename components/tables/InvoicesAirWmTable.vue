@@ -35,7 +35,19 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -250,26 +262,40 @@ import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '@/utils/data/systemData'
 import { formatToCurrency } from '@/utils/formatters'
 import { currencies } from '@/utils/data/systemData'
+import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
-const filters = ref<any>({
+// Initial filter values
+const initialFilters = {
   from: '',
   to: '',
   referencia: '',
-  referencias: [],
-  isProforma: null,
-  multipleid: null,
-  ids: [],
+  referencias: [] as string[],
+  isProforma: null as number | null,
+  multipleid: null as string | null,
+  ids: [] as string[],
   masterAwb: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
   deleted_status: '',
-  paymentStatus: null,
+  paymentStatus: null as string | null,
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'invoices-air-wm-filters',
+  arrayFields: ['referencias', 'ids'],
 })
 
 const wmInvoices = ref<any>({
@@ -279,6 +305,10 @@ const wmInvoices = ref<any>({
   perPage: 10,
   last_page: 1,
 })
+
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/invoices/search/air-import-wm'))
+provide('catalogBackUrl', backUrl)
 
 const catalogs = ref<any>({
   consignees: [],
@@ -314,13 +344,17 @@ const viewCreditNote = (creditNote: any) => {
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
+  addReferencia()
+  currentPage.value = 1
   wmInvoices.value.current_page = 1
+  await syncToUrl()
   await getData()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   wmInvoices.value.current_page = page
+  await syncToUrl()
   await getData()
 }
 
@@ -336,21 +370,8 @@ const getCurrenciesTotal = (invoice: any) => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    from: '',
-    to: '',
-    referencia: '',
-    referencias: [],
-    isProforma: null,
-    multipleid: null,
-    ids: [],
-    masterAwb: '',
-    houseBl: '',
-    consigneeId: '',
-    freight_forwarder_id: '',
-    deleted_status: '',
-    paymentStatus: null,
-  }
+  await resetFiltersComposable()
+  wmInvoices.value.current_page = 1
   await getData()
 }
 
@@ -366,10 +387,12 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    syncToUrl()
   }
 }
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const viewService = (service: any) => {
@@ -475,13 +498,14 @@ const getData = async () => {
     loadingStore.loading = true
     const response = (await $api.wmInvoices.getAirPaged({
       query: {
-        page: wmInvoices.value.current_page,
+        page: currentPage.value,
         perPage: wmInvoices.value.perPage,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })) as any
 
     wmInvoices.value = response
+    wmInvoices.value.current_page = currentPage.value
 
     if (response.data.length === 0) {
       snackbar.add({
@@ -498,8 +522,11 @@ const getData = async () => {
   }
 }
 
-await getData()
-await getCatalogs()
+onMounted(() => {
+  wmInvoices.value.current_page = currentPage.value
+  getData()
+  getCatalogs()
+})
 
 const viewInvoice = (invoice: any) => {
   router.push(`/invoices/search/wm-air-view-${invoice.id}`)
