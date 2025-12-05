@@ -48,6 +48,7 @@
               <th class="text-left">Bank Info</th>
               <th class="text-left">Amount</th>
               <th class="text-left">Linked Ref(s)</th>
+              <th class="text-left">Staus</th>
               <th class="text-left">Date added</th>
               <th class="text-left">Sent at</th>
             </tr>
@@ -101,6 +102,9 @@
                     <v-icon>mdi-open-in-new</v-icon>{{ ref.referencia?.reference_number }}
                   </v-chip>
                 </div>
+              </td>
+              <td>
+                ***ESTADO***
               </td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="schedule">
@@ -396,7 +400,7 @@ const getSchedules = async () => {
     })
 
     schedules.value = response as any
-
+console.log("*---RESPUESTA----",schedules)
     if (schedules.value.data.length === 0) {
       snackbar.add({
         type: 'info',
