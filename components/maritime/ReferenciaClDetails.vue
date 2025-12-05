@@ -56,11 +56,20 @@
                 <div class="col-span-2">
                   <v-divider />
                 </div>
-                <div>Created at</div>
-                <div>{{ formatDateString(referenciaCl.created_at) }}</div>
+                <div>Embalaje</div>
+                <div>{{ referenciaCl.embalaje?.name }}</div>
+                <div class="col-span-2">
+                  <v-divider />
+                </div>
+                <div class="font-bold col-span-2">Reference History (CL)</div>
+                <div>Created by</div>
+                <div>{{ referenciaCl.creator?.name || '-' }} <span v-if="referenciaCl.created_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.created_at) }}</span></div>
+
+                <div>Migrated by</div>
+                <div>{{ referenciaCl.migrator?.name || '-' }} <span v-if="referenciaCl.migrated_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.migrated_at) }}</span></div>
 
                 <div>Last updated by</div>
-                <div>{{ referenciaCl.updator?.name }}</div>
+                <div>{{ referenciaCl.updator?.name || '-' }} <span v-if="referenciaCl.updated_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.updated_at) }}</span></div>
               </div>
             </v-card-text>
           </v-card>
