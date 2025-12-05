@@ -268,6 +268,22 @@ const schedules = ref<any>({
 const showNotyForm = (schedule: any) => {
   notyDialog.value.showDialog = true
   notyDialog.value.schedule = schedule
+
+  // Precargar emails según el tipo de área (Import/Export)
+  const contactType = schedule.impoExpo === 'I' ? 'import' : 'export'
+  const areaContacts = schedule.line?.contacts?.filter((c: any) => c.contact_type === contactType) || []
+  const generalEmails = schedule.line?.emails || []
+
+  // Combinar emails de contactos específicos y generales
+  const emails: string[] = []
+  areaContacts.forEach((contact: any) => {
+    if (contact.email) emails.push(contact.email)
+  })
+  generalEmails.forEach((lineEmail: any) => {
+    if (lineEmail.email && !emails.includes(lineEmail.email)) emails.push(lineEmail.email)
+  })
+
+  form.value.emails = emails.join(',')
 }
 
 const closeNotyDialog = () => {

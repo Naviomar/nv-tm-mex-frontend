@@ -2,7 +2,7 @@
   <v-card class="mb-4">
     <v-card-title>
       <div class="flex justify-between">
-        <div>Emails</div>
+        <div>General Emails</div>
         <div>
           <v-btn icon size="x-small" @click="toggle" :color="showForm ? 'black' : 'success'">
             <v-icon v-if="showForm">mdi-close</v-icon>

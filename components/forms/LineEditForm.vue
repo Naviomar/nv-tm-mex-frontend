@@ -254,6 +254,10 @@
         </div>
 
         <div class="mb-4">
+          <LineContactsForm :line="line" @refresh="getData" />
+        </div>
+
+        <div class="mb-4">
           <LineNotesForm :line="values" />
         </div>
       </div>

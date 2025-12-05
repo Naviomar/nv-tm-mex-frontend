@@ -35,6 +35,18 @@
             <!-- Customer Search -->
             <ACustomerSearch v-model="filters.customer_id" :hide-details="true" />
 
+            <!-- Service Type Filter -->
+            <v-select
+              v-model="filters.service_type"
+              :items="serviceTypeOptions"
+              item-title="label"
+              item-value="value"
+              label="Tipo de Servicio"
+              density="compact"
+              hide-details
+              clearable
+            />
+
             <!-- Action buttons -->
             <div class="flex gap-2 items-center">
               <v-btn size="small" color="" variant="text" @click="clearFilters">Clear</v-btn>
@@ -67,11 +79,19 @@ const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
 // Last day of current month
 const lastDayCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 
+// Service type options
+const serviceTypeOptions = [
+  { label: 'Todos', value: null },
+  { label: 'Marítimo', value: 'sea' },
+  { label: 'Aéreo', value: 'air' },
+]
+
 // Initialize the filters with the date range
 const filters = ref<any>({
   fromDate: firstDayLastMonth,
   toDate: lastDayCurrentMonth,
   customer_id: null,
+  service_type: null,
 })
 
 // Function to apply filters and fetch data
@@ -84,6 +104,7 @@ const applyFilters = async () => {
       customer_id: filters.value.customer_id,
       from: formatDate(filters.value.fromDate),
       to: formatDate(filters.value.toDate),
+      service_type: filters.value.service_type,
     }
 
     // Send request to the API
@@ -129,6 +150,7 @@ const clearFilters = () => {
   filters.value.fromDate = firstDayLastMonth
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
+  filters.value.service_type = null
   applyFilters() // Optionally, refetch the report without filters
 }
 </script>
