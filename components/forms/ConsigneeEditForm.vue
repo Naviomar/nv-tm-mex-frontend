@@ -363,6 +363,7 @@
           </v-card-text>
         </v-card>
         <CustomerBankForm :id="id.toString()" />
+        <ConsigneeRegionFreeDaysForm :id="id.toString()" />
         <ConsigneeEditFormAddresses :consignee="consignee" @update:consignee="getData" />
         <ConsigneeEditFormAddEntrustLetter
           :letters="consignee?.entrust_letters"
