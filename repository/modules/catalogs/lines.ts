@@ -248,6 +248,27 @@ class LinesModule extends FetchFactory<any> {
   async deleteLinkedAgent(lineId: string, agentId: number, fetchOptions?: FetchOptions) {
     return this.call('DELETE', `${this.RESOURCE}/${lineId}/linked-agents/${agentId}`, fetchOptions)
   }
+
+  // Line Contacts (Import/Export)
+  async addContact(lineId: number, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${lineId}/contacts`, fetchOptions)
+  }
+
+  async updateContact(lineId: number, contactId: number, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('PUT', `${this.RESOURCE}/${lineId}/contacts/${contactId}`, fetchOptions)
+  }
+
+  async deleteContact(lineId: number, contactId: number, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/${lineId}/contacts/${contactId}`, fetchOptions)
+  }
 }
 
 export default LinesModule

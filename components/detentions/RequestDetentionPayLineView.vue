@@ -698,6 +698,21 @@ const onSaveBankInfoClick = async (values: any) => {
 
 const showSendNotyPay = () => {
   sendForm.showDialog = true
+
+  // Precargar emails de contactos de importación (detentions son siempre import)
+  const areaContacts = reqDetention.value.line?.contacts?.filter((c: any) => c.contact_type === 'import') || []
+  const generalEmails = reqDetention.value.line?.emails || []
+
+  // Combinar emails de contactos específicos y generales
+  const emails: string[] = []
+  areaContacts.forEach((contact: any) => {
+    if (contact.email) emails.push(contact.email)
+  })
+  generalEmails.forEach((lineEmail: any) => {
+    if (lineEmail.email && !emails.includes(lineEmail.email)) emails.push(lineEmail.email)
+  })
+
+  sendForm.emails = emails.join(',')
 }
 
 const sendNotyPay = async () => {
