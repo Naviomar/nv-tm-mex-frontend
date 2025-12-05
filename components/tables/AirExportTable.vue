@@ -18,7 +18,19 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field
@@ -193,6 +205,8 @@
 import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
@@ -205,10 +219,11 @@ const catalogs = ref<any>({
   customers: [],
 })
 
-const filters = ref<any>({
+// Initial filter values
+const initialFilters = {
   year: '',
   referencia: '',
-  referencias: [],
+  referencias: [] as string[],
   masterAwb: '',
   houseAwb: '',
   consignee_id: '',
@@ -216,6 +231,18 @@ const filters = ref<any>({
   airline_id: '',
   flightNum: '',
   deleted_status: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'air-export-filters',
+  arrayFields: ['referencias'],
 })
 
 const references = ref<any>({
@@ -227,6 +254,10 @@ const references = ref<any>({
   to: 1,
   total: 1,
 })
+
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/air/export'))
+provide('catalogBackUrl', backUrl)
 
 const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
@@ -244,21 +275,29 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
   await getAirExportReferences()
 }
 
 const onClickFilters = async () => {
+  // Add any pending reference before searching
+  addReferencia()
   // set current page to 1
+  currentPage.value = 1
   references.value.current_page = 1
+  await syncToUrl()
   await getAirExportReferences()
 }
 
@@ -267,12 +306,13 @@ const getAirExportReferences = async () => {
     loadingStore.start()
     const response = await $api.airExport.getReferences({
       query: {
-        page: references.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
+    references.value.current_page = currentPage.value
     if (references.value.data.length === 0) {
       snackbar.add({
         type: 'info',
@@ -336,22 +376,15 @@ const getAirExportFilters = async () => {
   catalogs.value = response as any
 }
 
-await getAirExportFilters()
-await getAirExportReferences()
+onMounted(() => {
+  getAirExportFilters()
+  references.value.current_page = currentPage.value
+  getAirExportReferences()
+})
 
 const clearFilters = async () => {
-  filters.value = {
-    year: '',
-    referencia: '',
-    referencias: [],
-    masterAwb: '',
-    houseAwb: '',
-    consignee_id: '',
-    freight_forwarder_id: '',
-    airline_id: '',
-    flightNum: '',
-    deleted_status: '',
-  }
+  await resetFiltersComposable()
+  references.value.current_page = 1
   await getAirExportReferences()
 }
 

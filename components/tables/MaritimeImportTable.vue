@@ -22,7 +22,19 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
@@ -337,6 +349,8 @@
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { sourceSystems, deletedStatus, systemCountries } from '~/utils/data/systemData'
 import { prefixYears } from '~/utils/date'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
@@ -355,11 +369,12 @@ const catalogs = ref({
 
 const containerViewer = ref(true)
 
-const filters = ref({
-  countryCode: null,
+// Initial filter values
+const initialFilters = {
+  countryCode: null as string | null,
   year: '',
   referencia: '',
-  referencias: [] as any,
+  referencias: [] as string[],
   masterBl: '',
   houseBl: '',
   consignee_id: '',
@@ -371,11 +386,25 @@ const filters = ref({
   containerNumber: '',
   bookingNum: '',
   line_id: '',
-  source_system_id: null,
+  source_system_id: null as number | null,
   deleted_status: '',
   trackerRef: '',
-  hasRevalidation: null,
-  statusHouseBl: null,
+  hasRevalidation: null as number | null,
+  statusHouseBl: null as string | null,
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  setPage,
+  getFilteredUrl,
+  hasActiveFilters,
+} = useTableFilters(initialFilters, {
+  storageKey: 'maritime-import-filters',
+  arrayFields: ['referencias'],
 })
 
 const references = ref({
@@ -387,6 +416,10 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+// Expose getFilteredUrl for child components and back navigation
+const backUrl = computed(() => getFilteredUrl('/maritime/import'))
+provide('catalogBackUrl', backUrl)
 
 const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
@@ -421,8 +454,12 @@ const searchLines = async (search: SearchParams) => {
 }
 
 const onClickFilters = async () => {
+  // Add any pending reference before searching
+  addReferencia()
   // set current page to 1
+  currentPage.value = 1
   references.value.current_page = 1
+  await syncToUrl()
   await getSeaImportReferences()
 }
 
@@ -438,15 +475,20 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    // Sync to URL after adding references
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
   await getSeaImportReferences()
 }
 
@@ -455,12 +497,13 @@ const getSeaImportReferences = async () => {
     loadingStore.loading = true
     const response = await $api.referencias.getSeaImportReferencias({
       query: {
-        page: references.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
+    references.value.current_page = currentPage.value
     if (references.value.data.length === 0) {
       snackbar.add({
         type: 'info',
@@ -511,29 +554,7 @@ const getSeaImportFilters = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    countryCode: null,
-    year: '',
-    referencia: '',
-    referencias: [],
-    masterBl: '',
-    houseBl: '',
-    consignee_id: '',
-    freight_forwarder_id: '',
-    vessel_id: '',
-    voyage_id: '',
-    voyage_departure_id: '',
-    eta: '',
-    containerNumber: '',
-    bookingNum: '',
-    line_id: '',
-    source_system_id: null,
-    deleted_status: '',
-    trackerRef: '',
-    hasRevalidation: null,
-    statusHouseBl: null,
-  }
-  // set page to 1
+  await resetFiltersComposable()
   references.value.current_page = 1
   await getSeaImportReferences()
 }
@@ -548,6 +569,8 @@ const confirmDeletion = (item: any) => {
 
 onMounted(() => {
   getSeaImportFilters()
+  // Sync current page from composable after URL is loaded
+  references.value.current_page = currentPage.value
   getSeaImportReferences()
 })
 </script>

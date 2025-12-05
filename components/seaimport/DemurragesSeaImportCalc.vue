@@ -162,7 +162,7 @@
             </v-card-title>
             <v-card-subtitle> Here you can view and update empty return date for this reference. </v-card-subtitle>
             <v-card-text>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-3 gap-2">
                 <v-card elevation="4">
                   <v-card-item>
                     <v-card-title> {{ demurrageInitDate }} </v-card-title>
@@ -187,6 +187,38 @@
                   <v-card-text v-show="showEditFreeDays">
                     <v-text-field v-model="form.freeDays" label="Días libres" density="compact" />
                     <v-btn @click="saveFreeDays" size="small" color="primary">Actualizar días libres</v-btn>
+                  </v-card-text>
+                </v-card>
+
+                <!-- Region Free Days Config Card -->
+                <v-card elevation="4" :color="freeDaysConfig?.needs_sync ? 'amber-lighten-4' : ''">
+                  <v-card-item>
+                    <v-card-title class="flex items-center gap-2">
+                      <v-icon size="small">mdi-map-marker</v-icon>
+                      {{ freeDaysConfig?.region?.name || 'Sin región' }}
+                    </v-card-title>
+                    <v-card-subtitle>
+                      <div v-if="freeDaysConfig?.has_region">
+                        <span class="font-bold">Configurado:</span> {{ freeDaysConfig?.configured_free_days }} días
+                        <span class="text-xs">({{ getSourceLabel(freeDaysConfig?.source) }})</span>
+                      </div>
+                      <div v-else class="text-orange-600">
+                        <v-icon size="small" color="warning">mdi-alert</v-icon>
+                        Sin región asignada - días libres = 0 para demoras
+                      </div>
+                    </v-card-subtitle>
+                  </v-card-item>
+                  <v-card-text v-if="freeDaysConfig?.needs_sync">
+                    <v-alert type="warning" density="compact" class="mb-2">
+                      <div class="text-xs">
+                        Los días libres del servicio ({{ freeDaysConfig?.current_free_days }}) 
+                        difieren de la configuración del cliente ({{ freeDaysConfig?.configured_free_days }}).
+                      </div>
+                    </v-alert>
+                    <v-btn @click="syncFreeDays" size="small" color="primary" block>
+                      <v-icon size="small" class="mr-1">mdi-sync</v-icon>
+                      Sincronizar a {{ freeDaysConfig?.configured_free_days }} días
+                    </v-btn>
                   </v-card-text>
                 </v-card>
               </div>
@@ -754,6 +786,7 @@ const referencia = ref<any>({})
 const containerCalcs = ref<any>([])
 const showDiscountDialog = ref(false)
 const refreshAuthReqs = ref(false)
+const freeDaysConfig = ref<any>(null)
 
 const canUpdateRates = computed(() => {
   return hasPermission(permissions.DemurragesUpdateSellRates)
@@ -992,6 +1025,9 @@ const getReferencia = async (voyageDest: any) => {
       container.demurrage.line_has_iva = container.demurrage.line_iva > 0 ? 1 : 0
     })
 
+    // Load configured free days
+    await getConfiguredFreeDays()
+
     // si se mueve, hay que actualizar PartialLastCalcShow.vue ya que obtiene el ultimo calculo
     // containerCalcs.value.forEach((container: any) => {
     //   container.demurrage?.calculations.sort((a: any, b: any) => {
@@ -1000,6 +1036,44 @@ const getReferencia = async (voyageDest: any) => {
     // })
   } catch (e) {
     console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const getConfiguredFreeDays = async () => {
+  try {
+    const response = await $api.demurrages.getConfiguredFreeDays(props.id)
+    freeDaysConfig.value = response
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const getSourceLabel = (source: string) => {
+  const labels: Record<string, string> = {
+    'region': 'por región',
+    'consignee_default': 'global del cliente',
+    'consignee_default_no_region': 'global - sin región',
+    'none': 'sin configuración',
+  }
+  return labels[source] || source
+}
+
+const syncFreeDays = async () => {
+  try {
+    loadingStore.loading = true
+    const response = await $api.demurrages.syncFreeDaysFromConfig(props.id) as any
+    snackbar.add({ 
+      type: 'success', 
+      text: `Días libres sincronizados: ${response.old_free_days} → ${response.new_free_days} (${response.source})` 
+    })
+    await getReferencia(props.id)
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e.message || 'Error al sincronizar días libres' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()

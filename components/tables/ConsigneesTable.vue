@@ -174,6 +174,8 @@
 </template>
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
@@ -181,7 +183,8 @@ const router = useRouter()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
 
-const filters = ref({
+// Initial filter values
+const initialFilters = {
   name: '',
   hasWarrantyLetters: '',
   contacto: '',
@@ -190,6 +193,17 @@ const filters = ref({
   deleted_status: '',
   tax_number: '',
   with_group: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  getFilteredUrl,
+} = useTableFilters(initialFilters, {
+  storageKey: 'consignees-filters',
 })
 
 const consignees = ref({
@@ -200,14 +214,21 @@ const consignees = ref({
   last_page: 1,
 })
 
+// Expose backUrl for child components
+const backUrl = computed(() => getFilteredUrl('/configuration/customers'))
+provide('catalogBackUrl', backUrl)
+
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   consignees.value.current_page = page
+  await syncToUrl()
   await getConsignees()
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
+  currentPage.value = 1
   consignees.value.current_page = 1
+  await syncToUrl()
   await getConsignees()
 }
 
@@ -269,12 +290,13 @@ const getConsignees = async () => {
     loadingStore.loading = true
     const response = await $api.consignees.getConsignees({
       query: {
-        page: consignees.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     consignees.value = response as any
+    consignees.value.current_page = currentPage.value
   } catch (e) {
     console.error(e)
   } finally {
@@ -287,20 +309,13 @@ const getConsignees = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    name: '',
-    hasWarrantyLetters: '',
-    contacto: '',
-    encomienda: '',
-    nameGroup: '',
-    deleted_status: '',
-    tax_number: '',
-    with_group: '',
-  }
+  await resetFiltersComposable()
+  consignees.value.current_page = 1
   await getConsignees()
 }
 
-onMounted(async () => {
-  await getConsignees()
+onMounted(() => {
+  consignees.value.current_page = currentPage.value
+  getConsignees()
 })
 </script>

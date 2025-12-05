@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-btn color="slate" size="small" variant="outlined" class="mb-4" @click="goBack">Back to customers</v-btn>
+    <CatalogBackButton fallback-url="/configuration/customers" />
     <v-card>
       <v-card-title>
         <h3>Customer #{{ id }}</h3>
@@ -13,11 +13,6 @@
 </template>
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
 
 const id = route.params.id
-
-const goBack = () => {
-  router.back()
-}
 </script>

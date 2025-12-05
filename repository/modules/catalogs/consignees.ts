@@ -267,6 +267,27 @@ class ConsigneesModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/${id}/update-export-rebate`, fetchOptions)
   }
+
+  // Region free days methods
+  async getSeaRegionsForFreeDays(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-regions-for-free-days`, fetchOptions)
+  }
+
+  async getRegionFreeDays(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/region-free-days`, fetchOptions)
+  }
+
+  async upsertRegionFreeDays(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/region-free-days`, fetchOptions)
+  }
+
+  async deleteRegionFreeDays(regionFreeDaysId: string, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/region-free-days/${regionFreeDaysId}`, fetchOptions)
+  }
 }
 
 export default ConsigneesModule

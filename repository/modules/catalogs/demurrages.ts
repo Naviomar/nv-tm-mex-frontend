@@ -124,6 +124,14 @@ class DemurragesModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/refresh-container-rates`, fetchOptions)
   }
+
+  async getConfiguredFreeDays(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-import-references/${id}/configured-free-days`, fetchOptions)
+  }
+
+  async syncFreeDaysFromConfig(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/sync-free-days`, fetchOptions)
+  }
 }
 
 export default DemurragesModule

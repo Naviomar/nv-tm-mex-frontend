@@ -1,11 +1,7 @@
 <template>
   <v-container fluid>
     <h1 class="text-xl font-bold">Air import</h1>
-    <div class="mb-2">
-      <v-btn to="/air/import" color="slate" size="small" variant="outlined">
-        <v-icon>mdi-arrow-left</v-icon> Back
-      </v-btn>
-    </div>
+    <CatalogBackButton fallback-url="/air/import" />
     <AirImportOperationsForm :id="id!" />
   </v-container>
 </template>
