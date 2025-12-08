@@ -158,8 +158,8 @@
           <v-table v-if="!isDeleted" density="compact">
             <thead>
               <tr>
-                <th>Advance payment</th>
-                <th>Amount</th>
+                <th>Advance payment #</th>
+                <th>Amount applied</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -171,7 +171,7 @@
                 <td>
                   <v-chip size="small" color="purple" @click="viewAdvancePayment(advPayment)">
                     <v-icon>mdi-eye-outline</v-icon>
-                    Supplier advance payment #{{ advPayment.req_advance_payment_id }}
+                    Advance #{{ advPayment.req_advance_payment_id }}
                   </v-chip>
                 </td>
                 <td>
@@ -191,6 +191,36 @@
               </tr>
             </tbody>
           </v-table>
+
+          <!-- Resumen de anticipos aplicados -->
+          <v-alert
+            v-if="supReqPayment.pay_advances?.length > 0"
+            :type="paymentBalanceType"
+            variant="tonal"
+            density="compact"
+          >
+            <div class="grid grid-cols-2 gap-2">
+              <div class="font-bold">Total invoices:</div>
+              <div>{{ getCurrencyName(supReqPayment.currency_id) }} {{ formatToCurrency(supReqPayment.amount) }}</div>
+
+              <div class="font-bold">Total advances applied:</div>
+              <div>{{ getCurrencyName(supReqPayment.currency_id) }} {{ formatToCurrency(totalAdvancesApplied) }}</div>
+
+              <div class="font-bold text-lg border-t pt-2">
+                {{ paymentBalance >= 0 ? 'Total to pay:' : 'Balance in favor:' }}
+              </div>
+              <div class="font-bold text-lg border-t pt-2">
+                {{ getCurrencyName(supReqPayment.currency_id) }} {{ formatToCurrency(Math.abs(paymentBalance)) }}
+              </div>
+
+              <div v-if="advancesCoverTotal" class="col-span-2">
+                <v-chip color="success" size="small">
+                  <v-icon>mdi-check-circle</v-icon>
+                  Advances cover the total amount
+                </v-chip>
+              </div>
+            </div>
+          </v-alert>
         </div>
 
         <div class="grid grid-cols-1 gap-4">
@@ -464,6 +494,29 @@ const isDeleted = computed(() => {
 
 const hasInvoiceAmountPaid = computed(() => {
   return supReqPayment.value.invoice?.amount_paid > 0
+})
+
+// Computed properties para anticipos aplicados
+const totalAdvancesApplied = computed(() => {
+  if (!supReqPayment.value.pay_advances?.length) return 0
+  return supReqPayment.value.pay_advances.reduce((acc: number, adv: any) => {
+    return acc + parseFloat(adv.amount || 0)
+  }, 0)
+})
+
+const paymentBalance = computed(() => {
+  const totalInvoices = parseFloat(supReqPayment.value.amount || 0)
+  return totalInvoices - totalAdvancesApplied.value
+})
+
+const advancesCoverTotal = computed(() => {
+  return totalAdvancesApplied.value >= parseFloat(supReqPayment.value.amount || 0)
+})
+
+const paymentBalanceType = computed(() => {
+  if (paymentBalance.value <= 0) return 'success'
+  if (totalAdvancesApplied.value > 0) return 'info'
+  return 'warning'
 })
 
 const formattedNotes = computed(() => {
