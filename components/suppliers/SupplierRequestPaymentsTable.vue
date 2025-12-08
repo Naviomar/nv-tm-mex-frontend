@@ -70,7 +70,29 @@
             <td class="whitespace-nowrap">
               {{ formatToCurrency(supReqPayment.amount) }} {{ getCurrencyName(supReqPayment.currency_id) }}
             </td>
-            <td class="whitespace-nowrap">{{ formatToCurrency(supReqPayment.invoice?.amount_paid) }}</td>
+            <td class="whitespace-nowrap">
+              <div>{{ formatToCurrency(supReqPayment.invoice?.amount_paid) }}</div>
+              <!-- Info de anticipos aplicados -->
+              <div v-if="supReqPayment.pay_advances?.length > 0" class="mt-1">
+                <v-chip
+                  size="x-small"
+                  :color="getAdvanceChipColor(supReqPayment)"
+                  class="cursor-pointer"
+                  @click="viewItem(supReqPayment)"
+                >
+                  <v-icon size="x-small" class="mr-1">mdi-cash-fast</v-icon>
+                  {{ supReqPayment.pay_advances.length }} advance(s)
+                </v-chip>
+                <div class="text-xs mt-1">
+                  <span class="font-semibold">Advances:</span>
+                  {{ formatToCurrency(getTotalAdvances(supReqPayment)) }}
+                </div>
+                <div class="text-xs" :class="getBalanceClass(supReqPayment)">
+                  <span class="font-semibold">{{ getBalanceLabel(supReqPayment) }}:</span>
+                  {{ formatToCurrency(Math.abs(getPaymentBalance(supReqPayment))) }}
+                </div>
+              </div>
+            </td>
             <td>
               <div class="flex flex-col items-center gap-1 mb-2">
                 <v-chip size="small" :color="supReqPayment.invoice?.is_paid == 1 ? 'green' : 'red'">{{
@@ -171,6 +193,38 @@ const getUniqueServices = (supReqPayment: any) => {
   })
 
   return services
+}
+
+// Funciones para anticipos aplicados
+const getTotalAdvances = (supReqPayment: any) => {
+  if (!supReqPayment.pay_advances?.length) return 0
+  return supReqPayment.pay_advances.reduce((acc: number, adv: any) => {
+    return acc + parseFloat(adv.amount || 0)
+  }, 0)
+}
+
+const getPaymentBalance = (supReqPayment: any) => {
+  const totalAmount = parseFloat(supReqPayment.amount || 0)
+  const totalAdvances = getTotalAdvances(supReqPayment)
+  return totalAmount - totalAdvances
+}
+
+const getAdvanceChipColor = (supReqPayment: any) => {
+  const balance = getPaymentBalance(supReqPayment)
+  if (balance <= 0) return 'success'
+  if (getTotalAdvances(supReqPayment) > 0) return 'info'
+  return 'warning'
+}
+
+const getBalanceLabel = (supReqPayment: any) => {
+  const balance = getPaymentBalance(supReqPayment)
+  return balance >= 0 ? 'To pay' : 'In favor'
+}
+
+const getBalanceClass = (supReqPayment: any) => {
+  const balance = getPaymentBalance(supReqPayment)
+  if (balance <= 0) return 'text-green-600'
+  return 'text-orange-600'
 }
 
 const clearFilters = async () => {
