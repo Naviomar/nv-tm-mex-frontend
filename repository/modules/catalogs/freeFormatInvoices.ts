@@ -18,6 +18,10 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}`, fetchOptions)
   }
 
+  async getCreditNotesPaged(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/credit-notes`, fetchOptions)
+  }
+
   async getById(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/details`, fetchOptions)
   }

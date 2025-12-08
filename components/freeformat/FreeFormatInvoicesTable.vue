@@ -54,7 +54,7 @@
             v-model="filters.inv_type"
             :items="invoiceTypes"
             item-title="name"
-            item-value="name"
+            item-value="value"
             @keyup.enter="getData"
             hide-details
           />
@@ -87,7 +87,67 @@
         @update:model-value="onClickPagination"
         density="compact"
       ></v-pagination>
-      <v-table density="compact" fixed-header height="75vh">
+
+      <!-- Tabla de Notas de Crédito -->
+      <v-table v-if="isSearchingCreditNotes" density="compact" fixed-header height="75vh">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            <th>Credit Note #</th>
+            <th>Related Invoice</th>
+            <th>Party</th>
+            <th>Party name</th>
+            <th>Amount</th>
+            <th>Concepts</th>
+            <th>Created at</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(creditNote, index) in freeFormatInvoices.data" :key="`credit-note-${index}`">
+            <td>
+              <div class="flex flex-col items-center gap-2">
+                <ViewButton :item="creditNote" @click="viewInvoice(creditNote.party_invoice)" />
+              </div>
+            </td>
+            <td>
+              <v-chip size="small" color="purple" class="cursor-pointer"> CN #{{ creditNote.id }} </v-chip>
+            </td>
+            <td>
+              <v-chip size="small" color="primary" class="cursor-pointer" @click="viewInvoice(creditNote.party_invoice)">
+                Invoice #{{ creditNote.party_invoice?.invoice?.invoice_number }}
+              </v-chip>
+            </td>
+            <td>
+              <div>{{ getPartyableType(creditNote.party_invoice?.partyable_type) }}</div>
+            </td>
+            <td class="whitespace-nowrap">
+              <div>{{ creditNote.party_invoice?.partyable?.name }}</div>
+            </td>
+            <td class="whitespace-nowrap font-bold">
+              {{ getCurrencyName(creditNote.currency_id) }} {{ formatToCurrency(creditNote.amount_total) }}
+            </td>
+            <td>
+              <div class="grid grid-cols-1 gap-1 overflow-hidden overflow-y-auto max-h-32 my-2">
+                <div
+                  v-for="(charge, idx) in creditNote.charges"
+                  :key="`cn-charge-${idx}`"
+                  class="text-xs text-nowrap text-ellipsis"
+                >
+                  {{ charge.charge?.name }} - {{ formatToCurrency(charge.amount) }}
+                </div>
+              </div>
+            </td>
+            <td class="whitespace-nowrap">
+              <UserInfoBadge :item="creditNote">
+                {{ formatDateString(creditNote.created_at) }}
+              </UserInfoBadge>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+
+      <!-- Tabla de Facturas (vista original) -->
+      <v-table v-else density="compact" fixed-header height="75vh">
         <thead>
           <tr>
             <th>Actions</th>
@@ -150,7 +210,7 @@
             <td>
               <div class="text-xs">{{ getInvoicePaidStatus(freeFormat) }}</div>
             </td>
-            <td>{{ freeFormat.inv_type.toUpperCase() }}</td>
+            <td>{{ freeFormat.inv_type?.toUpperCase() }}</td>
             <td>
               <div class="grid grid-cols-1 gap-1 overflow-hidden overflow-y-auto max-h-32 my-2">
                 <div
@@ -226,6 +286,9 @@ const freeFormatInvoices = ref<any>({
   last_page: 1,
 })
 
+// Variable para rastrear qué tipo de datos tenemos actualmente cargados
+const currentDataType = ref<'invoices' | 'credit_notes'>('invoices')
+
 const rowClass = (invoice: any) => {
   if (invoice.deleted_at) {
     return 'bg-red-100! dark:bg-red-900!'
@@ -236,7 +299,19 @@ const rowClass = (invoice: any) => {
   return ''
 }
 
-const invoiceTypes = [{ name: 'TM' }, { name: 'WM' }]
+const invoiceTypes = [
+  { name: 'TM', value: 'tm' },
+  { name: 'WM', value: 'wm' },
+  { name: 'NC', value: 'nc' },
+]
+
+// Usar el tipo de datos cargados, no el filtro seleccionado
+const isSearchingCreditNotes = computed(() => currentDataType.value === 'credit_notes')
+
+const getCurrencyName = (currencyId: number) => {
+  const currency = currencies.find((c) => c.id === currencyId)
+  return currency?.name || ''
+}
 
 const onClickFilters = async () => {
   // set current page to 1
@@ -337,15 +412,35 @@ const searchSuppliers = async (params: any) => {
 const getData = async () => {
   try {
     loadingStore.loading = true
-    const response = (await $api.freeFormatInvoices.getPaged({
-      query: {
-        page: freeFormatInvoices.value.current_page,
-        perPage: freeFormatInvoices.value.perPage,
-        ...flattenArraysToCommaSeparatedString(filters.value),
-      },
-    })) as any
+
+    // Si el filtro es 'nc', buscar notas de crédito directamente
+    const searchingCreditNotes = filters.value.inv_type === 'nc'
+    const queryFilters = { ...filters.value }
+
+    // Remover inv_type del query si es 'nc' ya que usaremos otro endpoint
+    if (searchingCreditNotes) {
+      delete queryFilters.inv_type
+    }
+
+    const response = searchingCreditNotes
+      ? ((await $api.freeFormatInvoices.getCreditNotesPaged({
+          query: {
+            page: freeFormatInvoices.value.current_page,
+            limit: freeFormatInvoices.value.perPage,
+            ...flattenArraysToCommaSeparatedString(queryFilters),
+          },
+        })) as any)
+      : ((await $api.freeFormatInvoices.getPaged({
+          query: {
+            page: freeFormatInvoices.value.current_page,
+            perPage: freeFormatInvoices.value.perPage,
+            ...flattenArraysToCommaSeparatedString(queryFilters),
+          },
+        })) as any)
 
     freeFormatInvoices.value = response
+    // Actualizar el tipo de datos cargados
+    currentDataType.value = searchingCreditNotes ? 'credit_notes' : 'invoices'
 
     if (response.data.length === 0) {
       snackbar.add({
@@ -365,6 +460,10 @@ const getData = async () => {
 await getData()
 
 const viewInvoice = (invoice: any) => {
+  if (!invoice?.id) {
+    snackbar.add({ type: 'warning', text: 'Invoice not found' })
+    return
+  }
   router.push(`/invoices/search/free-format/view-${invoice.id}`)
 }
 </script>
