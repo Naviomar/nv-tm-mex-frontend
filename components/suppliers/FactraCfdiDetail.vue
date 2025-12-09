@@ -63,7 +63,30 @@
                 <div v-if="supplierCfdi.is_free_format">
                   <v-chip color="deep-purple" size="small">Formato Libre</v-chip>
                 </div>
+                <!-- Estatus SAT -->
+                <div v-if="supplierCfdi.uuid" class="mt-2">
+                  <h3 class="font-bold">Estatus SAT</h3>
+                  <SatValidationStatus
+                    :supplierCfdi="supplierCfdi"
+                    @validated="onSatValidated"
+                  />
+                </div>
               </div>
+            </div>
+
+            <!-- Alerta si el CFDI está cancelado en SAT -->
+            <div v-if="supplierCfdi.sat_status === 'Cancelado'" class="mb-4">
+              <v-alert type="error" variant="flat" density="compact">
+                <div class="flex items-center gap-2">
+                  <v-icon>mdi-alert-circle</v-icon>
+                  <div>
+                    <div class="font-bold">Este CFDI está CANCELADO en SAT</div>
+                    <div class="text-sm">
+                      No se puede crear una solicitud de pago para este CFDI. Por favor contacte al proveedor.
+                    </div>
+                  </div>
+                </div>
+              </v-alert>
             </div>
 
             <!-- Opción para marcar como formato libre -->
@@ -762,6 +785,15 @@ const toggleFreeFormat = async (isFreeFormat: boolean) => {
   } finally {
     loadingFreeFormat.value = false
   }
+}
+
+const onSatValidated = async (response: any) => {
+  // Actualizar el estado local del CFDI con la respuesta de validación SAT
+  supplierCfdi.value.sat_status = response.sat_status
+  supplierCfdi.value.sat_status_label = response.sat_status_label
+  supplierCfdi.value.sat_validated_at = response.sat_validated_at
+  supplierCfdi.value.sat_validator = response.sat_validator
+  supplierCfdi.value.is_sat_valid = response.is_sat_valid
 }
 
 const deleteSupplierInvoiceInCfdi = async (supplierInvoice: any) => {

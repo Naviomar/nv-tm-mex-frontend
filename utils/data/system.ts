@@ -7,6 +7,7 @@ const permissions = {
   SeaExportProfit: 'export-maritime-profit',
   SupportRequestAssit: 'support_request.assist',
   DemurragesUpdateSellRates: 'demurrages-sell-update-rates',
+  SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
 }
 
 const authorizeResources = {

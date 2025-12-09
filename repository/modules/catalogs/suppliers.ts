@@ -228,6 +228,28 @@ class SuppliersModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/cfdis/${id}/toggle-free-format`, fetchOptions)
   }
 
+  /**
+   * Valida un CFDI individual con el SAT
+   * @param id ID del CFDI
+   * @param fetchOptions opciones de fetch
+   */
+  async validateCfdiSat(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/cfdis/${id}/validate-sat`, fetchOptions)
+  }
+
+  /**
+   * Valida múltiples CFDIs con el SAT antes de generar solicitud de pago
+   * @param form { supplierCfdis: Array<{ id: number }> }
+   * @param fetchOptions opciones de fetch
+   */
+  async validateMultipleCfdisSat(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/cfdis/validate-multiple-sat`, fetchOptions)
+  }
+
 }
 
 export default SuppliersModule

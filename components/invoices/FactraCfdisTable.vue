@@ -278,6 +278,18 @@
                   <div class="mx-auto">
                     <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                   </div>
+                  <!-- Botón de validación SAT para equipo de TI (por permiso) -->
+                  <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
+                    <v-btn
+                      size="x-small"
+                      color="indigo"
+                      variant="tonal"
+                      :loading="cfdi._validatingSat === true"
+                      @click="validateCfdiSatRow(cfdi)"
+                    >
+                      Validar SAT
+                    </v-btn>
+                  </div>
                 </td>
                 <td>
                   <ButtonDownloadS3Object2 :s3Path="cfdi.xml_attachment" />
@@ -350,11 +362,15 @@
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
+import { permissions } from '@/utils/data/system'
+import { useCheckUser } from '@/composables/useCheckUser'
+
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
 
 const filters = ref<any>({
   invoiceDate: '',
@@ -401,11 +417,39 @@ const supplierCfdis = ref({
   last_page: 1,
 })
 
+const canValidateSat = computed(() => hasPermission(permissions.SupplierCfdiValidateSat))
+
 const columnClass = (note: any) => {
   return {
     '': note.deleted_at == null,
     'bg-red-100! dark:bg-red-900!': note.deleted_at != null,
     'bg-yellow-100! dark:bg-yellow-900!': rfcReceptorNotTM(note),
+  }
+}
+
+const validateCfdiSatRow = async (cfdi: any) => {
+  try {
+    cfdi._validatingSat = true
+    const response = await $api.suppliers.validateCfdiSat(cfdi.id.toString())
+
+    cfdi.sat_status = response.sat_status
+    cfdi.sat_status_label = response.sat_status_label
+    cfdi.sat_validated_at = response.sat_validated_at
+    cfdi.sat_validator = response.sat_validator
+    cfdi.is_sat_valid = response.is_sat_valid
+
+    if (response.sat_status === 'Vigente') {
+      snackbar.add({ type: 'success', text: `CFDI ${cfdi.serie_folio} está vigente en SAT` })
+    } else if (response.sat_status === 'Cancelado') {
+      snackbar.add({ type: 'error', text: `CFDI ${cfdi.serie_folio} está CANCELADO en SAT` })
+    } else {
+      snackbar.add({ type: 'warning', text: response.message || `Resultado SAT para CFDI ${cfdi.serie_folio}` })
+    }
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.response?.data?.message || 'Error al validar CFDI con SAT' })
+  } finally {
+    cfdi._validatingSat = false
   }
 }
 

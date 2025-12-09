@@ -114,14 +114,25 @@
                 <th># Invoice</th>
                 <th>Supplier</th>
                 <th>Tipo comprobante</th>
+                <th>Estatus SAT</th>
                 <th>Invoice date</th>
                 <th>Amount</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="supCfdi in supplierCfdis" :key="supCfdi.id">
+              <tr
+                v-for="supCfdi in supplierCfdis"
+                :key="supCfdi.id"
+                :class="{ 'bg-red-100 dark:bg-red-900': supCfdi.sat_status === 'Cancelado' }"
+              >
                 <td>
-                  <v-checkbox v-model="supCfdi.selected" density="compact" label="Select to pay" hide-details />
+                  <v-checkbox
+                    v-model="supCfdi.selected"
+                    density="compact"
+                    label="Select to pay"
+                    hide-details
+                    :disabled="supCfdi.sat_status === 'Cancelado'"
+                  />
                 </td>
                 <td>
                   {{ supCfdi.requested_payment ? 'Yes' : 'No' }}
@@ -132,6 +143,13 @@
                 </td>
                 <td>{{ supCfdi.supplier?.name }}</td>
                 <td>{{ supCfdi.tipo_comprobante }}</td>
+                <td>
+                  <SatValidationStatus
+                    :supplierCfdi="supCfdi"
+                    :showValidateButton="true"
+                    @validated="(response) => onCfdiSatValidated(supCfdi, response)"
+                  />
+                </td>
                 <td>{{ formatDateOnlyString(supCfdi.invoice_date) }}</td>
                 <td
                   :class="{
@@ -277,9 +295,62 @@
               </div>
             </div>
 
+            <!-- Alerta si hay facturas canceladas seleccionadas -->
+            <v-alert
+              v-if="hasCancelledSelected"
+              type="error"
+              variant="flat"
+              density="compact"
+              class="mb-4"
+            >
+              <v-icon>mdi-alert-circle</v-icon>
+              Hay facturas CANCELADAS en SAT seleccionadas. Deseleccione estas facturas antes de continuar.
+            </v-alert>
+
+            <!-- Alerta si hay facturas sin validar -->
+            <v-alert
+              v-if="hasUnvalidatedSelected && !hasCancelledSelected"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <v-icon>mdi-shield-alert</v-icon>
+                  Hay {{ countUnvalidated }} factura(s) sin validar con SAT. Se recomienda validarlas antes de generar la solicitud.
+                </div>
+                <v-btn
+                  color="warning"
+                  size="small"
+                  :loading="loadingValidateAll"
+                  @click="validateAllSelectedWithSat"
+                >
+                  <v-icon left>mdi-shield-check</v-icon>
+                  Validar todas con SAT
+                </v-btn>
+              </div>
+            </v-alert>
+
             <div>
-              <div>
-                <v-btn color="primary" class="mr-4" @click="onClickGenerateReq">Generate request payment</v-btn>
+              <div class="flex gap-2">
+                <v-btn
+                  color="primary"
+                  @click="onClickGenerateReq"
+                  :disabled="hasCancelledSelected"
+                >
+                  Generate request payment
+                </v-btn>
+                <v-btn
+                  v-if="hasSelectedCfdis"
+                  color="teal"
+                  variant="outlined"
+                  :loading="loadingValidateAll"
+                  @click="validateAllSelectedWithSat"
+                >
+                  <v-icon left>mdi-shield-check</v-icon>
+                  Validar con SAT
+                </v-btn>
               </div>
             </div>
           </div>
@@ -315,6 +386,7 @@ const formReq = ref<any>({
 })
 
 const advancePayments = ref<any>([])
+const loadingValidateAll = ref(false)
 
 watch(
   () => filters.supplierId,
@@ -322,6 +394,21 @@ watch(
     supplierCfdis.value = []
   }
 )
+
+// Computed: verifica si hay facturas canceladas seleccionadas
+const hasCancelledSelected = computed(() => {
+  return supplierCfdis.value.some((cfdi: any) => cfdi.selected && cfdi.sat_status === 'Cancelado')
+})
+
+// Computed: verifica si hay facturas sin validar seleccionadas
+const hasUnvalidatedSelected = computed(() => {
+  return supplierCfdis.value.some((cfdi: any) => cfdi.selected && !cfdi.sat_status && cfdi.uuid)
+})
+
+// Computed: cuenta facturas sin validar seleccionadas
+const countUnvalidated = computed(() => {
+  return supplierCfdis.value.filter((cfdi: any) => cfdi.selected && !cfdi.sat_status && cfdi.uuid).length
+})
 
 const hasResults = computed(() => {
   return supplierCfdis.value.length > 0
@@ -369,6 +456,95 @@ const unselectAllCfdis = () => {
   supplierCfdis.value.forEach((cfdi: any) => {
     cfdi.selected = false
   })
+}
+
+// Maneja la validación SAT de un CFDI individual
+const onCfdiSatValidated = (supCfdi: any, response: any) => {
+  supCfdi.sat_status = response.sat_status
+  supCfdi.sat_status_label = response.sat_status_label
+  supCfdi.sat_validated_at = response.sat_validated_at
+  supCfdi.sat_validator = response.sat_validator
+  supCfdi.is_sat_valid = response.is_sat_valid
+
+  // Si el CFDI está cancelado, deseleccionarlo automáticamente
+  if (response.sat_status === 'Cancelado') {
+    supCfdi.selected = false
+    snackbar.add({
+      type: 'warning',
+      text: `La factura ${supCfdi.serie}${supCfdi.folio} ha sido deseleccionada porque está cancelada en SAT`,
+    })
+  }
+}
+
+// Valida todas las facturas seleccionadas con SAT
+const validateAllSelectedWithSat = async () => {
+  try {
+    loadingValidateAll.value = true
+
+    const selectedCfdis = supplierCfdis.value.filter((cfdi: any) => cfdi.selected)
+    if (selectedCfdis.length === 0) {
+      snackbar.add({ type: 'warning', text: 'No hay facturas seleccionadas para validar' })
+      return
+    }
+
+    const body = {
+      supplierCfdis: selectedCfdis.map((cfdi: any) => ({ id: cfdi.id })),
+    }
+
+    const response = await $api.suppliers.validateMultipleCfdisSat(body)
+
+    // Actualizar el estado de cada CFDI con los resultados
+    if (response.valid) {
+      response.valid.forEach((result: any) => {
+        const cfdi = supplierCfdis.value.find((c: any) => c.id === result.id)
+        if (cfdi) {
+          cfdi.sat_status = result.status
+          cfdi.sat_status_label = result.status === 'Vigente' ? 'Vigente en SAT' : result.status
+        }
+      })
+    }
+
+    if (response.cancelled) {
+      response.cancelled.forEach((result: any) => {
+        const cfdi = supplierCfdis.value.find((c: any) => c.id === result.id)
+        if (cfdi) {
+          cfdi.sat_status = result.status
+          cfdi.sat_status_label = 'Cancelado en SAT'
+          cfdi.selected = false // Deseleccionar automáticamente
+        }
+      })
+    }
+
+    if (response.not_found) {
+      response.not_found.forEach((result: any) => {
+        const cfdi = supplierCfdis.value.find((c: any) => c.id === result.id)
+        if (cfdi) {
+          cfdi.sat_status = result.status
+          cfdi.sat_status_label = 'No encontrado en SAT'
+        }
+      })
+    }
+
+    // Mostrar mensaje resumen
+    if (response.all_valid) {
+      snackbar.add({ type: 'success', text: 'Todas las facturas están vigentes en SAT' })
+    } else if (response.cancelled && response.cancelled.length > 0) {
+      snackbar.add({
+        type: 'error',
+        text: `${response.cancelled.length} factura(s) cancelada(s) en SAT han sido deseleccionadas`,
+      })
+    } else {
+      snackbar.add({ type: 'info', text: response.message })
+    }
+  } catch (error: any) {
+    console.error(error)
+    snackbar.add({
+      type: 'error',
+      text: error?.response?.data?.message || 'Error al validar con SAT',
+    })
+  } finally {
+    loadingValidateAll.value = false
+  }
 }
 
 const getTotalAmount = (supCfdi: any) => {
