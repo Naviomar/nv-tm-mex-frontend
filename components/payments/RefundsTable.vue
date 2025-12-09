@@ -5,7 +5,7 @@
       <div class="grid grid-cols-4 gap-5">
         <div><v-text-field v-model="filters.id" type="text" density="compact" label="Folio" /></div>
         <div>
-          <ACustomerSearch v-model="filters.customer_id" />
+          <ACustomerSearch v-model="filters.customer_id" :allow-deleted="true" />
         </div>
         <div>
           <AGlobalSearch
@@ -65,7 +65,10 @@
               </div>
             </td>
             <td>{{ refund.id }}</td>
-            <td>{{ refund.beneficiary?.name }}</td>
+            <td>
+              {{ refund.beneficiary?.name }}
+              <span v-if="refund.beneficiary?.deleted_at"> (Eliminado)</span>
+            </td>
             <td>
               <div class="flex flex-col items-center gap-1 py-2">
                 <v-chip

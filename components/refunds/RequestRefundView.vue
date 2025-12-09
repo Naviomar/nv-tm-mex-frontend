@@ -18,7 +18,10 @@
             <v-card-text>
               <div class="grid grid-cols-2 gap-2">
                 <div>Beneficiary</div>
-                <div>{{ reqRefund.beneficiary?.name }} ({{ beneficiaryType }})</div>
+                <div>
+                  {{ reqRefund.beneficiary?.name }} ({{ beneficiaryType }})
+                  <span v-if="reqRefund.beneficiary?.deleted_at"> (Eliminado)</span>
+                </div>
                 <div>Amount:</div>
                 <div>{{ formatToCurrency(reqRefundAmount) }} {{ getCurrencyName(reqRefund.currency_id) }}</div>
 
