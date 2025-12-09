@@ -25,10 +25,11 @@
           density="compact"
           @update:model-value="onClickPagination"
         ></v-pagination>
+
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="50">Actions</th>
+              <th class="text-left" width="120">Actions</th>
               <th class="text-left">Line</th>
               <th class="text-left">Serie-Folio</th>
               <th class="text-left">Invoice date</th>
@@ -50,9 +51,60 @@
               }"
             >
               <td>
-                <div class="flex gap-2">
-                  <ViewButton :item="item" @click="viewLineInvoice(item)" />
-                  <EditButton :item="item" @click="editLineInvoice(item)" />
+                <div class="flex gap-2 items-center h-10">
+                  
+                  <template v-if="!item.deleted_at">
+                    
+                    <ViewButton :item="item" @click="viewLineInvoice(item)" />
+
+                    <ProcessAuthorizationWrapper
+                      v-if="!isPaid(item)"
+                      processName="invoices.lines.update"
+                      :requestKey="item.id"
+                      label="Edit Line Invoice"
+                    >
+                      <template #auth>
+                        <EditButton :item="item" @click="editLineInvoice(item)" />
+                      </template>
+                    </ProcessAuthorizationWrapper>
+
+                    <ProcessAuthorizationWrapper
+                      v-if="!isPaid(item)"
+                      processName="invoices.lines.delete"
+                      :requestKey="item.id"
+                      label="Cancel Line Invoice"
+                    >
+                      <template #auth>
+                        <v-btn
+                          icon
+                          size="x-small"
+                          color="red"
+                          variant="elevated" 
+                          @click="deleteLineInvoice(item)"
+                        >
+                          <v-icon color="white">mdi-delete</v-icon>
+                        </v-btn>
+                      </template>
+                    </ProcessAuthorizationWrapper>
+
+                    <v-icon v-if="isPaid(item)" color="green" size="small" title="Invoice Paid - Locked">
+                        mdi-lock-check
+                    </v-icon>
+
+                  </template>
+
+                  <template v-else>
+                    <v-chip
+                        color="red"
+                        variant="flat"
+                        size="x-small"
+                        class="font-weight-bold tracking-wider"
+                        prepend-icon="mdi-cancel"
+                    >
+                        CANCELLED
+                    </v-chip>
+                  </template>
+
                 </div>
               </td>
 
@@ -113,12 +165,14 @@
     </v-card>
   </div>
 </template>
+
 <script setup lang="ts">
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const router = useRouter()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const initialYear = 2022
 const currentYear = new Date().getFullYear()
@@ -127,7 +181,6 @@ const maxYear = currentYear + 1
 const prefixYears = computed(() => {
   const years = []
   for (let i = initialYear; i <= maxYear; i++) {
-    // last two digits of the year
     const year = i.toString().slice(-2)
     years.push(`${year}`)
   }
@@ -158,12 +211,20 @@ const lineInvoices = ref({
   total: 1,
 })
 
+// Función auxiliar para detectar si la factura está pagada
+// Revisa si alguna de las referencias asociadas tiene estatus de pagado o monto pagado > 0
+const isPaid = (item: any) => {
+    if (!item.refs || item.refs.length === 0) return false
+    
+    return item.refs.some((ref: any) => {
+        return ref.invoice?.is_paid == 1 || (ref.invoice?.amount_paid && parseFloat(ref.invoice.amount_paid) > 0)
+    })
+}
+
 const addReferencia = () => {
   if (filters.value.referencia) {
-    // split by comma and remove empty spaces
     filters.value.referencia = filters.value.referencia.replace(/\s/g, '')
     const refs = Array.from(new Set(filters.value.referencia.split(',')))
-    // remove duplicates in refs array using set
 
     refs.forEach((ref) => {
       filters.value.referencias.push(ref)
@@ -174,7 +235,6 @@ const addReferencia = () => {
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
   lineInvoices.value.current_page = 1
   await getLineInvoices()
 }
@@ -197,7 +257,7 @@ const getLineInvoices = async () => {
     lineInvoices.value = response as any
 
     if (lineInvoices.value.data.length === 0) {
-      snackbar.add({ type: 'info', text: 'No records found' })
+      // snackbar.add({ type: 'info', text: 'No records found' })
     }
   } catch (e) {
     console.error(e)
@@ -223,8 +283,12 @@ const searchLines = async (search: any) => {
 }
 
 const getSeaImportFilters = async () => {
-  const response = await $api.referencias.getSeaImportFilters()
-  catalogs.value = response as any
+  try {
+      const response = await $api.referencias.getSeaImportFilters()
+      catalogs.value = response as any
+  } catch(e) {
+      console.error(e)
+  }
 }
 
 await getSeaImportFilters()
@@ -247,5 +311,29 @@ const viewLineInvoice = (item: any) => {
 
 const editLineInvoice = (item: any) => {
   router.push(`/invoices/lines/notes/edit-${item.id}`)
+}
+
+const deleteLineInvoice = async (item: any) => {
+  const ok = await confirm({
+    title: 'Are you sure?',
+    content: `Do you want to cancel the invoice ${item.serie_folio}?`,
+    confirmationText: 'Yes, Cancel',
+    confirmationButtonProps: { color: 'red' },
+  })
+
+  if (!ok) return
+
+  try {
+    loadingStore.start()
+    await $api.linePayments.delete(item.id)
+    
+    snackbar.add({ type: 'success', text: 'Line Invoice cancelled successfully' })
+    await getLineInvoices()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error cancelling invoice' })
+  } finally {
+    loadingStore.stop()
+  }
 }
 </script>
