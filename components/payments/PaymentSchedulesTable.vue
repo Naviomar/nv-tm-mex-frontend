@@ -104,7 +104,8 @@
                 </div>
               </td>
               <td>
-                ***ESTADO***
+                <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Paid'" color="success"> Paid </v-chip>
+                <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Pending'" color="warning"> Pending </v-chip>
               </td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="schedule">
@@ -219,6 +220,7 @@
   </div>
 </template>
 <script setup lang="ts">
+const count = 0;
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
@@ -264,6 +266,34 @@ const schedules = ref<any>({
   perPage: 10,
   last_page: 1,
 })
+
+const validatePaid = (paramRef: any): string => {
+  let array_paids = new Array();
+  let size_data_reference = paramRef.length
+  let data_reference = paramRef;
+  ///validamos si cada referencia esta pagada
+  for(var i = 0; i < size_data_reference; i++){
+    let line_pay_schedules_data = data_reference[i].referencia.line_pay_schedules;
+    
+    ///validamos facturas de referencia
+    for(var v = 0; v < line_pay_schedules_data.length; v++){
+      let invoices_reference = line_pay_schedules_data[v].line_invoice_refs;
+      for(var iv = 0; iv < invoices_reference.length; iv++){
+        let is_paid_ref = invoices_reference[iv].invoice.is_paid;
+        if(is_paid_ref === 1){
+          array_paids.push('Paid');
+        }
+      }
+    }
+  }
+
+  if(size_data_reference===array_paids.length){
+    return 'Paid';
+  }else{
+    return 'Pending';
+  }
+  
+}
 
 const showNotyForm = (schedule: any) => {
   notyDialog.value.showDialog = true
