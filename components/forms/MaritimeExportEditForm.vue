@@ -603,7 +603,7 @@
     <DraggableDiv>
       <div class="text-center font-bold py-2">Ref #{{ values.reference_number }}</div>
       <div class="flex justify-end items-center">
-        <v-btn class="mr-4" color="error" to="/maritime/export"> Cancel </v-btn>
+        <v-btn class="mr-4" color="error" to="/maritime/export"> Return </v-btn>
         <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
       </div>
     </DraggableDiv>

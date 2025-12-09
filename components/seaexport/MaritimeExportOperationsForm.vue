@@ -11,12 +11,13 @@
         @update:model-value="onTabChange"
       >
         <v-tab text="Details" prepend-icon="mdi-book-open-page-variant" value="1"></v-tab>
-        <v-tab text="Booking confirmation" prepend-icon="mdi-ticket-confirmation-outline" value="2"> </v-tab>
+        <v-tab text="Bkg confirmation" prepend-icon="mdi-ticket-confirmation-outline" value="2"> </v-tab>
         <v-tab text="Release" prepend-icon="mdi-receipt-text-send-outline" value="3"> </v-tab>
         <v-tab text="Print BL" prepend-icon="mdi-printer-outline" value="4"> </v-tab>
         <v-tab text="Ship sail check" prepend-icon="mdi-ferry" value="5"> </v-tab>
         <v-tab text="Alerts" prepend-icon="mdi-bell-alert-outline" value="6"> </v-tab>
         <v-tab text="Detentions" prepend-icon="mdi-timer-alert-outline" value="7"> </v-tab>
+        <v-tab text="Cancel" prepend-icon="mdi-delete-outline" value="8"> </v-tab>
       </v-tabs>
       <v-card-text>
         <v-window v-model="currentTab">
@@ -40,6 +41,9 @@
           </v-window-item>
           <v-window-item value="7">
             <SeaExportDetentions :id="props.id" />
+          </v-window-item>
+          <v-window-item value="8">
+            <SeaExportDeleteForm :id="props.id" serviceType="sea-export" />
           </v-window-item>
         </v-window>
       </v-card-text>
