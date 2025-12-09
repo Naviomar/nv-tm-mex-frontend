@@ -456,9 +456,25 @@ const linkedChargeToInvoice = (charge: any) => {
 }
 
 const creditExpirationDate = computed(() => {
-  if (!referencia.value?.credit_days) return ''
-  const expirationDate = new Date(referencia.value.created_at)
-  expirationDate.setDate(expirationDate.getDate() + referencia.value.credit_days)
+  if (!referencia.value) return ''
+
+  const creditDays = referencia.value.credit_days || 0
+  if (!creditDays) return ''
+
+  // 1) Preferir fecha calculada por backend
+  if (referencia.value.credit_due_date) {
+    return formatDateOnlyString(referencia.value.credit_due_date)
+  }
+
+  // 2) Export: ETD (etd_date) + credit_days,
+  //    con fallback a ETA (voyage_discharge.eta_date) y luego created_at.
+  const baseDateString =
+    referencia.value.etd_date || referencia.value.voyage_discharge?.eta_date || referencia.value.created_at
+
+  if (!baseDateString) return ''
+
+  const expirationDate = new Date(baseDateString)
+  expirationDate.setDate(expirationDate.getDate() + creditDays)
   return formatDateOnlyString(expirationDate)
 })
 
