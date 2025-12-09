@@ -19,8 +19,8 @@
       <template v-slot:item="{ item, props }">
         <v-list-item
           v-bind="props"
-          :title="`${item.title} ${item.raw.deleted_at ? '(Eliminado)' : ''}`"
-          :disabled="item.raw.deleted_at != null"
+          :title="`${item.title} ${(item as any).raw.deleted_at ? '(Eliminado)' : ''}`"
+          :disabled="!allowDeleted && (item as any).raw.deleted_at != null"
         ></v-list-item>
       </template>
     </v-autocomplete>
@@ -46,6 +46,11 @@ const props = defineProps({
     default: 'customers',
   },
   hideDetails: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  allowDeleted: {
     type: Boolean,
     required: false,
     default: false,

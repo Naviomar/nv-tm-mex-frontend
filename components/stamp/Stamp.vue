@@ -646,6 +646,52 @@ const drawHandles = (ctx: any) => {
   ctx.fillRect(offsetX - handleSize / 2, offsetY - handleSize / 2, handleSize, handleSize)
 }
 
+const renderPageForExport = (pageIndex: number, includeHash: boolean): Promise<void> => {
+  return new Promise((resolve) => {
+    const canvasRef = app.canvas[pageIndex]
+    const canvas = canvasRef?.value
+    const imageBlob = app.imagesPreviews[pageIndex]?.value
+    const state = app.states[pageIndex]
+
+    if (!canvas || !imageBlob) {
+      if (canvas && includeHash) {
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.font = '12px Arial'
+          ctx.fillText(hashSeal.value, 100, 1500)
+        }
+      }
+      resolve()
+      return
+    }
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      resolve()
+      return
+    }
+
+    const imgPage = new Image()
+    imgPage.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(imgPage, 0, 0, 1200, 1500)
+
+      if (state && state.stamp && state.posX !== null && state.posY !== null) {
+        ctx.drawImage(state.stamp, state.posX, state.posY, sealWidth, sealHeight)
+      }
+
+      if (includeHash) {
+        ctx.font = '12px Arial'
+        ctx.fillText(hashSeal.value, 100, 1500)
+      }
+
+      resolve()
+    }
+
+    imgPage.src = imageBlob
+  })
+}
+
 const addImage = () => {
   imageStamp.value = new Image()
   imageStamp.value.src = '/tm-logo-black.png'
@@ -831,15 +877,14 @@ const saveSeal = async () => {
 
     const dataUrls: string[] = []
     for (let i = 0; i < numPages.value; i++) {
-      const canvas = app.canvas[i]
-      // set hash to canvas at the end
-      const ctx = canvas.value.getContext('2d')
-      ctx.font = '12px Arial'
-      ctx.fillText(hashSeal.value, 100, 1500)
+      await renderPageForExport(i, true)
 
-      // console.log('canvas', canvas.value)
-      const dataUrl = canvas.value.toDataURL('image/png')
-      // console.log('dataUrl', dataUrl)
+      const canvasRef = app.canvas[i]
+      const canvas = canvasRef?.value
+
+      if (!canvas) continue
+
+      const dataUrl = canvas.toDataURL('image/png')
       dataUrls.push(dataUrl)
     }
 

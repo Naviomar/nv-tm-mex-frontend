@@ -60,8 +60,81 @@
                 <div v-if="supplierCfdi.is_manual">
                   <v-chip color="purple" size="small">Manual CFDI</v-chip>
                 </div>
+                <div v-if="supplierCfdi.is_free_format">
+                  <v-chip color="deep-purple" size="small">Formato Libre</v-chip>
+                </div>
+                <!-- Estatus SAT -->
+                <div v-if="supplierCfdi.uuid" class="mt-2">
+                  <h3 class="font-bold">Estatus SAT</h3>
+                  <SatValidationStatus
+                    :supplierCfdi="supplierCfdi"
+                    @validated="onSatValidated"
+                  />
+                </div>
               </div>
             </div>
+
+            <!-- Alerta si el CFDI está cancelado en SAT -->
+            <div v-if="supplierCfdi.sat_status === 'Cancelado'" class="mb-4">
+              <v-alert type="error" variant="flat" density="compact">
+                <div class="flex items-center gap-2">
+                  <v-icon>mdi-alert-circle</v-icon>
+                  <div>
+                    <div class="font-bold">Este CFDI está CANCELADO en SAT</div>
+                    <div class="text-sm">
+                      No se puede crear una solicitud de pago para este CFDI. Por favor contacte al proveedor.
+                    </div>
+                  </div>
+                </div>
+              </v-alert>
+            </div>
+
+            <!-- Opción para marcar como formato libre -->
+            <div v-if="canMarkAsFreeFormat" class="mb-4">
+              <v-alert type="info" variant="tonal" density="compact">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-bold">¿Marcar como formato libre?</div>
+                    <div class="text-sm">
+                      Las facturas de formato libre no requieren desglose a referencias y se pueden pagar directamente.
+                    </div>
+                  </div>
+                  <v-btn
+                    color="deep-purple"
+                    size="small"
+                    @click="toggleFreeFormat(true)"
+                    :loading="loadingFreeFormat"
+                  >
+                    <v-icon left>mdi-tag-outline</v-icon>
+                    Marcar como Formato Libre
+                  </v-btn>
+                </div>
+              </v-alert>
+            </div>
+
+            <div v-if="supplierCfdi.is_free_format && !supplierCfdi.requested_payment" class="mb-4">
+              <v-alert type="warning" variant="tonal" density="compact" color="deep-purple">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-bold">Este CFDI está marcado como Formato Libre</div>
+                    <div class="text-sm">
+                      Puede crear una solicitud de pago directamente sin desglosar conceptos.
+                    </div>
+                  </div>
+                  <v-btn
+                    color="grey"
+                    size="small"
+                    variant="outlined"
+                    @click="toggleFreeFormat(false)"
+                    :loading="loadingFreeFormat"
+                  >
+                    <v-icon left>mdi-tag-off-outline</v-icon>
+                    Desmarcar
+                  </v-btn>
+                </div>
+              </v-alert>
+            </div>
+
             <div class="grid grid-cols-2">
               <ButtonDownloadS3Object2 :s3Path="supplierCfdi.xml_attachment" label="Download XML" />
 
@@ -420,6 +493,7 @@ const dialogVsSellProfit = ref<any>({
 const calcIvaMode = ref<'masIva' | 'sinIva'>('masIva')
 const calcMonto = ref<number>(0)
 const showCalc = ref<boolean>(true)
+const loadingFreeFormat = ref<boolean>(false)
 
 const calcMontoSinIva = computed(() => {
   if (calcIvaMode.value === 'masIva') {
@@ -527,6 +601,21 @@ const canAddMoreSupplierPayConcepts = computed(() => {
 const hasLinkWithDemurrageAndDetentions = computed(() => {
   // if in supplierCfdi has length > 0 in reqDemurrages or reqDetentions
   return supplierCfdi.value.req_demurrages?.length > 0 || supplierCfdi.value.req_detentions?.length > 0
+})
+
+// Computed para verificar si se puede marcar como formato libre
+const canMarkAsFreeFormat = computed(() => {
+  // Se puede marcar como formato libre si:
+  // 1. No tiene invoices (desglose)
+  // 2. No está ya marcado como formato libre
+  // 3. Es un CFDI de tipo ingreso (I) o egreso (E)
+  // 4. No está eliminado
+  return (
+    !supplierCfdi.value.is_free_format &&
+    supplierCfdi.value.invoices?.length === 0 &&
+    (supplierCfdi.value.tipo_comprobante === 'I' || supplierCfdi.value.tipo_comprobante === 'E') &&
+    !supplierCfdi.value.deleted_at
+  )
 })
 
 const getChargeName = (id: number) => {
@@ -675,6 +764,36 @@ const reSyncSupplierCapLimit = async () => {
       loadingStore.stop()
     }, 250)
   }
+}
+
+const toggleFreeFormat = async (isFreeFormat: boolean) => {
+  try {
+    loadingFreeFormat.value = true
+    const body = {
+      is_free_format: isFreeFormat,
+    }
+    await $api.suppliers.toggleFreeFormat(supplierCfdi.value.id, body)
+    snackbar.add({
+      type: 'success',
+      text: isFreeFormat ? 'CFDI marcado como formato libre' : 'CFDI desmarcado como formato libre',
+    })
+
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.response?.data?.message || 'Error al actualizar el formato' })
+  } finally {
+    loadingFreeFormat.value = false
+  }
+}
+
+const onSatValidated = async (response: any) => {
+  // Actualizar el estado local del CFDI con la respuesta de validación SAT
+  supplierCfdi.value.sat_status = response.sat_status
+  supplierCfdi.value.sat_status_label = response.sat_status_label
+  supplierCfdi.value.sat_validated_at = response.sat_validated_at
+  supplierCfdi.value.sat_validator = response.sat_validator
+  supplierCfdi.value.is_sat_valid = response.is_sat_valid
 }
 
 const deleteSupplierInvoiceInCfdi = async (supplierInvoice: any) => {

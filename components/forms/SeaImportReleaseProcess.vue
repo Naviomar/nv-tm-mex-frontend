@@ -9,20 +9,20 @@
         </v-card-title>
         <v-card-text class="pt-4">
           <div class="mb-4">
-            <p class="text-base">Will the customs agent change in this new revalidation?</p>
-          </div>
-          <v-alert v-if="showAgentChangeWarning" type="warning" variant="tonal" class="mb-4" border="start" prominent>
-            <div class="font-bold mb-2">Important notice</div>
-            <p>
-              Changing the customs agent will generate an additional charge of <strong>$150 USD</strong> (depending on the
-              shipping line for the service).
+            <p class="text-base">
+              When you redo the electronic revalidation, the system will compare the customs agent from the last
+              checklist with the current release. If a change is detected, an additional charge of
+              <strong>$150 USD</strong> will be generated.
             </p>
-            <p class="mt-2">
-              The concept "Customs Agent Change" will be automatically added to Local Charges and an invoice/proforma
-              will be generated for the customer.
+          </div>
+          <v-alert v-if="agentChanged" type="warning" variant="tonal" class="mb-4" border="start" prominent>
+            <div class="font-bold mb-2">Customs agent change detected</div>
+            <p>
+              A change of customs agent has been detected between the last checklist and the current release. Redoing
+              the revalidation now will generate the "Customs Agent Change" charge in Local Charges.
             </p>
           </v-alert>
-          <div v-if="showAgentChangeWarning && canSkipAgentChangeCharge" class="mt-2">
+          <div v-if="agentChanged && canSkipAgentChangeCharge" class="mt-2">
             <v-checkbox
               v-model="skipAgentChangeCharge"
               density="compact"
@@ -30,17 +30,33 @@
               hide-details
               label="This is a data entry correction. Do not generate the customs agent change charge (supervisor only)."
             />
+
+            <div v-if="skipAgentChangeCharge" class="mt-4">
+              <v-alert type="info" density="compact" class="mb-2">
+                <div class="text-sm">
+                  Skipping the customs agent change charge requires an authorization.
+                  Please request authorization before proceeding.
+                </div>
+              </v-alert>
+              <AuthorizeProcessSmart
+                :resource="authorizeResources.RevalidationSkipAgentChangeCharge.resource"
+                :resourceId="String(reference.id)"
+                label="Request authorization to skip customs agent change charge"
+                :refresh="refreshAuthReqs"
+              >
+                <template #auth>
+                  <v-chip color="success" size="small">
+                    <v-icon>mdi-check</v-icon>
+                    Authorized - proceed
+                  </v-chip>
+                </template>
+              </AuthorizeProcessSmart>
+            </div>
           </div>
         </v-card-text>
         <v-card-actions class="justify-end pa-4">
           <v-btn variant="outlined" @click="cancelRedoRevalidation">Cancel</v-btn>
-          <v-btn v-if="!showAgentChangeWarning" color="grey" variant="flat" @click="confirmNoAgentChange">
-            No, same agent
-          </v-btn>
-          <v-btn v-if="!showAgentChangeWarning" color="orange-darken-2" variant="flat" @click="confirmAgentChange">
-            Yes, the agent will change
-          </v-btn>
-          <v-btn v-if="showAgentChangeWarning" color="red-darken-2" variant="flat" @click="executeRedoRevalidation">
+          <v-btn color="red-darken-2" variant="flat" @click="executeRedoRevalidation">
             Confirm and continue
           </v-btn>
         </v-card-actions>
@@ -176,6 +192,7 @@
 </template>
 <script setup lang="ts">
 import { LIVERPOOL_MBL_CONSIGNEE_IDS } from '~/utils/data/systemData'
+import { authorizeResources } from '~/utils/data/system'
 
 const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
@@ -194,6 +211,20 @@ const emits = defineEmits(['updateReference'])
 
 const tab = ref('option-0')
 
+const customAgents = ref<any[]>([])
+const previousAgent = ref<string | null>(null)
+const currentReleaseAgentId = ref<number | null>(null)
+
+const currentAgentShortName = computed(() => {
+  if (!currentReleaseAgentId.value) return null
+  const agent = customAgents.value.find((a: any) => a.id === currentReleaseAgentId.value)
+  return agent?.short_name ?? null
+})
+
+const agentChanged = computed(() => {
+  return !!(previousAgent.value && currentAgentShortName.value && previousAgent.value !== currentAgentShortName.value)
+})
+
 const hasArrivalNotification = computed(() => {
   if (!props.reference.arrival_notys) return false
   return props.reference.arrival_notys.length > 0
@@ -211,9 +242,8 @@ const isLiverpoolMbl = computed(() => {
 })
 
 const showAgentChangeDialog = ref(false)
-const showAgentChangeWarning = ref(false)
-const willChangeAgent = ref(false)
 const skipAgentChangeCharge = ref(false)
+const refreshAuthReqs = ref(false)
 
 const canSkipAgentChangeCharge = computed(() => {
   // Check if user has the specific permission (directly or via role)
@@ -229,47 +259,34 @@ const refresh = () => {
   emits('updateReference')
 }
 
-const onClickRedoRevalidation = () => {
+const onClickRedoRevalidation = async () => {
+  await loadAgentContext()
   showAgentChangeDialog.value = true
-  showAgentChangeWarning.value = false
-  willChangeAgent.value = false
   skipAgentChangeCharge.value = false
 }
 
 const cancelRedoRevalidation = () => {
   showAgentChangeDialog.value = false
-  showAgentChangeWarning.value = false
-  willChangeAgent.value = false
   skipAgentChangeCharge.value = false
-}
-
-const confirmNoAgentChange = () => {
-  willChangeAgent.value = false
-  executeRedoRevalidation()
-}
-
-const confirmAgentChange = () => {
-  willChangeAgent.value = true
-  showAgentChangeWarning.value = true
 }
 
 const executeRedoRevalidation = async () => {
   try {
     loadingStore.loading = true
     const response = await $api.referencias.redoRevalidation(props.reference.id, {
-      will_change_agent: willChangeAgent.value,
       skip_agent_change_charge: skipAgentChangeCharge.value,
     })
     showAgentChangeDialog.value = false
-    showAgentChangeWarning.value = false
 
-    if (willChangeAgent.value) {
-      if (response?.agent_change_charge_created) {
+    const { agent_changed, agent_change_charge_created, agent_change_charge_skipped } = response as any
+
+    if (agent_changed) {
+      if (agent_change_charge_created) {
         snackbar.add({
           type: 'warning',
           text: 'The customs agent change has been registered. The corresponding charge will be generated.',
         })
-      } else if (response?.agent_change_charge_skipped) {
+      } else if (agent_change_charge_skipped) {
         snackbar.add({
           type: 'info',
           text: 'The customs agent change has been registered without generating the additional charge (supervisor override).',
@@ -280,10 +297,45 @@ const executeRedoRevalidation = async () => {
     emits('updateReference')
   } catch (e) {
     console.error(e)
+    const { isValidationError, bag } = useApiError(e as any)
+    if (isValidationError && bag.authorization && bag.authorization.length > 0) {
+      snackbar.add({
+        type: 'error',
+        text: String(
+          bag.authorization[0] ?? 'Authorization is required to skip the customs agent change charge.',
+        ),
+      })
+    } else {
+      snackbar.add({ type: 'error', text: 'Error while redoing revalidation.' })
+    }
   } finally {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
   }
 }
+
+const loadAgentContext = async () => {
+  try {
+    loadingStore.loading = true
+    const [checklist, release, agents] = await Promise.all([
+      $api.referencias.getChecklistRevalidation(props.reference.id),
+      $api.referencias.getSeaImportReleaseInfo(props.reference.id),
+      $api.customAgents.getAll(),
+    ])
+    previousAgent.value = (checklist as any)?.agente_aduanal ?? null
+    currentReleaseAgentId.value = (release as any)?.release_agent_id ?? null
+    customAgents.value = agents as any[]
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+onMounted(async () => {
+  await loadAgentContext()
+})
 </script>

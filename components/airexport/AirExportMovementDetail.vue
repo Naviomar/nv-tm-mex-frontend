@@ -255,9 +255,19 @@ const props = defineProps({
 const showInfo = ref(true)
 
 const creditExpirationDate = computed(() => {
-  if (!props.airReference.credit_days) return ''
-  const expirationDate = new Date(props.airReference.created_at)
-  expirationDate.setDate(expirationDate.getDate() + props.airReference.credit_days)
+  const ref = props.airReference as any
+  if (!ref) return ''
+
+  const creditDays = ref.credit_days || 0
+  if (!creditDays) return ''
+
+  const lastTransit = (ref.transits || []).slice(-1)[0]
+  const baseDateString = lastTransit?.arrival_date || ref.created_at
+
+  if (!baseDateString) return ''
+
+  const expirationDate = new Date(baseDateString)
+  expirationDate.setDate(expirationDate.getDate() + creditDays)
   return formatDateOnlyString(expirationDate)
 })
 

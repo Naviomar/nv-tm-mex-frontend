@@ -7,6 +7,7 @@ const permissions = {
   SeaExportProfit: 'export-maritime-profit',
   SupportRequestAssit: 'support_request.assist',
   DemurragesUpdateSellRates: 'demurrages-sell-update-rates',
+  SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
 }
 
 const authorizeResources = {
@@ -49,7 +50,12 @@ const authorizeResources = {
     resource: 'cancel-customer-credit-note',
     description: 'Cancel Customer Credit Note',
     redirect: null,
-  }
+  },
+  RevalidationSkipAgentChangeCharge: {
+    resource: 'sea-import-revalidation-skip-agent-change-charge',
+    description: 'Skip customs agent change charge on sea import revalidation',
+    redirect: null,
+  },
 }
 
 const systemLayouts = {

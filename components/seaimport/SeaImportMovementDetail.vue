@@ -27,7 +27,9 @@
               <div>Executive</div>
               <div>{{ referencia.executive?.name }}</div>
               <div>Credit days</div>
-              <div>{{ referencia.credit_days }}</div>
+              <div>{{ referencia.credit_days || 0 }} days</div>
+              <div>Credit expiration date</div>
+              <div>{{ creditExpirationDate }}</div>
               <div>Line</div>
               <div>{{ referencia.line?.commercial_name }}</div>
               <div>Vessel departure</div>
@@ -348,5 +350,26 @@ const referenciaTotal = computed(() => {
   }, 0)
 
   return charges + sellCharges + demurrageCharges
+})
+
+const creditExpirationDate = computed(() => {
+  const ref = props.referencia as any
+  if (!ref) return ''
+
+  const creditDays = ref.credit_days || 0
+  if (!creditDays) return ''
+
+  if (ref.credit_due_date) {
+    return formatDateOnlyString(ref.credit_due_date)
+  }
+
+  const baseDateString =
+    ref.voyage_discharge?.eta_date || ref.eta_date || ref.created_at
+
+  if (!baseDateString) return ''
+
+  const expirationDate = new Date(baseDateString)
+  expirationDate.setDate(expirationDate.getDate() + creditDays)
+  return formatDateOnlyString(expirationDate)
 })
 </script>

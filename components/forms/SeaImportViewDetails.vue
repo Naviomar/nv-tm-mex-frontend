@@ -354,9 +354,26 @@ const getData = async () => {
 await getData()
 
 const creditExpirationDate = computed(() => {
-  if (!referencia.value?.credit_days) return ''
-  const expirationDate = new Date(referencia.value.created_at)
-  expirationDate.setDate(expirationDate.getDate() + referencia.value.credit_days)
+  if (!referencia.value) return ''
+
+  const creditDays = referencia.value.credit_days || 0
+  if (!creditDays) return ''
+
+  // 1) Si backend ya calculó credit_due_date, usarlo directo
+  if (referencia.value.credit_due_date) {
+    return formatDateOnlyString(referencia.value.credit_due_date)
+  }
+
+  // 2) Si no, replicar la lógica del backend:
+  //    Para mar: ETA (voyage_discharge.eta_date o referencia.eta_date) + días de crédito,
+  //    con fallback a created_at si tampoco hay ETA.
+  const baseDateString =
+    referencia.value.voyage_discharge?.eta_date || referencia.value.eta_date || referencia.value.created_at
+
+  if (!baseDateString) return ''
+
+  const expirationDate = new Date(baseDateString)
+  expirationDate.setDate(expirationDate.getDate() + creditDays)
   return formatDateOnlyString(expirationDate)
 })
 
