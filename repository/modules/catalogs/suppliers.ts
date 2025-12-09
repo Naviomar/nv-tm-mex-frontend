@@ -220,6 +220,13 @@ class SuppliersModule extends FetchFactory<any> {
     return this.call('DELETE', `${this.RESOURCE}/cfdis/${id}/delete-note`, fetchOptions)
   }
 
+  async toggleFreeFormat(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/cfdis/${id}/toggle-free-format`, fetchOptions)
+  }
 
 }
 

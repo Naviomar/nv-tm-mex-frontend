@@ -65,6 +65,23 @@
             <v-text-field v-model="filters.endDate" density="compact" label="End date" type="date" />
           </v-col>
 
+          <v-col cols="12">
+            <v-btn-toggle v-model="filters.isFreeFormat" mandatory color="deep-purple" class="mb-2">
+              <v-btn :value="false">
+                <v-icon left>mdi-link</v-icon>
+                Facturas con Referencias
+              </v-btn>
+              <v-btn :value="true">
+                <v-icon left>mdi-tag-outline</v-icon>
+                Formato Libre
+              </v-btn>
+            </v-btn-toggle>
+            <div v-if="filters.isFreeFormat" class="text-sm text-purple-600 dark:text-purple-300">
+              <v-icon size="small">mdi-information</v-icon>
+              Las facturas de formato libre no tienen desglose a referencias y se pagan directamente.
+            </div>
+          </v-col>
+
           <v-col cols="12" md="4">
             <v-btn color="primary" size="small" @click="onClickSearch">Search</v-btn>
           </v-col>
@@ -85,6 +102,10 @@
           </div>
 
           <div class="font-bold text-lg"><span class="text-lg">1️⃣</span> Search results:</div>
+          <v-alert v-if="filters.isFreeFormat" type="info" variant="tonal" color="deep-purple" density="compact" class="mb-2">
+            <v-icon>mdi-tag-outline</v-icon>
+            Mostrando facturas de <strong>Formato Libre</strong> - Se pagarán directamente sin desglose a referencias.
+          </v-alert>
           <v-table density="compact">
             <thead>
               <tr>
@@ -105,7 +126,10 @@
                 <td>
                   {{ supCfdi.requested_payment ? 'Yes' : 'No' }}
                 </td>
-                <td>{{ supCfdi.serie }}{{ supCfdi.folio }}</td>
+                <td>
+                  {{ supCfdi.serie }}{{ supCfdi.folio }}
+                  <v-chip v-if="supCfdi.is_free_format" color="deep-purple" size="x-small" class="ml-1">Libre</v-chip>
+                </td>
                 <td>{{ supCfdi.supplier?.name }}</td>
                 <td>{{ supCfdi.tipo_comprobante }}</td>
                 <td>{{ formatDateOnlyString(supCfdi.invoice_date) }}</td>
@@ -281,6 +305,7 @@ const filters = reactive<any>({
   startDate: null,
   endDate: null,
   folios: [],
+  isFreeFormat: false,
 })
 
 const formReq = ref<any>({
@@ -347,15 +372,23 @@ const unselectAllCfdis = () => {
 }
 
 const getTotalAmount = (supCfdi: any) => {
-  let total = supCfdi.invoices.reduce((acc: number, invoice: any) => {
-    return (
-      acc +
-      parseFloat(invoice.amount) +
-      parseFloat(invoice.amount_iva) -
-      parseFloat(invoice.amount_ret_iva) -
-      parseFloat(invoice.amount_ret_isr)
-    )
-  }, 0)
+  let total = 0
+
+  // Para formato libre, usar el monto total del CFDI directamente
+  if (filters.isFreeFormat || supCfdi.is_free_format) {
+    total = parseFloat(supCfdi.amount_cfdi) || 0
+  } else {
+    // Para facturas con referencias, calcular desde los invoices
+    total = supCfdi.invoices?.reduce((acc: number, invoice: any) => {
+      return (
+        acc +
+        parseFloat(invoice.amount) +
+        parseFloat(invoice.amount_iva) -
+        parseFloat(invoice.amount_ret_iva) -
+        parseFloat(invoice.amount_ret_isr)
+      )
+    }, 0) || 0
+  }
 
   // if supCfdi.tipoComprobante === 'E' return as negative
   if (supCfdi.tipo_comprobante === 'E') {
@@ -395,6 +428,7 @@ const onClickSearch = async () => {
       startDate: filters.startDate,
       endDate: filters.endDate,
       currency_id: filters.currencyId,
+      is_free_format: filters.isFreeFormat,
     }
     const response = await $api.suppliers.requestPaymentSearchInvoices(body)
     supplierCfdis.value = response
@@ -457,6 +491,7 @@ const onClickGenerateReq = async () => {
       notes: formReq.value.notes,
       origin_bank_id: formReq.value.origin_bank.id,
       supplier_bank_id: formReq.value.supplier_bank.id,
+      is_free_format: filters.isFreeFormat,
       supplierCfdis: supplierCfdis.value
         .filter((supCfdi) => supCfdi.selected)
         .map((cfdi) => ({
