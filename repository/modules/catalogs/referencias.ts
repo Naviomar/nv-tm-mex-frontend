@@ -442,6 +442,10 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/delete-reference`, fetchOptions)
   }
 
+  async deleteReferenceExport(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/delete-reference`, fetchOptions)
+  }
+
   async getSeaServiceCustomerInvoices(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-service/${id}/customer-invoices`, fetchOptions)
   }
