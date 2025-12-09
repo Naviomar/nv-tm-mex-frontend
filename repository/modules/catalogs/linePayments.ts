@@ -125,6 +125,12 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/remove-attachment`, fetchOptions)
   }
 
+  // --- NUEVO MÉTODO AGREGADO ---
+  async delete(id: string | number, fetchOptions?: FetchOptions) {
+    // Ajusta la URL si tu backend usa otra ruta, por ejemplo: `${this.RESOURCE}/${id}`
+    return this.call('DELETE', `${this.RESOURCE}/invoices/${id}`, fetchOptions)
+  }
+
 
 }
 

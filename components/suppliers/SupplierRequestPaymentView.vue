@@ -46,9 +46,15 @@
                 <v-btn color="primary" size="small" @click="previewReqPdf">View PDF</v-btn>
                 <v-btn color="purple" size="small" @click="showSendByEmail">Send by email</v-btn>
                 <ReqSupplierPaymentAttachments :sup-req-payment="supReqPayment" />
-                <v-btn v-if="!isUSD" color="indigo" size="small" @click="showUpdateExchangeRate"
-                  >Update exchange rate</v-btn
+                
+                <v-btn 
+                  v-if="!isUSD && !hasInvoiceAmountPaid" 
+                  color="indigo" 
+                  size="small" 
+                  @click="showUpdateExchangeRate"
                 >
+                  Update exchange rate
+                </v-btn>
               </div>
             </v-card-text>
           </v-card>
@@ -57,16 +63,28 @@
             <v-card-title>
               <div class="flex items-center gap-2">
                 <div>
-                  <v-btn color="primary" variant="outlined" size="small" @click="showEditBankInfo"
-                    ><v-icon class="cursor-pointer">
-                      {{ formEditBank.show ? 'mdi-close' : 'mdi-pencil-outline' }}
-                    </v-icon></v-btn
+                  <v-btn 
+                    v-if="!hasInvoiceAmountPaid"
+                    color="primary" 
+                    variant="outlined" 
+                    size="small" 
+                    @click="showEditBankInfo"
                   >
+                    <v-icon class="cursor-pointer">
+                      {{ formEditBank.show ? 'mdi-close' : 'mdi-pencil-outline' }}
+                    </v-icon>
+                  </v-btn>
                 </div>
                 <div>Beneficiary Bank</div>
               </div>
             </v-card-title>
             <v-card-text>
+              <div v-if="hasInvoiceAmountPaid" class="mb-4">
+                <v-alert type="warning" variant="tonal" density="compact">
+                  <div class="font-bold">This request payment has payments, you cannot modify bank info.</div>
+                </v-alert>
+              </div>
+
               <div v-if="formEditBank.show">
                 <VeeForm
                   @submit="onSaveBankInfoClick"
@@ -129,6 +147,7 @@
             </v-card-text>
           </v-card>
         </div>
+
         <div class="grid grid-cols-1 gap-4 mb-4">
           <div>
             <v-card>
@@ -137,11 +156,15 @@
                 <v-alert type="info" variant="tonal">
                   <div v-html="formattedNotes"></div>
 
-                  <v-btn v-if="supReqPayment.deleted_at == null" size="small" color="blue" @click="toggleEditNotes">{{
-                    isEditingNotes ? 'Cancel' : 'Edit Notes'
-                  }}</v-btn>
+                  <v-btn 
+                    v-if="supReqPayment.deleted_at == null && !hasInvoiceAmountPaid" 
+                    size="small" 
+                    color="blue" 
+                    @click="toggleEditNotes"
+                  >
+                    {{ isEditingNotes ? 'Cancel' : 'Edit Notes' }}
+                  </v-btn>
 
-                  <!-- Textarea and Save Button -->
                   <div v-if="isEditingNotes">
                     <v-textarea v-model="supReqPayment.notes" :rows="3" placeholder="Enter your notes here..." />
                     <v-btn color="purple" @click="saveNotes">Save changes</v-btn>
@@ -152,9 +175,9 @@
           </div>
           <div></div>
         </div>
+
         <div class="grid grid-cols-1 gap-4 mb-4">
           <div class="font-bold">Linked advance payments</div>
-          <!-- TODO Poder quitar los anticipos con su payment para poder cancelar la solicitud. -->
           <v-table v-if="!isDeleted" density="compact">
             <thead>
               <tr>
@@ -194,11 +217,13 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4">
+          
           <div v-if="hasInvoiceAmountPaid">
             <v-alert type="warning" variant="tonal" density="compact">
               <div class="font-bold">This request payment has payments, you cannot modify invoices.</div>
             </v-alert>
           </div>
+          
           <div v-if="!hasInvoiceAmountPaid">
             <SupplierReqPayAddInvoice :supReqPayment="supReqPayment" @addInvoice="addToSupReqPayment" />
           </div>
@@ -237,9 +262,7 @@
                     </template>
                   </ProcessAuthorizationWrapper>
                 </td>
-                <td>
-                  {{ invoice.cfdi?.serie_folio }}
-                </td>
+                <td>{{ invoice.cfdi?.serie_folio }}</td>
                 <td>{{ invoice.referenceable?.reference_number }}</td>
                 <td>{{ invoice.chargeable?.name }}</td>
                 <td>{{ formatToCurrency(invoice.amount) }}</td>
@@ -293,6 +316,7 @@
         </div>
       </v-card-text>
     </v-card>
+
     <v-dialog v-model="showPdfDialog" fullscreen>
       <v-card>
         <v-toolbar color="primary">
@@ -307,6 +331,7 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+
     <v-dialog v-model="formSendEmail.show" max-width="600">
       <v-card>
         <v-card-title>
@@ -349,6 +374,7 @@
     </v-dialog>
   </div>
 </template>
+
 <script setup lang="ts">
 import { schemaBankInfo } from '~~/forms/supplierReqPaymentsForm'
 import VeeForm from '@/components/global/VeeForm.vue'
@@ -400,6 +426,14 @@ const exchangeRate = computed(() => {
 
 const isUSD = computed(() => {
   return supReqPayment.value.currency_id === 2
+})
+
+// MODIFICADO: Computada robusta para saber si ya hay pagos
+const hasInvoiceAmountPaid = computed(() => {
+  return (
+    (supReqPayment.value.invoice?.amount_paid && parseFloat(supReqPayment.value.invoice?.amount_paid) > 0) ||
+    supReqPayment.value.invoice?.is_paid === 1
+  )
 })
 
 const showSendByEmail = () => {
@@ -460,10 +494,6 @@ const getUsdAmount = computed(() => {
 
 const isDeleted = computed(() => {
   return supReqPayment.value.deleted_at != null
-})
-
-const hasInvoiceAmountPaid = computed(() => {
-  return supReqPayment.value.invoice?.amount_paid > 0
 })
 
 const formattedNotes = computed(() => {
