@@ -289,16 +289,6 @@
           <div v-if="formCharge.show" class="py-4 px-2">
             <div class="font-bold text-lg">Charge form</div>
             <div class="grid grid-cols-4 gap-2">
-              <div class="col-span-2">
-                <v-autocomplete
-                  v-model="formCharge.charge.charge_id"
-                  density="compact"
-                  :items="catalogs.charges"
-                  item-title="name"
-                  item-value="id"
-                  label="Charge *"
-                />
-              </div>
               <div>
                 <v-autocomplete
                   v-model="formCharge.charge.inv_type"
@@ -307,6 +297,20 @@
                   item-title="name"
                   item-value="value"
                   label="Type *"
+                  @update:model-value="onInvoiceTypeChangeMain"
+                />
+              </div>
+              <div class="col-span-2">
+                <v-autocomplete
+                  v-model="formCharge.charge.charge_id"
+                  density="compact"
+                  :items="filteredChargesMain"
+                  item-title="name"
+                  item-value="id"
+                  label="Charge *"
+                  :disabled="!formCharge.charge.inv_type"
+                  :hint="chargeFilterHintMain"
+                  persistent-hint
                 />
               </div>
               <div>
@@ -811,6 +815,34 @@ const showSellBreakdown = ref(false)
 
 const hasCharges = computed(() => fueraAwbCharges.value.length > 0)
 const fueraAwbCharges = computed(() => charges.value.filter((charge) => charge.fuera_dentro_awb === 'F'))
+
+// Filtrar charges según el tipo de factura seleccionado (TM/WM)
+// TM: solo charges con clave SAT (code no nulo)
+// WM: todos los charges
+const filteredChargesMain = computed(() => {
+  if (!catalogs.value?.charges) return []
+  
+  if (formCharge.value.charge.inv_type === 'tm') {
+    return catalogs.value.charges.filter((c: any) => c.code && c.code.trim() !== '')
+  }
+  return catalogs.value.charges
+})
+
+const chargeFilterHintMain = computed(() => {
+  if (formCharge.value.charge.inv_type === 'tm') {
+    return `Only charges with SAT key (${filteredChargesMain.value.length} available)`
+  }
+  return ''
+})
+
+const onInvoiceTypeChangeMain = (value: any) => {
+  if (formCharge.value.charge.charge_id) {
+    const chargeStillValid = filteredChargesMain.value.some((c: any) => c.id === formCharge.value.charge.charge_id)
+    if (!chargeStillValid) {
+      formCharge.value.charge.charge_id = null
+    }
+  }
+}
 
 const labelSaveCharge = computed(() => (formCharge.value.charge.id ? 'Update charge' : 'Save charge'))
 
