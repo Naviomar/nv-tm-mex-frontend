@@ -1,13 +1,23 @@
 <template>
   <div>
     <!-- Toggle Button -->
-    <v-btn class="mb-4" color="primary" size="x-small" @click="toggleOnlineUsers">
-      {{ showOnlineUsers ? 'Hide Online Users' : 'Show Online Users' }}
+    <v-btn
+      class="mb-4 btn-online-toggle"
+      color="primary"
+      variant="tonal"
+      size="small"
+      :prepend-icon="showOnlineUsers ? 'mdi-account-multiple-minus-outline' : 'mdi-account-multiple-outline'"
+      @click="toggleOnlineUsers"
+    >
+      {{
+        (showOnlineUsers ? 'Hide Online Users' : 'Show Online Users') +
+        (onlineUsers ? ` (${onlineUsers})` : '')
+      }}
     </v-btn>
 
     <!-- Online Users Section -->
     <v-expand-transition>
-      <div v-if="showOnlineUsers">
+      <div v-if="showOnlineUsers" class="mx-4 mb-4">
         <p class="text-xs text-gray-500 dark:text-white">Online Users: {{ onlineUsers }}</p>
         <ul>
           <li v-for="user in users" :key="user.id" class="text-sm text-gray-700 dark:text-white">
@@ -203,3 +213,13 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.btn-online-toggle {
+  border-radius: 9999px;
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 12px 16px 8px;
+}
+</style>

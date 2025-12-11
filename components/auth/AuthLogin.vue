@@ -168,21 +168,24 @@ onMounted(async () => {
 .theme-light {
     --bg-gradient: linear-gradient(180deg, #F9FAFB 0%, #E5E7EB 100%);
     --card-bg: #FFFFFF;
-    
+
     /* Variable NUEVA: Borde visible solo en modo claro */
     --card-border: rgba(0,0,0,0.08);
 
-    --text-title: #000000;
+    /* Azul corporativo basado en el logo de Transporte Multimodal */
+    --brand-primary: #1C2A7A;
+
+    --text-title: #1C2A7A;
     --text-subtitle: rgba(0, 0, 0, 0.6);
-    --text-label: #111827;
+    --text-label: #1C2A7A;
     --input-bg: #F3F4F6;
     --input-focus-bg: #FFFFFF;
     --input-border: rgba(0,0,0,0.08);
-    --input-text: #111827;
+    --input-text: #1C2A7A;
     --input-placeholder: #9CA3AF;
-    --input-focus-border: #2E4053;
-    --link-color: #1565C0; 
-    --btn-bg: #2E4053;
+    --input-focus-border: var(--brand-primary);
+    --link-color: var(--brand-primary);
+    --btn-bg: var(--brand-primary);
     --btn-text: #FFFFFF;
     --shadow-color: rgba(0, 0, 0, 0.05);
     --icon-color: #6B7280;
@@ -196,6 +199,9 @@ onMounted(async () => {
     /* Variable NUEVA: Borde transparente (sin marco negro) */
     --card-border: transparent;
 
+    /* Azul corporativo reutilizado también en modo oscuro */
+    --brand-primary: #415eff;
+
     --text-title: #FFFFFF;
     --text-subtitle: #B0B0B0;
     --text-label: #E0E0E0;
@@ -204,9 +210,9 @@ onMounted(async () => {
     --input-border: #4D4D4D;
     --input-text: #FFFFFF;
     --input-placeholder: #909090;
-    --input-focus-border: #2196F3;
-    --link-color: #64B5F6;
-    --btn-bg: #1976D2; 
+    --input-focus-border: var(--brand-primary);
+    --link-color: var(--brand-primary);
+    --btn-bg: var(--brand-primary); 
     --btn-text: #FFFFFF;
     --shadow-color: rgba(0, 0, 0, 0.4);
     --icon-color: #B0B0B0;
@@ -266,7 +272,7 @@ onMounted(async () => {
 
 .soft-input :deep(.v-field--focused) {
   background-color: var(--input-focus-bg) !important;
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(28, 42, 122, 0.25) !important;
 }
 
 .soft-input :deep(.v-field--focused .v-field__outline) {
