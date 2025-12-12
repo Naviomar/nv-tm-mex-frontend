@@ -72,6 +72,7 @@ import MaritimeDemurragesModule from '~/repository/modules/catalogs/maritimeDemu
 import MaritimeDetentionsModule from '~/repository/modules/catalogs/maritimeDetentions'
 import DepartmentsModule from '~/repository/modules/catalogs/departments'
 import MailNotificationsModule from '~/repository/modules/catalogs/mailNotifications'
+import MailNotificationGroupsModule from '~/repository/modules/catalogs/mailNotificationGroups'
 import ServicePrintsModule from '~/repository/modules/catalogs/servicePrints'
 import ServiceChargeLogsModule from '~/repository/modules/catalogs/serviceChargeLogs'
 import SeaTrackingModule from '~/repository/modules/catalogs/seaTrackings'
@@ -159,6 +160,7 @@ interface IApiInstance {
   maritimeDetentions: MaritimeDetentionsModule
   departments: DepartmentsModule
   mailNotifications: MailNotificationsModule
+  mailNotificationGroups: MailNotificationGroupsModule
   servicePrints: ServicePrintsModule
   serviceChargeLogs: ServiceChargeLogsModule
   seaTrackings: SeaTrackingModule
@@ -247,6 +249,7 @@ export function useApiFactory() {
     maritimeDetentions: new MaritimeDetentionsModule(client),
     departments: new DepartmentsModule(client),
     mailNotifications: new MailNotificationsModule(client),
+    mailNotificationGroups: new MailNotificationGroupsModule(client),
     servicePrints: new ServicePrintsModule(client),
     serviceChargeLogs: new ServiceChargeLogsModule(client),
     seaTrackings: new SeaTrackingModule(client),

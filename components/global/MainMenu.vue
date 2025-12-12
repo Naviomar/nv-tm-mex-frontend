@@ -131,6 +131,11 @@
         prepend-icon="mdi-email-outline"
         to="/system/mail-notifications"
       ></v-list-item>
+      <v-list-item
+        title="Mail notification groups"
+        prepend-icon="mdi-email-multiple-outline"
+        to="/system/mail-notification-groups"
+      ></v-list-item>
       <v-list-item title="Support tickets" prepend-icon="mdi-ticket-outline" to="/system/support-tickets"></v-list-item>
       <v-list-item title="Audit" prepend-icon="mdi-history" to="/system/audit-log"></v-list-item>
       <v-list-item title="Wiki" prepend-icon="mdi-book-outline" to="/wiki"></v-list-item>

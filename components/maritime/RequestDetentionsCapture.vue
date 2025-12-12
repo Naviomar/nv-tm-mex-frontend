@@ -141,6 +141,25 @@
             />
           </div>
 
+          <div class="grid grid-cols-1 gap-2 mt-4">
+            <v-text-field
+              v-model="reqForm.notification_emails"
+              label="Notification emails (comma separated)"
+              density="compact"
+              hint="Emails to notify when request is created. Leave empty to skip notification."
+              persistent-hint
+            />
+            <v-alert
+              v-if="reqForm.notification_emails"
+              type="info"
+              density="compact"
+              variant="outlined"
+            >
+              An automatic email with the request and Excel file will be sent to these addresses when you create the
+              request.
+            </v-alert>
+          </div>
+
           <div class="grid grid-cols-2 gap-2 mb-4">
             <div v-if="reqForm.origin_bank" class="">
               <v-card>
@@ -224,6 +243,7 @@ const reqForm = ref<any>({
   serie: null,
   folio: null,
   invoice_date: null,
+  notification_emails: '',
 })
 
 const refContainers = ref<any>([])
@@ -382,7 +402,13 @@ const requestPayDetention = async () => {
     }
     const response = (await $api.maritimeDetentions.requestDetentionPayment(body)) as any
 
-    snackbar.add({ type: 'success', text: 'Request payment detentions created' })
+    const sentEmails = !!reqForm.value.notification_emails
+    snackbar.add({
+      type: 'success',
+      text: sentEmails
+        ? 'Request payment detentions created and notification email sent.'
+        : 'Request payment detentions created.',
+    })
     refContainers.value = []
     router.push(`/invoices/search/lines/detentions/req-pay-view-${response.id}`)
   } catch (e) {

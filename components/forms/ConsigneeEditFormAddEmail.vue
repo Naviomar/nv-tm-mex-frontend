@@ -17,6 +17,37 @@
           <InputText name="email" density="compact" label="Email" />
         </div>
         <div class="col-span-2">
+          <InputText name="notes" density="compact" label="Notes (optional)" />
+        </div>
+        <!-- Group Selection -->
+        <div class="col-span-2">
+          <v-autocomplete
+            v-model="selectedGroups"
+            :items="notificationGroups"
+            item-title="name"
+            item-value="id"
+            label="Select notification groups (optional)"
+            density="compact"
+            variant="outlined"
+            clearable
+            multiple
+            chips
+            closable-chips
+            return-object
+            hide-details
+            @update:model-value="applyGroupNotifications"
+          >
+            <template v-slot:item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template v-slot:subtitle>
+                  {{ item.raw.mail_notifications?.length || 0 }} notifications
+                </template>
+              </v-list-item>
+            </template>
+          </v-autocomplete>
+          <p class="text-gray-500 text-xs mt-1">Selecting groups will pre-select notifications from all of them</p>
+        </div>
+        <div class="col-span-2">
           <InputAutocomplete
             name="mail_notifications"
             label="Notification type"
@@ -65,6 +96,7 @@
           <tr>
             <th class="text-left">Actions</th>
             <th class="text-left">Email</th>
+            <th class="text-left">Notes</th>
             <th class="text-left">Noty Type(s)</th>
           </tr>
         </thead>
@@ -93,6 +125,9 @@
             </td>
             <td>{{ item.email }}</td>
             <td>
+              <span class="text-sm text-gray-600">{{ item.notes || '-' }}</span>
+            </td>
+            <td>
               <div class="overflow-y-auto max-h-32 my-2 border">
                 <div v-for="(mailNoty, index) in item.mail_notifications" :key="`email-mail-noti-${index}`">
                   <span class="font-bold">{{ mailNoty.pivot.type }}</span
@@ -118,12 +153,59 @@ const props = defineProps(['emails', 'catalogs', 'id'])
 const emit = defineEmits(['refresh'])
 
 const showForm = ref(false)
+const selectedGroups = ref<any[]>([])
+const notificationGroups = ref<any[]>([])
 
-const { handleSubmit, values, setValues, resetForm } = useForm({
+// Load notification groups
+const loadNotificationGroups = async () => {
+  try {
+    const groups = await $api.mailNotificationGroups.getAll('consignee')
+    notificationGroups.value = groups
+  } catch (e) {
+    console.error('Error loading notification groups:', e)
+  }
+}
+
+// Apply group notifications when selected (supports multiple groups)
+const applyGroupNotifications = (groups: any[] | null) => {
+  if (!groups || groups.length === 0) {
+    setValues({
+      ...values,
+      mail_notifications: [],
+    })
+    return
+  }
+
+  const notificationsMap = new Map<number, { id: number; short_name: string; type: string }>()
+
+  groups.forEach((group: any) => {
+    group.mail_notifications?.forEach((noty: any) => {
+      if (!notificationsMap.has(noty.id)) {
+        notificationsMap.set(noty.id, {
+          id: noty.id,
+          short_name: noty.short_name || noty.name?.replace('App\\Mail\\Mexico\\', ''),
+          type: noty.pivot?.default_type || 'TO',
+        })
+      }
+    })
+  })
+
+  setValues({
+    ...values,
+    mail_notifications: Array.from(notificationsMap.values()),
+  })
+}
+
+onMounted(() => {
+  loadNotificationGroups()
+})
+
+const { handleSubmit, values, setValues, resetForm } = useForm<any>({
   validationSchema: schema,
   initialValues: {
     id: null,
     email: '',
+    notes: '',
     mail_notifications: [],
     mail_notification_ids: [],
   },
@@ -133,10 +215,12 @@ const toggle = () => {
   showForm.value = !showForm.value
   // if closed reset form
   if (!showForm.value) {
+    selectedGroups.value = []
     resetForm({
       values: {
         id: null,
         email: '',
+        notes: '',
         mail_notification_ids: [],
       },
     })
@@ -206,20 +290,50 @@ const showConfirmDelete = async (id: any) => {
     }
   }
 }
+// Infer which groups apply to an existing email based on its notifications
+const inferGroupsFromEmail = (item: any) => {
+  if (!notificationGroups.value.length || !item.mail_notifications) {
+    selectedGroups.value = []
+    return
+  }
 
-const modeEdit = (item: any) => {
+  const emailNotyIds = new Set<number>(
+    item.mail_notifications.map((n: any) => n.id),
+  )
+
+  const inferred = notificationGroups.value.filter((group: any) => {
+    const groupNotys = group.mail_notifications || []
+    if (!groupNotys.length) return false
+
+    // Consider the group "applied" if all its notifications are present on the email
+    return groupNotys.every((n: any) => emailNotyIds.has(n.id))
+  })
+
+  selectedGroups.value = inferred
+}
+
+const modeEdit = async (item: any) => {
   console.log(item)
   showForm.value = true
+
+  // Ensure groups are loaded before inferring
+  if (!notificationGroups.value.length) {
+    await loadNotificationGroups()
+  }
+
   setValues({
     id: item.id,
     email: item.email,
-    mail_notification_ids: item.mail_notifications.map((item: any) => item.id),
+    notes: item.notes || '',
+    mail_notification_ids: item.mail_notifications.map((m: any) => m.id),
     mail_notifications: item.mail_notifications.map((notification: any) => ({
       short_name: notification.short_name,
       id: notification.id,
       type: notification.pivot?.type,
     })),
   })
+
+  inferGroupsFromEmail(item)
 }
 
 const save = handleSubmit(onSuccess, onInvalidSubmit)

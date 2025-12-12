@@ -29,7 +29,11 @@
           <v-btn v-else variant="text" icon="mdi-message-fast-outline" @click.stop="toggleChatDrawer" />
         </v-app-bar>
 
-        <NavRightDrawer :show="drawerRight" @new-message="showNewMessage = $event" />
+        <NavRightDrawer
+          :show="drawerRight"
+          @new-message="showNewMessage = $event"
+          @close="drawerRight = false"
+        />
         <v-navigation-drawer v-model="drawer" rail expand-on-hover class="group">
           <MainMenu />
         </v-navigation-drawer>

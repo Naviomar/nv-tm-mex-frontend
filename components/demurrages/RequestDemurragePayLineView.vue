@@ -377,7 +377,7 @@
         <v-card-title>Send notification to pay</v-card-title>
         <v-card-text>
           <div class="grid grid-cols-1 gap-4">
-            <v-text-field v-if="false" v-model="sendForm.emails" label="Emails" density="compact" />
+            <v-text-field v-model="sendForm.emails" label="Emails (comma separated)" density="compact" hint="Shipping line email addresses" persistent-hint />
             <v-textarea v-model="sendForm.body" label="Additional comments" density="compact" hide-details />
             <v-alert density="compact" type="info">
               If request and invoices match will be sent a notification to pay. And a invoice will be generated to pay.
