@@ -526,10 +526,6 @@ const isDeleted = computed(() => {
   return supReqPayment.value.deleted_at != null
 })
 
-const hasInvoiceAmountPaid = computed(() => {
-  return supReqPayment.value.invoice?.amount_paid > 0
-})
-
 // Computed properties para anticipos aplicados
 const totalAdvancesApplied = computed(() => {
   if (!supReqPayment.value.pay_advances?.length) return 0
