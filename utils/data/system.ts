@@ -7,6 +7,10 @@ const permissions = {
   SeaExportProfit: 'export-maritime-profit',
   SupportRequestAssit: 'support_request.assist',
   DemurragesUpdateSellRates: 'demurrages-sell-update-rates',
+  DemurragesRateOverrideView: 'demurrages-rate-override-view',
+  DemurragesRateOverrideCreate: 'demurrages-rate-override-create',
+  DemurragesRateOverrideEdit: 'demurrages-rate-override-edit',
+  DemurragesRateOverrideDelete: 'demurrages-rate-override-delete',
   SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
 }
 

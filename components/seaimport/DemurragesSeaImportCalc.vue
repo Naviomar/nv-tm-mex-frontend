@@ -466,6 +466,13 @@
             </v-card-text>
           </v-card>
 
+          <!-- Rate Overrides Section -->
+          <ReferenceRateOverrideManager
+            :referencia-id="props.id"
+            :active-override="referencia.rate_override"
+            @refresh="getReferencia(props.id)"
+          />
+
           <v-card class="mb-4">
             <v-card-title>
               <div class="flex items-center gap-2">

@@ -132,6 +132,31 @@ class DemurragesModule extends FetchFactory<any> {
   async syncFreeDaysFromConfig(id: string, fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/sync-free-days`, fetchOptions)
   }
+
+  // Rate Overrides
+  async getRateOverrides(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-import-references/${id}/rate-overrides`, fetchOptions)
+  }
+
+  async createRateOverride(id: string, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/rate-overrides`, fetchOptions)
+  }
+
+  async updateRateOverride(id: string, overrideId: string, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/rate-overrides/${overrideId}/update`, fetchOptions)
+  }
+
+  async deleteRateOverride(id: string, overrideId: string, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/sea-import-references/${id}/rate-overrides/${overrideId}`, fetchOptions)
+  }
 }
 
 export default DemurragesModule
