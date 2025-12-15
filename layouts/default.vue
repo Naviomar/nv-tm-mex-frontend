@@ -49,6 +49,15 @@
               <SystemVersion />
             </div>
             <SupportAssist />
+            <v-btn
+              v-if="showRepositionDraggable"
+              size="small"
+              color="primary"
+              variant="tonal"
+              icon="mdi-target"
+              title="Recentrar panel flotante"
+              @click="repositionDraggable"
+            />
             <SupportDial />
           </div>
         </v-footer>
@@ -69,11 +78,42 @@ const appName = computed(() => config.public.appName)
 const drawer = ref(true)
 const drawerRight = ref(false)
 const showNewMessage = ref(false)
+const showRepositionDraggable = ref(false)
 
 const toggleChatDrawer = () => {
   drawerRight.value = !drawerRight.value
   showNewMessage.value = false // clear badge when user toggles chat
 }
+
+const repositionDraggable = () => {
+  if (import.meta.client) {
+    window.dispatchEvent(new CustomEvent('nv-tm:draggable-reposition'))
+  }
+}
+
+const DRAGGABLE_COUNT_KEY = '__nv_tm_draggable_count__'
+
+const updateRepositionVisibility = (count: number) => {
+  showRepositionDraggable.value = count > 0
+}
+
+const onDraggablePresence = (event: Event) => {
+  const anyEvent = event as any
+  updateRepositionVisibility(Number(anyEvent?.detail?.count ?? 0))
+}
+
+onMounted(() => {
+  if (!import.meta.client) return
+
+  const w = window as any
+  updateRepositionVisibility(Number(w[DRAGGABLE_COUNT_KEY] ?? 0))
+  window.addEventListener('nv-tm:draggable-presence', onDraggablePresence)
+})
+
+onBeforeUnmount(() => {
+  if (!import.meta.client) return
+  window.removeEventListener('nv-tm:draggable-presence', onDraggablePresence)
+})
 
 const goToHome = () => {
   router.push('/')
