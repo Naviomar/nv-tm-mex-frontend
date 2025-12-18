@@ -515,9 +515,11 @@ const exportToExcel = async () => {
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
+    const today = new Date();
+    const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
-    link.download = `export-invoices-tm-${Date.now()}.xlsx`
+    link.download = `export-invoices-tm-${currentDate}.xlsx`
     link.click()
   } catch (e) {
     console.error(e)
