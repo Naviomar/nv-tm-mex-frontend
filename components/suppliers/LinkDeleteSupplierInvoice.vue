@@ -105,16 +105,17 @@ const linkInvoice = async () => {
     form.serie = null
     form.deletedInvoice = null
 
+    snackbar.add({ type: 'success', text: 'Invoice linked successfully' })
     emit('refresh')
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
+    const errorMsg = error?.response?.data?.message || error?.message || 'Error linking invoice'
+    snackbar.add({ type: 'error', text: errorMsg })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
   }
-
-  emit('refresh')
 }
 
 const unlinkInvoice = async () => {
