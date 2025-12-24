@@ -4,7 +4,7 @@
       class="transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving"
     >
       <div class="">
-        <h5 class="font-semibold leading-none text-center">{{ label }}</h5>
+        <h5 class="font-semibold leading-none text-center" v-if="!hasPendingRequest && !hasGrantedRequest">{{ label }}</h5>
       </div>
 
       <div class="pt-0">
