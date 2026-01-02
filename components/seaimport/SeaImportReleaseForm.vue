@@ -196,8 +196,18 @@ const loadPreviousAgent = async () => {
     loadingStore.start()
     const response = await $api.referencias.getChecklistRevalidation(props.referenceId)
     previousAgent.value = (response as any)?.agente_aduanal ?? null
+    
+    // Debug log
+    console.log('🔍 Release Form - Previous Agent Loaded:', {
+      referenceId: props.referenceId,
+      previousAgent: previousAgent.value,
+      currentAgentId: form.value?.release_agent_id,
+      currentAgentShortName: currentAgentShortName.value,
+      agentChanged: agentChanged.value,
+      canSkipAgentChangeCharge: canSkipAgentChangeCharge.value,
+    })
   } catch (e) {
-    console.error(e)
+    console.error('❌ Error loading previous agent:', e)
   } finally {
     setTimeout(() => {
       loadingStore.stop()
