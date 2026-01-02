@@ -20,6 +20,9 @@
 
           <UserInfoNav path="/profile" />
 
+          <!-- Alerts Button -->
+          <AlertsButton />
+
           <!-- Chat Button with Badge -->
           <v-badge v-if="showNewMessage" color="red" content="!" overlap offset-x="8" offset-y="8">
             <v-btn variant="text" icon="mdi-message-fast-outline" @click.stop="toggleChatDrawer" />
@@ -34,6 +37,7 @@
           @new-message="showNewMessage = $event"
           @close="drawerRight = false"
         />
+        <AlertsDrawer />
         <v-navigation-drawer v-model="drawer" rail expand-on-hover class="group">
           <MainMenu />
         </v-navigation-drawer>
@@ -72,6 +76,7 @@
 const darkMode = useDarkMode()
 const config = useRuntimeConfig()
 const router = useRouter()
+const { connect: connectAlertsSocket, disconnect: disconnectAlertsSocket } = useAlertsSocket()
 
 const currentYear = computed(() => new Date().getFullYear())
 const appName = computed(() => config.public.appName)
@@ -108,11 +113,17 @@ onMounted(() => {
   const w = window as any
   updateRepositionVisibility(Number(w[DRAGGABLE_COUNT_KEY] ?? 0))
   window.addEventListener('nv-tm:draggable-presence', onDraggablePresence)
+  
+  // Connect to alerts socket
+  connectAlertsSocket()
 })
 
 onBeforeUnmount(() => {
   if (!import.meta.client) return
   window.removeEventListener('nv-tm:draggable-presence', onDraggablePresence)
+  
+  // Disconnect alerts socket
+  disconnectAlertsSocket()
 })
 
 const goToHome = () => {
