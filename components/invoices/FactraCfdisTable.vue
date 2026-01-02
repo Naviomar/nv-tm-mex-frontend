@@ -262,7 +262,7 @@
             <tbody>
               <tr
                 v-for="(cfdi, index) in supplierCfdis.data"
-                :key="`supplier-cfdi-${index}`"
+                :key="`supplier-cfdi-${cfdi.id}`"
                 :class="columnClass(cfdi)"
               >
                 <td>

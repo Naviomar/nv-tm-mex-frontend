@@ -112,24 +112,39 @@
               </v-alert>
             </div>
 
-            <div v-if="supplierCfdi.is_free_format && !supplierCfdi.requested_payment" class="mb-4">
-              <v-alert type="warning" variant="tonal" density="compact" color="deep-purple">
-                <div class="flex items-center justify-between">
+            <!-- Alerta informativa cuando está marcado como formato libre (sin botón) -->
+            <div v-if="supplierCfdi.is_free_format && !canRevertFreeFormat" class="mb-4">
+              <v-alert type="info" variant="tonal" density="compact" color="deep-purple">
+                <div class="flex items-center gap-2">
+                  <v-icon>mdi-tag-outline</v-icon>
                   <div>
                     <div class="font-bold">Este CFDI está marcado como Formato Libre</div>
                     <div class="text-sm">
                       Puede crear una solicitud de pago directamente sin desglosar conceptos.
                     </div>
                   </div>
+                </div>
+              </v-alert>
+            </div>
+
+            <!-- Opción para revertir formato libre (solo si tiene permiso) -->
+            <div v-if="canRevertFreeFormat" class="mb-4">
+              <v-alert type="warning" variant="tonal" density="compact">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-bold">Revertir formato libre</div>
+                    <div class="text-sm">
+                      Esta factura está marcada como formato libre. Puedes revertirla a formato normal.
+                    </div>
+                  </div>
                   <v-btn
-                    color="grey"
+                    color="orange"
                     size="small"
-                    variant="outlined"
                     @click="toggleFreeFormat(false)"
                     :loading="loadingFreeFormat"
                   >
-                    <v-icon left>mdi-tag-off-outline</v-icon>
-                    Desmarcar
+                    <v-icon left>mdi-undo</v-icon>
+                    Revertir a Normal
                   </v-btn>
                 </div>
               </v-alert>
@@ -169,6 +184,119 @@
 
             <div class="mb-4">
               <SupplierCfdiNotesForm :supplierCfdi="supplierCfdi" />
+            </div>
+
+            <!-- Sección de cargos manuales para formato libre -->
+            <div v-if="supplierCfdi.is_free_format" class="mb-4">
+              <v-card color="deep-purple-lighten-5" class="dark:bg-deep-purple-darken-4">
+                <v-card-title class="font-bold">
+                  <v-icon>mdi-tag-outline</v-icon>
+                  Cargos de Formato Libre
+                </v-card-title>
+                <v-card-text>
+                  <!-- Lista de cargos existentes -->
+                  <div v-if="supplierCfdi.cfdi_charges?.length > 0" class="mb-4">
+                    <v-table density="compact">
+                      <thead>
+                        <tr>
+                          <th>Acciones</th>
+                          <th>Concepto</th>
+                          <th>Monto</th>
+                          <th>Notas</th>
+                          <th>Creado por</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="charge in supplierCfdi.cfdi_charges" :key="charge.id">
+                          <td>
+                            <v-btn
+                              icon="mdi-pencil"
+                              size="x-small"
+                              color="primary"
+                              variant="tonal"
+                              @click="editCfdiCharge(charge)"
+                              class="mr-1"
+                            />
+                            <v-btn
+                              icon="mdi-delete"
+                              size="x-small"
+                              color="error"
+                              variant="tonal"
+                              @click="confirmDeleteCfdiCharge(charge)"
+                            />
+                          </td>
+                          <td>{{ charge.charge?.name || 'Sin concepto' }}</td>
+                          <td>{{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(charge.amount) }}</td>
+                          <td class="text-xs">{{ charge.notes }}</td>
+                          <td>{{ charge.creator?.name }}</td>
+                        </tr>
+                      </tbody>
+                    </v-table>
+                  </div>
+
+                  <!-- Formulario para agregar/editar cargo -->
+                  <div class="bg-white dark:bg-grey-darken-4 p-4 rounded">
+                    <div class="font-bold mb-2">{{ editingCharge ? 'Editar Cargo' : 'Agregar Nuevo Cargo' }}</div>
+                    <v-row>
+                      <v-col cols="12" md="4">
+                        <v-autocomplete
+                          v-model="newCfdiCharge.charge_id"
+                          :items="catalogs.free_format_charges || []"
+                          item-title="name"
+                          item-value="id"
+                          label="Concepto (opcional)"
+                          density="compact"
+                          clearable
+                        />
+                      </v-col>
+                      <v-col cols="12" md="3">
+                        <v-text-field
+                          v-model.number="newCfdiCharge.amount"
+                          type="number"
+                          label="Monto *"
+                          density="compact"
+                          :error-messages="chargeErrors.amount"
+                        />
+                      </v-col>
+                      <v-col cols="12" md="5">
+                        <v-textarea
+                          v-model="newCfdiCharge.notes"
+                          label="Notas (obligatorio) *"
+                          density="compact"
+                          rows="2"
+                          :error-messages="chargeErrors.notes"
+                        />
+                      </v-col>
+                    </v-row>
+                    <div class="flex gap-2">
+                      <v-btn
+                        color="deep-purple"
+                        size="small"
+                        @click="saveCfdiCharge"
+                        :loading="loadingCharge"
+                      >
+                        <v-icon left>{{ editingCharge ? 'mdi-content-save' : 'mdi-plus' }}</v-icon>
+                        {{ editingCharge ? 'Guardar Cambios' : 'Agregar Cargo' }}
+                      </v-btn>
+                      <v-btn
+                        v-if="editingCharge"
+                        color="grey"
+                        size="small"
+                        variant="outlined"
+                        @click="cancelEditCharge"
+                      >
+                        Cancelar
+                      </v-btn>
+                    </div>
+                  </div>
+
+                  <v-alert v-if="!supplierCfdi.requested_payment" type="info" density="compact" class="mt-4">
+                    <div class="text-sm">
+                      <strong>Importante:</strong> Las notas son obligatorias. El concepto es opcional para facturas de formato libre.
+                    </div>
+                  </v-alert>
+                </v-card-text>
+              </v-card>
             </div>
 
             <div>
@@ -447,6 +575,7 @@
 </template>
 <script setup lang="ts">
 import { currencies } from '~/utils/data/systemData'
+import { permissions } from '~/utils/data/system'
 const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
@@ -454,6 +583,7 @@ const loadingStore = useLoadingStore()
 const router = useRouter()
 const darkMode = useDarkMode()
 const supplierProvision = useSupplierProvisionStore()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -494,6 +624,19 @@ const calcIvaMode = ref<'masIva' | 'sinIva'>('masIva')
 const calcMonto = ref<number>(0)
 const showCalc = ref<boolean>(true)
 const loadingFreeFormat = ref<boolean>(false)
+const loadingCharge = ref<boolean>(false)
+const editingCharge = ref<any>(null)
+
+const newCfdiCharge = ref<any>({
+  charge_id: null,
+  amount: 0,
+  notes: '',
+})
+
+const chargeErrors = ref<any>({
+  amount: [],
+  notes: [],
+})
 
 const calcMontoSinIva = computed(() => {
   if (calcIvaMode.value === 'masIva') {
@@ -610,11 +753,22 @@ const canMarkAsFreeFormat = computed(() => {
   // 2. No está ya marcado como formato libre
   // 3. Es un CFDI de tipo ingreso (I) o egreso (E)
   // 4. No está eliminado
+  // 5. El usuario tiene el permiso correspondiente
   return (
+    hasPermission(permissions.MarkSupplierCfdiAsFreeFormat) &&
     !supplierCfdi.value.is_free_format &&
     supplierCfdi.value.invoices?.length === 0 &&
     (supplierCfdi.value.tipo_comprobante === 'I' || supplierCfdi.value.tipo_comprobante === 'E') &&
     !supplierCfdi.value.deleted_at
+  )
+})
+
+// Computed para verificar si se puede revertir formato libre
+const canRevertFreeFormat = computed(() => {
+  return (
+    hasPermission(permissions.RevertSupplierCfdiFromFreeFormat) &&
+    supplierCfdi.value.is_free_format &&
+    !supplierCfdi.value.requested_payment
   )
 })
 
@@ -784,6 +938,114 @@ const toggleFreeFormat = async (isFreeFormat: boolean) => {
     snackbar.add({ type: 'error', text: e?.response?.data?.message || 'Error al actualizar el formato' })
   } finally {
     loadingFreeFormat.value = false
+  }
+}
+
+const validateCfdiCharge = () => {
+  chargeErrors.value = { amount: [], notes: [] }
+  let isValid = true
+
+  if (!newCfdiCharge.value.notes || newCfdiCharge.value.notes.trim() === '') {
+    chargeErrors.value.notes.push('Las notas son obligatorias')
+    isValid = false
+  }
+
+  if (!newCfdiCharge.value.amount || newCfdiCharge.value.amount <= 0) {
+    chargeErrors.value.amount.push('El monto debe ser mayor a 0')
+    isValid = false
+  }
+
+  return isValid
+}
+
+const saveCfdiCharge = async () => {
+  if (!validateCfdiCharge()) {
+    return
+  }
+
+  try {
+    loadingCharge.value = true
+    const body = {
+      charge_id: newCfdiCharge.value.charge_id,
+      amount: newCfdiCharge.value.amount,
+      currency_id: supplierCfdi.value.currency_id,
+      notes: newCfdiCharge.value.notes,
+    }
+
+    if (editingCharge.value) {
+      await $api.suppliers.updateCfdiCharge(supplierCfdi.value.id, editingCharge.value.id, body)
+      snackbar.add({ type: 'success', text: 'Cargo actualizado correctamente' })
+    } else {
+      await $api.suppliers.addCfdiCharge(supplierCfdi.value.id, body)
+      snackbar.add({ type: 'success', text: 'Cargo agregado correctamente' })
+    }
+
+    newCfdiCharge.value = {
+      charge_id: null,
+      amount: 0,
+      notes: '',
+    }
+    editingCharge.value = null
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.response?.data?.message || 'Error al guardar el cargo' })
+  } finally {
+    loadingCharge.value = false
+  }
+}
+
+const editCfdiCharge = (charge: any) => {
+  editingCharge.value = charge
+  newCfdiCharge.value = {
+    charge_id: charge.charge_id,
+    amount: charge.amount,
+    notes: charge.notes,
+  }
+}
+
+const cancelEditCharge = () => {
+  editingCharge.value = null
+  newCfdiCharge.value = {
+    charge_id: null,
+    amount: 0,
+    notes: '',
+  }
+  chargeErrors.value = { amount: [], notes: [] }
+}
+
+const confirmDeleteCfdiCharge = async (charge: any) => {
+  const result = await confirm({
+    title: '¿Estás seguro?',
+    confirmationText: 'Sí, eliminar',
+    content: '¿Deseas eliminar este cargo?',
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'error',
+    },
+  })
+
+  if (result) {
+    await deleteCfdiCharge(charge)
+  }
+}
+
+const deleteCfdiCharge = async (charge: any) => {
+  try {
+    loadingStore.start()
+    await $api.suppliers.deleteCfdiCharge(supplierCfdi.value.id, charge.id)
+    snackbar.add({ type: 'success', text: 'Cargo eliminado correctamente' })
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.response?.data?.message || 'Error al eliminar el cargo' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
   }
 }
 
