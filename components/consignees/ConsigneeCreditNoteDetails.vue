@@ -359,7 +359,7 @@ const creditNoteInvoice = computed(() => {
     return ''
   }
   const invMorphType = getInvoiceType(creditNote.value?.invoice)
-  return `${invMorphType} #${creditNote.value?.invoice?.invoiceable_id} related to credit note`
+  return `${invMorphType} #${creditNote.value?.invoice?.invoice_number} related to credit note`
 })
 
 const referenciaNumber = computed(() => {
