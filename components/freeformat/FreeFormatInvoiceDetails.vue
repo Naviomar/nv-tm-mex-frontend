@@ -57,7 +57,7 @@
               >
               <v-btn v-if="isProforma" color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
 
-              <FreeFormatCreditNoteForm :partyInvoice="partyInvoice" @refresh="getData" />
+              <FreeFormatCreditNoteForm :partyInvoice="partyInvoice" @refresh="getData" v-if="!isCancelled && !isProforma" />
             </div>
 
             <div v-if="!isCancelled && !isProforma" class="flex">
