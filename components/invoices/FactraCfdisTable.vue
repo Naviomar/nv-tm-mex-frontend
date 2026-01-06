@@ -249,6 +249,7 @@
                     </template>
                   </v-tooltip>
                 </th>
+                <th class="text-left">Estatus SAT</th>
                 <th class="text-left">Total CFDI</th>
                 <th class="text-left">Provisioned</th>
                 <th class="text-left">Concepts</th>
@@ -261,7 +262,7 @@
             <tbody>
               <tr
                 v-for="(cfdi, index) in supplierCfdis.data"
-                :key="`supplier-cfdi-${index}`"
+                :key="`supplier-cfdi-${cfdi.id}`"
                 :class="columnClass(cfdi)"
               >
                 <td>
@@ -365,6 +366,10 @@
                   >
                     {{ cfdi.tipo_comprobante_name }}
                   </v-chip>
+                </td>
+                <td>
+                  <SatValidationStatus v-if="cfdi.uuid" :key="`sat-${cfdi.id}-${cfdi.sat_validated_at}`" :supplierCfdi="cfdi" :showValidateButton="false" />
+                  <v-chip v-else color="grey" size="small" variant="tonal">N/A</v-chip>
                 </td>
                 <td class="whitespace-nowrap">
                   {{ formatToCurrency(cfdi.amount_cfdi) }} {{ getCurrencyName(cfdi.currency_id) }}

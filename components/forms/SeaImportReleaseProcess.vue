@@ -326,8 +326,19 @@ const loadAgentContext = async () => {
     previousAgent.value = (checklist as any)?.agente_aduanal ?? null
     currentReleaseAgentId.value = (release as any)?.release_agent_id ?? null
     customAgents.value = agents as any[]
+
+    // Debug logs
+    console.log('🔍 Agent Context Loaded:', {
+      referenceId: props.reference.id,
+      previousAgent: previousAgent.value,
+      currentReleaseAgentId: currentReleaseAgentId.value,
+      currentAgentShortName: currentAgentShortName.value,
+      agentChanged: agentChanged.value,
+      canSkipAgentChangeCharge: canSkipAgentChangeCharge.value,
+      customAgentsCount: customAgents.value.length,
+    })
   } catch (e) {
-    console.error(e)
+    console.error('❌ Error loading agent context:', e)
   } finally {
     setTimeout(() => {
       loadingStore.stop()

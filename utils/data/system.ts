@@ -12,6 +12,8 @@ const permissions = {
   DemurragesRateOverrideEdit: 'demurrages-rate-override-edit',
   DemurragesRateOverrideDelete: 'demurrages-rate-override-delete',
   SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
+  MarkSupplierCfdiAsFreeFormat: 'mark-supplier-cfdi-as-free-format',
+  RevertSupplierCfdiFromFreeFormat: 'revert-supplier-cfdi-from-free-format',
 }
 
 const authorizeResources = {
