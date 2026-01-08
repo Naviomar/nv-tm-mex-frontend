@@ -263,14 +263,14 @@
                     </span>
                   </template>
                   <span>
-                    <b>Profit</b> is calculated by adding and subtracting the following concepts:<br />
+                    <b>Operational Profit</b> includes:<br />
                     <ul style="padding-left: 1em">
                       <li><b>+ Total sell</b></li>
                       <li><b>+ Credit notes</b></li>
                       <li><b>+ Debit notes</b></li>
                       <li><b>- Warranty deposit</b></li>
-                      <li><b>- Supplier invoice</b></li>
-                      <li><b>- Total buy</b></li>
+                      <li><b>- Supplier invoice</b> (Real costs)</li>
+                      <li><b>- Pending buy</b> (Estimated remaining costs)</li>
                       <li><b>- Rebate</b></li>
                     </ul>
                     <br />
@@ -348,8 +348,8 @@
                       <li><b>+ Credit notes</b></li>
                       <li><b>+ Debit notes</b></li>
                       <li><b>- Warranty deposit</b></li>
-                      <li><b>- Supplier invoice</b></li>
-                      <li><b>- Total buy</b> (only if there is <b>no</b> Supplier invoice)</li>
+                      <li><b>- Supplier invoice</b> (Real costs)</li>
+                      <li><b>- Pending buy</b> (Estimated remaining costs)</li>
                       <li><b>- Rebate</b></li>
                     </ul>
                     <b>Demurrages Profit</b> includes:<br />
@@ -362,11 +362,13 @@
                     <b>Logic details:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        If there <b>is a Supplier invoice</b>: those invoices are used as the real cost and
-                        <b>Total buy is not deducted</b> to avoid subtracting the purchase twice.
+                        Costs are calculated per concept. We use the <b>Supplier invoice</b> amount if it exists.
                       </li>
                       <li>
-                        If there <b>is no Supplier invoice</b>: <b>Total buy</b> is used as the estimated purchase cost.
+                        If the <b>Supplier invoice</b> amount is less than the <b>Estimated buy</b>, we also deduct the difference (Total buy) to account for expected costs.
+                      </li>
+                      <li>
+                        If there is no <b>Supplier invoice</b> for a concept, the full <b>Estimated buy</b> is deducted.
                       </li>
                     </ul>
                     <br />
@@ -377,8 +379,7 @@
                     </code>
                     <br />
                     <span>
-                      Note: in this formula, <b>Total buy</b> is only deducted when there is <b>no</b> Supplier invoice;
-                      if there is a Supplier invoice, that term is not applied to avoid subtracting the purchase twice.
+                      Note: <b>Total buy</b> is adjusted to avoid double counting with <b>Supplier invoices</b>, while ensuring all estimated costs are considered per concept.
                     </span>
                   </span>
                 </v-tooltip>
@@ -410,24 +411,18 @@ const props = defineProps({
 
 const getDemurragesBuy = computed(() => {
   return (profitSeaImportRef.value.referencia?.demurrages || []).reduce((acc: any, demurrage: any) => {
-    if (acc[2]) {
-      acc[2] += parseFloat(demurrage.line_cost || 0)
-    } else {
-      acc[2] = parseFloat(demurrage.line_cost || 0)
-    }
+    const amount = parseFloat(demurrage.line_cost || 0)
+    acc[2] = (acc[2] || 0) + amount
     return acc
-  }, {})
+  }, { 2: 0 })
 })
 
 const getDemurragesBuyIva = computed(() => {
   return (profitSeaImportRef.value.referencia?.demurrages || []).reduce((acc: any, demurrage: any) => {
-    if (acc[2]) {
-      acc[2] += parseFloat(demurrage.line_iva || 0)
-    } else {
-      acc[2] = parseFloat(demurrage.line_iva || 0)
-    }
+    const amount = parseFloat(demurrage.line_iva || 0)
+    acc[2] = (acc[2] || 0) + amount
     return acc
-  }, {})
+  }, { 2: 0 })
 })
 
 const getDemurragesBuyTotal = computed(() => {
@@ -439,24 +434,18 @@ const getDemurragesBuyTotal = computed(() => {
 
 const getDemurragesSell = computed(() => {
   return (profitSeaImportRef.value.referencia?.demurrages || []).reduce((acc: any, demurrage: any) => {
-    if (acc[2]) {
-      acc[2] += parseFloat(demurrage.amount || 0)
-    } else {
-      acc[2] = parseFloat(demurrage.amount || 0)
-    }
+    const amount = parseFloat(demurrage.amount || 0)
+    acc[2] = (acc[2] || 0) + amount
     return acc
-  }, {})
+  }, { 2: 0 })
 })
 
 const getDemurragesSellIva = computed(() => {
   return (profitSeaImportRef.value.referencia?.demurrages || []).reduce((acc: any, demurrage: any) => {
-    if (acc[2]) {
-      acc[2] += parseFloat(demurrage.amount_iva || 0)
-    } else {
-      acc[2] = parseFloat(demurrage.amount_iva || 0)
-    }
+    const amount = parseFloat(demurrage.amount_iva || 0)
+    acc[2] = (acc[2] || 0) + amount
     return acc
-  }, {})
+  }, { 2: 0 })
 })
 
 const getDemurragesSellTotal = computed(() => {
@@ -488,48 +477,39 @@ const getDemurragesProfitTotal = computed(() => {
 })
 
 const getCreditFfNotes = computed(() => {
-  return (profitSeaImportRef.value.referencia?.ff_notes || []).reduce((acc: any, ffNote: any) => {
+  const ffNotes = profitSeaImportRef.value.referencia?.ff_notes || []
+  const totals: Record<number, number> = {}
+  
+  ffNotes.forEach((ffNote: any) => {
+    const currencyId = ffNote.currency_id
+    if (!currencyId) return
+    
+    const amount = parseFloat(ffNote.signed_amount) || 0
     // Agente Credito y TM Debito (positivo)
     // inbound = 1 From Agent, if not From TM
-    if (ffNote.inbound === 1 && ffNote.type === 'C') {
-      if (acc[ffNote.currency_id]) {
-        acc[ffNote.currency_id] += parseFloat(ffNote.signed_amount)
-      } else {
-        acc[ffNote.currency_id] = parseFloat(ffNote.signed_amount)
-      }
+    if ((ffNote.inbound === 1 && ffNote.type === 'C') || (ffNote.inbound === 0 && ffNote.type === 'D')) {
+      totals[currencyId] = (totals[currencyId] || 0) + amount
     }
-    if (ffNote.inbound === 0 && ffNote.type === 'D') {
-      if (acc[ffNote.currency_id]) {
-        acc[ffNote.currency_id] += parseFloat(ffNote.signed_amount)
-      } else {
-        acc[ffNote.currency_id] = parseFloat(ffNote.signed_amount)
-      }
-    }
-    return acc
-  }, {})
+  })
+  return totals
 })
 
 const getDebitFfNotes = computed(() => {
-  return (profitSeaImportRef.value.referencia?.ff_notes || []).reduce((acc: any, ffNote: any) => {
+  const ffNotes = profitSeaImportRef.value.referencia?.ff_notes || []
+  const totals: Record<number, number> = {}
+  
+  ffNotes.forEach((ffNote: any) => {
+    const currencyId = ffNote.currency_id
+    if (!currencyId) return
+    
+    const amount = parseFloat(ffNote.signed_amount) || 0
     // Credito TM y Agente Debito (negativo)
     // inbound = 1 From Agent, if not From TM
-    if (ffNote.inbound === 1 && ffNote.type === 'D') {
-      if (acc[ffNote.currency_id]) {
-        acc[ffNote.currency_id] += parseFloat(ffNote.signed_amount)
-      } else {
-        acc[ffNote.currency_id] = parseFloat(ffNote.signed_amount)
-      }
+    if ((ffNote.inbound === 1 && ffNote.type === 'D') || (ffNote.inbound === 0 && ffNote.type === 'C')) {
+      totals[currencyId] = (totals[currencyId] || 0) + amount
     }
-
-    if (ffNote.inbound === 0 && ffNote.type === 'C') {
-      if (acc[ffNote.currency_id]) {
-        acc[ffNote.currency_id] += parseFloat(ffNote.signed_amount)
-      } else {
-        acc[ffNote.currency_id] = parseFloat(ffNote.signed_amount)
-      }
-    }
-    return acc
-  }, {})
+  })
+  return totals
 })
 
 const getRefMergedCharges = computed(() => {
@@ -694,13 +674,17 @@ const getBuyTotalCollect = computed(() => {
   return totals
 })
 
-const addToTotals = (totals: Record<number, number>, source: Record<number, number>, isMinus = false) => {
+const addToTotals = (totals: Record<number, number>, source: Record<number, number> | null | undefined, isMinus = false) => {
+  if (!source) return totals
   for (const [currencyId, amount] of Object.entries(source)) {
     const numericCurrencyId = Number(currencyId)
+    if (isNaN(numericCurrencyId)) continue
+    
+    const numericAmount = parseFloat(amount as any) || 0
     if (totals[numericCurrencyId]) {
-      totals[numericCurrencyId] += isMinus ? -amount : amount
+      totals[numericCurrencyId] += isMinus ? -numericAmount : numericAmount
     } else {
-      totals[numericCurrencyId] = isMinus ? -amount : amount
+      totals[numericCurrencyId] = isMinus ? -numericAmount : numericAmount
     }
   }
 
@@ -758,12 +742,46 @@ const getProfitSell = computed(() => {
   return totals
 })
 
+const getRemainingBuy = computed(() => {
+  const totals: Record<number, number> = {}
+  const buyBreakdown = profitSeaImportRef.value.referencia?.buy_rate_breakdown || []
+  const supplierInvoices = profitSeaImportRef.value.supplierInvoices || []
+
+  // Group invoices by charge_id and currency_id
+  const invoicedByConcept: Record<string, number> = {}
+  supplierInvoices.forEach((si: any) => {
+    const key = `${si.charge_id}-${si.currency_id}`
+    invoicedByConcept[key] = (invoicedByConcept[key] || 0) + parseFloat(si.amount_total || 0)
+  })
+
+  buyBreakdown.forEach((buyCharge: any) => {
+    const key = `${buyCharge.charge_id}-${buyCharge.currency_id}`
+    const baseAmount = parseFloat(buyCharge.amount || 0)
+    const ivaAmount = buyCharge.is_con_iva === 1 ? baseAmount * 0.16 : 0
+    const buyTotalAmount = baseAmount + ivaAmount
+
+    const invoicedAmount = invoicedByConcept[key] || 0
+
+    if (buyTotalAmount > invoicedAmount) {
+      const remaining = buyTotalAmount - invoicedAmount
+      const currencyId = buyCharge.currency_id
+      if (totals[currencyId]) {
+        totals[currencyId] += remaining
+      } else {
+        totals[currencyId] = remaining
+      }
+    }
+  })
+
+  return totals
+})
+
 const getTotalBuy = computed(() => {
-  // merge getBuyTotalCollect and getBuyTotalPrepaid
+  // merge getBuyTotalCollect and getBuyTotalPrepaid (which already include IVA)
   const totals: Record<number, number> = {}
 
-  addToTotals(totals, getBuyPrepaidConceptsWithinBl.value)
-  addToTotals(totals, getBuyCollectConceptsWithinBl.value)
+  addToTotals(totals, getBuyTotalPrepaid.value)
+  addToTotals(totals, getBuyTotalCollect.value)
 
   return totals
 })
@@ -771,16 +789,12 @@ const getTotalBuy = computed(() => {
 const getTotalProfit = computed(() => {
   const totals: Record<number, number> = {}
 
-  const hasSupplierInvoices = (profitSeaImportRef.value.supplierInvoices || []).length > 0
-
   addToTotals(totals, getProfitSell.value)
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getWarrantyDepositConcepts.value, true)
   addToTotals(totals, getSupplierInvoices.value, true)
-  if (!hasSupplierInvoices) {
-    addToTotals(totals, getTotalBuy.value, true)
-  }
+  addToTotals(totals, getRemainingBuy.value, true)
   addToTotals(totals, getRebate.value, true)
 
   return totals
@@ -881,141 +895,17 @@ const getTotalRefundApplied = computed(() => {
   return totals
 })
 
-const useTotals = () => {
-  // const get
-
-  const getSellCollectConcepts = computed(() => {
-    let sellConcepts = profitSeaImportRef.value.referencia?.charges.filter((x: any) => x.sell_amount != null) || []
-    if (profitSeaImportRef.value.referencia?.sell_ppcc && profitSeaImportRef.value.referencia?.sell_ppcc !== 'C') {
-      sellConcepts = []
-    }
-
-    return sellConcepts.concat(profitSeaImportRef.value.referencia?.charges || [])
-  })
-
-  const getSellLocalCharges = computed(() => {
-    return profitSeaImportRef.value.referencia?.charges || []
-  })
-
-  const getSellCollectConceptsOutBl = computed(() => {
-    let sellConcepts = profitSeaImportRef.value.referencia?.charges
-    if (profitSeaImportRef.value.referencia?.sell_ppcc !== 'Collect') {
-      sellConcepts = []
-    }
-
-    return sellConcepts.concat(
-      profitSeaImportRef.value.referencia?.charges?.filter((c: any) => c.fuera_dentro_bl === 'F') || []
-    )
-  })
-
-  const getSellCollectMxn = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 1
-    return getSellCollectConcepts.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'MXN')!.id) {
-        return acc + parseFloat(concept.amount)
-      }
-      return acc
-    }, 0)
-  })
-
-  const getSellCollectUsd = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 2
-    return getSellCollectConcepts.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'USD')!.id) {
-        return acc + parseFloat(concept.amount)
-      }
-      return acc
-    }, 0)
-  })
-
-  const getSellCollectUsdIVA = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 2
-    return getSellCollectConcepts.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'USD')!.id) {
-        if (concept.is_con_iva) {
-          return acc + parseFloat(concept.amount) * 0.16
-        }
-      }
-      return acc
-    }, 0)
-  })
-
-  const getSellCollectUsdOutBl = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 2
-    return getSellCollectConceptsOutBl.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'USD')!.id) {
-        return acc + parseFloat(concept.amount)
-      }
-      return acc
-    }, 0)
-  })
-
-  const getSellCollectMxnIVA = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 2
-    return getSellCollectConcepts.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'MXN')!.id) {
-        if (concept.is_con_iva) {
-          return acc + parseFloat(concept.amount) * 0.16
-        }
-      }
-      return acc
-    }, 0)
-  })
-
-  const getSellCollectMxnOutnBl = computed(() => {
-    // loop sellCollectConcepts but only with currency_id === 1
-    return getSellCollectConceptsOutBl.value.reduce((acc: any, concept: any) => {
-      if (concept.currency_id === currencies.find((c: any) => c.name === 'MXN')!.id) {
-        return acc + parseFloat(concept.amount)
-      }
-      return acc
-    }, 0)
-  })
-
-  const getDemurragesAmount = computed(() => {
-    return (
-      profitSeaImportRef.value.referencia?.demurrage_charges?.reduce((acc: any, demurrage: any) => {
-        if (demurrage.is_con_iva) {
-          return acc + parseFloat(demurrage.amount) * 1.16
-        }
-      }, 0) || 0
-    )
-  })
-
-  const totalCollectUsd = computed(() => {
-    return getSellCollectUsdOutBl.value + getSellCollectUsdIVA.value + getDemurragesAmount.value
-  })
-
-  const totalCollectMxn = computed(() => {
-    return getSellCollectMxnOutnBl.value + getSellCollectMxnIVA.value
-  })
-
-  return {
-    getSellCollectMxn,
-    getSellCollectUsd,
-
-    getSellCollectUsdOutBl,
-    getSellCollectUsdIVA,
-    totalCollectUsd,
-
-    getSellCollectMxnOutnBl,
-    getSellCollectMxnIVA,
-    totalCollectMxn,
-
-    getDemurragesAmount,
-  }
-}
-
-const totals = useTotals()
-
 const getSupplierInvoices = computed(() => {
-  const supplierInvoices = profitSeaImportRef.value.supplierInvoices
-  console.log(supplierInvoices)
+  const supplierInvoices = profitSeaImportRef.value.supplierInvoices || []
   return supplierInvoices.reduce((acc: any, charge: any) => {
-    if (acc[charge.currency_id]) {
-      acc[charge.currency_id] += parseFloat(charge.amount_total)
+    const currencyId = charge.currency_id
+    if (!currencyId) return acc
+    
+    const amount = parseFloat(charge.amount_total) || 0
+    if (acc[currencyId]) {
+      acc[currencyId] += amount
     } else {
-      acc[charge.currency_id] = parseFloat(charge.amount_total)
+      acc[currencyId] = amount
     }
     return acc
   }, {})
