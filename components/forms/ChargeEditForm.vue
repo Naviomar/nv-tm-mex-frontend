@@ -74,6 +74,10 @@
               <v-checkbox v-model="charge.can_be_deleted" label="Can be deleted?" />
             </div>
 
+            <div>
+              <v-checkbox v-model="charge.is_for_free_format_cfdi" label="Is for Free Format CFDI?" />
+            </div>
+
             <div class="flex justify-center items-center">
               <v-btn class="mr-4" color="secondary" to="/configuration/charges"> Cancel </v-btn>
               <v-btn color="primary" @click="validateBeforeUpdate"> Save changes </v-btn>
@@ -315,6 +319,7 @@ const getData = async () => {
     const response = await $api.charges.getById(props.id)
     charge.value = response
     charge.value.can_be_deleted = charge.value.can_be_deleted === 1
+    charge.value.is_for_free_format_cfdi = charge.value.is_for_free_format_cfdi === 1
     // for each charge.services set update_services with ids
     if (charge.value.services) {
       charge.value.update_services = Array.from(new Set(charge.value.services.map((item: any) => item.id)))

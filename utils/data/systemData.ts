@@ -150,6 +150,11 @@ const chargeEntities = [
     value: 'other',
     name: 'Other',
   },
+  {
+    id: 4,
+    value: 'supplier',
+    name: 'Supplier',
+  },
 ]
 
 const serviceTypes = [

@@ -12,6 +12,7 @@ const schema = toTypedSchema(
     default_amount: yup.number().required('Default amount is required'),
     default_currency_id: yup.string().nullable(),
     can_be_deleted: yup.string(),
+    is_for_free_format_cfdi: yup.boolean(),
   })
 )
 

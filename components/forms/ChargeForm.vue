@@ -60,6 +60,10 @@
           <InputCheckbox name="can_be_deleted" label="Can be deleted?" />
         </div>
 
+        <div>
+          <InputCheckbox name="is_for_free_format_cfdi" label="Is for Free Format CFDI?" />
+        </div>
+
         <div class="flex justify-center items-center">
           <v-btn class="mr-4" color="secondary" to="/configuration/charges"> Cancel </v-btn>
           <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
