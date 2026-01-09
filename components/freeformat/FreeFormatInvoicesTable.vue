@@ -75,6 +75,7 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
       <div class="flex gap-4">
+        <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
         <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
         <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
@@ -465,5 +466,66 @@ const viewInvoice = (invoice: any) => {
     return
   }
   router.push(`/invoices/search/free-format/view-${invoice.id}`)
+}
+
+const exportToExcel = async () => {
+  try {
+    loadingStore.start()
+
+    // Si el filtro es 'nc', buscar notas de crédito directamente
+    const searchingCreditNotes = filters.value.inv_type === 'nc'
+    const queryFiltersNc = { ...filters.value }
+    // Remover inv_type del query si es 'nc' ya que usaremos otro endpoint
+    if (searchingCreditNotes) {
+      delete queryFiltersNc.inv_type
+    }
+
+    console.log("queryFilters::",queryFiltersNc)
+    console.log("searchingCreditNotes:",searchingCreditNotes);
+    if(searchingCreditNotes){
+      console.log('Excel NC')
+      const response = (await $api.freeFormatInvoices.exportInvoicesToExcelNc({
+        query: {
+          ...flattenArraysToCommaSeparatedString(queryFiltersNc),
+        },
+      })) as any
+
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+
+      const today = new Date();
+      const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+      const link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.download = `export-invoices-tmflnc-${currentDate}.xlsx`
+      link.click()
+    }else{
+      const response = (await $api.freeFormatInvoices.exportInvoicesToExcel({
+        query: {
+          ...flattenArraysToCommaSeparatedString(queryFiltersNc),
+        },
+      })) as any
+
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+
+      const today = new Date();
+      const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+      const link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.download = `export-invoices-tmfl-${currentDate}.xlsx`
+      link.click()
+
+    }
+    
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 </script>
