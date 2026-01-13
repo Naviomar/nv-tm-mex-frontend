@@ -7,7 +7,7 @@
           <ACustomerSearch v-model="filters.consigneeId" />
         </div>
         <div>
-          <v-text-field v-model="filters.id" type="text" label="Credit Note #" density="compact" hide-details />
+          <v-text-field v-model="filters.external_folio" type="text" label="Credit Note #" density="compact" hide-details />
         </div>
         <div>
           <v-autocomplete
@@ -26,6 +26,7 @@
         <div><v-text-field v-model="filters.dateTo" type="date" label="Date to" density="compact" hide-details /></div>
       </div>
       <div class="flex gap-2">
+        <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
         <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
         <v-btn color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
@@ -118,7 +119,7 @@
             <td>{{ creditNote.consignee?.name }}</td>
             <td>{{ creditNote.description }}</td>
             <td>{{ getCNInvoiceServices(creditNote) }}</td>
-            <td class="whitespace-nowrap">{{ getInvoiceType(creditNote.invoice) }}</td>
+            <td class="whitespace-nowrap">{{ creditNote.invoice.invoice_number }}</td>
             <td>{{ formatToCurrency(creditNote.amount) }}</td>
             <td>{{ formatToCurrency(creditNote.amount_available) }}</td>
             <td class="whitespace-nowrap">
@@ -156,7 +157,7 @@ const refreshAuthReqs = ref(false)
 const authorizeCancelCN = ref<any>(null)
 
 const filters = ref({
-  id: '',
+  external_folio: '',
   inv_type: null,
   consigneeId: '',
   dateFrom: '',
@@ -184,7 +185,7 @@ const invoiceTypes = [
 const getInvoiceType = (invoice: any) => {
   if (!invoice) return ''
   if (invoice.invoiceable_type?.includes('InvoiceSeaTm')) {
-    return `TM Sea Invoice #${invoice.invoiceable_id}`
+    return `TM Sea Invoice #${invoice.external_folio}`
   }
   if (invoice.invoiceable_type?.includes('InvoiceSeaWm')) {
     return `WM Sea Invoice #${invoice.invoiceable_id}`
@@ -234,7 +235,7 @@ const onClickPagination = async (page: number) => {
 
 const clearFilters = async () => {
   filters.value = {
-    id: '',
+    external_folio: '',
     inv_type: null,
     consigneeId: '',
     dateFrom: '',
@@ -292,6 +293,42 @@ const getData = async () => {
     })) as any
 
     creditNotes.value = response
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const exportToExcel = async () => {
+  try {
+    loadingStore.start()
+
+
+    console.log("queryFilters::",filters.value)
+    
+ 
+    const response = (await $api.consigneeCreditNotes.exportInvoicesToExcel({
+        query: {
+          ...flattenArraysToCommaSeparatedString(filters.value),
+        },
+      })) as any
+
+      const blob = new Blob([response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+
+      const today = new Date();
+      const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+      const link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.download = `export-invoices-tmNc-${currentDate}.xlsx`
+      link.click()
+
+    
+    
   } catch (e) {
     console.error(e)
   } finally {
