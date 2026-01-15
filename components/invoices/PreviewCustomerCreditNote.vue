@@ -57,7 +57,7 @@ const previewInvoice = async () => {
       id: props.id.toString(),
     }
     const response = await $api.consigneeCreditNotes.showPdf(body)
-
+    console.log("-->>",response.value)
     // console.log(data.value)
     const blob = new Blob([response as any], { type: 'application/pdf' })
     const pdfUrl = URL.createObjectURL(blob)

@@ -97,6 +97,10 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/charge/update-cfdi-name`, fetchOptions)
   }
 
+  async exportInvoicesToExcel(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel`, fetchOptions)
+  }
+
 }
 
 export default ConsigneeCreditNotesModule
