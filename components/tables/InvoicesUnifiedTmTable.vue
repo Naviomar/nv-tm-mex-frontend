@@ -105,6 +105,22 @@
             hide-details
           />
         </div>
+<div class="">
+          <v-autocomplete
+            density="compact"
+            label="CFDI linked"
+            v-model="filters.cfdi"
+            :items="[
+              { value: null, name: 'All' },
+              { value: 'pending', name: 'Pending' },
+              { value: 'linked', name: 'Linked' },
+            ]"
+            item-title="name"
+            item-value="value"
+            @keyup.enter="getData"
+            hide-details
+          />
+        </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="">
@@ -141,22 +157,7 @@
           </div>
         </div>
 
-        <div class="">
-          <v-autocomplete
-            density="compact"
-            label="CFDI linked"
-            v-model="filters.cfdi"
-            :items="[
-              { value: null, name: 'All' },
-              { value: 'pending', name: 'Pending' },
-              { value: 'linked', name: 'Linked' },
-            ]"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
-        </div>
+        
       </div>
       <div v-if="filters.referencias.length > 0" class="mb-4">
         <div>Filter by reference(s)</div>
@@ -326,6 +327,8 @@ const initialFilters = {
   multipleid: null as string | null,
   ids: [] as string[],
   masterDocument: '',
+  masterBl: '',
+  masterAwb: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
@@ -373,9 +376,9 @@ const rowClass = (invoice: any) => {
 }
 
 const addFolio = () => {
-  let ids = filters.value.multipleid.split('\n').map((bl: string) => bl.trim())
-  ids = ids.filter((bl: string) => bl.length > 0)
-  filters.value.ids = [...filters.value.ids, ...ids]
+  let ids = filters.value.multipleid?.split('\n').map((bl: string) => bl.trim())
+  ids = ids?.filter((bl: string) => bl.length > 0)
+  filters.value.ids = [...filters.value.ids, ...ids || []]
   filters.value.ids = Array.from(new Set(filters.value.ids))
   filters.value.multipleid = ''
 }
