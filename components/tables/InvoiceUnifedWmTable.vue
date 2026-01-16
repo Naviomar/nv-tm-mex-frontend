@@ -32,6 +32,27 @@
                         </template>
                     </v-text-field>
                 </div>
+                <div>
+                    <AGlobalSearch v-model="filters.consigneeId" :onSearch="searchCustomers" validate-key="consigneeId"
+                        label="Customer" />
+                </div>
+                <div>
+                    <v-text-field v-model="filters.masterDocument" density="compact" type="text"
+                        label="Master BL / Master AWB" />
+                </div>
+                <div class="">
+                    <v-autocomplete density="compact" label="Status" v-model="filters.deleted_status"
+                        :items="deletedStatus" item-title="name" item-value="value" @keyup.enter="getData"
+                        hide-details />
+                </div>
+                <div class="">
+                    <v-autocomplete density="compact" label="Payment status" v-model="filters.paymentStatus" :items="[
+                        { value: 'paid', name: 'Paid' },
+                        { value: 'parcial', name: 'Partial paid' },
+                        { value: 'pending', name: 'Pending' },
+                    ]" item-title="name" item-value="value" @keyup.enter="getData" hide-details />
+                </div>
+
             </div>
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div class="">
@@ -55,37 +76,8 @@
                         </v-chip>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <AGlobalSearch v-model="filters.consigneeId" :onSearch="searchCustomers" validate-key="consigneeId"
-                        label="Customer" />
-                </div>
-                <div>
-                    <v-text-field v-model="filters.masterDocument" density="compact" type="text"
-                        label="Master BL / Master AWB" />
-                </div>
-                <div class="">
-                    <v-autocomplete density="compact" label="Status" v-model="filters.deleted_status"
-                        :items="deletedStatus" item-title="name" item-value="value" @keyup.enter="getData"
-                        hide-details />
-                </div>
-                <div class="">
-                    <v-autocomplete density="compact" label="Payment status" v-model="filters.paymentStatus" :items="[
-                        { value: 'paid', name: 'Paid' },
-                        { value: 'parcial', name: 'Partial paid' },
-                        { value: 'pending', name: 'Pending' },
-                    ]" item-title="name" item-value="value" @keyup.enter="getData" hide-details />
-                </div>
-            </div>
-            <div v-if="filters.referencias.length > 0" class="mb-4">
-                <div>Filter by reference(s)</div>
-                <div class="flex gap-2">
-                    <v-chip v-for="(ref, index) in filters.referencias" :key="`ref-search-${ref}`" closable
-                        @click:close="removeReferencia(index)">
-                        {{ ref }}
-                    </v-chip>
-                </div>
-            </div>
             <div class="flex gap-4">
                 <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
                 <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
@@ -273,10 +265,10 @@ const rowClass = (invoice: any) => {
 }
 
 const addFolio = () => {
-    let ids = filters.value.multipleid.split('\n').map((bl: string) => bl.trim())
+    let ids = filters.value.multipleid?.split('\n').map((bl: string) => bl.trim())
     // remove empty
-    ids = ids.filter((bl: string) => bl.length > 0)
-    filters.value.ids = [...filters.value.ids, ...ids]
+    ids = ids?.filter((bl: string) => bl.length > 0)
+    filters.value.ids = [...filters.value.ids, ...ids || []]
     // unique
     filters.value.ids = Array.from(new Set(filters.value.ids))
     filters.value.multipleid = ''
