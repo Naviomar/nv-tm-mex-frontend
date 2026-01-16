@@ -88,7 +88,7 @@
           <ACustomerSearch v-model="filters.consigneeId" />
         </div>
         <div>
-          <v-text-field v-model="filters.masterAwb" density="compact" type="text" label="Master AWB" />
+          <v-text-field v-model="filters.master" density="compact" type="text" label="Master AWB" />
         </div>
         <div class="">
           <v-autocomplete
@@ -296,7 +296,7 @@ const initialFilters = {
   isProforma: null as number | null,
   multipleid: null as string | null,
   ids: [] as string[],
-  masterAwb: '',
+  master: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',

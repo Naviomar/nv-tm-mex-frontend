@@ -90,7 +90,7 @@
           <ACustomerSearch v-model="filters.consigneeId" />
         </div>
         <div>
-          <v-text-field v-model="filters.masterBl" density="compact" type="text" label="Master BL" />
+          <v-text-field v-model="filters.master" density="compact" type="text" label="Master BL" />
         </div>
         <div class="">
           <v-autocomplete
@@ -302,7 +302,7 @@ const initialFilters = {
   isProforma: null as number | null,
   multipleid: null as string | null,
   ids: [] as string[],
-  masterBl: '',
+  master: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
@@ -515,8 +515,8 @@ const exportToExcel = async () => {
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
-    const today = new Date();
-    const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    const today = new Date()
+    const currentDate = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
     link.download = `export-invoices-tm-${currentDate}.xlsx`

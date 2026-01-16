@@ -1,39 +1,34 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import tailwindcss from '@tailwindcss/vite'
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-
+ 
   devtools: {
-    enabled: process.env.NODE_ENV !== 'production',
-
+    enabled: true,
+ 
     timeline: {
       enabled: true,
     },
   },
-
+ 
   experimental: {
     renderJsonPayloads: false,
-    checkOutdatedBuildInterval: 40000 * 10
   },
-
+ 
   css: [
     '~/assets/css/main.css',
     '@mdi/font/css/materialdesignicons.min.css',
-    // 'vuetify/lib/styles/main.sass',
     '~/assets/scss/styles.scss',
-    '~/assets/css/wiki-prose.css',
   ],
-
+ 
   modules: [
     '@nuxt/content',
     'nuxt-auth-sanctum',
     'nuxt-lodash',
     'nuxt-meilisearch',
-    // '@vite-pwa/nuxt',
     [
       '@pinia/nuxt',
       {
@@ -46,40 +41,11 @@ export default defineNuxtConfig({
     (_options, nuxt) => {
       nuxt.hooks.hook('vite:extendConfig', (config) => {
         // @ts-expect-error
-        config.plugins.push(vuetify({
-          autoImport: true
-        }))
+        config.plugins.push(vuetify({ autoImport: true }))
       })
-    },
-  ],
-
-  pwa: {
-    registerType: 'autoUpdate', // Detecta actualizaciones automáticas
-    workbox: {
-      clientsClaim: true, // Asegura que los nuevos SW se activen de inmediato
-      skipWaiting: true,  // Obliga a que la nueva versión se use de inmediato
-      navigateFallback: '/',
-      navigateFallbackDenylist: [/^\/api\//], // Ignore API routes
-    },
-    manifest: {
-      name: process.env.APP_NAME || 'TM System',
-      short_name: 'Naviomar',
-      theme_color: '#ffffff',
-      icons: [
-        {
-          src: '/tm-logo-black.png',
-          sizes: '192x192',
-          type: 'image/png'
-        },
-        {
-          src: '/tm-logo-black.png',
-          sizes: '512x512',
-          type: 'image/png'
-        }
-      ]
     }
-  },
-
+  ],
+ 
   echo: {
     broadcaster: 'reverb',
     host: process.env.LARAVEL_ECHO_HOST, // Your Laravel Echo server
@@ -91,28 +57,28 @@ export default defineNuxtConfig({
       baseUrl: process.env.API_URL, // Your Laravel app URL
     },
   },
-
+ 
   meilisearch: {
     instantSearch: true,
     hostUrl: process.env.MEILISEARCH_HOST || 'http://127.0.0.1:7700', //required
     searchApiKey: process.env.MEILISEARCH_KEY || '', // required
     serverSideUsage: false
   },
-
+ 
   snackbar: {
     bottom: true,
     right: true,
     duration: 5000
   },
-
+ 
   lodash: {
     prefix: "_",
   },
-
+ 
   veeValidate: {
     autoImports: true,
   },
-
+ 
   sanctum: {
     baseUrl: process.env.API_URL || 'http://localhost:8000',
     endpoints: {
@@ -121,20 +87,27 @@ export default defineNuxtConfig({
       logout: '/logout',
       user: '/user',
     },
+    client: {
+      retry: false,
+    },
+    csrf: {
+      cookie: 'XSRF-TOKEN',
+      header: 'X-XSRF-TOKEN',
+    },
     redirectIfUnauthenticated: true,
     redirect: {
       keepRequestedRoute: true,
       onLogin: '/', // Custom route after successful login
       onAuthOnly: '/system/auth/login',
       onGuestOnly: '/system/auth/login',
-
+ 
     },
     globalMiddleware: {
       enabled: true,
     },
-    logLevel: 0,
+    logLevel: 3,
   },
-
+ 
   imports: {
     presets: [
       {
@@ -143,17 +116,17 @@ export default defineNuxtConfig({
       }
     ]
   },
-
+ 
   components: [
     {
       path: '~/components',
       pathPrefix: false,
     },
   ],
-
+ 
   app: {
     head: {
-      title: process.env.APP_NAME || 'TM System',
+      title: process.env.APP_NAME || 'TMD Chile System',
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon/favicon.ico' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon/favicon-32x32.png' },
@@ -171,27 +144,25 @@ export default defineNuxtConfig({
       ],
     },
   },
-
+ 
   runtimeConfig: {
     public: {
       apiUrl: process.env.API_URL || 'http://localhost:8000/api/v1',
       apiUrlCsrf: process.env.CSRF_API_URL || 'http://localhost:8000/sanctum/csrf-cookie',
-      apiUrlChile: process.env.CHILE_API_URL || 'http://localhost:8000/api/v1',
-      appName: process.env.APP_NAME || 'TM System',
-      appUrl: process.env.APP_URL || 'http://localhost:3000',
+      appName: process.env.APP_NAME || 'Naviomar System',
     },
   },
-
+ 
   postcss: {
     plugins: {
       autoprefixer: {},
     },
   },
-
+ 
   build: {
     transpile: ['vuetify'],
   },
-
+ 
   vite: {
     ssr: {
       noExternal: ['moment-timezone']
@@ -209,9 +180,14 @@ export default defineNuxtConfig({
     },
     define: {
       'process.env.DEBUG': false,
-    }
+    },
   },
-
-
-  compatibilityDate: '2024-07-08',
+ 
+  devServer: {
+    host: 'localhost',
+    port: 3010, // o el puerto que quieras
+    https: false,
+  },
+ 
+  compatibilityDate: '2024-08-31',
 })
