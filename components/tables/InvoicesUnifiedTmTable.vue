@@ -563,14 +563,12 @@ const exportToExcel = async () => {
 }
 
 const prepareFiltersForApi = () => {
-  const apiFilters = { ...filters.value }
+  const { masterDocument, ...apiFilters } = filters.value
   
-  if (filters.value.masterDocument) {
-    apiFilters.masterBl = filters.value.masterDocument
-    apiFilters.masterAwb = filters.value.masterDocument
+  if (masterDocument) {
+    apiFilters.masterBl = masterDocument
+    apiFilters.masterAwb = masterDocument
   }
-  
-  delete apiFilters.masterDocument
   
   return apiFilters
 }
