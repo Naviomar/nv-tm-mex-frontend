@@ -821,6 +821,11 @@ const availableDiscounts = computed(() => {
 
 // Computed para verificar si se requiere autorización para regresar de Total a Parcial
 const requiresRevertToPartialAuth = computed(() => {
+  // Si el usuario tiene el permiso para saltarse la autorización, no mostrar
+  if (hasPermission('maritime-demurrages-bypass-revert-authorization')) {
+    return false
+  }
+  
   // Solo mostrar si el tipo de cálculo seleccionado es Parcial
   if (form.type_calculation !== 'Parcial') {
     return false
