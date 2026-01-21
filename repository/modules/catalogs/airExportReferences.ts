@@ -244,6 +244,22 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/export-report-xlsx`, fetchOptions)
   }
 
+  async printReservation(id: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/print/reservation`, fetchOptions)
+  }
+
+  async previewReservationPdf(id: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/${id}/preview-reservation-pdf`, fetchOptions)
+  }
+
 }
 
 export default AirExportModule

@@ -130,6 +130,14 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/delete-cfdi-link`, fetchOptions)
   }
 
+  async exportInvoicesToExcel(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel`, fetchOptions)
+  }
+
+  async exportInvoicesToExcelNc(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel-nc`, fetchOptions)
+  }
+
 }
 
 export default FreeFormatInvoicesModule

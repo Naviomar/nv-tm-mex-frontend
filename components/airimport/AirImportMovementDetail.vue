@@ -252,6 +252,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+
 const props = defineProps({
   airReference: {
     type: Object,
@@ -259,19 +261,19 @@ const props = defineProps({
   },
 })
 
-const showInfo = ref(true)
+const showInfo = ref<any>(true)
 
 const creditExpirationDate = computed(() => {
-  const refT = props.airReference as any
-  if (!refT) return ''
+  const airRef = props.airReference as any
+  if (!airRef) return ''
 
-  const creditDays = refT.credit_days || 0
+  const creditDays = airRef.credit_days || 0
   if (!creditDays) return ''
 
   // Para aéreo: usar arrival_date del último tránsito + días de crédito,
   // con fallback a created_at si no hay transits.
-  const lastTransit = (refT.transits || []).slice(-1)[0]
-  const baseDateString = lastTransit?.arrival_date || refT.created_at
+  const lastTransit = (airRef.transits || []).slice(-1)[0]
+  const baseDateString = lastTransit?.arrival_date || airRef.created_at
 
   if (!baseDateString) return ''
 
