@@ -5,7 +5,21 @@
       <div class="grid grid-cols-5 gap-5">
         <div><v-text-field v-model="filters.from" density="compact" type="date" label="Date from" /></div>
         <div><v-text-field v-model="filters.to" density="compact" type="date" label="Date to" /></div>
-
+        <div>
+          <v-autocomplete
+            v-model="filters.serviceType"
+            :items="[
+              { id: 'all', value: 'All' },
+              { id: 'sea', value: 'Maritime' },
+              { id: 'air', value: 'Air' },
+            ]"
+            item-title="value"
+            item-value="id"
+            density="compact"
+            label="Service type"
+            @update:model-value="onServiceTypeChange"
+          />
+        </div>
         <div>
           <v-autocomplete
             v-model="filters.isProforma"
@@ -29,6 +43,8 @@
             @keyup.enter="getData"
           />
         </div>
+      </div>
+      <div class="grid grid-cols-5 gap-5">
         <div>
           <v-text-field
             v-model="filters.referencia"
@@ -49,6 +65,61 @@
               />
             </template>
           </v-text-field>
+        </div>
+        <div>
+          <ACustomerSearch v-model="filters.consigneeId" />
+        </div>
+        <div>
+          <v-text-field 
+            v-model="filters.masterDocument" 
+            density="compact" 
+            type="text" 
+            :label="filters.serviceType === 'air' ? 'Master AWB' : 'Master BL'" 
+          />
+        </div>
+        <div class="">
+          <v-autocomplete
+            density="compact"
+            label="Status"
+            v-model="filters.deleted_status"
+            :items="deletedStatus"
+            item-title="name"
+            item-value="value"
+            @keyup.enter="getData"
+            hide-details
+          />
+        </div>
+        <div class="">
+          <v-autocomplete
+            density="compact"
+            label="Payment status"
+            v-model="filters.paymentStatus"
+            :items="[
+              { value: 'paid', name: 'Paid' },
+              { value: 'parcial', name: 'Partial paid' },
+              { value: 'pending', name: 'Pending' },
+            ]"
+            item-title="name"
+            item-value="value"
+            @keyup.enter="getData"
+            hide-details
+          />
+        </div>
+<div class="">
+          <v-autocomplete
+            density="compact"
+            label="CFDI linked"
+            v-model="filters.cfdi"
+            :items="[
+              { value: null, name: 'All' },
+              { value: 'pending', name: 'Pending' },
+              { value: 'linked', name: 'Linked' },
+            ]"
+            item-title="name"
+            item-value="value"
+            @keyup.enter="getData"
+            hide-details
+          />
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -86,56 +157,7 @@
           </div>
         </div>
 
-        <div>
-          <ACustomerSearch v-model="filters.consigneeId" />
-        </div>
-        <div>
-          <v-text-field v-model="filters.master" density="compact" type="text" label="Master BL" />
-        </div>
-        <div class="">
-          <v-autocomplete
-            density="compact"
-            label="Status"
-            v-model="filters.deleted_status"
-            :items="deletedStatus"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
-        </div>
-        <div class="">
-          <v-autocomplete
-            density="compact"
-            label="Payment status"
-            v-model="filters.paymentStatus"
-            :items="[
-              { value: 'paid', name: 'Paid' },
-              { value: 'parcial', name: 'Partial paid' },
-              { value: 'pending', name: 'Pending' },
-            ]"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
-        </div>
-        <div class="">
-          <v-autocomplete
-            density="compact"
-            label="CFDI linked"
-            v-model="filters.cfdi"
-            :items="[
-              { value: null, name: 'All' },
-              { value: 'pending', name: 'Pending' },
-              { value: 'linked', name: 'Linked' },
-            ]"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
-        </div>
+        
       </div>
       <div v-if="filters.referencias.length > 0" class="mb-4">
         <div>Filter by reference(s)</div>
@@ -171,6 +193,7 @@
         <thead>
           <tr>
             <th>Actions</th>
+            <th>Service Type</th>
             <th>Services #</th>
             <th>Status</th>
             <th>Inv. type</th>
@@ -189,8 +212,13 @@
             <td>
               <div class="flex flex-col items-center gap-2">
                 <ViewButton :item="invoiceTm" @click="viewInvoice(invoiceTm)" />
-                <PreviewTmInvoice service="sea" :invoice="invoiceTm" size="small" />
+                <PreviewTmInvoice :service="invoiceTm.service_type || 'sea'" :invoice="invoiceTm" size="small" />
               </div>
+            </td>
+            <td>
+              <v-chip size="small" :color="invoiceTm.service_type === 'air' ? 'blue' : 'cyan'">
+                {{ invoiceTm.service_type === 'air' ? 'Air' : 'Maritime' }}
+              </v-chip>
             </td>
             <td>
               <div v-if="invoiceTm.is_free_format == 1">
@@ -202,9 +230,9 @@
                   :key="`service-${index}`"
                   size="small"
                   color="primary"
-                  @click="viewService(service)"
+                  @click="viewService(service, invoiceTm.service_type)"
                 >
-                  {{ service.referencia?.reference_number }}
+                  {{ getServiceReferenceNumber(service, invoiceTm.service_type) }}
                 </v-chip>
               </div>
             </td>
@@ -289,10 +317,6 @@ const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
-const proformaDialog = ref<any>({ type: null, show: false })
-const pdfViewer = ref<any>(null)
-
-// Initial filter values
 const initialFilters = {
   from: '',
   to: '',
@@ -302,16 +326,18 @@ const initialFilters = {
   isProforma: null as number | null,
   multipleid: null as string | null,
   ids: [] as string[],
-  master: '',
+  masterDocument: '',
+  masterBl: '',
+  masterAwb: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
   deleted_status: '',
   paymentStatus: null as string | null,
   cfdi: null as string | null,
+  serviceType: 'all' as string,
 }
 
-// Use the table filters composable for URL persistence
 const {
   filters,
   currentPage,
@@ -319,7 +345,7 @@ const {
   resetFilters: resetFiltersComposable,
   getFilteredUrl,
 } = useTableFilters(initialFilters, {
-  storageKey: 'invoices-tm-filters',
+  storageKey: 'invoices-unified-tm-filters',
   arrayFields: ['referencias', 'ids'],
 })
 
@@ -331,8 +357,7 @@ const tmInvoices = ref<any>({
   last_page: 1,
 })
 
-// Expose backUrl for child components
-const backUrl = computed(() => getFilteredUrl('/invoices/search/sea-import-tm'))
+const backUrl = computed(() => getFilteredUrl('/invoices/search/tm'))
 provide('catalogBackUrl', backUrl)
 
 const catalogs = ref<any>({
@@ -351,23 +376,12 @@ const rowClass = (invoice: any) => {
 }
 
 const addFolio = () => {
-  let ids = filters.value.multipleid.split('\n').map((bl: string) => bl.trim())
-  // remove empty
-  ids = ids.filter((bl: string) => bl.length > 0)
-  filters.value.ids = [...filters.value.ids, ...ids]
-  // unique
+  let ids = filters.value.multipleid?.split('\n').map((bl: string) => bl.trim())
+  ids = ids?.filter((bl: string) => bl.length > 0)
+  filters.value.ids = [...filters.value.ids, ...ids || []]
   filters.value.ids = Array.from(new Set(filters.value.ids))
   filters.value.multipleid = ''
 }
-
-// const addFolio = () => {
-//   // check null, trim and add to folios and then unique it
-//   if (filters.value.multipleid != null && filters.value.multipleid.trim() !== '') {
-//     filters.value.ids.push(filters.value.multipleid.trim())
-//     filters.value.ids = filters.value.ids.filter((value: any, index: any, self: any) => self.indexOf(value) === index)
-//     filters.value.multipleid = ''
-//   }
-// }
 
 const removeFolio = (index: number) => {
   filters.value.ids.splice(index, 1)
@@ -375,6 +389,13 @@ const removeFolio = (index: number) => {
 
 const viewCreditNote = (creditNote: any) => {
   router.push(`/invoices/search/credit-notes/view-${creditNote.id}`)
+}
+
+const onServiceTypeChange = async () => {
+  currentPage.value = 1
+  tmInvoices.value.current_page = 1
+  await syncToUrl()
+  await getData()
 }
 
 const onClickPagination = async (page: number) => {
@@ -395,8 +416,6 @@ const onClickFilters = async () => {
 const getCurrenciesTotal = (invoice: any) => {
   if (!invoice.invoice_total) return []
   const totales = Object.keys(invoice.invoice_total).map((currency_id: any) => {
-    // console.log('currency_id', currency_id)
-    // console.log('total', invoice.invoice_total[currency_id])
     const currency = currencies.find((c) => c.id == currency_id)
     return `${currency?.name}: ${formatToCurrency(invoice.invoice_total[currency_id])}`
   })
@@ -411,10 +430,8 @@ const clearFilters = async () => {
 
 const addReferencia = () => {
   if (filters.value.referencia) {
-    // split by comma and remove empty spaces
     filters.value.referencia = filters.value.referencia.replace(/\s/g, '')
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
-    // remove duplicates in refs array using set
 
     refs.forEach((ref) => {
       filters.value.referencias.push(ref)
@@ -430,12 +447,28 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
-const viewService = (service: any) => {
-  if (service.referencia?.impoExpo === 'I') {
-    router.push(`/invoices/search/sea-import/view-${service.referencia.id}`)
+const getServiceReferenceNumber = (service: any, serviceType: string) => {
+  if (serviceType === 'air') {
+    return service.air_reference?.reference_number
   }
-  if (service.referencia?.impoExpo === 'E') {
-    router.push(`/invoices/search/sea-export/view-${service.referencia.id}`)
+  return service.referencia?.reference_number
+}
+
+const viewService = (service: any, serviceType: string) => {
+  if (serviceType === 'air') {
+    if (service.air_reference?.impoExpo === 'I') {
+      router.push(`/invoices/search/air-import/view-${service.air_reference?.id}`)
+    }
+    if (service.air_reference?.impoExpo === 'E') {
+      router.push(`/invoices/search/air-export/view-${service.air_reference?.id}`)
+    }
+  } else {
+    if (service.referencia?.impoExpo === 'I') {
+      router.push(`/invoices/search/sea-import/view-${service.referencia.id}`)
+    }
+    if (service.referencia?.impoExpo === 'E') {
+      router.push(`/invoices/search/sea-export/view-${service.referencia.id}`)
+    }
   }
 }
 
@@ -454,25 +487,24 @@ const getInvoicePaidStatus = (invoiceTm: any) => {
 
 const getInvoiceStatusColor = (invoiceTm: any) => {
   if (invoiceTm.deleted_at) {
-    return 'red' // Cancelled invoices
+    return 'red'
   }
   if (!invoiceTm.invoice) {
-    return 'purple' // Pending invoice
+    return 'purple'
   }
   if (invoiceTm.invoice?.is_paid) {
-    return 'green' // Fully paid
+    return 'green'
   }
   if (checkParcialPaid(invoiceTm) === 'Partial paid') {
-    return 'amber' // Partial payments
+    return 'amber'
   }
   if (checkParcialPaid(invoiceTm) === 'Pending payment') {
-    return 'red' // Partial payments
+    return 'red'
   }
-  return 'purple' // Default for pending payments
+  return 'purple'
 }
 
 const checkParcialPaid = (invoiceTm: any) => {
-  // get invoiceTm.invoice.charges.amount_paid and compare with invoiceTm.invoice.total
   if (invoiceTm.invoice?.charges) {
     const totalPaid = invoiceTm.invoice.charges.reduce((acc: number, charge: any) => {
       return acc + parseFloat(charge.amount_paid)
@@ -508,7 +540,7 @@ const exportToExcel = async () => {
 
     const response = (await $api.tmInvoices.exportInvoicesToExcel({
       query: {
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...flattenArraysToCommaSeparatedString(prepareFiltersForApi()),
       },
     })) as any
 
@@ -530,14 +562,28 @@ const exportToExcel = async () => {
   }
 }
 
+const prepareFiltersForApi = () => {
+  const { masterDocument, ...apiFilters } = filters.value
+  
+  if (masterDocument) {
+    apiFilters.masterBl = masterDocument
+    apiFilters.masterAwb = masterDocument
+  }
+  
+  return apiFilters
+}
+
 const getData = async () => {
   try {
     loadingStore.loading = true
-    const response = (await $api.tmInvoices.getPaged({
+    
+    const apiFilters = prepareFiltersForApi()
+    
+    const response = (await $api.tmInvoices.getUnifiedPaged({
       query: {
         page: currentPage.value,
         perPage: tmInvoices.value.perPage,
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...flattenArraysToCommaSeparatedString(apiFilters),
       },
     })) as any
 
@@ -566,6 +612,10 @@ onMounted(() => {
 })
 
 const viewInvoice = (invoice: any) => {
-  router.push(`/invoices/search/tm-view-${invoice.id}`)
+  if (invoice.service_type === 'air') {
+    router.push(`/invoices/search/tm-air-view-${invoice.id}`)
+  } else {
+    router.push(`/invoices/search/tm-view-${invoice.id}`)
+  }
 }
 </script>

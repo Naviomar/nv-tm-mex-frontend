@@ -40,6 +40,9 @@ class TmInvoicesModule extends FetchFactory<IPortPagination> {
     return this.call('GET', `${this.RESOURCE}/service-air`, fetchOptions)
   }
 
+  async getUnifiedPaged(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/unified`, fetchOptions)
+  }
 
   async getCommissionsPaged(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/commissions`, fetchOptions)
