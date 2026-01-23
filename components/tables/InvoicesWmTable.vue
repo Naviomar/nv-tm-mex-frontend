@@ -6,46 +6,21 @@
         <div><v-text-field v-model="filters.from" density="compact" type="date" label="Date from" /></div>
         <div><v-text-field v-model="filters.to" density="compact" type="date" label="Date to" /></div>
         <div>
-          <v-autocomplete
-            v-model="filters.isProforma"
-            :items="[
-              { id: 1, value: 'Proforma' },
-              { id: 0, value: 'Invoice' },
-            ]"
-            item-title="value"
-            item-value="id"
-            density="compact"
-            label="Invoice type"
-            clearable
-          />
+          <v-autocomplete v-model="filters.isProforma" :items="[
+            { id: 1, value: 'Proforma' },
+            { id: 0, value: 'Invoice' },
+          ]" item-title="value" item-value="id" density="compact" label="Invoice type" clearable />
         </div>
         <div>
-          <v-autocomplete
-            v-model="filters.year"
-            :items="prefixYears"
-            density="compact"
-            label="Year"
-            @keyup.enter="getData"
-          />
+          <v-autocomplete v-model="filters.year" :items="prefixYears" density="compact" label="Year"
+            @keyup.enter="getData" />
         </div>
         <div>
-          <v-text-field
-            v-model="filters.referencia"
-            density="compact"
-            label="Add reference #"
-            hint="Separate multiple references with commas"
-            @keyup.enter="addReferencia"
-          >
+          <v-text-field v-model="filters.referencia" density="compact" label="Add reference #"
+            hint="Separate multiple references with commas" @keyup.enter="addReferencia">
             <template #append-inner>
-              <v-btn
-                v-if="filters.referencia"
-                icon="mdi-plus"
-                size="x-small"
-                variant="text"
-                color="primary"
-                @click="addReferencia"
-                title="Add reference to filter"
-              />
+              <v-btn v-if="filters.referencia" icon="mdi-plus" size="x-small" variant="text" color="primary"
+                @click="addReferencia" title="Add reference to filter" />
             </template>
           </v-text-field>
         </div>
@@ -53,14 +28,8 @@
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="">
           <div class="font-bold text-base">Invoice number multiline</div>
-          <v-textarea
-            v-model="filters.multipleid"
-            density="compact"
-            label="Multiline invoice number"
-            placeholder="Enter invoice number by line"
-            rows="3"
-            hide-details
-          />
+          <v-textarea v-model="filters.multipleid" density="compact" label="Multiline invoice number"
+            placeholder="Enter invoice number by line" rows="3" hide-details />
           <v-btn @click="addFolio" size="small" color="primary">
             <div class="flex gap-2">
               <v-icon>mdi-plus</v-icon>
@@ -71,13 +40,8 @@
         <div class="col-span-4">
           <div v-if="filters.ids.length > 0" class="flex gap-2 px-2">Searching invoices #</div>
           <div class="flex gap-2 px-2">
-            <v-chip
-              v-for="(folio, index) in filters.ids"
-              size="small"
-              color="green"
-              :key="`folio-${index}`"
-              @click="removeFolio(index)"
-            >
+            <v-chip v-for="(folio, index) in filters.ids" size="small" color="green" :key="`folio-${index}`"
+              @click="removeFolio(index)">
               {{ folio }}
               <v-icon>mdi-close</v-icon>
             </v-chip>
@@ -85,54 +49,29 @@
         </div>
 
         <div>
-          <AGlobalSearch
-            v-model="filters.consigneeId"
-            :onSearch="searchCustomers"
-            validate-key="consigneeId"
-            label="Customer"
-          />
+          <AGlobalSearch v-model="filters.consigneeId" :onSearch="searchCustomers" validate-key="consigneeId"
+            label="Customer" />
         </div>
         <div>
-          <v-text-field v-model="filters.masterBl" density="compact" type="text" label="Master BL" />
+          <v-text-field v-model="filters.masterDocument" density="compact" type="text" label="Master BL / Master AWB" />
         </div>
         <div class="">
-          <v-autocomplete
-            density="compact"
-            label="Status"
-            v-model="filters.deleted_status"
-            :items="deletedStatus"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
+          <v-autocomplete density="compact" label="Status" v-model="filters.deleted_status" :items="deletedStatus"
+            item-title="name" item-value="value" @keyup.enter="getData" hide-details />
         </div>
         <div class="">
-          <v-autocomplete
-            density="compact"
-            label="Payment status"
-            v-model="filters.paymentStatus"
-            :items="[
-              { value: 'paid', name: 'Paid' },
-              { value: 'parcial', name: 'Partial paid' },
-              { value: 'pending', name: 'Pending' },
-            ]"
-            item-title="name"
-            item-value="value"
-            @keyup.enter="getData"
-            hide-details
-          />
+          <v-autocomplete density="compact" label="Payment status" v-model="filters.paymentStatus" :items="[
+            { value: 'paid', name: 'Paid' },
+            { value: 'parcial', name: 'Partial paid' },
+            { value: 'pending', name: 'Pending' },
+          ]" item-title="name" item-value="value" @keyup.enter="getData" hide-details />
         </div>
       </div>
       <div v-if="filters.referencias.length > 0" class="mb-4">
         <div>Filter by reference(s)</div>
         <div class="flex gap-2">
-          <v-chip
-            v-for="(ref, index) in filters.referencias"
-            :key="`ref-search-${ref}`"
-            closable
-            @click:close="removeReferencia(index)"
-          >
+          <v-chip v-for="(ref, index) in filters.referencias" :key="`ref-search-${ref}`" closable
+            @click:close="removeReferencia(index)">
             {{ ref }}
           </v-chip>
         </div>
@@ -144,13 +83,8 @@
       </div>
     </div>
     <div>
-      <v-pagination
-        v-model="wmInvoices.current_page"
-        :length="wmInvoices.last_page"
-        rounded="circle"
-        @update:model-value="onClickPagination"
-        density="compact"
-      ></v-pagination>
+      <v-pagination v-model="wmInvoices.current_page" :length="wmInvoices.last_page" rounded="circle"
+        @update:model-value="onClickPagination" density="compact"></v-pagination>
       <div class="text-xs">
         Showing {{ wmInvoices.from }} to {{ wmInvoices.to }} from {{ wmInvoices.total }} total records
       </div>
@@ -186,13 +120,8 @@
                 <v-chip size="small" color="primary"> Free format </v-chip>
               </div>
               <div v-if="invoiceWm.is_free_format == 0">
-                <v-chip
-                  v-for="(service, index) in invoiceWm.services"
-                  :key="`service-${index}`"
-                  size="small"
-                  color="primary"
-                  @click="viewService(service)"
-                >
+                <v-chip v-for="(service, index) in invoiceWm.services" :key="`service-${index}`" size="small"
+                  color="primary" @click="viewService(service)">
                   {{ service.referencia?.reference_number }}
                 </v-chip>
               </div>
@@ -207,23 +136,15 @@
                 {{ invoiceWm.is_proforma ? 'Profoma' : 'Invoice' }}
               </v-chip>
               <div v-if="invoiceWm.from_deleted_invoice != null">
-                <v-chip size="small" color="red"
-                  >Linked to deleted invoice #{{ invoiceWm.from_deleted_invoice }}</v-chip
-                >
+                <v-chip size="small" color="red">Linked to deleted invoice #{{ invoiceWm.from_deleted_invoice
+                  }}</v-chip>
               </div>
             </td>
             <td>
-              <div
-                v-if="invoiceWm.invoice?.consignee_credit_notes.length > 0"
-                class="flex flex-col gap-1 items-center justify-center"
-              >
-                <v-chip
-                  v-for="(creditNote, index) in invoiceWm.invoice?.consignee_credit_notes"
-                  size="small"
-                  color="red"
-                  :key="`ccn-${index}`"
-                  @click="viewCreditNote(creditNote)"
-                >
+              <div v-if="invoiceWm.invoice?.consignee_credit_notes.length > 0"
+                class="flex flex-col gap-1 items-center justify-center">
+                <v-chip v-for="(creditNote, index) in invoiceWm.invoice?.consignee_credit_notes" size="small"
+                  color="red" :key="`ccn-${index}`" @click="viewCreditNote(creditNote)">
                   <div class="flex gap-1"><v-icon>mdi-eye-outline</v-icon> CN #{{ creditNote.id }}</div>
                 </v-chip>
               </div>
@@ -231,11 +152,8 @@
             <td class="whitespace-nowrap">{{ invoiceWm.consignee?.name }}</td>
             <td>
               <div class="grid grid-cols-1 gap-1 overflow-hidden">
-                <div
-                  v-for="(charge, index) in invoiceWm.invoice_charges"
-                  :key="`charge-${index}`"
-                  class="text-xs text-nowrap text-ellipsis"
-                >
+                <div v-for="(charge, index) in invoiceWm.invoice_charges" :key="`charge-${index}`"
+                  class="text-xs text-nowrap text-ellipsis">
                   {{ charge.charge?.name }} - {{ charge.amount }}
                 </div>
               </div>
@@ -254,13 +172,8 @@
           </tr>
         </tbody>
       </v-table>
-      <v-pagination
-        v-model="wmInvoices.current_page"
-        :length="wmInvoices.last_page"
-        rounded="circle"
-        @update:model-value="onClickPagination"
-        density="compact"
-      ></v-pagination>
+      <v-pagination v-model="wmInvoices.current_page" :length="wmInvoices.last_page" rounded="circle"
+        @update:model-value="onClickPagination" density="compact"></v-pagination>
     </div>
   </div>
 </template>
@@ -285,12 +198,13 @@ const initialFilters = {
   isProforma: null as number | null,
   multipleid: null as string | null,
   ids: [] as string[],
-  masterBl: '',
+  masterDocument: '',
   houseBl: '',
   consigneeId: '',
   freight_forwarder_id: '',
   deleted_status: '',
   paymentStatus: null as string | null,
+  year: null as string | null,
 }
 
 // Use the table filters composable for URL persistence
@@ -333,10 +247,10 @@ const rowClass = (invoice: any) => {
 }
 
 const addFolio = () => {
-  let ids = filters.value.multipleid.split('\n').map((bl: string) => bl.trim())
+  let ids = filters.value.multipleid?.split('\n').map((bl: string) => bl.trim())
   // remove empty
-  ids = ids.filter((bl: string) => bl.length > 0)
-  filters.value.ids = [...filters.value.ids, ...ids]
+  ids = ids?.filter((bl: string) => bl.length > 0)
+  filters.value.ids = [...filters.value.ids, ...(ids || [])]
   // unique
   filters.value.ids = Array.from(new Set(filters.value.ids))
   filters.value.multipleid = ''
@@ -517,7 +431,7 @@ const exportToExcel = async () => {
 const getData = async () => {
   try {
     loadingStore.loading = true
-    const response = (await $api.wmInvoices.getPaged({
+    const response = (await $api.wmInvoices.getUnifiedPaged({
       query: {
         page: currentPage.value,
         perPage: wmInvoices.value.perPage,

@@ -408,9 +408,12 @@ const toggleChargeAddForm = () => {
 }
 
 const canEditCharges = computed(() => {
+  // Si no cuenta con viaje de descarga, no se pueden editar cargas
   if (!referencia.value.voyage_discharge) {
     return false
   }
+
+  // Si el viaje de descarga está cerrado, no se pueden editar cargas
   return referencia.value.voyage_discharge.locked_at == null
 })
 
