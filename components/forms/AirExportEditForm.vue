@@ -60,7 +60,7 @@
               <div class="">Service executive:</div>
               <div class="font-bold">
                 <span v-if="!values.executive_id">No executive</span>
-                <span v-if="values.executive_id">{{ values.executive?.name }}</span>
+                <span v-if="values.executive_id">{{ (values.executive as any)?.name }}</span>
               </div>
             </div>
             <div class="flex flex-col">
@@ -122,7 +122,7 @@
           </v-card-title>
           <v-card-text v-if="showRoutes">
             <div v-for="(route, index) in routes" :key="`route-${index}`">
-              <div class="grid grid-cols-3 gap-5">
+              <div class="grid grid-cols-4 gap-5">
                 <div>
                   <v-autocomplete
                     v-model="route.departure_country_id"
@@ -164,8 +164,17 @@
                     prepend-icon="mdi-airplane-takeoff"
                   />
                 </div>
+                <div>
+                  <v-text-field
+                    v-model="route.departure_time"
+                    density="compact"
+                    variant="solo-filled"
+                    label="Departure time"
+                    type="time"
+                  />
+                </div>
               </div>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-4 gap-2">
                 <div>
                   <v-autocomplete
                     v-model="route.arrival_country_id"
@@ -208,6 +217,15 @@
                     prepend-icon="mdi-airplane-landing"
                   />
                 </div>
+                <div>
+                  <v-text-field
+                    v-model="route.arrival_time"
+                    density="compact"
+                    variant="solo-filled"
+                    label="Arrival time"
+                    type="time"
+                  />
+                </div>
 
                 <div class="flex items-start gap-2">
                   <v-text-field
@@ -221,7 +239,7 @@
                     size="x-small"
                     color="red"
                     class="mt-2"
-                    @click="removeRoute(index)"
+                    @click="removeRoute(Number(index))"
                   ></v-btn>
                 </div>
                 <div v-if="index === routes.length - 1">
@@ -333,7 +351,6 @@
 <script setup lang="ts">
 import { schema } from '~/forms/airExportForm'
 
-const router = useRouter()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -432,13 +449,20 @@ const canEditCharges = computed(() => {
 
 const getSellCharges = (callback: Function) => {
   callback(
-    (values.charges ?? [])
+    (charges.value ?? [])
       .filter((charge: any) => charge.sell_total && charge.id)
       .map((charge: any) => ({
         ...charge,
         amount_total: charge.sell_total ?? 0, // Ensure amount_total exists
       }))
   )
+}
+
+const validateNumber = (event: any) => {
+  const value = event.target?.value
+  if (value && isNaN(Number(value))) {
+    snackbar.add({ type: 'warning', text: 'Please enter a valid number' })
+  }
 }
 
 const updateServiceExecutive = () => {
@@ -554,9 +578,11 @@ const addRoute = () => {
     departure_country_id: lastArrivalCountry,
     departure_airport_id: lastArrivalAirport,
     departure_date: null,
+    departure_time: null,
     arrival_airport_id: null,
     destination: null,
     arrival_date: null,
+    arrival_time: null,
     flight_number: null,
   })
 
