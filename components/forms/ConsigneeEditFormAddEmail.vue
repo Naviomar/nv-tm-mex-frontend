@@ -63,9 +63,10 @@
         </div>
         <div class="col-span-2">
           <div v-for="(notification, index) in values.mail_notifications" :key="index">
-            <div class="grid grid-cols-2 items-center gap-2 mb-4">
+            <div v-if="customerMailNotifications.find((item: any) => item.id === notification.id)" 
+                 class="grid grid-cols-2 items-center gap-2 mb-4">
               <div class="col-span-1">
-                {{ customerMailNotifications.find((item: any) => item.id === notification.id)?.short_name }}
+                {{ customerMailNotifications.find((item: any) => item.id === notification.id)?.short_name || notification.short_name }}
               </div>
               <InputAutocomplete
                 :name="'notification' + notification.id + 'type'"
