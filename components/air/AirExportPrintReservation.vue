@@ -41,7 +41,7 @@
           </div>
 
           <h2 class="text-lg mb-2">Agency</h2>
-          <v-text-field v-model="formData.agency_name" label="Agency Name" variant="outlined" density="compact" />
+          <v-text-field v-model="formData.agency_name" label="Representative's name" variant="outlined" density="compact" />
           <v-text-field v-model="formData.agency_phone" label="Agency Phone" variant="outlined" density="compact" />
 
           <h2 class="text-lg mb-2">Reservation Number</h2>
@@ -136,7 +136,7 @@ watchEffect(() => {
       height,
       length,
       width,
-      agency_name: referenceData.value.consignee?.name || '',
+      agency_name: referenceData.value.shipper || '',
       agency_phone: referenceData.value.origin_ff?.contact_phone || ''
     }
     
