@@ -257,7 +257,7 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
       responseType: 'blob',
       ...fetchOptions,
     }
-    return this.call('GET', `${this.RESOURCE}/${id}/preview-reservation-pdf`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/${id}/preview-reservation-pdf`, fetchOptions)
   }
 
   async previewEmailPdf(id: string, fetchOptions?: FetchOptions) {
