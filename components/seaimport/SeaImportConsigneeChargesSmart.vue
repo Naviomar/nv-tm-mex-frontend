@@ -65,7 +65,7 @@
 
           <div class="font-bold text-base">Reference sell rate charge(s)</div>
           <div v-for="(charge, index) in referencia.sell_rate_breakdown" :key="`sell-charge-${index}`">
-            <div class="grid grid-cols-7 gap-1">
+            <div class="grid grid-cols-9 gap-1">
               <div class="col-span-1">
                 <div class="flex items-center">
                   <div class="-mt-4 px-1">
@@ -125,6 +125,19 @@
                   density="compact"
                   variant="solo-filled"
                   label="+ IVA"
+                  :value="1"
+                  :readonly="isChargeReadOnly(charge)"
+                  @update:model-value="charge.unsaved = true"
+                  hide-details
+                />
+                
+              </div>
+              <div class="flex flex-col gap-1 items-center">
+                <v-checkbox
+                  v-model="charge.has_desglose"
+                  density="compact"
+                  variant="solo-filled"
+                  label="Breakdown?"
                   :value="1"
                   :readonly="isChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
@@ -252,7 +265,7 @@
             <v-btn color="primary" size="small" @click="toggleChargeAddForm">Add charge to reference</v-btn>
           </div>
           <div v-if="chargeForm.show">
-            <div class="grid grid-cols-8 gap-1">
+            <div class="grid grid-cols-9 gap-1">
               <div class="col-span-1">
                 <v-autocomplete
                   v-model="chargeForm.inv_type"
@@ -310,7 +323,17 @@
                   label="+ IVA"
                   :value="1"
                 />
+                </div>
+                <div class="">
+                <v-checkbox
+                  v-model="chargeForm.charge.has_desglose"
+                  density="compact"
+                  variant="solo-filled"
+                  label="Breakdown?"
+                  :value="1"
+                />
               </div>
+              
               <div class="flex flex-col justify-center items-center gap-2">
                 <v-btn density="compact" variant="outlined" color="red" @click="toggleChargeAddForm">Cancel</v-btn>
                 <v-btn density="compact" variant="outlined" color="green" @click="addCharge">Add charge</v-btn>
@@ -391,6 +414,7 @@ const chargeForm = ref<any>({
     amount: 0,
     currency_id: null,
     is_con_iva: false,
+    has_desglose: 0,
   },
 })
 
@@ -403,6 +427,7 @@ const toggleChargeAddForm = () => {
       amount: 0,
       currency_id: null,
       is_con_iva: false,
+      has_desglose: 0,
     },
   }
 }
@@ -482,6 +507,7 @@ const addChargeToProforma = async () => {
       invoice_id: chargeForm.value.invoice_sea.id,
       invoice_type: chargeForm.value.invoice_sea.inv_type,
       charge: chargeForm.value.charge,
+      has_desglose: 0,
     }
     console.log('addChargeToProforma', body)
     const response = await $api.invoices.addChargeToProforma(body, !canEditCharges.value)
@@ -495,6 +521,7 @@ const addChargeToProforma = async () => {
         amount: 0,
         currency_id: null,
         is_con_iva: false,
+        has_desglose: 0,
       },
     }
 
@@ -617,6 +644,7 @@ const addChargeToReferencia = async () => {
         amount: 0,
         currency_id: null,
         is_con_iva: false,
+        has_desglose: 0,
       },
     }
 
