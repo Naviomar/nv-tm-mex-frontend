@@ -61,15 +61,17 @@
                 <div class="col-span-2">
                   <v-divider />
                 </div>
-                <div class="font-bold col-span-2">Reference History (CL)</div>
-                <div>Created by</div>
-                <div>{{ referenciaCl.creator?.name || '-' }} <span v-if="referenciaCl.created_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.created_at) }}</span></div>
+                <div v-if="hasAllinfo">
+                  <div class="font-bold col-span-2">Reference History (CL)</div>
+                  <div>Created by</div>
+                  <div>{{ allinfo.creator?.name || '-' }} <span v-if="allinfo.created_at" class="text-gray-500 text-xs">@ {{ formatDateString(allinfo.created_at) }}</span></div>
 
-                <div>Migrated by</div>
-                <div>{{ referenciaCl.migrator?.name || '-' }} <span v-if="referenciaCl.migrated_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.migrated_at) }}</span></div>
+                  <div>Migrated by</div>
+                  <div>{{ allinfo.migrator?.name || '-' }} <span v-if="allinfo.migrated_at" class="text-gray-500 text-xs">@ {{ formatDateString(allinfo.migrated_at) }}</span></div>
 
-                <div>Last updated by</div>
-                <div>{{ referenciaCl.updator?.name || '-' }} <span v-if="referenciaCl.updated_at" class="text-gray-500 text-xs">@ {{ formatDateString(referenciaCl.updated_at) }}</span></div>
+                  <div>Last updated by</div>
+                  <div>{{ allinfo.updator?.name || allinfo.creator?.name || '-' }} <span v-if="allinfo.updated_at" class="text-gray-500 text-xs">@ {{ formatDateString(allinfo.updated_at) }}</span></div>
+                </div>
               </div>
             </v-card-text>
           </v-card>
@@ -142,9 +144,15 @@ const props = defineProps({
     required: false,
     default: null,
   },
+  allinfo: {
+    type: Object as PropType<any>,
+    required: false,
+    default: null,
+  },
 })
 
 const hasReferenciaCl = computed(() => props.referenciaCl != null)
+const hasAllinfo = computed(() => props.allinfo != null)
 
 const dialog = ref<any>({
   show: false,

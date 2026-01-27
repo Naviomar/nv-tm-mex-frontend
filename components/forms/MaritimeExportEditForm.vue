@@ -8,7 +8,7 @@
             <div class="flex gap-2 items-center">
               Sea Export information #<ServiceNumberLabel :service="values" />
               <UserInfoBadge :item="values" />
-              <ReferenciaClDetails :referenciaCl="values.referencia_cl" />
+              <ReferenciaClDetails :allinfo="values" :referenciaCl="values.referencia_cl" />
             </div>
           </div>
 
