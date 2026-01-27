@@ -1,12 +1,12 @@
 <template>
   <div>
     <v-card>
-      <v-card-title>Agents F.F. SOA - Credit / debit notes</v-card-title>
+      <v-card-title>Agents F.F. SOA - Credit / Debit notes</v-card-title>
       <v-card-subtitle>Check and send notes to pay</v-card-subtitle>
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
-          <div class="grid grid-cols-4 gap-4">
-            <div class="col-span-2">
+          <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
+            <div class="col-span-1">
               <AFreightForwarderSearch v-if="false" v-model="filters.freightId" label="Freight forwarder" />
               <v-autocomplete
                 v-model="filters.freightId"
@@ -18,7 +18,7 @@
                 label="Freight forwarder"
               />
             </div>
-            <div class="col-span-2">
+            <div class="col-span-1">
               <AGlobalSearch
                 v-model="filters.freightGroupId"
                 :onSearch="searchFfGroups"
@@ -94,7 +94,7 @@
                 <th v-if="hasCheckedNotes" class="text-left min-w-48">Note #</th>
                 <th class="text-left">Payment request</th>
                 <th class="text-left">Vessel</th>
-                <th class="text-left">Date</th>
+                <th class="text-left">Date (ETD)</th>
                 <th class="text-left">DN / CN #</th>
 
                 <th class="text-left">Credit Note</th>
@@ -179,7 +179,7 @@
                 </td>
                 <td class="whitespace-nowrap">
                   <UserInfoBadge :item="note">
-                    {{ formatDateString(note.created_at) }}
+                    {{ getEtdDate(note) }}
                   </UserInfoBadge>
                 </td>
                 <td class="whitespace-nowrap font-bold">
@@ -447,10 +447,35 @@ const getVesselFromServiceable = (note: any) => {
   }
   const serviceType = note.serviceable_type
   if (serviceType.includes('Referencia')) {
-    return `⚓ ${note.serviceable?.voyage_discharge?.short_name}`
+    if (note.serviceable?.voyage_discharge?.short_name) {
+      return `⚓ ${note.serviceable?.voyage_discharge?.short_name}`
+    }
+    return '⚓ No vessel'
   }
   if (serviceType.includes('AirReference')) {
-    return `✈️ ${note.serviceable?.airline?.name}`
+    if (note.serviceable?.airline?.name) {
+      return `✈️ ${note.serviceable?.airline?.name}`
+    }
+    return '✈️ No airline'
+  }
+}
+
+const getEtdDate = (note: any) => {
+  if (!note.serviceable) {
+    return 'No service linked'
+  }
+  const serviceType = note.serviceable_type
+  if (serviceType.includes('Referencia')) {
+    if (note.serviceable?.etd_date) {
+      return formatDateString(note.serviceable?.etd_date)
+    }
+    return 'No ETD'
+  }
+  if (serviceType.includes('AirReference')) {
+    if (note.serviceable?.transits?.first()?.departure_date) {
+      return formatDateString(note.serviceable?.transits?.first()?.departure_date)
+    }
+    return 'No ETD'
   }
 }
 
