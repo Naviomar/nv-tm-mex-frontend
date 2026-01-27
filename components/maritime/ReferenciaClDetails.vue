@@ -33,7 +33,7 @@
                 <div>{{ referenciaCl.line?.name }}</div>
 
                 <div>Departure vessel</div>
-                <div>{{ referenciaCl.vessel_departure?.name }}</div>
+                <div>{{ referenciaCl.vessel_departure?.name }} {{ referenciaCl.voyage_departure ? `/ ${referenciaCl.voyage_departure}` : '' }}</div>
 
                 <div>Origin</div>
                 <div>{{ referenciaCl.origin?.name }}</div>
