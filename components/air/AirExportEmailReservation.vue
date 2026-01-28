@@ -9,14 +9,6 @@
       </v-card-title>
       <v-card-subtitle>Send reservation details via email</v-card-subtitle>
       <v-card-text>
-        <div class="mb-4">
-          <v-alert type="info" variant="tonal">
-            <div class="text-sm">
-              <strong>Phase 2 Feature:</strong> Email reservation functionality for China Cargo and EVA will be implemented in the next phase.
-            </div>
-          </v-alert>
-        </div>
-
         <div class="grid grid-cols-1 gap-4">
           <div>
             <v-text-field
@@ -26,7 +18,6 @@
               variant="outlined"
               type="email"
               hint="Enter recipient email address"
-              disabled
             />
           </div>
           <div>
@@ -37,7 +28,6 @@
               variant="outlined"
               type="email"
               hint="Enter CC email addresses (comma separated)"
-              disabled
             />
           </div>
           <div>
@@ -46,7 +36,6 @@
               label="Subject"
               density="compact"
               variant="outlined"
-              disabled
             />
           </div>
           <div>
@@ -57,19 +46,17 @@
               variant="outlined"
               rows="8"
               hint="Email message content"
-              disabled
             />
           </div>
         </div>
 
         <div class="mt-4 flex gap-2">
-          <v-btn color="primary" prepend-icon="mdi-email-send" disabled>
+          <v-btn color="primary" prepend-icon="mdi-email-send">
             Send Email
           </v-btn>
           <v-btn color="secondary" prepend-icon="mdi-eye" @click="openPreviewModal">
             Preview Email
           </v-btn>
-          
         </div>
       </v-card-text>
     </v-card>
