@@ -31,12 +31,7 @@
             />
           </div>
           <div>
-            <v-text-field
-              v-model="emailData.subject"
-              label="Subject"
-              density="compact"
-              variant="outlined"
-            />
+            <v-text-field v-model="emailData.subject" label="Subject" density="compact" variant="outlined" />
           </div>
           <div>
             <v-textarea
@@ -51,12 +46,8 @@
         </div>
 
         <div class="mt-4 flex gap-2">
-          <v-btn color="primary" prepend-icon="mdi-email-send">
-            Send Email
-          </v-btn>
-          <v-btn color="secondary" prepend-icon="mdi-eye" @click="openPreviewModal">
-            Preview Email
-          </v-btn>
+          <v-btn color="primary" prepend-icon="mdi-email-send" @click="sendEmail"> Send Email </v-btn>
+          <v-btn color="secondary" prepend-icon="mdi-eye" @click="openPreviewModal"> Preview Email </v-btn>
         </div>
       </v-card-text>
     </v-card>
@@ -78,13 +69,11 @@
             <div><strong>Shipper:</strong> {{ reference.consignee?.name }}</div>
           </div>
         </div>
-        <div v-else class="text-center text-grey">
-          Loading reference data...
-        </div>
+        <div v-else class="text-center text-grey">Loading reference data...</div>
       </v-card-text>
     </v-card>
 
- <v-dialog v-model="showModal" fullscreen>
+    <v-dialog v-model="showModal" fullscreen>
       <v-card>
         <v-toolbar color="primary" dark>
           <v-toolbar-title>Reservation Document - {{ airlineName }}</v-toolbar-title>
@@ -131,14 +120,13 @@ const emailData = ref({
   body: '',
 })
 
-
 const { $api } = useNuxtApp()
-const loadingStore = useLoadingStore();
+const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const showModal = ref(false)
 const pdfUrl = ref<string | null>(null)
 
-  // Computed properties for airline detection
+// Computed properties for airline detection
 const isChinaCargo = computed(() => props.reference?.airline_id === 27)
 const isEvaAir = computed(() => props.reference?.airline_id === 30)
 
@@ -164,6 +152,30 @@ const openPreviewModal = async () => {
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error generating PDF' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const sendEmail = async () => {
+  try {
+    loadingStore.start()
+
+    const payload = {
+      to: emailData.value.to,
+      cc: emailData.value.cc,
+      subject: emailData.value.subject,
+      body: emailData.value.body,
+    }
+
+    const response = await $api.airExport.sendEmailPdf(props.id, payload)
+
+    snackbar.add({ type: 'success', text: 'Email sent successfully' })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error sending email' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
