@@ -113,6 +113,11 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['refresh-data'])
+
+// Inject refresh function from parent
+const refreshAllTabs = inject<(() => Promise<void>) | null>('refreshAllTabs', null)
+
 const emailData = ref({
   to: '',
   cc: '',
@@ -173,6 +178,12 @@ const sendEmail = async () => {
     const response = await $api.airExport.sendEmailPdf(props.id, payload)
 
     snackbar.add({ type: 'success', text: 'Email sent successfully' })
+
+    // Refresh all tabs data
+    if (refreshAllTabs) {
+      await refreshAllTabs()
+    }
+    emit('refresh-data')
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error sending email' })
@@ -183,12 +194,18 @@ const sendEmail = async () => {
   }
 }
 
-const closeModal = () => {
+const closeModal = async () => {
   if (pdfUrl.value) {
     window.URL.revokeObjectURL(pdfUrl.value)
     pdfUrl.value = null
   }
   showModal.value = false
+
+  // Refresh all tabs data
+  if (refreshAllTabs) {
+    await refreshAllTabs()
+  }
+  emit('refresh-data')
 }
 
 const printFromModal = () => {

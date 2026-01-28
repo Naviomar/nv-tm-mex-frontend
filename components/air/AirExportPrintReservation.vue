@@ -91,9 +91,14 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['refresh-data'])
+
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+
+// Inject refresh function from parent
+const refreshAllTabs = inject<(() => Promise<void>) | null>('refreshAllTabs', null)
 
 const showModal = ref(false)
 const pdfUrl = ref<string | null>(null)
@@ -158,12 +163,21 @@ const openPreviewModal = async () => {
   }
 }
 
-const closeModal = () => {
+const closeModal = async () => {
   if (pdfUrl.value) {
     window.URL.revokeObjectURL(pdfUrl.value)
     pdfUrl.value = null
   }
   showModal.value = false
+
+  console.log('📄 Closing modal and refreshing tabs...')
+  // Refresh all tabs data
+  if (refreshAllTabs) {
+    await refreshAllTabs()
+  } else {
+    console.warn('⚠️ refreshAllTabs not available')
+  }
+  emit('refresh-data')
 }
 
 const printFromModal = () => {
