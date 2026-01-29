@@ -43,6 +43,7 @@
               <th class="text-left">Name</th>
               <th class="text-left">Email</th>
               <th class="text-left">Type</th>
+              <th class="text-left">Created At</th>
             </tr>
           </thead>
           <tbody>
@@ -55,6 +56,11 @@
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
               <td>{{ user.pivot?.department_type }}</td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="user">
+                  {{ formatDateString(user.created_at) }}
+                </UserInfoBadge>
+              </td>
             </tr>
           </tbody>
         </v-table>
@@ -122,6 +128,7 @@
             <tr>
               <th class="w-12 text-left">Actions</th>
               <th class="text-left">Permission Name</th>
+              <th class="text-left">Created At</th>
             </tr>
           </thead>
           <tbody>
@@ -132,6 +139,11 @@
                 </div>
               </td>
               <td>{{ permission.name }}</td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="permission">
+                  {{ formatDateString(permission.created_at) }}
+                </UserInfoBadge>
+              </td>
             </tr>
           </tbody>
         </v-table>
