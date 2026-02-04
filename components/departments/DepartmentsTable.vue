@@ -52,7 +52,11 @@
               <td>{{ department.users_count }}</td>
               <td>{{ department.name }}</td>
               <td>{{ department.description }}</td>
-              <td>{{ formatDateString(department.created_at) }}</td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="department">
+                  {{ formatDateString(department.created_at) }}
+                </UserInfoBadge>
+              </td>
             </tr>
           </tbody>
         </v-table>
