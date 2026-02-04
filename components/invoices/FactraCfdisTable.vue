@@ -447,20 +447,62 @@ const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDa
 
 const letInvoice = (currentDate: any, invoice_date: any): number => {
   let pasarInvoice = 0;
+  
+  /*pruebas invoice_date = '2026-01-03'
+  currentDate = '2026-02-04'*/
   const invoiceSplit = invoice_date.split('-')
   const currentSplit = currentDate.split('-');
 
-  if((invoiceSplit[0] === currentSplit[0]) && (invoiceSplit[1] === currentSplit[1])){ ///es mismo año y mismo mes
-    pasarInvoice = 1;
-  }
-  if((invoiceSplit[0] === currentSplit[0]) && (invoiceSplit[1] !== currentSplit[1])){
-    ///si no es el mismo mes , validamos si del siguente mes pasaron 3 días
-    if(today.getDate() <= 3){///son hasta 3 días del sig mes, dejamos pasar
-      pasarInvoice = 1;
+  const anioActual = parseInt(currentSplit[0]);
+  const mesActual = parseInt(currentSplit[1]);
+  const diaActual = parseInt(currentSplit[2]);
+
+  const anioFactura = parseInt(invoiceSplit[0]);
+  const mesFactura = parseInt(invoiceSplit[1]);
+  const diaFactura = parseInt(invoiceSplit[2]);
+
+  const anioPrevio = anioActual - 1;
+  const sigMes = mesActual + 1;
+  const sigMesFactura = mesFactura + 1;
+
+  /*console.log("anioActual: ",anioActual," mesActual:",mesActual," diaActual:", diaActual)
+  console.log("anioFactura: ",anioFactura," mesFactura:",mesFactura," diaFactura:",diaFactura)
+  console.log("anioPrevio: ",anioPrevio," sigMes: ",sigMes," sigMesFactura: ",sigMesFactura)
+  console.log("TODAY:" , today)*/
+
+///es de año previo? Es de diciembre? Hoy es enero?
+if(anioFactura === anioPrevio){
+    if(mesFactura === 12){
+        if(mesActual === 1){
+            //console.log("Entre - diaActual:",diaActual);
+            ///hoy es día 3 o antes del mes ? --- se deja pasar
+            if(diaActual <= 3){
+              //console.log("Entre2");
+              pasarInvoice = 1;
+            }
+        }else{
+          pasarInvoice = 0;
+        }
     }else{
+      ///es de año previo, pero no de diciembre-se requiere autorización
       pasarInvoice = 0;
     }
+}else if(anioFactura === anioActual){
+  ////no es de año previo es año del actual
+  ///es del mes actual?
+  if(mesFactura === mesActual){
+    ///se deja pasar
+    pasarInvoice = 1;
+  }else{
+    ///no es del mes actual -- es sig mes
+    if(sigMesFactura === mesActual){
+      if(today.getDate() <= 3){
+        //console.log("Entre3 tody:",today);
+        pasarInvoice = 1;
+      }
+    }
   }
+}
   return pasarInvoice;
 }
 
