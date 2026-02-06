@@ -66,6 +66,7 @@ const props = defineProps({
   processName: { type: String, required: true },
   requestKey: { type: String, required: true },
   label: { type: String, required: true },
+  displayName: { type: String, default: '' },
   refresh: { type: Boolean, default: false },
 })
 
@@ -112,6 +113,7 @@ const onRequestAuthorizationClick = async () => {
     const body = {
       process_name: props.processName,
       request_key: props.requestKey,
+      display_name: props.displayName,
       reason: form.value.reason,
     }
     await $api.authProcessRequests.requestAuthorization(body)
