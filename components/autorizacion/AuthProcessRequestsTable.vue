@@ -86,7 +86,7 @@
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
             <td class="whitespace-nowrap">
-              {{ authRequest.process_name_key }}
+              {{ authRequest.display_name || authRequest.process_name_key }}
             </td>
             <td class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</td>
 
@@ -116,7 +116,7 @@
           <v-card-title>Grant process authorization</v-card-title>
           <v-card-text>
             <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Process: {{ form.auth_request?.process_name_key }}</div>
+              <div class="text-base">Process: {{ form.auth_request?.display_name || form.auth_request?.process_name_key }}</div>
               <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
               <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
             </div>
