@@ -154,6 +154,7 @@
           <v-card-text>
             <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
               <div class="text-base">Resource: {{ getResourceName(form.auth_request?.resource) }}</div>
+              <div class="text-base">Reference: #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</div>
               <div class="text-base">Requested by: {{ form.auth_request?.requested?.name }}</div>
               <div class="text-base">Comments: {{ form.auth_request?.request_reason }}</div>
             </div>
