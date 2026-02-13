@@ -22,41 +22,54 @@
               the revalidation now will generate the "Customs Agent Change" charge in Local Charges.
             </p>
           </v-alert>
-          <div v-if="agentChanged && canSkipAgentChangeCharge" class="mt-2">
-            <v-checkbox
-              v-model="skipAgentChangeCharge"
-              density="compact"
-              color="primary"
-              hide-details
-              label="This is a data entry correction. Do not generate the customs agent change charge (supervisor only)."
-            />
 
-            <div v-if="skipAgentChangeCharge" class="mt-4">
-              <v-alert type="info" density="compact" class="mb-2">
-                <div class="text-sm">
-                  Skipping the customs agent change charge requires an authorization.
-                  Please request authorization before proceeding.
-                </div>
-              </v-alert>
-              <AuthorizeProcessSmart
-                :resource="authorizeResources.RevalidationSkipAgentChangeCharge.resource"
-                :resourceId="String(reference.id)"
-                label="Request authorization to skip customs agent change charge"
-                :refresh="refreshAuthReqs"
-              >
-                <template #auth>
-                  <v-chip color="success" size="small">
-                    <v-icon>mdi-check</v-icon>
-                    Authorized - proceed
-                  </v-chip>
-                </template>
-              </AuthorizeProcessSmart>
-            </div>
+          <!-- Users WITH skip permission: informational message -->
+          <div v-if="agentChanged && canSkipAgentChangeCharge" class="mt-2">
+            <v-alert type="info" variant="tonal" density="compact" class="mb-2">
+              <div class="text-sm">
+                You have permission to skip the customs agent change charge.
+                Use the <strong>"Skip charge & continue"</strong> button below to proceed without generating the charge.
+              </div>
+            </v-alert>
+          </div>
+
+          <!-- Users WITHOUT skip permission: authorization request -->
+          <div v-if="agentChanged && !canSkipAgentChangeCharge" class="mt-2">
+            <v-alert type="info" variant="tonal" density="compact" class="mb-2">
+              <div class="text-sm">
+                If this is a data entry correction and the charge should not be generated,
+                you can request authorization to skip it.
+              </div>
+            </v-alert>
+            <AuthorizeProcessSmart
+              ref="authProcessRef"
+              :resource="authorizeResources.RevalidationSkipAgentChangeCharge.resource"
+              :resourceId="String(reference.id)"
+              label="Request authorization to skip customs agent change charge"
+              :refresh="refreshAuthReqs"
+              :resourceData="{ reference_number: reference.reference_number }"
+            >
+              <template #auth>
+                <v-chip color="success" size="small">
+                  <v-icon>mdi-check</v-icon>
+                  Authorized - you can now skip the charge
+                </v-chip>
+              </template>
+            </AuthorizeProcessSmart>
           </div>
         </v-card-text>
         <v-card-actions class="justify-end pa-4">
           <v-btn variant="outlined" @click="cancelRedoRevalidation">Cancel</v-btn>
-          <v-btn color="red-darken-2" variant="flat" @click="executeRedoRevalidation">
+          <v-btn
+            v-if="agentChanged && (canSkipAgentChangeCharge || hasGrantedAuthorization)"
+            color="orange-darken-2"
+            variant="flat"
+            @click="executeRedoRevalidation(true)"
+          >
+            <v-icon start>mdi-shield-check</v-icon>
+            Skip charge & continue
+          </v-btn>
+          <v-btn color="red-darken-2" variant="flat" @click="executeRedoRevalidation(false)">
             Confirm and continue
           </v-btn>
         </v-card-actions>
@@ -156,7 +169,7 @@
               <v-window-item value="option-3">
                 <v-card flat>
                   <v-card-text>
-                    <SeaImportReleaseForm :referenceId="reference.id" />
+                    <SeaImportReleaseForm :referenceId="reference.id" :revalidationSnapshot="reference.revalidation?.release_agent_snapshot ?? null" :referenceNumber="reference.reference_number ?? null" />
                   </v-card-text>
                 </v-card>
               </v-window-item>
@@ -198,7 +211,7 @@ const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 const snackbar = useSnackbar()
-const { user } = useCheckUser()
+const { user, hasPermission } = useCheckUser()
 
 const props = defineProps({
   reference: {
@@ -244,15 +257,15 @@ const isLiverpoolMbl = computed(() => {
 const showAgentChangeDialog = ref(false)
 const skipAgentChangeCharge = ref(false)
 const refreshAuthReqs = ref(false)
+const authProcessRef = ref<any>(null)
 
 const canSkipAgentChangeCharge = computed(() => {
-  // Check if user has the specific permission (directly or via role)
-  const permissionName = 'revalidation-skip-agent-change-charge'
-  const hasDirectPermission = user.value?.permissions?.some((p: any) => p.name === permissionName) ?? false
-  const hasRolePermission = user.value?.roles?.some((role: any) =>
-    role.permissions?.some((p: any) => p.name === permissionName)
-  ) ?? false
-  return hasDirectPermission || hasRolePermission
+  return hasPermission('revalidation-skip-agent-change-charge')
+})
+
+const hasGrantedAuthorization = computed(() => {
+  if (!authProcessRef.value) return false
+  return authProcessRef.value?.hasGrantedRequest ?? false
 })
 
 const refresh = () => {
@@ -263,6 +276,7 @@ const onClickRedoRevalidation = async () => {
   await loadAgentContext()
   showAgentChangeDialog.value = true
   skipAgentChangeCharge.value = false
+  refreshAuthReqs.value = !refreshAuthReqs.value
 }
 
 const cancelRedoRevalidation = () => {
@@ -270,11 +284,11 @@ const cancelRedoRevalidation = () => {
   skipAgentChangeCharge.value = false
 }
 
-const executeRedoRevalidation = async () => {
+const executeRedoRevalidation = async (skipCharge: boolean = false) => {
   try {
     loadingStore.loading = true
     const response = await $api.referencias.redoRevalidation(props.reference.id, {
-      skip_agent_change_charge: skipAgentChangeCharge.value,
+      skip_agent_change_charge: skipCharge,
     })
     showAgentChangeDialog.value = false
 
@@ -323,13 +337,19 @@ const loadAgentContext = async () => {
       $api.referencias.getSeaImportReleaseInfo(props.reference.id),
       $api.customAgents.getAll(),
     ])
-    previousAgent.value = (checklist as any)?.agente_aduanal ?? null
+    // Use revalidation snapshot as primary source (matches backend logic),
+    // fallback to checklist agente_aduanal
+    previousAgent.value = props.reference.revalidation?.release_agent_snapshot
+      ?? (checklist as any)?.agente_aduanal
+      ?? null
     currentReleaseAgentId.value = (release as any)?.release_agent_id ?? null
     customAgents.value = agents as any[]
 
     // Debug logs
     console.log('🔍 Agent Context Loaded:', {
       referenceId: props.reference.id,
+      revalidationSnapshot: props.reference.revalidation?.release_agent_snapshot,
+      checklistAgent: (checklist as any)?.agente_aduanal,
       previousAgent: previousAgent.value,
       currentReleaseAgentId: currentReleaseAgentId.value,
       currentAgentShortName: currentAgentShortName.value,
