@@ -45,8 +45,8 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <EditButton :item="department" @click="editDepartments(department)" />
-                  <TrashButton :item="department" @click="showConfirmDelete" />
+                  <div  v-if="whoRolEdit(department.name) === 'true'"><EditButton :item="department" @click="editDepartments(department)" /></div>
+                  <div  v-if="whoRolDelete(department.name) === 'true'"><TrashButton :item="department" @click="showConfirmDelete" /></div>
                 </div>
               </td>
               <td>{{ department.users_count }}</td>
@@ -78,6 +78,7 @@ const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { user } = useCheckUser()
 
 const filters = ref<any>({
   name: '',
@@ -92,6 +93,76 @@ const departments = ref<any>({
   perPage: 25,
   last_page: 1,
 })
+
+const whoRolEdit = (nameDep: any): string => {
+  var canEdit = 'false';
+  var allRol = user.value?.roles
+  var idRol = 0
+  //console.log("name:",nameDep)
+  //console.log("---roles---",user.value?.roles);
+
+  for(var i=0; i<allRol.length; i++){
+    idRol = allRol[i].id
+    //console.log("all:",idRol)
+
+    if(idRol === 1){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Sea Import' && idRol === 4){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Sea Export' && idRol === 5){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Air Import' && idRol === 6){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Air Export' && idRol === 7){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Finance' && idRol === 8){
+      canEdit = 'true';
+    } 
+
+    if(nameDep === 'Accounting' && idRol === 9){
+      canEdit = 'true';
+    }
+    
+    if(nameDep === 'IT' && idRol === 10){
+      canEdit = 'true';
+    }
+
+    if(nameDep === 'Billing' && idRol === 11){
+      canEdit = 'true';
+    }
+  }
+
+  return canEdit;
+}
+
+const whoRolDelete = (nameDep: any): string => {
+  var canDelete = 'false';
+  var allRolDel = user.value?.roles
+  var idRolDel = 0
+  //console.log("name:",nameDep)
+  //console.log("---roles---",user.value?.roles);
+
+  for(var i=0; i<allRolDel.length; i++){
+    idRolDel = allRolDel[i].id
+    //console.log("all:",idRolDel)
+
+    if(idRolDel === 1){
+      canDelete = 'true';
+    }
+  }
+
+  return canDelete;
+}
 
 const onClickPagination = async (page: number) => {
   departments.value.current_page = page
