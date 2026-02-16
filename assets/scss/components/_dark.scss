@@ -57,3 +57,28 @@ table tbody tr {
 .v-theme--dark .deleted-row {
   background-color: colors.$deleted-row-color-dark; // Dark mode
 }
+
+// Mail notification edit page: native card + tables (no Vuetify)
+.dark .mail-notification-edit-card,
+.v-theme--dark .mail-notification-edit-card {
+  background-color: #09090b !important;
+  border-color: #27272a !important;
+}
+
+.dark .mail-notification-tables th,
+.dark .mail-notification-tables td,
+.v-theme--dark .mail-notification-tables th,
+.v-theme--dark .mail-notification-tables td {
+  color: #fafafa !important;
+}
+
+.dark .mail-notification-tables tbody tr:hover td,
+.v-theme--dark .mail-notification-tables tbody tr:hover td {
+  background-color: rgba(39, 39, 42, 0.5) !important;
+}
+
+.dark .mail-notification-tables thead th,
+.v-theme--dark .mail-notification-tables thead th {
+  color: #a1a1aa !important;
+  background-color: rgba(39, 39, 42, 0.8) !important;
+}
