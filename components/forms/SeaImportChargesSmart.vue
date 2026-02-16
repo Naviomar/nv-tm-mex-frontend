@@ -354,7 +354,10 @@ const getCurrencyName = (id: number) => {
 
 const clearInvoiceType = (value: any) => {
   if (!editNotAllowInvoiceType.value) {
-    setValues({ tm_wm: null, charge_id: null })
+    // Solo limpiar si se marca + IVA y el tipo actual es WM (que ya no sería válido)
+    if (value && values.tm_wm === 'WM') {
+      setValues({ tm_wm: null, charge_id: null })
+    }
   }
 }
 

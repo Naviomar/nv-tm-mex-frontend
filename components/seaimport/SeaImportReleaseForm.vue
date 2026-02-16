@@ -65,11 +65,22 @@
           </p>
         </v-alert>
 
+        <!-- Users WITH skip permission: informational message -->
         <div v-if="agentChanged && canSkipAgentChangeCharge" class="mb-4">
+          <v-alert type="info" variant="tonal" density="compact">
+            <div class="text-sm">
+              You have permission to skip the customs agent change charge.
+              When you redo the electronic revalidation, use the <strong>"Skip charge & continue"</strong> button to proceed without generating the charge.
+            </div>
+          </v-alert>
+        </div>
+
+        <!-- Users WITHOUT skip permission: authorization request -->
+        <div v-if="agentChanged && !canSkipAgentChangeCharge" class="mb-4">
           <v-alert type="info" density="compact" class="mb-2">
             <div class="text-sm">
-              Skipping the customs agent change charge requires an authorization.
-              Please request authorization if this change should not generate the charge.
+              If this is a data entry correction and the charge should not be generated,
+              you can request authorization to skip it when redoing the electronic revalidation.
             </div>
           </v-alert>
           <AuthorizeProcessSmart
@@ -77,6 +88,7 @@
             :resourceId="String(props.referenceId)"
             label="Request authorization to skip customs agent change charge"
             :refresh="refreshAuthReqs"
+            :resourceData="props.referenceNumber ? { reference_number: props.referenceNumber } : null"
           >
             <template #auth>
               <v-chip color="success" size="small">
@@ -102,12 +114,20 @@ import AuthorizeProcessSmart from '@/components/autorizacion/AuthorizeProcessSma
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
-const { user } = useCheckUser()
+const { user, hasPermission } = useCheckUser()
 
 const props = defineProps({
   referenceId: {
     type: String,
     required: true,
+  },
+  revalidationSnapshot: {
+    type: String,
+    default: null,
+  },
+  referenceNumber: {
+    type: String,
+    default: null,
   },
 })
 
@@ -126,11 +146,7 @@ const previousAgent = ref<string | null>(null)
 const refreshAuthReqs = ref(false)
 
 const canSkipAgentChangeCharge = computed(() => {
-  const permissionName = 'revalidation-skip-agent-change-charge'
-  const hasDirectPermission = user.value?.permissions?.some((p: any) => p.name === permissionName) ?? false
-  const hasRolePermission =
-    user.value?.roles?.some((role: any) => role.permissions?.some((p: any) => p.name === permissionName)) ?? false
-  return hasDirectPermission || hasRolePermission
+  return hasPermission('revalidation-skip-agent-change-charge')
 })
 
 const currentAgentShortName = computed(() => {
@@ -195,11 +211,17 @@ const loadPreviousAgent = async () => {
   try {
     loadingStore.start()
     const response = await $api.referencias.getChecklistRevalidation(props.referenceId)
-    previousAgent.value = (response as any)?.agente_aduanal ?? null
+    // Use revalidation snapshot as primary source (matches backend logic),
+    // fallback to checklist agente_aduanal
+    previousAgent.value = props.revalidationSnapshot
+      ?? (response as any)?.agente_aduanal
+      ?? null
     
     // Debug log
     console.log('🔍 Release Form - Previous Agent Loaded:', {
       referenceId: props.referenceId,
+      revalidationSnapshot: props.revalidationSnapshot,
+      checklistAgent: (response as any)?.agente_aduanal,
       previousAgent: previousAgent.value,
       currentAgentId: form.value?.release_agent_id,
       currentAgentShortName: currentAgentShortName.value,

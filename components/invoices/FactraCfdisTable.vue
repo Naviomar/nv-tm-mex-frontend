@@ -168,6 +168,21 @@
             </div>
             <div class="">
               <v-autocomplete
+                v-model="filters.blockedAtEntry"
+                density="compact"
+                :items="[
+                  { name: 'Blocked at entry', value: true },
+                  { name: 'Not blocked at entry', value: false },
+                ]"
+                item-title="name"
+                item-value="value"
+                clearable
+                hide-details
+                label="Entry status"
+              />
+            </div>
+            <div class="">
+              <v-autocomplete
                 v-model="filters.currencyId"
                 density="compact"
                 :items="currencies"
@@ -193,7 +208,7 @@
             <div class="col-span-6">
               <div v-if="filters.folios.length > 0" class="flex gap-2 px-2">Searching by folios:</div>
               <div class="flex gap-2 px-2">
-                <v-chip v-for="(folio, index) in filters.folios" :key="`folio-${index}`" @click="removeFolio(index)">
+                <v-chip v-for="(folio, index) in filters.folios" :key="`folio-${index}`" @click="removeFolio(Number(index))">
                   {{ folio }}
                   <v-icon>mdi-close</v-icon>
                 </v-chip>
@@ -266,12 +281,14 @@
                 :class="columnClass(cfdi)"
               >
                 <td>
-                  <div v-if="letInvoice(currentDate,cfdi.invoice_date) === 0" class="text-sm text-red-600 dark:text-red-300">
-                    <v-icon size="small">mdi-information</v-icon>
-                    <small>La factura no es del mes actual.<br>Se han rebasado los tres días posteriores al siguiente mes.</small>
+                  <!-- State 1: Invoice blocked due to late entry into Factra -->
+                  <div v-if="isBlockedAtEntry(cfdi)" class="text-sm text-red-600 dark:text-red-300">
+                    <v-icon size="small">mdi-lock</v-icon>
+                    <small>{{ cfdi.blocked_at_entry_reason || 'This invoice is blocked because it was entered into Factra past the deadline.' }}</small>
                     <ProcessAuthorizationWrapper 
                         processName="supplier-work-past-date"
                         :requestKey="`${cfdi.id}`"
+                        :displayName="cfdi.serie_folio || `Invoice ${cfdi.id}`"
                         label="Request"
                         >
                         <template #auth>
@@ -288,7 +305,6 @@
                             <div class="mx-auto">
                               <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                             </div>
-                            <!-- Botón de validación SAT para equipo de TI (por permiso) -->
                             <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
                               <v-btn
                                 size="x-small"
@@ -303,7 +319,52 @@
                         </template>
                     </ProcessAuthorizationWrapper>
                   </div>
-                  <div v-if="letInvoice(currentDate,cfdi.invoice_date) === 1">
+                  <!-- State 2: Supplier credit days expired (invoice not blocked at entry) -->
+                  <div v-else-if="isCreditExpired(cfdi)" class="text-sm text-orange-600 dark:text-orange-300">
+                    <v-icon size="small">mdi-clock-alert</v-icon>
+                    <small v-if="cfdi.supplier_credit_days === 0">
+                      This invoice can only be processed on the same day (0 credit days).<br>
+                      Invoice date: {{ new Date(cfdi.invoice_date).toLocaleDateString() }}
+                    </small>
+                    <small v-else>
+                      The supplier's credit days have expired.<br>({{ cfdi.supplier_credit_days }} days from {{ new Date(cfdi.invoice_date).toLocaleDateString() }})
+                    </small>
+                    <ProcessAuthorizationWrapper 
+                        processName="supplier-work-past-date"
+                        :requestKey="`${cfdi.id}`"
+                        :displayName="cfdi.serie_folio || `Invoice ${cfdi.id}`"
+                        label="Request"
+                        >
+                        <template #auth>
+                            <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
+                              <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                              <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
+                              <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                            </div>
+                            <div v-if="!hasSupplierLinked(cfdi)" class="flex gap-2">
+                              <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">
+                                <v-icon>mdi-sync</v-icon>
+                              </v-btn>
+                            </div>
+                            <div class="mx-auto">
+                              <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
+                            </div>
+                            <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
+                              <v-btn
+                                size="x-small"
+                                color="indigo"
+                                variant="tonal"
+                                :loading="cfdi._validatingSat === true"
+                                @click="validateCfdiSatRow(cfdi)"
+                              >
+                                Validar SAT
+                              </v-btn>
+                            </div>
+                        </template>
+                    </ProcessAuthorizationWrapper>
+                  </div>
+                  <!-- State 3: Invoice within credit days - user can process normally -->
+                  <div v-else>
                     <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
                       <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                       <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
@@ -317,7 +378,6 @@
                     <div class="mx-auto">
                       <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                     </div>
-                    <!-- Botón de validación SAT para equipo de TI (por permiso) -->
                     <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
                       <v-btn
                         size="x-small"
@@ -330,8 +390,6 @@
                       </v-btn>
                     </div>
                   </div>
-                  
-                  
                 </td>
                 <td>
                   <ButtonDownloadS3Object2 :s3Path="cfdi.xml_attachment" />
@@ -436,32 +494,58 @@ const filters = ref<any>({
   currencyId: null,
   hasSupplier: null,
   amountProvisioned: null,
+  blockedAtEntry: '',
 })
 
 const initialYear = 2022
 const currentYear = new Date().getFullYear()
 const maxYear = currentYear + 1
 
-const today = new Date();
-const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+const isEnteredLate = (cfdi: any): boolean => {
+  if (!cfdi.invoice_date || !cfdi.created_at) return false
+  const invoiceDate = new Date(cfdi.invoice_date + 'T00:00:00')
+  const lastDayOfMonth = new Date(invoiceDate.getFullYear(), invoiceDate.getMonth() + 1, 0)
+  const entryDeadline = new Date(lastDayOfMonth)
+  entryDeadline.setDate(entryDeadline.getDate() + 3)
+  entryDeadline.setHours(23, 59, 59, 999)
+  const createdAt = new Date(cfdi.created_at)
+  return createdAt > entryDeadline
+}
 
-const letInvoice = (currentDate: any, invoice_date: any): number => {
-  let pasarInvoice = 0;
-  const invoiceSplit = invoice_date.split('-')
-  const currentSplit = currentDate.split('-');
+const isBlockedAtEntry = (cfdi: any): boolean => {
+  if (cfdi.blocked_at_entry === true) return true
+  return isEnteredLate(cfdi)
+}
 
-  if((invoiceSplit[0] === currentSplit[0]) && (invoiceSplit[1] === currentSplit[1])){ ///es mismo año y mismo mes
-    pasarInvoice = 1;
+const isCreditExpired = (cfdi: any): boolean => {
+  const creditDays = cfdi.supplier_credit_days ?? 0
+  
+  // If no supplier linked, we can't validate credit days
+  if (!cfdi.supplier_id) {
+    return false
   }
-  if((invoiceSplit[0] === currentSplit[0]) && (invoiceSplit[1] !== currentSplit[1])){
-    ///si no es el mismo mes , validamos si del siguente mes pasaron 3 días
-    if(today.getDate() <= 3){///son hasta 3 días del sig mes, dejamos pasar
-      pasarInvoice = 1;
-    }else{
-      pasarInvoice = 0;
-    }
+
+  const invoiceDate = new Date(cfdi.invoice_date + 'T00:00:00')
+  const deadline = new Date(invoiceDate)
+  
+  // If credit days is 0, deadline is end of the same day
+  // Otherwise, add credit days to the invoice date
+  if (creditDays === 0) {
+    deadline.setHours(23, 59, 59, 999)
+  } else {
+    deadline.setDate(deadline.getDate() + creditDays)
+    deadline.setHours(23, 59, 59, 999)
   }
-  return pasarInvoice;
+
+  const now = new Date()
+  return now > deadline
+}
+
+
+const canProcessCfdi = (cfdi: any): boolean => {
+  if (isBlockedAtEntry(cfdi)) return false
+  if (isCreditExpired(cfdi)) return false
+  return true
 }
 
 const prefixYears = computed(() => {

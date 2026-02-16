@@ -81,6 +81,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  resourceData: {
+    type: Object,
+    default: null,
+  },
 })
 
 const showConfirmDialog = ref(false)
@@ -108,6 +112,11 @@ const authorizationRequest = computed(() => {
   )
 })
 
+defineExpose({
+  hasGrantedRequest,
+  hasPendigRequest,
+})
+
 const confirmRequestAuthorization = () => {
   showConfirmDialog.value = true
 }
@@ -119,11 +128,14 @@ const requestAuthorization = async () => {
       return
     }
     loadingStore.loading = true
-    const body = {
+    const body: any = {
       resource: props.resource,
       resource_id: props.resourceId,
       request_reason: form.value.request_reason,
       files: form.value.files,
+    }
+    if (props.resourceData) {
+      body.resource_data = JSON.stringify(props.resourceData)
     }
     const response = await $api.authRequests.requestAuthorization(body)
 
@@ -161,11 +173,10 @@ await getUserAuthRequests()
 
 watch(
   () => props.refresh,
-  async () => {
-    if (props.refresh) {
+  async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
       await getUserAuthRequests()
     }
   },
-  { immediate: true }
 )
 </script>
