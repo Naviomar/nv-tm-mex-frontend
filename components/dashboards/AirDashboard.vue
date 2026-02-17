@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
+    <div class="p-4 bg-sky-100 dark:text-zinc-100 dark:bg-neutral-800 rounded-lg">
       <div class="font-bold">Air Dashboard</div>
       <!-- Filters -->
       <Card class="mb-6">

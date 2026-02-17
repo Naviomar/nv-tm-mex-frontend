@@ -1,11 +1,11 @@
 <template>
   <Card class="relative">
-    <h2 class="text-overline px-3 pt-3">{{ title }}</h2>
+    <h2 class="text-xs uppercase tracking-wider px-3 pt-3 font-medium text-zinc-600 dark:text-zinc-400">{{ title }}</h2>
     <div class="p-4">
-      <div class="text-blue-900 dark:text-blue-200 text-5xl font-bold z-10 relative">
+      <div class="text-blue-900 dark:text-blue-200 text-3xl font-bold z-10 relative">
         {{ value }}
       </div>
-      <div class="text-xs font-bold">{{ subtitle }}</div>
+      <div class="text-xs font-bold text-zinc-600 dark:text-zinc-400">{{ subtitle }}</div>
       <span
         :class="['mdi', icon, 'absolute right-4 top-1/2 -translate-y-1/2 text-[64px] opacity-30 z-0', iconColorClass]"
         aria-hidden="true"

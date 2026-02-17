@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
-      <div class="font-bold">Maritime Dashboard</div>
+      <div class="font-bold dark:text-zinc-100">Maritime Dashboard</div>
       <!-- Filters -->
       <Card class="mb-6">
         <div class="p-4">
