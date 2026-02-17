@@ -1,57 +1,55 @@
 <template>
-  <div>
-    <v-tabs
-      v-model="tab"
-      next-icon="mdi-arrow-right-bold-box-outline"
-      prev-icon="mdi-arrow-left-bold-box-outline"
-      align-tabs="center"
-      height="60"
-      slider-color="#f78166"
-      show-arrows
-      grow
-      class="rounded-lg bg-sky-200 dark:bg-sky-800"
+  <div class="w-full">
+    <!-- Tab bar -->
+    <nav
+      class="flex items-center justify-center gap-0 rounded-t-lg bg-sky-200 dark:bg-sky-900/60 border border-b-0 border-zinc-200 dark:border-zinc-700 h-14"
+      role="tablist"
     >
-      <v-tab value="sea-tab">
-        <div class="flex gap-4"><v-icon>mdi-ferry</v-icon> Maritime</div>
-      </v-tab>
-      <v-tab value="air-tab">
-        <div class="flex gap-4"><v-icon>mdi-airplane</v-icon> Air</div></v-tab
+      <button
+        v-for="t in tabs"
+        :key="t.value"
+        type="button"
+        role="tab"
+        :aria-selected="tab === t.value"
+        :class="[
+          'flex items-center justify-center gap-2 px-6 h-full font-medium rounded-t-md border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2',
+          tab === t.value
+            ? 'bg-white dark:bg-zinc-900 text-sky-700 dark:text-sky-300 border-sky-500 dark:border-sky-400 -mb-px'
+            : 'text-zinc-600 dark:text-zinc-400 border-transparent hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-sky-100/80 dark:hover:bg-sky-900/40'
+        ]"
+        @click="tab = t.value"
       >
-      <v-tab value="billing-tab">
-        <div class="flex gap-4"><v-icon>mdi-invoice-list-outline</v-icon> Billing</div></v-tab
-      >
-      <v-tab v-if="false" value="suppliers-tab">
-        <div class="flex gap-4"><v-icon>mdi-account-details-outline</v-icon> Suppliers</div></v-tab
-      >
-      <v-tab v-if="false" value="freight-line-tab">
-        <div class="flex gap-4"><v-icon>mdi-account-details-outline</v-icon> Freight lines</div></v-tab
-      >
-      <v-tab v-if="false" value="ff-agents-tab">
-        <div class="flex gap-4"><v-icon>mdi-account-details-outline</v-icon> F.F. Agents</div></v-tab
-      >
-    </v-tabs>
-    <v-tabs-window v-model="tab">
-      <v-tabs-window-item value="sea-tab">
-        <SeaDashboard />
-      </v-tabs-window-item>
-      <v-tabs-window-item value="air-tab">
-        <AirDashboard />
-      </v-tabs-window-item>
-      <v-tabs-window-item value="billing-tab">
-        <BillingDashboard />
-      </v-tabs-window-item>
-      <v-tabs-window-item value="suppliers-tab">
-        <SuppliersDashboard />
-      </v-tabs-window-item>
-      <v-tabs-window-item value="freight-line-tab">
-        <FreightLineDashboard />
-      </v-tabs-window-item>
-      <v-tabs-window-item value="ff-agents-tab">
-        <FFAgentsDashboard />
-      </v-tabs-window-item>
-    </v-tabs-window>
+        <span :class="t.icon" class="mdi text-lg shrink-0" aria-hidden="true" />
+        {{ t.label }}
+      </button>
+    </nav>
+
+    <!-- Panel -->
+    <div
+      class="dashboard-tab-panel rounded-b-lg border border-t-0 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-4"
+      role="tabpanel"
+    >
+      <SeaDashboard v-if="tab === 'sea-tab'" />
+      <AirDashboard v-else-if="tab === 'air-tab'" />
+      <BillingDashboard v-else-if="tab === 'billing-tab'" />
+      <!-- <SuppliersDashboard v-else-if="tab === 'suppliers-tab'" />
+      <FreightLineDashboard v-else-if="tab === 'freight-line-tab'" />
+      <FFAgentsDashboard v-else-if="tab === 'ff-agents-tab'" /> -->
+    </div>
   </div>
 </template>
+
 <script setup lang="ts">
-const tab = ref<any>('sea-tab')
+const tab = ref<string>('sea-tab')
+
+const tabs = [
+  { value: 'sea-tab', label: 'Maritime', icon: 'mdi-ferry' },
+  { value: 'air-tab', label: 'Air', icon: 'mdi-airplane' },
+  { value: 'billing-tab', label: 'Billing', icon: 'mdi-invoice-list-outline' },
+  ...(false ? [{ value: 'suppliers-tab', label: 'Suppliers', icon: 'mdi-account-details-outline' }] : []),
+  ...(false ? [{ value: 'freight-line-tab', label: 'Freight lines', icon: 'mdi-account-details-outline' }] : []),
+  ...(false ? [{ value: 'ff-agents-tab', label: 'F.F. Agents', icon: 'mdi-account-details-outline' }] : []),
+]
 </script>
+
+

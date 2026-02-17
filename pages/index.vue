@@ -1,14 +1,8 @@
 <template>
-  <v-container fluid>
-    <v-row>
-      <v-col cols="12">
-        <h1 class="text-xl font-bold underline">{{ appName }}</h1>
-      </v-col>
-      <v-col cols="12">
-        <GlobalDashboard />
-      </v-col>
-    </v-row>
-  </v-container>
+  <div class="container mx-auto my-8 space-y-8">
+      <h1 class="text-2xl font-bold">{{ appName }}</h1>
+      <GlobalDashboard />
+  </div>
 </template>
 
 <script setup lang="ts">

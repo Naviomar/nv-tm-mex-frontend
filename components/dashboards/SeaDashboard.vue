@@ -3,21 +3,22 @@
     <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
       <div class="font-bold">Maritime Dashboard</div>
       <!-- Filters -->
-      <v-card class="mb-6" flat>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="d-flex justify-center">
-              <v-date-input v-model="filters.from" label="From" density="compact" hide-details />
-              <v-date-input v-model="filters.to" label="To" density="compact" hide-details />
+      <Card class="mb-6">
+        <div class="p-4">
+          <div class="flex justify-between">
+            <div class="w-full flex gap-4 items-end">
+              <Input v-model="filters.from" label="From" type="date" />
+              <Input v-model="filters.to" label="To" type="date" />
+            <!-- TODO: general component -->
+            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" class="w-[450px]" />
             </div>
-            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" />
-            <div class="flex gap-2 items-center">
-              <v-btn size="small" color="" variant="text" @click="clearFilters">Clear</v-btn>
-              <v-btn size="small" color="primary" @click="applyFilters">Apply</v-btn>
+            <div class="flex gap-2 items-end">
+              <Button variant="ghost" size="sm" @click="clearFilters">Clear</Button>
+              <Button variant="primary" size="sm" @click="applyFilters">Apply</Button>
             </div>
           </div>
-        </v-card-text>
-      </v-card>
+        </div>
+      </Card>
       <div class="mb-4 px-2 text-sm text-gray-600 dark:text-gray-300">
         <span class="font-bold">Filters applied:</span>
         <template v-if="dateRangeFromTo.from && dateRangeFromTo.to">
@@ -32,202 +33,117 @@
         </template>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <v-card>
-          <v-card-title class="text-overline"> Total Import </v-card-title>
-          <v-card-text>
-            <!-- Number in front -->
-            <div class="text-blue-darken-3 text-h3 font-weight-bold z-10 relative">
-              {{ report.total_import }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-
-            <!-- Icon to the right and behind -->
-            <v-icon icon="mdi-ferry" size="64" class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0" />
-          </v-card-text>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Total Export </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_export }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-            <!-- Icon to the right and behind -->
-            <v-icon icon="mdi-ferry" size="64" class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0" />
-          </v-card-text>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Unique customers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.unique_customers }}
-            </div>
-            <div class="text-xs font-bold">Customers</div>
-            <!-- Icon to the right and behind -->
-            <v-icon
-              icon="mdi-account-group-outline"
-              size="64"
-              class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-            />
-            <v-btn size="x-small" variant="text" @click="dialogCustomer = true"> View list </v-btn>
-          </v-card-text>
-        </v-card>
+        <DashboardCard
+          title="Total Import"
+          :value="report.total_import"
+          subtitle="References"
+          icon="mdi-ferry"
+        />
+        <DashboardCard
+          title="Total Export"
+          :value="report.total_export"
+          subtitle="References"
+          icon="mdi-ferry"
+        />
+        <DashboardCard
+          title="Unique customers"
+          :value="report.unique_customers"
+          subtitle="Customers"
+          icon="mdi-account-group-outline"
+        >
+          <template #actions>
+            <Button variant="ghost" size="sm" class="mt-2" @click="dialogCustomer = true">View list</Button>
+          </template>
+        </DashboardCard>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <v-card>
-          <v-card-title class="text-overline"> Pending arrival noty </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.pending_arrival_noty }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-          </v-card-text>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-bell-outline"
-            color="red"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-
-          <v-divider></v-divider>
-
-          <div class="px-4 text-xs">Maritime Import</div>
-        </v-card>
-        <v-card>
-          <v-card-title class="text-overline"> Pending revalidation </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.pending_revalidation }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-file-sign"
-            color="orange"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-
-          <div class="px-4 text-xs">Maritime Import</div>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Import Containers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_containers_import }}
-            </div>
-            <div class="text-xs font-bold">Containers</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-train-car-container"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Export Containers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_containers_export }}
-            </div>
-            <div class="text-xs font-bold">Containers</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-train-car-container"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Booking confirmation </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.export_bookings }}
-            </div>
-            <div class="text-xs font-bold">Export References</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-ticket-confirmation-outline"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Import demurrages </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.import_demurrages }}
-            </div>
-            <div class="text-xs font-bold">Containers (amount > 0)</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-timer-outline"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
+        <DashboardCard
+          title="Pending arrival noty"
+          :value="report.pending_arrival_noty"
+          subtitle="References"
+          icon="mdi-bell-outline"
+          icon-color="red"
+        >
+          <template #footer>Maritime Import</template>
+        </DashboardCard>
+        <DashboardCard
+          title="Pending revalidation"
+          :value="report.pending_revalidation"
+          subtitle="References"
+          icon="mdi-file-sign"
+          icon-color="orange"
+        >
+          <template #footer>Maritime Import</template>
+        </DashboardCard>
+        <DashboardCard
+          title="Import Containers"
+          :value="report.total_containers_import"
+          subtitle="Containers"
+          icon="mdi-train-car-container"
+        />
+        <DashboardCard
+          title="Export Containers"
+          :value="report.total_containers_export"
+          subtitle="Containers"
+          icon="mdi-train-car-container"
+        />
+        <DashboardCard
+          title="Booking confirmation"
+          :value="report.export_bookings"
+          subtitle="Export References"
+          icon="mdi-ticket-confirmation-outline"
+        />
+        <DashboardCard
+          title="Import demurrages"
+          :value="report.import_demurrages"
+          subtitle="Containers (amount > 0)"
+          icon="mdi-timer-outline"
+        />
       </div>
     </div>
 
-    <v-dialog v-model="dialogCustomer" max-width="500">
-      <v-card>
-        <v-card-title>
-          <div class="flex items-center justify-between">
-            <span class="text-h6">Customers ({{ report.customers?.length || 0 }})</span>
-            <v-spacer />
-            <v-btn icon @click="dialogCustomer = false"><v-icon icon="mdi-close" /></v-btn>
+    <!-- Customers modal -->
+    <Teleport to="body">
+      <div
+        v-if="dialogCustomer"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @click.self="dialogCustomer = false"
+      >
+        <Card class="w-full max-w-[500px] max-h-[80vh] flex flex-col">
+          <div class="flex items-center justify-between p-4">
+            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Customers ({{ report.customers?.length || 0 }})
+            </h3>
+            <button
+              type="button"
+              class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              aria-label="Cerrar"
+              @click="dialogCustomer = false"
+            >
+              <span class="mdi mdi-close text-lg" aria-hidden="true"></span>
+            </button>
           </div>
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <v-list v-if="report.customers?.length" f density="compact">
-            <v-list-item v-for="(customer, index) in report.customers" :key="index">
-              <v-list-item-title class="font-medium">
+          <div class="border-t border-zinc-200 dark:border-zinc-700" />
+          <div class="p-4 overflow-y-auto flex-1">
+            <ul v-if="report.customers?.length" class="space-y-2">
+              <li
+                v-for="(customer, index) in report.customers"
+                :key="index"
+                class="text-sm font-medium text-zinc-900 dark:text-zinc-100 py-1"
+              >
                 {{ customer.name || 'Unnamed' }}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-          <div v-else class="text-sm text-gray-500">No customers found.</div>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+              </li>
+            </ul>
+            <p v-else class="text-sm text-zinc-500 dark:text-zinc-400">No customers found.</p>
+          </div>
+        </Card>
+      </div>
+    </Teleport>
   </div>
 </template>
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
-
-// Helper to format date as YYYY-MM-DD
-function formatDate(date: Date) {
-  return date.toISOString().slice(0, 10)
-}
 
 // Today
 const today = new Date()
@@ -248,6 +164,18 @@ const filters = ref<any>({
 })
 
 const dialogCustomer = ref(false)
+
+function closeCustomerDialog() {
+  dialogCustomer.value = false
+}
+
+onMounted(() => {
+  const onEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && dialogCustomer.value) closeCustomerDialog()
+  }
+  window.addEventListener('keydown', onEsc)
+  onUnmounted(() => window.removeEventListener('keydown', onEsc))
+})
 
 const report = ref<any>({
   total_import: 0,
