@@ -1,6 +1,6 @@
 <template>
   <div
-    class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden"
+    class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 overflow-hidden"
     :class="$attrs.class"
   >
     <slot />

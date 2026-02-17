@@ -2,7 +2,7 @@
   <NuxtLink
     v-if="props.to"
     :to="props.to"
-    :class="buttonClass"
+    :class="[buttonClass, props.class]"
     @click="onClick"
   >
     <slot />
@@ -10,7 +10,7 @@
   <button
     v-else
     type="button"
-    :class="buttonClass"
+    :class="[buttonClass, props.class]"
     :disabled="disabled"
     @click="onClick"
   >
@@ -22,10 +22,11 @@ defineOptions({ name: 'Button', inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'ghost'
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
     size?: 'sm' | 'md'
     to?: string
     disabled?: boolean
+    class?: string
   }>(),
   { variant: 'secondary', size: 'md', disabled: false }
 )
@@ -40,6 +41,8 @@ const buttonClass = computed(() => {
   switch (props.variant) {
     case 'primary':
       return baseClass + ' ' + part + ' text-white bg-blue-900 hover:bg-blue-800 dark:bg-blue-900 dark:hover:bg-blue-800'
+    case 'danger':
+      return baseClass + ' ' + part + ' text-white bg-red-600 hover:bg-red-700 border border-red-600 dark:bg-red-700 dark:hover:bg-red-800 dark:border-red-700'
     case 'ghost':
       return baseClass + ' ' + part + ' text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800'
     default:
