@@ -255,14 +255,14 @@ const props = defineProps({
 const showInfo = ref(true)
 
 const creditExpirationDate = computed(() => {
-  const ref = props.airReference as any
-  if (!ref) return ''
+  const refVar = props.airReference as any
+  if (!refVar) return ''
 
-  const creditDays = ref.credit_days || 0
+  const creditDays = refVar.credit_days || 0
   if (!creditDays) return ''
 
-  const lastTransit = (ref.transits || []).slice(-1)[0]
-  const baseDateString = lastTransit?.arrival_date || ref.created_at
+  const lastTransit = (refVar.transits || []).slice(-1)[0]
+  const baseDateString = lastTransit?.arrival_date || refVar.created_at
 
   if (!baseDateString) return ''
 
@@ -271,6 +271,7 @@ const creditExpirationDate = computed(() => {
   return formatDateOnlyString(expirationDate)
 })
 
+// TODO: Unused function
 const hasAirReference = computed(() => {
   return Object.keys(props.airReference).length > 0
 })
@@ -298,6 +299,7 @@ const linkedChargeToInvoice = (charge: any) => {
   return 'mdi-link-off'
 }
 
+// TODO: Unused function
 const boxColorBuyOwner = (charge: any) => {
   return {
     'w-5 h-5 bg-yellow-300': charge.buy_owner_value === 'Freight line',
@@ -309,6 +311,7 @@ const getConceptIva = (concept: any) => {
   return concept.is_con_iva ? parseFloat(concept.amount) * 0.16 : 0
 }
 
+// TODO: Unused function
 const getConceptTotal = (concept: any) => {
   return parseFloat(concept.amount) + getConceptIva(concept)
 }
