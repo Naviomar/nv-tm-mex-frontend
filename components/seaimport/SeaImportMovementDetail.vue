@@ -353,18 +353,18 @@ const referenciaTotal = computed(() => {
 })
 
 const creditExpirationDate = computed(() => {
-  const ref = props.referencia as any
-  if (!ref) return ''
+  const refVar = props.referencia as any
+  if (!refVar) return ''
 
-  const creditDays = ref.credit_days || 0
+  const creditDays = refVar.credit_days || 0
   if (!creditDays) return ''
 
-  if (ref.credit_due_date) {
-    return formatDateOnlyString(ref.credit_due_date)
+  if (refVar.credit_due_date) {
+    return formatDateOnlyString(refVar.credit_due_date)
   }
 
   const baseDateString =
-    ref.voyage_discharge?.eta_date || ref.eta_date || ref.created_at
+    refVar.voyage_discharge?.eta_date || refVar.eta_date || refVar.created_at
 
   if (!baseDateString) return ''
 
