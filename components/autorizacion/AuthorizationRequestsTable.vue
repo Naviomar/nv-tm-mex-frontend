@@ -1,221 +1,212 @@
 <template>
-  <v-card variant="flat">
-    <v-card-text>
-      <div class="mb-4" @keyup.enter="onClickFilters">
-        <div class="grid grid-cols-6 gap-4">
-          <div class="col-span-2">
-            <v-text-field v-model="filters.id" type="number" density="compact" label="By ID" />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.search" density="compact" label="Search in comments" />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              v-model="filters.requestedBy"
-              :items="catalogs.users"
-              item-title="name"
-              item-value="id"
-              density="compact"
-              label="Requested by"
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Status"
-              v-model="filters.deleted_status"
-              :items="deletedStatus"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
+  <Card>
+    <div class="p-4 space-y-4">
+      <!-- Filters -->
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4" @keyup.enter="onClickFilters">
+        <div class="md:col-span-2">
+          <Input v-model="filterIdInput" type="number" label="By ID" placeholder="ID" />
         </div>
-        <div class="grid grid-cols-1 pt-4">
-          <div class="flex gap-2">
-            <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-            <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
-          </div>
+        <div class="md:col-span-2">
+          <Input v-model="filters.search" label="Search in comments" placeholder="Search…" />
         </div>
+        <div class="md:col-span-2">
+          <Select v-model="filters.requestedBy" label="Requested by">
+            <option :value="null">All</option>
+            <option v-for="u in catalogs.users" :key="u.id" :value="u.id">{{ u.name }}</option>
+          </Select>
+        </div>
+        <div class="md:col-span-2">
+          <Select v-model="filters.deleted_status" label="Status">
+            <option :value="null">All</option>
+            <option v-for="s in deletedStatus" :key="s.value" :value="s.value">{{ s.name }}</option>
+          </Select>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <Button variant="secondary" size="sm" @click="clearFilters">Clear</Button>
+        <Button variant="primary" size="sm" @click="onClickFilters">Search</Button>
       </div>
 
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
-      <div class="text-xs">
+      <Pagination
+        :current-page="authRequests.current_page"
+        :total-pages="authRequests.last_page"
+        @update:current-page="onClickPagination"
+      />
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">
         Showing {{ authRequests.from }} to {{ authRequests.to }} from {{ authRequests.total }} total records
-      </div>
-      <v-table density="compact">
+      </p>
+
+      <Table rounded="lg" scroll>
         <thead>
-          <tr>
-            <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Actions</th>
-            <th class="text-left">Requested by</th>
-            <th class="text-left">Resource</th>
-            <th class="text-left">Comments</th>
-            <th class="text-left">Attachment(s)</th>
-            <th v-show="false" class="text-left">Resource</th>
-            <th v-show="false" class="text-left">Resource ID</th>
-            <th class="text-left">Granted?</th>
-            <th class="text-left">Used?</th>
-            <th class="text-left">Expired?</th>
-            <th class="text-left">Expiration date</th>
-            <th class="text-left">User auth</th>
-            <th class="text-left">Created at</th>
+          <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50">
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-16">ID</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-24">Actions</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Requested by</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Resource</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Comments</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Attachment(s)</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Granted?</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Used?</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Expired?</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Expiration date</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">User auth</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Created at</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(authRequest, index) in authRequests.data"
             :key="`authRequest-${index}`"
-            :class="{
-              'dark:hover:bg-gray-700! hover:bg-slate-300!': true,
-              'bg-red-100! dark:bg-red-900!': authRequest.deleted_at,
-            }"
+            :class="[
+              'border-b border-zinc-100 dark:border-zinc-800/80',
+              authRequest.deleted_at ? 'bg-red-50/50 dark:bg-red-950/20' : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30'
+            ]"
           >
-            <td>
-              {{ authRequest.id }}
-            </td>
-            <td>
+            <td class="px-3 py-2 text-zinc-900 dark:text-zinc-100">{{ authRequest.id }}</td>
+            <td class="px-3 py-2">
               <div v-if="isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="primary" size="small" @click="showFormGrant(authRequest)"> Respond </v-btn>
+                <Button variant="primary" size="sm" class="w-24" @click="showFormGrant(authRequest)">Respond</Button>
               </div>
-              <div v-if="!isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="red" size="small" @click="showFormCancel(authRequest)"> Delete </v-btn>
+              <div v-else-if="!isPendingToGrant(authRequest) && !authRequest.deleted_at">
+                <Button variant="danger" size="sm" class="w-24" @click="showFormCancel(authRequest)">Delete</Button>
               </div>
             </td>
-            <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
-            <td class="whitespace-nowrap">
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-900 dark:text-zinc-100">{{ authRequest.requested?.name }}</td>
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
               {{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}
             </td>
-            <td>{{ authRequest.request_reason }}</td>
-            <td>
-              <div v-if="authRequest.files.length <= 0">
-                <v-chip size="small" color="warning">No attachments</v-chip>
+            <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400">{{ authRequest.request_reason }}</td>
+            <td class="px-3 py-2">
+              <div v-if="!authRequest.files?.length">
+                <Badge variant="warning">No attachments</Badge>
               </div>
-              <div v-if="authRequest.files.length > 0">
-                <div v-for="(file, index) in authRequest.files" :key="`file-${index}`">
-                  <ButtonDownloadS3Object :s3Path="file.attachment" />
-                </div>
+              <div v-else class="flex flex-col gap-1">
+                <ButtonDownloadS3Object v-for="(file, fi) in authRequest.files" :key="`file-${fi}`" :s3-path="file.attachment" />
               </div>
             </td>
-
-            <td v-show="false">{{ authRequest.resource }}</td>
-            <td v-show="false">{{ authRequest.resource_id }}</td>
-            <td>
+            <td class="px-3 py-2">
               <div v-if="authRequest.is_authorized == null">
-                <v-chip size="small" color="warning">Pending</v-chip>
+                <Badge variant="warning">Pending</Badge>
               </div>
               <div v-else>
-                <v-chip size="small" color="success" v-if="authRequest.is_authorized == 1">Yes</v-chip>
-                <v-chip size="small" color="error" v-else>No</v-chip>
-                <div>{{ authRequest.authorized_reason }}</div>
+                <Badge :variant="authRequest.is_authorized == 1 ? 'success' : 'error'">
+                  {{ authRequest.is_authorized == 1 ? 'Yes' : 'No' }}
+                </Badge>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ authRequest.authorized_reason }}</div>
               </div>
             </td>
-            <td>
-              <div v-if="authRequest.used_at">
-                <v-chip size="small" color="primary" v-if="authRequest.used_at">
-                  {{ formatDateString(authRequest.used_at) }}
-                </v-chip>
-              </div>
+            <td class="px-3 py-2">
+              <Badge v-if="authRequest.used_at" variant="default">{{ formatDateString(authRequest.used_at) }}</Badge>
             </td>
-            <td>
-              <div v-if="!authRequest.used_at">
-                <v-chip size="small" color="primary">
-                  {{ authRequest.expired ? 'Yes' : 'No' }}
-                </v-chip>
-              </div>
+            <td class="px-3 py-2">
+              <Badge v-if="!authRequest.used_at" variant="default">{{ authRequest.expired ? 'Yes' : 'No' }}</Badge>
             </td>
-            <td>{{ formatDateString(authRequest.expires_at) }}</td>
-            <td class="whitespace-nowrap">{{ authRequest.authorized?.name }}</td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="authRequest" createdByKey="requested_by">
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ formatDateString(authRequest.expires_at) }}</td>
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ authRequest.authorized?.name }}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <UserInfoBadge :item="authRequest" created-by-key="requested_by">
                 {{ formatDateString(authRequest.created_at) }}
               </UserInfoBadge>
             </td>
           </tr>
         </tbody>
-      </v-table>
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
+      </Table>
 
-      <v-dialog v-model="showGrantDialog" max-width="500" persistent>
-        <v-card>
-          <v-card-title>Grant authorization</v-card-title>
-          <v-card-text>
-            <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Resource: {{ getResourceName(form.auth_request?.resource) }}</div>
-              <div class="text-base">Reference: #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</div>
-              <div class="text-base">Requested by: {{ form.auth_request?.requested?.name }}</div>
-              <div class="text-base">Comments: {{ form.auth_request?.request_reason }}</div>
-            </div>
-            <v-autocomplete
-              v-model="form.is_authorized"
-              :items="[
-                { text: '', value: null },
-                { text: 'Yes', value: 1 },
-                { text: 'No', value: 0 },
-              ]"
-              item-title="text"
-              item-value="value"
-              label="Grant or reject?"
-            />
-            <v-text-field
-              v-if="form.is_authorized == 1"
-              v-model="form.until_date"
-              type="date"
-              label="Until date granted"
-            />
-            <v-textarea v-model="form.authorized_reason" label="Comments" />
-          </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeGrantDialog">Cancel</v-btn>
-            <v-btn color="success" @click="preGrantAuth">Save response</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <Pagination
+        :current-page="authRequests.current_page"
+        :total-pages="authRequests.last_page"
+        @update:current-page="onClickPagination"
+      />
+    </div>
+  </Card>
 
-      <v-dialog v-model="showCancelDialog" max-width="500" persistent>
-        <v-card>
-          <v-card-title>Cancel authorization request</v-card-title>
-          <v-card-text> Please confirm the delete of the authorization request </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeCancelDialog">Cancel</v-btn>
-            <v-btn color="success" @click="cancelAuthorization">Yes, I confirm.</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-card-text>
-  </v-card>
+  <!-- Grant dialog -->
+  <Teleport to="body">
+    <div
+      v-if="showGrantDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      @click.self="closeGrantDialog"
+    >
+      <Card class="w-full max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Grant authorization</h3>
+        </div>
+        <div class="p-4 overflow-y-auto space-y-4">
+          <div class="rounded-md border-2 border-dashed border-zinc-200 dark:border-zinc-700 p-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+            <p><span class="font-medium text-zinc-700 dark:text-zinc-300">Resource:</span> {{ getResourceName(form.auth_request?.resource) }}</p>
+            <p><span class="font-medium text-zinc-700 dark:text-zinc-300">Reference:</span> #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</p>
+            <p><span class="font-medium text-zinc-700 dark:text-zinc-300">Requested by:</span> {{ form.auth_request?.requested?.name }}</p>
+            <p><span class="font-medium text-zinc-700 dark:text-zinc-300">Comments:</span> {{ form.auth_request?.request_reason }}</p>
+          </div>
+          <Select v-model="form.is_authorized" label="Grant or reject?">
+            <option :value="null">—</option>
+            <option :value="1">Yes</option>
+            <option :value="0">No</option>
+          </Select>
+          <Input
+            v-if="form.is_authorized === 1"
+            v-model="form.until_date"
+            type="date"
+            label="Until date granted"
+          />
+          <Textarea v-model="form.authorized_reason" label="Comments" placeholder="Optional comments" />
+        </div>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-end gap-2">
+          <Button variant="secondary" @click="closeGrantDialog">Cancel</Button>
+          <Button variant="primary" @click="preGrantAuth">Save response</Button>
+        </div>
+      </Card>
+    </div>
+  </Teleport>
+
+  <!-- Cancel dialog -->
+  <Teleport to="body">
+    <div
+      v-if="showCancelDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      @click.self="closeCancelDialog"
+    >
+      <Card class="w-full max-w-[500px]">
+        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Cancel authorization request</h3>
+        </div>
+        <div class="p-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Please confirm the delete of the authorization request.
+        </div>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-end gap-2">
+          <Button variant="secondary" @click="closeCancelDialog">Cancel</Button>
+          <Button variant="primary" @click="cancelAuthorization">Yes, I confirm.</Button>
+        </div>
+      </Card>
+    </div>
+  </Teleport>
 </template>
 <script setup lang="ts">
-import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
+import { getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
+const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
 const router = useRouter()
 const authRequestStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
 
-const filters = ref({
+const filters = ref<{
+  id: string | null
+  search: string
+  deleted_status: string | null
+  requestedBy: number | null
+}>({
   id: null,
   search: '',
   deleted_status: null,
   requestedBy: null,
+})
+
+const filterIdInput = computed({
+  get: () => filters.value.id ?? '',
+  set: (v: string) => { filters.value.id = v === '' ? null : v },
 })
 
 const catalogs = ref<any>({
@@ -235,11 +226,14 @@ const form = ref<any>({
 })
 
 const authRequests = ref<any>({
-  data: [] as any,
+  data: [],
   current_page: 1,
   page: 1,
   perPage: 10,
   last_page: 1,
+  from: 0,
+  to: 0,
+  total: 0,
 })
 
 const showGrantDialog = ref(false)
@@ -319,6 +313,7 @@ const grantAuthorization = async () => {
 const cancelAuthorization = async () => {
   try {
     loadingStore.loading = true
+    // TODO: Unused variable response
     const response = await $api.authRequests.cancelRequest(formCancel.value.auth_request.id, {
       cancel_reason: formCancel.value.cancel_reason,
     })
@@ -390,12 +385,10 @@ const getAuthReqCatalogs = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = {
-    id: null,
-    search: '',
-    deleted_status: null,
-    requestedBy: null,
-  }
+  filters.value.id = null
+  filters.value.search = ''
+  filters.value.deleted_status = null
+  filters.value.requestedBy = null
   authRequests.value.current_page = 1
   await getAuthRequests()
 }

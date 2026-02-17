@@ -1,14 +1,14 @@
 <template>
-  <v-container fluid>
+  <div class="w-full max-w-full px-4 sm:px-6 py-6">
     <GrantAuthLinks />
     <div class="flex items-center gap-2">
-      <v-icon>mdi-security</v-icon>
+      <span class="mdi mdi-security text-2xl text-zinc-600 dark:text-zinc-400" aria-hidden="true" />
       <h1 class="text-xl font-bold">Authorization Requests</h1>
     </div>
     <div class="pt-4">
       <AuthorizationRequestsTable />
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
