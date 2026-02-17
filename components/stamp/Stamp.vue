@@ -251,8 +251,11 @@ const canvas9 = ref<any>(null)
 const canvas10 = ref<any>(null)
 
 let isResizing = false
-let sealWidth = 100 // Initial width of the seal
-let sealHeight = 100 // Initial height of the seal
+let resizeHandle = '' // Which handle is being used: 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'
+let sealWidth = 350 // Initial width of the seal (matches generated stamp base width)
+let sealHeight = 175 // Initial height of the seal (matches generated stamp base height)
+let dragStartX = 0 // Mouse X at mousedown, to detect actual drag vs click
+let dragStartY = 0 // Mouse Y at mousedown
 
 const cachedPageImages = []
 const imageSelected = ref()
@@ -413,23 +416,22 @@ const app = reactive({
 
   startDragging: function (event: any) {
     const canvas = app.canvas[app.pageSelected]?.value
-    const handleSize = 10
+    const handleSize = 14
     const clickX = event.clientX - canvas.getBoundingClientRect().left
     const clickY = event.clientY - canvas.getBoundingClientRect().top
 
-    // Check if the user clicked on the top-left handle
-    if (
-      clickX >= offsetX - handleSize / 2 &&
-      clickX <= offsetX + handleSize / 2 &&
-      clickY >= offsetY - handleSize / 2 &&
-      clickY <= offsetY + handleSize / 2
-    ) {
+    // Record start position to distinguish drag from click
+    dragStartX = event.clientX
+    dragStartY = event.clientY
+
+    // Check which handle was clicked (8 resize handles + rotation)
+    resizeHandle = getClickedHandle(clickX, clickY, handleSize)
+
+    if (resizeHandle) {
       isResizing = true
     } else {
       isDragging = true
     }
-
-    handleDragging(event)
   },
   stopDragging: function (event: any) {
     isDragging = false
@@ -584,7 +586,19 @@ const app = reactive({
     ctx.lineWidth = 3
     ctx.strokeRect(0, 0, w, h)
 
-    const dataUrl = canvasCustom.value.toDataURL('image/png')
+    // Update seal dimensions to match the actual drawn stamp size
+    sealWidth = w
+    sealHeight = h
+
+    // Export only the drawn area (w x h) into a trimmed canvas to avoid
+    // transparent padding that would misalign the resize handles
+    const trimmedCanvas = document.createElement('canvas')
+    trimmedCanvas.width = w
+    trimmedCanvas.height = h
+    const trimmedCtx = trimmedCanvas.getContext('2d')!
+    trimmedCtx.drawImage(canvasCustom.value, 0, 0, w, h, 0, 0, w, h)
+
+    const dataUrl = trimmedCanvas.toDataURL('image/png')
     const image = new Image()
     image.onload = () => {
       this.stampSelected = image
@@ -604,7 +618,9 @@ const app = reactive({
 })
 
 const handleDragging = _Throttle((event: any) => {
-  if ((isDragging || isResizing) && app.stampSelected) {
+  // Ignore tiny movements to prevent jump on simple click
+  const movedEnough = Math.abs(event.clientX - dragStartX) > 3 || Math.abs(event.clientY - dragStartY) > 3
+  if ((isDragging || isResizing) && app.stampSelected && (isResizing || movedEnough)) {
     const ctx = app.canvas[app.pageSelected]?.value.getContext('2d')
     const imageBlob = app.imagesPreviews[app.pageSelected]?.value
     const canvas = app.canvas[app.pageSelected]?.value
@@ -614,17 +630,81 @@ const handleDragging = _Throttle((event: any) => {
       imgPage.onload = () => {
         ctx.clearRect(0, 0, 1200, 1500)
 
-        if (isResizing) {
-          const deltaX = event.clientX - canvas.getBoundingClientRect().left - offsetX
-          const deltaY = event.clientY - canvas.getBoundingClientRect().top - offsetY
+        if (isResizing && resizeHandle) {
+          // Handle resize based on which handle is being dragged
+          const mouseX = event.clientX - canvas.getBoundingClientRect().left
+          const mouseY = event.clientY - canvas.getBoundingClientRect().top
+          const minSize = 80
+          const aspectRatio = sealWidth / sealHeight
 
-          sealWidth -= deltaX
-          sealHeight -= deltaY
-          offsetX += deltaX
-          offsetY += deltaY
+          switch (resizeHandle) {
+            case 'nw': // Top-left corner
+              const newW_nw = sealWidth + (offsetX - mouseX)
+              const newH_nw = sealHeight + (offsetY - mouseY)
+              if (newW_nw >= minSize && newH_nw >= minSize / 2) {
+                sealWidth = newW_nw
+                sealHeight = newH_nw
+                offsetX = mouseX
+                offsetY = mouseY
+              }
+              break
+            case 'n': // Top edge
+              const newH_n = sealHeight + (offsetY - mouseY)
+              if (newH_n >= minSize / 2) {
+                sealHeight = newH_n
+                offsetY = mouseY
+              }
+              break
+            case 'ne': // Top-right corner
+              const newW_ne = mouseX - offsetX
+              const newH_ne = sealHeight + (offsetY - mouseY)
+              if (newW_ne >= minSize && newH_ne >= minSize / 2) {
+                sealWidth = newW_ne
+                sealHeight = newH_ne
+                offsetY = mouseY
+              }
+              break
+            case 'e': // Right edge
+              const newW_e = mouseX - offsetX
+              if (newW_e >= minSize) {
+                sealWidth = newW_e
+              }
+              break
+            case 'se': // Bottom-right corner
+              const newW_se = mouseX - offsetX
+              const newH_se = mouseY - offsetY
+              if (newW_se >= minSize && newH_se >= minSize / 2) {
+                sealWidth = newW_se
+                sealHeight = newH_se
+              }
+              break
+            case 's': // Bottom edge
+              const newH_s = mouseY - offsetY
+              if (newH_s >= minSize / 2) {
+                sealHeight = newH_s
+              }
+              break
+            case 'sw': // Bottom-left corner
+              const newW_sw = sealWidth + (offsetX - mouseX)
+              const newH_sw = mouseY - offsetY
+              if (newW_sw >= minSize && newH_sw >= minSize / 2) {
+                sealWidth = newW_sw
+                sealHeight = newH_sw
+                offsetX = mouseX
+              }
+              break
+            case 'w': // Left edge
+              const newW_w = sealWidth + (offsetX - mouseX)
+              if (newW_w >= minSize) {
+                sealWidth = newW_w
+                offsetX = mouseX
+              }
+              break
+          }
         } else if (isDragging) {
-          offsetX = event.clientX - canvas.getBoundingClientRect().left - 100
-          offsetY = event.clientY - canvas.getBoundingClientRect().top - 100
+          // Center the stamp on cursor for better UX
+          offsetX = event.clientX - canvas.getBoundingClientRect().left - sealWidth / 2
+          offsetY = event.clientY - canvas.getBoundingClientRect().top - sealHeight / 2
         }
 
         // Draw the image page and the stamp
@@ -638,12 +718,86 @@ const handleDragging = _Throttle((event: any) => {
   }
 }, 50)
 
-// Draw only the top-left resize handle
+// Get which handle was clicked based on position
+const getClickedHandle = (clickX: number, clickY: number, handleSize: number): string => {
+  const handles = [
+    { name: 'nw', x: offsetX, y: offsetY },
+    { name: 'n', x: offsetX + sealWidth / 2, y: offsetY },
+    { name: 'ne', x: offsetX + sealWidth, y: offsetY },
+    { name: 'e', x: offsetX + sealWidth, y: offsetY + sealHeight / 2 },
+    { name: 'se', x: offsetX + sealWidth, y: offsetY + sealHeight },
+    { name: 's', x: offsetX + sealWidth / 2, y: offsetY + sealHeight },
+    { name: 'sw', x: offsetX, y: offsetY + sealHeight },
+    { name: 'w', x: offsetX, y: offsetY + sealHeight / 2 },
+  ]
+
+  for (const handle of handles) {
+    if (
+      clickX >= handle.x - handleSize / 2 &&
+      clickX <= handle.x + handleSize / 2 &&
+      clickY >= handle.y - handleSize / 2 &&
+      clickY <= handle.y + handleSize / 2
+    ) {
+      return handle.name
+    }
+  }
+  return ''
+}
+
+// Draw selection border and all resize handles (Word-style)
 const drawHandles = (ctx: any) => {
   const handleSize = 10
 
-  ctx.fillStyle = 'red'
-  ctx.fillRect(offsetX - handleSize / 2, offsetY - handleSize / 2, handleSize, handleSize)
+  // Draw selection border (dashed line)
+  ctx.strokeStyle = '#3b82f6'
+  ctx.lineWidth = 2
+  ctx.setLineDash([5, 3])
+  ctx.strokeRect(offsetX, offsetY, sealWidth, sealHeight)
+  ctx.setLineDash([])
+
+  // Draw 8 resize handles (small squares at corners and edges)
+  const handles = [
+    { x: offsetX, y: offsetY }, // nw
+    { x: offsetX + sealWidth / 2, y: offsetY }, // n
+    { x: offsetX + sealWidth, y: offsetY }, // ne
+    { x: offsetX + sealWidth, y: offsetY + sealHeight / 2 }, // e
+    { x: offsetX + sealWidth, y: offsetY + sealHeight }, // se
+    { x: offsetX + sealWidth / 2, y: offsetY + sealHeight }, // s
+    { x: offsetX, y: offsetY + sealHeight }, // sw
+    { x: offsetX, y: offsetY + sealHeight / 2 }, // w
+  ]
+
+  ctx.fillStyle = '#ffffff'
+  ctx.strokeStyle = '#3b82f6'
+  ctx.lineWidth = 2
+
+  handles.forEach((handle) => {
+    ctx.beginPath()
+    ctx.rect(handle.x - handleSize / 2, handle.y - handleSize / 2, handleSize, handleSize)
+    ctx.fill()
+    ctx.stroke()
+  })
+
+  // Draw rotation handle at top center (small circle with line)
+  const rotHandleY = offsetY - 25
+  const rotHandleX = offsetX + sealWidth / 2
+
+  // Line from top edge to rotation handle
+  ctx.beginPath()
+  ctx.moveTo(rotHandleX, offsetY)
+  ctx.lineTo(rotHandleX, rotHandleY)
+  ctx.strokeStyle = '#3b82f6'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  // Rotation handle circle
+  ctx.beginPath()
+  ctx.arc(rotHandleX, rotHandleY, 6, 0, Math.PI * 2)
+  ctx.fillStyle = '#3b82f6'
+  ctx.fill()
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
+  ctx.stroke()
 }
 
 const renderPageForExport = (pageIndex: number, includeHash: boolean): Promise<void> => {
