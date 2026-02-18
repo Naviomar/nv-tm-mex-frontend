@@ -4,7 +4,7 @@
     <v-list-item
       prepend-icon="mdi-shield-lock-outline"
       title="Authorizations"
-      to="/auth-requests/auth-options"
+      to="/auth-requests"
     ></v-list-item>
     <v-list-group value="Banking Transactions">
       <template v-slot:activator="{ props }">
