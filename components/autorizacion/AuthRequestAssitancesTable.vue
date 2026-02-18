@@ -1,187 +1,192 @@
 <template>
-  <v-card variant="flat">
-    <v-card-text>
-      <div class="mb-4" @keyup.enter="onClickFilters">
-        <div class="grid grid-cols-6 gap-4">
-          <div class="col-span-2">
-            <AUserSearch v-model="filters.created_by" label="Requested by" />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.id" type="number" density="compact" label="By ID" />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Status"
-              v-model="filters.status"
-              :items="estatuses"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Active / Inactive"
-              v-model="filters.deleted_status"
-              :items="deletedStatus"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
+  <Card>
+    <div class="p-4 space-y-4">
+      <!-- Filters -->
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4" @keyup.enter="onClickFilters">
+        <div class="md:col-span-2">
+          <AUserSearch v-model="filters.created_by" label="Requested by" />
         </div>
-        <div class="grid grid-cols-1 pt-4">
-          <div class="flex gap-2">
-            <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-            <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
-          </div>
+        <div class="md:col-span-2">
+          <Input v-model="filters.id" type="number" label="By ID" placeholder="ID" />
         </div>
+        <div class="md:col-span-2">
+          <Select v-model="filters.status" label="Status">
+            <option :value="null">All</option>
+            <option v-for="s in estatuses" :key="s.value" :value="s.value">{{ s.name }}</option>
+          </Select>
+        </div>
+        <div class="md:col-span-2">
+          <Select v-model="filters.deleted_status" label="Active / Inactive">
+            <option :value="null">All</option>
+            <option v-for="s in deletedStatus" :key="s.value" :value="s.value">{{ s.name }}</option>
+          </Select>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <Button variant="secondary" size="sm" @click="clearFilters">Clear</Button>
+        <Button variant="primary" size="sm" @click="onClickFilters">Search</Button>
       </div>
 
-      <v-pagination
-        v-model="reqAssistances.current_page"
-        :length="reqAssistances.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
-      <div class="text-xs">
+      <Pagination
+        :current-page="reqAssistances.current_page"
+        :total-pages="reqAssistances.last_page"
+        @update:current-page="onClickPagination"
+      />
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">
         Showing {{ reqAssistances.from }} to {{ reqAssistances.to }} from {{ reqAssistances.total }} total records
-      </div>
-      <v-table density="compact">
+      </p>
+
+      <Table rounded="lg" scroll>
         <thead>
-          <tr>
-            <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Actions</th>
-            <th class="text-left">Requested by</th>
-            <th class="text-left">Route</th>
-            <th class="text-left">Message</th>
-            <th class="text-left">Attachments</th>
-            <th class="text-left">Status</th>
-            <th class="text-left">Assisted by</th>
-            <th class="text-left">Comments</th>
-            <th class="text-left">Created at</th>
+          <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50">
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-16">ID</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-24">Actions</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Requested by</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Route</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Message</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Attachments</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Status</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Assisted by</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Comments</th>
+            <th class="h-10 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Created at</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(reqAssist, index) in reqAssistances.data"
             :key="`reqAssist-${index}`"
-            :class="{
-              'dark:hover:bg-gray-700! hover:bg-slate-300!': true,
-              'bg-red-100! dark:bg-red-900!': reqAssist.deleted_at,
-            }"
+            :class="[
+              'border-b border-zinc-100 dark:border-zinc-800/80',
+              reqAssist.deleted_at
+                ? 'bg-red-50/50 dark:bg-red-950/20'
+                : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30',
+            ]"
           >
-            <td>
-              {{ reqAssist.id }}
-            </td>
-            <td>
+            <td class="px-3 py-2 text-zinc-900 dark:text-zinc-100">{{ reqAssist.id }}</td>
+            <td class="px-3 py-2">
               <div v-if="isPendingToGrant(reqAssist) && !reqAssist.deleted_at">
-                <v-btn color="primary" size="x-small" @click="showFormGrant(reqAssist)"> Respond </v-btn>
+                <Button variant="primary" size="sm" class="w-24" @click="showFormGrant(reqAssist)">Respond</Button>
               </div>
-              <div v-if="!isPendingToGrant(reqAssist) && !reqAssist.deleted_at">
-                <v-btn color="red" size="x-small" @click="showFormCancel(reqAssist)"> Delete </v-btn>
+              <div v-else-if="!isPendingToGrant(reqAssist) && !reqAssist.deleted_at">
+                <Button variant="danger" size="sm" class="w-24" @click="showFormCancel(reqAssist)">Delete</Button>
               </div>
             </td>
-            <td class="whitespace-nowrap">{{ reqAssist.user?.name }}</td>
-
-            <td class="whitespace-nowrap">
-              <nuxt-link :to="`${reqAssist.route}`" target="_blank" class="flex items-center">
-                <v-icon size="x-small" class="mr-1">mdi-open-in-new</v-icon>
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-900 dark:text-zinc-100">{{ reqAssist.user?.name }}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <NuxtLink
+                :to="reqAssist.route"
+                target="_blank"
+                class="flex items-center gap-1 text-sky-600 dark:text-sky-400 hover:underline"
+              >
+                <span class="mdi mdi-open-in-new text-sm" aria-hidden="true" />
                 {{ reqAssist.route }}
-              </nuxt-link>
+              </NuxtLink>
             </td>
-
-            <td class="whitespace-nowrap">{{ reqAssist.message }}</td>
-
-            <td class="whitespace-nowrap">
-              <div v-if="reqAssist.files.length <= 0">
-                <v-chip color="warning">No attachments</v-chip>
+            <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400">{{ reqAssist.message }}</td>
+            <td class="px-3 py-2">
+              <div v-if="!reqAssist.files?.length">
+                <Badge variant="warning">No attachments</Badge>
               </div>
-              <div v-if="reqAssist.files.length > 0" class="flex flex-col gap-1">
-                <div v-for="(file, fileIndex) in reqAssist.files" :key="`file-${fileIndex}`">
-                  <ButtonDownloadS3Object :s3Path="file.file_path" />
-                </div>
+              <div v-else class="flex flex-col gap-1">
+                <ButtonDownloadS3Object
+                  v-for="(file, fileIndex) in reqAssist.files"
+                  :key="`file-${fileIndex}`"
+                  :s3-path="file.file_path"
+                />
               </div>
             </td>
-
-            <td>
-              <v-chip size="x-small" color="primary">{{ reqAssist.status }}</v-chip>
+            <td class="px-3 py-2">
+              <Badge variant="default">{{ reqAssist.status }}</Badge>
             </td>
-            <td class="whitespace-nowrap">{{ reqAssist.assisted_by?.name }}</td>
-            <td class="">
-              {{ reqAssist.comments }}
+            <td class="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+              {{ reqAssist.assisted_by?.name }}
             </td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="reqAssist" createdByKey="created_by">
+            <td class="px-3 py-2 text-zinc-600 dark:text-zinc-400">{{ reqAssist.comments }}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <UserInfoBadge :item="reqAssist" created-by-key="created_by">
                 {{ formatDateString(reqAssist.created_at) }}
               </UserInfoBadge>
             </td>
           </tr>
         </tbody>
-      </v-table>
-      <v-pagination
-        v-model="reqAssistances.current_page"
-        :length="reqAssistances.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
+      </Table>
 
-      <v-dialog v-model="showGrantDialog" max-width="500" persistent>
-        <v-card>
-          <v-card-title>Assist Request</v-card-title>
-          <v-card-text>
-            <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Route: {{ form.req_assist?.route }}</div>
-              <div class="text-base">Requested by: {{ form.req_assist?.user?.name }}</div>
-              <div class="text-base">Comments: {{ form.req_assist?.message || 'No comments' }}</div>
-            </div>
-            <v-autocomplete
-              v-model="form.status"
-              :items="[
-                { text: 'Open', value: 'open' },
-                { text: 'Grant', value: 'granted' },
-                { text: 'Deny', value: 'denied' },
-              ]"
-              item-title="text"
-              item-value="value"
-              label="Grant or deny?"
-            />
-            <v-textarea v-model="form.comments" label="Comments" :rows="3" />
-          </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeGrantDialog">Cancel</v-btn>
-            <v-btn color="success" @click="preAssist">Save response</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <Pagination
+        :current-page="reqAssistances.current_page"
+        :total-pages="reqAssistances.last_page"
+        @update:current-page="onClickPagination"
+      />
+    </div>
+  </Card>
 
-      <v-dialog v-model="showCancelDialog" max-width="500" persistent>
-        <v-card>
-          <v-card-title>Cancel request assistance</v-card-title>
-          <v-card-text> Please confirm the delete of the request assistance </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeCancelDialog">Cancel</v-btn>
-            <v-btn color="success" @click="cancelReqAssistance">Yes, I confirm.</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-card-text>
-  </v-card>
+  <!-- Grant / Assist dialog -->
+  <Teleport to="body">
+    <div
+      v-if="showGrantDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      @click.self="closeGrantDialog"
+    >
+      <Card class="w-full max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Assist Request</h3>
+        </div>
+        <div class="p-4 overflow-y-auto space-y-4">
+          <div
+            class="rounded-md border-2 border-dashed border-zinc-200 dark:border-zinc-700 p-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-1"
+          >
+            <p><span class="font-medium text-zinc-700 dark:text-zinc-300">Route:</span> {{ form.req_assist?.route }}</p>
+            <p>
+              <span class="font-medium text-zinc-700 dark:text-zinc-300">Requested by:</span>
+              {{ form.req_assist?.user?.name }}
+            </p>
+            <p>
+              <span class="font-medium text-zinc-700 dark:text-zinc-300">Comments:</span>
+              {{ form.req_assist?.message || 'No comments' }}
+            </p>
+          </div>
+          <Select v-model="form.status" label="Grant or deny?">
+            <option :value="null">—</option>
+            <option value="open">Open</option>
+            <option value="granted">Grant</option>
+            <option value="denied">Deny</option>
+          </Select>
+          <Textarea v-model="form.comments" label="Comments" :rows="3" placeholder="Optional" />
+        </div>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-end gap-2">
+          <Button variant="secondary" @click="closeGrantDialog">Cancel</Button>
+          <Button variant="primary" @click="preAssist">Save response</Button>
+        </div>
+      </Card>
+    </div>
+  </Teleport>
+
+  <!-- Cancel dialog -->
+  <Teleport to="body">
+    <div
+      v-if="showCancelDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      @click.self="closeCancelDialog"
+    >
+      <Card class="w-full max-w-[500px]">
+        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Cancel request assistance</h3>
+        </div>
+        <div class="p-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Please confirm the delete of the request assistance.
+        </div>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-end gap-2">
+          <Button variant="secondary" @click="closeCancelDialog">Cancel</Button>
+          <Button variant="primary" @click="cancelReqAssistance">Yes, I confirm.</Button>
+        </div>
+      </Card>
+    </div>
+  </Teleport>
 </template>
+
 <script setup lang="ts">
-import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
+const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
-const router = useRouter()
-const reqAssistStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -191,10 +196,6 @@ const filters = ref<any>({
   search: '',
   deleted_status: null,
   created_by: null,
-})
-
-const catalogs = ref<any>({
-  users: [],
 })
 
 const estatuses = ref<any>([
@@ -282,7 +283,7 @@ const assistSaveReq = async () => {
 const cancelReqAssistance = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
+    const _ = await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
       cancel_reason: formCancel.value.cancel_reason,
     })
 
