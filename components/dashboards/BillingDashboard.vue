@@ -5,10 +5,12 @@
       <!-- Filters -->
       <Card class="mb-6">
         <div class="p-4">
-          <div class="flex flex-wrap items-end gap-4">
+          <div class="flex items-end">
+            <div class="w-full flex gap-4 items-end">
             <Input v-model="filters.from" label="From" type="date" />
             <Input v-model="filters.to" label="To" type="date" />
-            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" class="w-[350px]" />
+            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" class="w-[450px]" />
+            </div>
             <div class="flex gap-2">
               <Button variant="ghost" size="sm" @click="clearFilters">Clear</Button>
               <Button variant="primary" size="sm" @click="applyFilters">Apply</Button>
