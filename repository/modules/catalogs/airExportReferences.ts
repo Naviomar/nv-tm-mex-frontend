@@ -268,6 +268,15 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/${id}/preview-email-pdf`, fetchOptions)
   }
 
+  async sendEmailPdf(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      method: 'POST',
+      body: form,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/preview-email-pdf`, fetchOptions)
+  }
+
 }
 
 export default AirExportModule

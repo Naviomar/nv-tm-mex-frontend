@@ -63,9 +63,10 @@
         </div>
         <div class="col-span-2">
           <div v-for="(notification, index) in values.mail_notifications" :key="index">
-            <div class="grid grid-cols-2 items-center gap-2 mb-4">
-              <div class="col-span-1">
-                {{ customerMailNotifications.find((item: any) => item.id === notification.id)?.short_name }}
+            <div v-if="customerMailNotifications.find((item: any) => item.id === notification.id)" 
+                 class="grid grid-cols-2 items-center gap-2 mb-4">
+              <div class="col-span-1 min-h-[1.5rem] flex items-center">
+                {{ displayNameForNotification(notification) }}
               </div>
               <InputAutocomplete
                 :name="'notification' + notification.id + 'type'"
@@ -230,6 +231,12 @@ const toggle = () => {
 const customerMailNotifications = computed(() => {
   return mailNotifications.filter((notify) => notify.is_for_consignee)
 })
+
+function displayNameForNotification(notification: { id: number; short_name?: string | null }) {
+  const fromCatalog = customerMailNotifications.value.find((item: any) => item.id === notification.id)?.short_name
+  const name = (fromCatalog ?? notification.short_name ?? '').toString().trim()
+  return name || `(ID: ${notification.id})`
+}
 
 const onChangeType = (value: any, notification: any) => {
   console.log(value, notification)

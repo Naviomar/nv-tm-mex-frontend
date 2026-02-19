@@ -355,6 +355,9 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 
+// Inject refresh function from parent
+const refreshAllTabs = inject<(() => Promise<void>) | null>('refreshAllTabs', null)
+
 const props = defineProps({
   id: {
     type: String,
@@ -446,7 +449,6 @@ const canEditCharges = computed(() => {
   return values.locked_at == null
 })
 
-
 const getSellCharges = (callback: Function) => {
   callback(
     (charges.value ?? [])
@@ -454,7 +456,7 @@ const getSellCharges = (callback: Function) => {
       .map((charge: any) => ({
         ...charge,
         amount_total: charge.sell_total ?? 0, // Ensure amount_total exists
-      }))
+      })),
   )
 }
 
@@ -550,6 +552,12 @@ const onSuccess = async () => {
     snackbar.add({ type: 'success', text: 'Air export reference updated' })
 
     await getData()
+
+    // Refresh all tabs data after successful update
+    if (refreshAllTabs) {
+      console.log('📝 Form saved, refreshing all tabs...')
+      await refreshAllTabs()
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -602,6 +610,12 @@ const addNewHouseAwb = async () => {
     snackbar.add({ type: 'success', text: 'House AWB added' })
     await getData()
     triggerRefresh()
+
+    // Refresh all tabs data after adding house AWB
+    if (refreshAllTabs) {
+      console.log('📋 House AWB added, refreshing all tabs...')
+      await refreshAllTabs()
+    }
     // TODO por el momento refresh a toda la pagina.
     // window.location.reload()
   } catch (e) {

@@ -9,14 +9,6 @@
       </v-card-title>
       <v-card-subtitle>Send reservation details via email</v-card-subtitle>
       <v-card-text>
-        <div class="mb-4">
-          <v-alert type="info" variant="tonal">
-            <div class="text-sm">
-              <strong>Phase 2 Feature:</strong> Email reservation functionality for China Cargo and EVA will be implemented in the next phase.
-            </div>
-          </v-alert>
-        </div>
-
         <div class="grid grid-cols-1 gap-4">
           <div>
             <v-text-field
@@ -26,7 +18,6 @@
               variant="outlined"
               type="email"
               hint="Enter recipient email address"
-              disabled
             />
           </div>
           <div>
@@ -37,17 +28,10 @@
               variant="outlined"
               type="email"
               hint="Enter CC email addresses (comma separated)"
-              disabled
             />
           </div>
           <div>
-            <v-text-field
-              v-model="emailData.subject"
-              label="Subject"
-              density="compact"
-              variant="outlined"
-              disabled
-            />
+            <v-text-field v-model="emailData.subject" label="Subject" density="compact" variant="outlined" />
           </div>
           <div>
             <v-textarea
@@ -57,19 +41,13 @@
               variant="outlined"
               rows="8"
               hint="Email message content"
-              disabled
             />
           </div>
         </div>
 
         <div class="mt-4 flex gap-2">
-          <v-btn color="primary" prepend-icon="mdi-email-send" disabled>
-            Send Email
-          </v-btn>
-          <v-btn color="secondary" prepend-icon="mdi-eye" @click="openPreviewModal">
-            Preview Email
-          </v-btn>
-          
+          <v-btn color="primary" prepend-icon="mdi-email-send" @click="sendEmail"> Send Email </v-btn>
+          <v-btn color="secondary" prepend-icon="mdi-eye" @click="openPreviewModal"> Preview Email </v-btn>
         </div>
       </v-card-text>
     </v-card>
@@ -91,13 +69,11 @@
             <div><strong>Shipper:</strong> {{ reference.consignee?.name }}</div>
           </div>
         </div>
-        <div v-else class="text-center text-grey">
-          Loading reference data...
-        </div>
+        <div v-else class="text-center text-grey">Loading reference data...</div>
       </v-card-text>
     </v-card>
 
- <v-dialog v-model="showModal" fullscreen>
+    <v-dialog v-model="showModal" fullscreen>
       <v-card>
         <v-toolbar color="primary" dark>
           <v-toolbar-title>Reservation Document - {{ airlineName }}</v-toolbar-title>
@@ -137,6 +113,11 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['refresh-data'])
+
+// Inject refresh function from parent
+const refreshAllTabs = inject<(() => Promise<void>) | null>('refreshAllTabs', null)
+
 const emailData = ref({
   to: '',
   cc: '',
@@ -144,14 +125,13 @@ const emailData = ref({
   body: '',
 })
 
-
 const { $api } = useNuxtApp()
-const loadingStore = useLoadingStore();
+const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const showModal = ref(false)
 const pdfUrl = ref<string | null>(null)
 
-  // Computed properties for airline detection
+// Computed properties for airline detection
 const isChinaCargo = computed(() => props.reference?.airline_id === 27)
 const isEvaAir = computed(() => props.reference?.airline_id === 30)
 
@@ -184,12 +164,48 @@ const openPreviewModal = async () => {
   }
 }
 
-const closeModal = () => {
+const sendEmail = async () => {
+  try {
+    loadingStore.start()
+
+    const payload = {
+      to: emailData.value.to,
+      cc: emailData.value.cc,
+      subject: emailData.value.subject,
+      body: emailData.value.body,
+    }
+
+    const response = await $api.airExport.sendEmailPdf(props.id, payload)
+
+    snackbar.add({ type: 'success', text: 'Email sent successfully' })
+
+    // Refresh all tabs data
+    if (refreshAllTabs) {
+      await refreshAllTabs()
+    }
+    emit('refresh-data')
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error sending email' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const closeModal = async () => {
   if (pdfUrl.value) {
     window.URL.revokeObjectURL(pdfUrl.value)
     pdfUrl.value = null
   }
   showModal.value = false
+
+  // Refresh all tabs data
+  if (refreshAllTabs) {
+    await refreshAllTabs()
+  }
+  emit('refresh-data')
 }
 
 const printFromModal = () => {
