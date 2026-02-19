@@ -513,8 +513,9 @@ const viewPayment = (payment: any) => {
     router.push(`/transfers/global/view-${payment.paymentable_id}?focusPayable=${payment.id}`)
     return
   }
-  // ConsigneeCreditNote
-  if (payment.paymentable_type.includes('ConsigneeCreditNote')) {
+  // ConsigneeCreditNote or unified CreditNote
+  if (payment.paymentable_type.includes('ConsigneeCreditNote') || 
+      (payment.paymentable_type.includes('CreditNote') && !payment.paymentable_type.includes('LineCreditNote'))) {
     router.push(`/invoices/search/credit-notes/view-${payment.paymentable_id}`)
     return
   }

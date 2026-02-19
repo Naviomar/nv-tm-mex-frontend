@@ -98,6 +98,10 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
   }
 
   async exportInvoicesToExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
     return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel`, fetchOptions)
   }
 

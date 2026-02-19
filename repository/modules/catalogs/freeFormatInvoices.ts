@@ -130,11 +130,31 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/delete-cfdi-link`, fetchOptions)
   }
 
+  async getUnifiedPaged(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/unified`, fetchOptions)
+  }
+
+  async exportUnified(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/export-unified`, fetchOptions)
+  }
+
   async exportInvoicesToExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
     return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel`, fetchOptions)
   }
 
   async exportInvoicesToExcelNc(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
     return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel-nc`, fetchOptions)
   }
 

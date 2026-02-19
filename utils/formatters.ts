@@ -249,7 +249,8 @@ const getPaymentableLink = (payment: any) => {
   if (payment.paymentable_type?.includes('BankMovement')) {
     return `/transfers/global/view-${payment.paymentable_id}?focusPayable=${payment.id}`
   }
-  if (payment.paymentable_type?.includes('ConsigneeCreditNote')) {
+  if (payment.paymentable_type?.includes('ConsigneeCreditNote') ||
+      (payment.paymentable_type?.includes('CreditNote') && !payment.paymentable_type?.includes('LineCreditNote'))) {
     return `/invoices/search/credit-notes/view-${payment.paymentable_id}`
   }
   if (payment.paymentable_type?.includes('ReqAdvancePayment')) {

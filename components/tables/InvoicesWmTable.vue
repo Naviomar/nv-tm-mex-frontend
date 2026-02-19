@@ -141,9 +141,9 @@
               </div>
             </td>
             <td>
-              <div v-if="invoiceWm.invoice?.consignee_credit_notes.length > 0"
+              <div v-if="invoiceWm.invoice?.credit_notes?.length > 0"
                 class="flex flex-col gap-1 items-center justify-center">
-                <v-chip v-for="(creditNote, index) in invoiceWm.invoice?.consignee_credit_notes" size="small"
+                <v-chip v-for="(creditNote, index) in invoiceWm.invoice?.credit_notes" size="small"
                   color="red" :key="`ccn-${index}`" @click="viewCreditNote(creditNote)">
                   <div class="flex gap-1"><v-icon>mdi-eye-outline</v-icon> CN #{{ creditNote.id }}</div>
                 </v-chip>
