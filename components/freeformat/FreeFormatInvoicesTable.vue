@@ -82,177 +82,119 @@
     </div>
     <div>
       <v-pagination
-        v-model="freeFormatInvoices.current_page"
-        :length="freeFormatInvoices.last_page"
+        v-model="unifiedData.current_page"
+        :length="unifiedData.last_page"
         rounded="circle"
         @update:model-value="onClickPagination"
         density="compact"
-      ></v-pagination>
-
-      <!-- Tabla de Notas de Crédito -->
-      <v-table v-if="isSearchingCreditNotes" density="compact" fixed-header height="75vh">
+      />
+      <div class="text-xs mb-1">
+        Showing {{ unifiedData.from ?? 1 }} to {{ unifiedData.to ?? unifiedData.data?.length }} of {{ unifiedData.total ?? unifiedData.data?.length }} records
+      </div>
+      <v-table density="compact" fixed-header height="75vh">
         <thead>
           <tr>
             <th>Actions</th>
-            <th>Credit Note #</th>
-            <th>Related Invoice</th>
+            <th>Tipo</th>
+            <th>Folio</th>
             <th>Party</th>
-            <th>Party name</th>
-            <th>Amount</th>
-            <th>Concepts</th>
-            <th>Created at</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(creditNote, index) in freeFormatInvoices.data" :key="`credit-note-${index}`">
-            <td>
-              <div class="flex flex-col items-center gap-2">
-                <ViewButton :item="creditNote" @click="viewInvoice(creditNote.party_invoice)" />
-              </div>
-            </td>
-            <td>
-              <v-chip size="small" color="purple" class="cursor-pointer"> CN #{{ creditNote.id }} </v-chip>
-            </td>
-            <td>
-              <v-chip size="small" color="primary" class="cursor-pointer" @click="viewInvoice(creditNote.party_invoice)">
-                Invoice #{{ creditNote.party_invoice?.invoice?.invoice_number }}
-              </v-chip>
-            </td>
-            <td>
-              <div>{{ getPartyableType(creditNote.party_invoice?.partyable_type) }}</div>
-            </td>
-            <td class="whitespace-nowrap">
-              <div>{{ creditNote.party_invoice?.partyable?.name }}</div>
-            </td>
-            <td class="whitespace-nowrap font-bold">
-              {{ getCurrencyName(creditNote.currency_id) }} {{ formatToCurrency(creditNote.amount_total) }}
-            </td>
-            <td>
-              <div class="grid grid-cols-1 gap-1 overflow-hidden overflow-y-auto max-h-32 my-2">
-                <div
-                  v-for="(charge, idx) in creditNote.charges"
-                  :key="`cn-charge-${idx}`"
-                  class="text-xs text-nowrap text-ellipsis"
-                >
-                  {{ charge.charge?.name }} - {{ formatToCurrency(charge.amount) }}
-                </div>
-              </div>
-            </td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="creditNote">
-                {{ formatDateString(creditNote.created_at) }}
-              </UserInfoBadge>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-
-      <!-- Tabla de Facturas (vista original) -->
-      <v-table v-else density="compact" fixed-header height="75vh">
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Invoice #</th>
-            <th>Total</th>
-            <th>Credit notes</th>
-            <th>Party</th>
-            <th>Party name</th>
+            <th>Nombre Party</th>
+            <th>Total / Monto</th>
+            <th>Inv. Type</th>
+            <th>Conceptos</th>
+            <th>Relacionado</th>
             <th>Status</th>
-            <th>Inv. type</th>
-            <th>Concepts</th>
-            <th class="min-w-[300px]">CFDI data</th>
-
-            <th>Created at</th>
+            <th>Creado</th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="(freeFormat, index) in freeFormatInvoices.data"
-            :key="`party-invoice-${index}`"
-            :class="rowClass(freeFormat)"
+            v-for="(row, index) in unifiedData.data"
+            :key="`unified-${index}`"
+            :class="rowClass(row)"
           >
-            <td>
-              <div class="flex flex-col items-center gap-2">
-                <ViewButton :item="freeFormat" @click="viewInvoice(freeFormat)" />
-                <PreviewPartyInvoice :invoice="freeFormat" size="small" />
-              </div>
-            </td>
-            <td>
-              <v-chip size="small" color="primary" class="cursor-pointer">
-                {{ freeFormat.is_proforma == 1 ? 'Proforma' : 'Invoice' }} #{{
-                  freeFormat?.invoice?.invoice_number
-                }}</v-chip
-              >
-            </td>
-            <td class="whitespace-nowrap">
-              <div v-for="(totalCurrency, index) in getCurrenciesTotal(freeFormat)" :key="`currency-total-${index}`">
-                {{ totalCurrency }}
-              </div>
-            </td>
-            <td>
-              <div class="grid grid-cols-1 gap-1 overflow-hidden">
-                <v-chip
-                  v-for="(creditNote, index) in freeFormat.party_credit_notes"
-                  :key="`credit-note-${index}`"
-                  class="text-xs text-nowrap text-ellipsis"
-                  color="purple"
-                  size="small"
-                >
-                  CN #{{ creditNote.id }}
+            <!-- ── Invoice row ───────────── -->
+            <template v-if="row._record_type === 'invoice'">
+              <td>
+                <div class="flex flex-col items-center gap-1">
+                  <ViewButton :item="row" @click="viewInvoice(row)" />
+                  <PreviewPartyInvoice :invoice="row" size="small" />
+                </div>
+              </td>
+              <td><v-chip size="x-small" color="blue-darken-2">Factura</v-chip></td>
+              <td>
+                <v-chip size="small" color="primary" class="cursor-pointer">
+                  {{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }} #{{ row?.invoice?.invoice_number }}
                 </v-chip>
-              </div>
-            </td>
-            <td>
-              <div>{{ getPartyableType(freeFormat.partyable_type) }}</div>
-            </td>
-            <td class="whitespace-nowrap">
-              <div>{{ freeFormat.partyable?.name }}</div>
-            </td>
-            <td>
-              <div class="text-xs">{{ getInvoicePaidStatus(freeFormat) }}</div>
-            </td>
-            <td>{{ freeFormat.inv_type?.toUpperCase() }}</td>
-            <td>
-              <div class="grid grid-cols-1 gap-1 overflow-hidden overflow-y-auto max-h-32 my-2">
-                <div
-                  v-for="(charge, index) in freeFormat.invoice_charges"
-                  :key="`debit-charge-${index}`"
-                  class="text-xs text-nowrap text-ellipsis"
-                >
-                  {{ charge.charge?.name }} - {{ charge.amount }}
+              </td>
+              <td>{{ getPartyableType(row.partyable_type) }}</td>
+              <td class="whitespace-nowrap">{{ row.partyable?.name }}</td>
+              <td class="whitespace-nowrap">
+                <div v-for="(t, i) in getCurrenciesTotal(row)" :key="`ct-${i}`">{{ t }}</div>
+              </td>
+              <td>{{ row.inv_type?.toUpperCase() }}</td>
+              <td>
+                <div class="grid gap-1 overflow-y-auto max-h-28 my-1">
+                  <div v-for="(c, i) in row.invoice_charges" :key="`ic-${i}`" class="text-xs text-nowrap text-ellipsis">
+                    {{ c.charge?.name }} - {{ c.amount }}
+                  </div>
                 </div>
-                <div
-                  v-for="(charge, index) in freeFormat.charges"
-                  :key="`credit-charge-${index}`"
-                  class="text-xs text-nowrap text-ellipsis"
-                >
-                  {{ charge.charge?.name }} - {{ charge.amount }}
+              </td>
+              <td>
+                <div class="flex flex-col gap-1">
+                  <v-chip v-for="(cn, i) in row.credit_notes" :key="`cn-${i}`" size="x-small" color="purple">
+                    CN #{{ cn.id }}
+                  </v-chip>
                 </div>
-              </div>
-            </td>
-            <td>
-              <div class="grid grid-cols-1 overflow-hidden">
-                <div class="text-xs text-nowrap text-ellipsis">Uso CFDI: {{ freeFormat.uso_cfdi }}</div>
-                <div class="text-xs text-nowrap text-ellipsis">Forma de pago: {{ freeFormat.forma_pago }}</div>
-                <div class="text-xs text-nowrap text-ellipsis">Método de pago: {{ freeFormat.metodo_pago }}</div>
-              </div>
-            </td>
+              </td>
+              <td><div class="text-xs">{{ getInvoicePaidStatus(row) }}</div></td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="row">{{ formatDateString(row.created_at) }}</UserInfoBadge>
+              </td>
+            </template>
 
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="freeFormat">
-                {{ formatDateString(freeFormat.created_at) }}
-              </UserInfoBadge>
-            </td>
+            <!-- ── Credit Note row ────────── -->
+            <template v-else-if="row._record_type === 'credit_note'">
+              <td>
+                <div class="flex flex-col items-center gap-1">
+                  <ViewButton :item="row" @click="viewInvoice(row.party_invoice)" />
+                </div>
+              </td>
+              <td><v-chip size="x-small" color="purple">NC</v-chip></td>
+              <td><v-chip size="small" color="purple">CN #{{ row.id }}</v-chip></td>
+              <td>{{ getPartyableType(row.party_invoice?.partyable_type) }}</td>
+              <td class="whitespace-nowrap">{{ row.party_invoice?.partyable?.name }}</td>
+              <td class="whitespace-nowrap font-bold">
+                {{ getCurrencyName(row.currency_id) }} {{ formatToCurrency(row.amount_total) }}
+              </td>
+              <td>{{ row.inv_type?.toUpperCase() }}</td>
+              <td>
+                <div class="grid gap-1 overflow-y-auto max-h-28 my-1">
+                  <div v-for="(c, i) in row.charges" :key="`cnc-${i}`" class="text-xs text-nowrap text-ellipsis">
+                    {{ c.charge?.name }} - {{ formatToCurrency(c.amount) }}
+                  </div>
+                </div>
+              </td>
+              <td>
+                <v-chip size="x-small" color="primary" class="cursor-pointer" @click="viewInvoice(row.party_invoice)">
+                  Invoice #{{ row.party_invoice?.invoice?.invoice_number }}
+                </v-chip>
+              </td>
+              <td><div class="text-xs">{{ row.deleted_at ? 'Cancelado' : 'Activo' }}</div></td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="row">{{ formatDateString(row.created_at) }}</UserInfoBadge>
+              </td>
+            </template>
           </tr>
         </tbody>
       </v-table>
       <v-pagination
-        v-model="freeFormatInvoices.current_page"
-        :length="freeFormatInvoices.last_page"
+        v-model="unifiedData.current_page"
+        :length="unifiedData.last_page"
         rounded="circle"
         @update:model-value="onClickPagination"
         density="compact"
-      ></v-pagination>
+      />
     </div>
   </div>
 </template>
@@ -267,38 +209,25 @@ const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
-const pdfViewer = ref<any>(null)
-
 const filters = ref<any>({
   from: '',
   to: '',
-  invoice_number: null,
+  invoice_number: '',
   inv_type: '',
   partyable_type: '',
   partyable_id: '',
   deleted_status: '',
 })
 
-const freeFormatInvoices = ref<any>({
-  data: [],
+const unifiedData = ref<any>({
+  data: [] as any[],
   current_page: 1,
-  page: 1,
-  perPage: 10,
+  perPage: 50,
   last_page: 1,
+  total: 0,
+  from: 0,
+  to: 0,
 })
-
-// Variable para rastrear qué tipo de datos tenemos actualmente cargados
-const currentDataType = ref<'invoices' | 'credit_notes'>('invoices')
-
-const rowClass = (invoice: any) => {
-  if (invoice.deleted_at) {
-    return 'bg-red-100! dark:bg-red-900!'
-  }
-  if (invoice.is_proforma === 1) {
-    return 'bg-stone-200'
-  }
-  return ''
-}
 
 const invoiceTypes = [
   { name: 'TM', value: 'tm' },
@@ -306,226 +235,113 @@ const invoiceTypes = [
   { name: 'NC', value: 'nc' },
 ]
 
-// Usar el tipo de datos cargados, no el filtro seleccionado
-const isSearchingCreditNotes = computed(() => currentDataType.value === 'credit_notes')
+const rowClass = (row: any) => {
+  if (row.deleted_at)        return 'bg-red-100! dark:bg-red-900!'
+  if (row.is_proforma === 1) return 'bg-stone-200'
+  return ''
+}
 
 const getCurrencyName = (currencyId: number) => {
-  const currency = currencies.find((c) => c.id === currencyId)
-  return currency?.name || ''
-}
-
-const onClickFilters = async () => {
-  // set current page to 1
-  freeFormatInvoices.value.current_page = 1
-  await getData()
-}
-
-const onClickPagination = async (page: number) => {
-  freeFormatInvoices.value.current_page = page
-  await getData()
+  return currencies.find((c) => c.id === currencyId)?.name || ''
 }
 
 const getCurrenciesTotal = (invoice: any) => {
   if (!invoice.invoice_total) return []
-  const totales = Object.keys(invoice.invoice_total).map((currency_id: any) => {
-    // console.log('currency_id', currency_id)
-    // console.log('total', invoice.invoice_total[currency_id])
+  return Object.keys(invoice.invoice_total).map((currency_id: any) => {
     const currency = currencies.find((c) => c.id == currency_id)
     return `${currency?.name}: ${formatToCurrency(invoice.invoice_total[currency_id])}`
   })
-  return totales
 }
 
 const getPartyableType = (partyableType: string) => {
-  if (partyableType === 'App\\Models\\Mexico\\Consignee') {
-    return 'Customer'
+  const map: Record<string, string> = {
+    'App\\Models\\Mexico\\Consignee':   'Customer',
+    'App\\Models\\Mexico\\Supplier':    'Supplier',
+    'App\\Models\\Mexico\\Line':        'Freight line',
+    'App\\Models\\Mexico\\CustomAgent': 'Custom agent',
   }
-  if (partyableType === 'App\\Models\\Mexico\\Supplier') {
-    return 'Supplier'
-  }
-  if (partyableType === 'App\\Models\\Mexico\\Line') {
-    return 'Freight line'
-  }
-  if (partyableType === 'App\\Models\\Mexico\\CustomAgent') {
-    return 'Custom agent'
-  }
-  return partyableType
+  return map[partyableType] ?? partyableType
 }
 
-const clearPartyableId = () => {
-  filters.value.partyable_id = null
-}
+const clearPartyableId = () => { filters.value.partyable_id = '' }
 
-const clearFilters = async () => {
-  filters.value = {
-    from: '',
-    to: '',
-    invoice_number: null,
-    inv_type: '',
-    partyable_type: '',
-    partyable_id: '',
-    deleted_status: '',
-  }
-  await getData()
-}
-
-const getInvoicePaidStatus = (freeFormat: any) => {
-  if (freeFormat.deleted_at) {
-    return 'Cancelled'
-  }
-  if (!freeFormat.invoice) {
-    return 'Pending'
-  }
-  if (freeFormat.invoice?.is_paid) {
-    return 'Paid @ ' + formatDateOnlyString(freeFormat.invoice.paid_at)
-  }
+const getInvoicePaidStatus = (row: any) => {
+  if (row.deleted_at)        return 'Cancelled'
+  if (!row.invoice)          return 'Pending'
+  if (row.invoice?.is_paid)  return 'Paid @ ' + formatDateOnlyString(row.invoice.paid_at)
   return 'Pending'
 }
 
 const searchCustomers = async (search: any) => {
-  try {
-    const response = await $api.consignees.searchConsignees({
-      query: search,
-    })
-    return response
-  } catch (error) {
-    snackbar.add({
-      type: 'error',
-      text: 'Error fetching customers',
-    })
-  }
+  try   { return await $api.consignees.searchConsignees({ query: search }) }
+  catch { snackbar.add({ type: 'error', text: 'Error fetching customers' }) }
 }
 
 const searchSuppliers = async (params: any) => {
-  try {
-    const response = await $api.suppliers.searchSuppliers({
-      query: params,
-    })
-    return response
-  } catch (error) {
-    snackbar.add({
-      type: 'error',
-      text: 'Error fetching suppliers',
-    })
-  }
+  try   { return await $api.suppliers.searchSuppliers({ query: params }) }
+  catch { snackbar.add({ type: 'error', text: 'Error fetching suppliers' }) }
 }
 
 const getData = async () => {
+  loadingStore.loading = true
   try {
-    loadingStore.loading = true
-
-    // Si el filtro es 'nc', buscar notas de crédito directamente
-    const searchingCreditNotes = filters.value.inv_type === 'nc'
-    const queryFilters = { ...filters.value }
-
-    // Remover inv_type del query si es 'nc' ya que usaremos otro endpoint
-    if (searchingCreditNotes) {
-      delete queryFilters.inv_type
+    const q = flattenArraysToCommaSeparatedString({ ...filters.value })
+    const resp = (await $api.freeFormatInvoices.getUnifiedPaged({
+      query: { page: unifiedData.value.current_page, perPage: unifiedData.value.perPage, ...q },
+    })) as any
+    unifiedData.value = resp
+    unifiedData.value.current_page = resp.current_page ?? 1
+    if (!resp.data?.length) {
+      snackbar.add({ type: 'info', text: 'No data found' })
     }
-
-    const response = searchingCreditNotes
-      ? ((await $api.freeFormatInvoices.getCreditNotesPaged({
-          query: {
-            page: freeFormatInvoices.value.current_page,
-            limit: freeFormatInvoices.value.perPage,
-            ...flattenArraysToCommaSeparatedString(queryFilters),
-          },
-        })) as any)
-      : ((await $api.freeFormatInvoices.getPaged({
-          query: {
-            page: freeFormatInvoices.value.current_page,
-            perPage: freeFormatInvoices.value.perPage,
-            ...flattenArraysToCommaSeparatedString(queryFilters),
-          },
-        })) as any)
-
-    freeFormatInvoices.value = response
-    // Actualizar el tipo de datos cargados
-    currentDataType.value = searchingCreditNotes ? 'credit_notes' : 'invoices'
-
-    if (response.data.length === 0) {
-      snackbar.add({
-        type: 'info',
-        text: 'No data found',
-      })
-    }
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading data: ' + (e?.message ?? e) })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => loadingStore.stop(), 250)
   }
+}
+
+const onClickFilters = async () => {
+  unifiedData.value.current_page = 1
+  await getData()
+}
+
+const onClickPagination = async (page: number) => {
+  unifiedData.value.current_page = page
+  await getData()
+}
+
+const clearFilters = async () => {
+  filters.value = { from: '', to: '', invoice_number: '', inv_type: '', partyable_type: '', partyable_id: '', deleted_status: '' }
+  unifiedData.value.current_page = 1
+  await getData()
 }
 
 await getData()
 
 const viewInvoice = (invoice: any) => {
-  if (!invoice?.id) {
-    snackbar.add({ type: 'warning', text: 'Invoice not found' })
-    return
-  }
+  if (!invoice?.id) { snackbar.add({ type: 'warning', text: 'Invoice not found' }); return }
   router.push(`/invoices/search/free-format/view-${invoice.id}`)
 }
 
 const exportToExcel = async () => {
   try {
     loadingStore.start()
-
-    // Si el filtro es 'nc', buscar notas de crédito directamente
-    const searchingCreditNotes = filters.value.inv_type === 'nc'
-    const queryFiltersNc = { ...filters.value }
-    // Remover inv_type del query si es 'nc' ya que usaremos otro endpoint
-    if (searchingCreditNotes) {
-      delete queryFiltersNc.inv_type
-    }
-
-    console.log("queryFilters::",queryFiltersNc)
-    console.log("searchingCreditNotes:",searchingCreditNotes);
-    if(searchingCreditNotes){
-      console.log('Excel NC')
-      const response = (await $api.freeFormatInvoices.exportInvoicesToExcelNc({
-        query: {
-          ...flattenArraysToCommaSeparatedString(queryFiltersNc),
-        },
-      })) as any
-
-      const blob = new Blob([response], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-
-      const today = new Date();
-      const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-      const link = document.createElement('a')
-      link.href = window.URL.createObjectURL(blob)
-      link.download = `export-invoices-tmflnc-${currentDate}.xlsx`
-      link.click()
-    }else{
-      const response = (await $api.freeFormatInvoices.exportInvoicesToExcel({
-        query: {
-          ...flattenArraysToCommaSeparatedString(queryFiltersNc),
-        },
-      })) as any
-
-      const blob = new Blob([response], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-
-      const today = new Date();
-      const currentDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-      const link = document.createElement('a')
-      link.href = window.URL.createObjectURL(blob)
-      link.download = `export-invoices-tmfl-${currentDate}.xlsx`
-      link.click()
-
-    }
-    
-  } catch (e) {
+    const today   = new Date()
+    const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    const q       = flattenArraysToCommaSeparatedString({ ...filters.value })
+    const resp    = (await $api.freeFormatInvoices.exportUnified({ query: q })) as any
+    const blob    = new Blob([resp], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const link    = document.createElement('a')
+    link.href     = window.URL.createObjectURL(blob)
+    link.download = `export-free-format-unified-${dateStr}.xlsx`
+    link.click()
+  } catch (e: any) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error exporting: ' + (e?.message ?? e) })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => loadingStore.stop(), 250)
   }
 }
 </script>

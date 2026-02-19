@@ -223,11 +223,11 @@
             </td>
             <td>
               <div
-                v-if="invoiceTm.invoice?.consignee_credit_notes.length > 0"
+                v-if="invoiceTm.invoice?.credit_notes?.length > 0"
                 class="flex flex-col gap-1 items-center justify-center"
               >
                 <v-chip
-                  v-for="(creditNote, index) in invoiceTm.invoice?.consignee_credit_notes"
+                  v-for="(creditNote, index) in invoiceTm.invoice?.credit_notes"
                   size="small"
                   color="red"
                   :key="`ccn-${index}`"

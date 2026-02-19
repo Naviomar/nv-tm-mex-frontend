@@ -14,6 +14,13 @@ const paymentableName = (payment: any) => {
   if (payment.paymentable_type?.includes('PartyCreditNote')) {
     return 'Free format credit note'
   }
+  // Unified CreditNote model
+  if (payment.paymentable_type?.includes('CreditNote') && !payment.paymentable_type?.includes('LineCreditNote')) {
+    if (payment.paymentable?.type === 'party') {
+      return 'Free format credit note'
+    }
+    return 'Credit note'
+  }
 
   if (payment.paymentable_type?.includes('LineCreditNote')) {
     return 'Freight line credit note'

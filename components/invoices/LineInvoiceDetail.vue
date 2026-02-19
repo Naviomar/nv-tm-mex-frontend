@@ -140,6 +140,11 @@ const viewPayment = (payment: any) => {
     router.push(`/transfers/global/view-${payment.paymentable_id}?focusPayable=${payment.id}`)
     return
   }
+  if (payment.paymentable_type.includes('ConsigneeCreditNote') || 
+      (payment.paymentable_type.includes('CreditNote') && !payment.paymentable_type.includes('LineCreditNote'))) {
+    router.push(`/invoices/search/credit-notes/view-${payment.paymentable_id}`)
+    return
+  }
 
   snackbar.add({ type: 'error', text: 'Unknown payment type' })
 }

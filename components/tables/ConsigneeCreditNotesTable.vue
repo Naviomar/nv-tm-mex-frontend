@@ -119,7 +119,7 @@
             <td>{{ creditNote.consignee?.name }}</td>
             <td>{{ creditNote.description }}</td>
             <td>{{ getCNInvoiceServices(creditNote) }}</td>
-            <td class="whitespace-nowrap">{{ creditNote.invoice.invoice_number }}</td>
+            <td class="whitespace-nowrap">{{ creditNote.invoice?.invoice_number }}</td>
             <td>{{ formatToCurrency(creditNote.amount) }}</td>
             <td>{{ formatToCurrency(creditNote.amount_available) }}</td>
             <td class="whitespace-nowrap">
@@ -158,7 +158,7 @@ const authorizeCancelCN = ref<any>(null)
 
 const filters = ref({
   external_folio: '',
-  inv_type: null,
+  inv_type: '',
   consigneeId: '',
   dateFrom: '',
   dateTo: '',
@@ -236,7 +236,7 @@ const onClickPagination = async (page: number) => {
 const clearFilters = async () => {
   filters.value = {
     external_folio: '',
-    inv_type: null,
+    inv_type: '',
     consigneeId: '',
     dateFrom: '',
     dateTo: '',
@@ -339,9 +339,12 @@ const exportToExcel = async () => {
 }
 
 const getCatalogs = async () => {
-  const response = await $api.consigneeCreditNotes.getCatalogs()
-
-  catalogs.value = response as any
+  try {
+    const response = await $api.consigneeCreditNotes.getCatalogs()
+    catalogs.value = response as any
+  } catch (e) {
+    console.error('Error loading catalogs:', e)
+  }
 }
 
 await getCatalogs()

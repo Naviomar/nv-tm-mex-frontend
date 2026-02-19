@@ -229,7 +229,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(partyCreditNote, idx) in partyInvoice.party_credit_notes" :key="`free-format-cn-${idx}`">
+            <tr v-for="(partyCreditNote, idx) in (partyInvoice.credit_notes || partyInvoice.party_credit_notes)" :key="`free-format-cn-${idx}`">
               <td>
                 <div v-if="false" class="flex gap-2">
                   <EditButton :item="partyCreditNote" @click="editConcept(partyCreditNote)" />
