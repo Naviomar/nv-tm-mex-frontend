@@ -31,6 +31,18 @@
               hide-details
             />
           </div>
+          <div class="col-span-2">
+            <v-autocomplete
+              density="compact"
+              label="Process type"
+              v-model="filters.process_name"
+              :items="processTypeItems"
+              item-title="description"
+              item-value="processName"
+              clearable
+              hide-details
+            />
+          </div>
         </div>
         <div class="grid grid-cols-1 pt-4">
           <div class="flex gap-2">
@@ -86,7 +98,7 @@
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
             <td class="whitespace-nowrap">
-              {{ authRequest.display_name || authRequest.process_name_key }}
+              {{ authRequest.resolved_display }}
             </td>
             <td class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</td>
 
@@ -116,7 +128,7 @@
           <v-card-title>Grant process authorization</v-card-title>
           <v-card-text>
             <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Process: {{ form.auth_request?.display_name || form.auth_request?.process_name_key }}</div>
+              <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
               <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
               <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
             </div>
@@ -163,7 +175,7 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
+import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -174,11 +186,15 @@ const authRequestStore = useAuthRequestStore()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
 
+const processTypeItems = Object.values(processResources)
+
 const filters = ref<any>({
   id: null,
   search: '',
   deleted_status: null,
   user_id: null,
+  process_name: null,
+  status: null,
 })
 
 const catalogs = ref<any>({
@@ -347,6 +363,8 @@ const clearFilters = async () => {
     search: '',
     deleted_status: null,
     user_id: null,
+    process_name: null,
+    status: null,
   }
   authRequests.value.current_page = 1
   await getAuthProcessRequests()

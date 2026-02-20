@@ -42,7 +42,7 @@
         </v-card-title>
         <v-card-text>
           <div class="leading-none">Are you sure you want to request authorization to execute this process?</div>
-          <div class="text-xs">{{ processName }}{{ requestKey }}</div>
+          <div class="text-sm font-semibold mt-1">{{ friendlyDisplayName }}</div>
           <v-textarea v-model="form.reason" label="Reason" counter rows="3" clearable />
         </v-card-text>
         <v-card-actions>
@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { getProcessDisplayName } from '~/utils/data/system'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -69,6 +70,11 @@ const props = defineProps({
   displayName: { type: String, default: '' },
   refresh: { type: Boolean, default: false },
 })
+
+// Resolve a human-readable name: explicit displayName prop > processResources map > raw fallback
+const friendlyDisplayName = computed(() =>
+  getProcessDisplayName(props.processName, props.requestKey, props.displayName || null)
+)
 
 // States
 const showConfirmDialog = ref<any>(false)
@@ -113,7 +119,7 @@ const onRequestAuthorizationClick = async () => {
     const body = {
       process_name: props.processName,
       request_key: props.requestKey,
-      display_name: props.displayName,
+      display_name: friendlyDisplayName.value,
       reason: form.value.reason,
     }
     await $api.authProcessRequests.requestAuthorization(body)

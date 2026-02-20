@@ -7,7 +7,8 @@
           <th>ID</th>
           <th>Date</th>
           <th>Resource</th>
-          <th>Resource ID</th>
+          <th>Reference / Invoice</th>
+          <th>Reason</th>
           <th>Status</th>
           <th>User Auth</th>
           <th>Attachment(s)</th>
@@ -16,22 +17,23 @@
       <tbody>
         <tr v-for="(authReq, index) in authRequets" :key="`u-auth-${index}`">
           <td>{{ authReq.id }}</td>
-          <td>{{ formatDateString(authReq.created_at) }}</td>
-          <td>{{ authReq.resource }}</td>
-          <td>{{ authReq.resource_id }}</td>
+          <td class="whitespace-nowrap">{{ formatDateString(authReq.created_at) }}</td>
+          <td class="whitespace-nowrap">{{ getResourceName(authReq.resource) || authReq.resource }}</td>
+          <td class="whitespace-nowrap font-bold">{{ authReq.invoice_number || authReq.resource_id }}</td>
+          <td class="max-w-xs truncate">{{ authReq.request_reason || '—' }}</td>
           <td>
             <div v-if="authReq.is_authorized == null">
-              <v-chip color="warning">Pending</v-chip>
+              <v-chip size="small" color="warning">Pending</v-chip>
             </div>
             <div v-else>
-              <v-chip color="success" v-if="authReq.is_authorized == 1">Yes</v-chip>
-              <v-chip color="error" v-else>No</v-chip>
+              <v-chip size="small" color="success" v-if="authReq.is_authorized == 1">Approved</v-chip>
+              <v-chip size="small" color="error" v-else>Rejected</v-chip>
             </div>
           </td>
-          <td>{{ authReq.authorized?.name }}</td>
+          <td class="whitespace-nowrap">{{ authReq.authorized?.name || '—' }}</td>
           <td>
             <div v-if="authReq.files.length <= 0">
-              <v-chip color="warning">No attachments</v-chip>
+              <v-chip size="small" color="warning">No attachments</v-chip>
             </div>
             <div v-if="authReq.files.length > 0">
               <div v-for="(file, index) in authReq.files" :key="`file-${index}`">
@@ -45,9 +47,14 @@
   </div>
 </template>
 <script setup lang="ts">
+import { getAuthResourceByName } from '~/utils/data/system'
 const { $api } = useNuxtApp()
 
 const authRequets = ref<any>([])
 const response = await $api.users.getMyAuthRequests()
 authRequets.value = response
+
+const getResourceName = (resource: string) => {
+  return getAuthResourceByName(resource)?.description
+}
 </script>

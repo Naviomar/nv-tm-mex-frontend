@@ -286,6 +286,7 @@
                     processName="supplier-request-unlink-invoice"
                     :requestKey="`${props.id}:${invoice.id}`"
                     label="Unlink invoice"
+                    :displayName="invoice.cfdi?.serie_folio || `Invoice #${invoice.id}`"
                   >
                     <template #auth>
                       <TrashButton :item="invoice" @click="confirmDeleteSupReqInv(invoice)" />

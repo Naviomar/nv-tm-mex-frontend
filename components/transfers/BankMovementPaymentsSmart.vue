@@ -117,6 +117,7 @@
                         processName="bank-movement-payment-delete"
                         :requestKey="`${bankMovement.id}:${payment.id}`"
                         label="Undo payment"
+                        :displayName="`Bank Mov. #${bankMovement.id} / Payment #${payment.id}`"
                       >
                         <template #auth>
                           <TrashButton :item="payment" @click="confirmDeletePayment(payment)" :can-restore="false" />

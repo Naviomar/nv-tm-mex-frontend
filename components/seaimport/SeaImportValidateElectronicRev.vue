@@ -9,6 +9,7 @@
         processName="sea-import-electronic-revalidation"
         :requestKey="`${props.referenceId}`"
         label="Electronic revalidation"
+        :displayName="props.referenceNumber ? `Ref. ${props.referenceNumber}` : `Ref. ID ${props.referenceId}`"
       >
         <template #auth>
           <SeaImportElectronicRevForm :referenceId="referenceId" @update-reference="refresh" />
@@ -31,6 +32,10 @@ const props = defineProps({
   referenceId: {
     type: [String, Number],
     required: true,
+  },
+  referenceNumber: {
+    type: String,
+    default: null,
   },
 })
 

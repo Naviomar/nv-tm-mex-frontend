@@ -72,6 +72,7 @@
                     processName="sea-export-update-detentions"
                     :requestKey="`${props.id}:${refContainer.id}`"
                     label="Update detentions"
+                    :displayName="`Ref. ${referencia.reference_number} / ${refContainer.container.container_number}`"
                   >
                     <template #auth>
                       <v-btn color="amber" size="x-small" @click="editDetention(refContainer)">

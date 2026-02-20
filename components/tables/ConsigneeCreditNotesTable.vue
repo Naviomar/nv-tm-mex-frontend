@@ -56,6 +56,7 @@
             :resource="authorizeResources.CancelCustomerCreditNote.resource"
             :resourceId="String(selectedCreditNote?.id || '')"
             :refresh="refreshAuthReqs"
+            :resourceData="{ folio: selectedCreditNote?.external_folio || ('CN-' + selectedCreditNote?.id), consignee: selectedCreditNote?.consignee?.name }"
           >
             <template #auth>
               <div class="flex flex-col gap-2">

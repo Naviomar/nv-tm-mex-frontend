@@ -70,6 +70,7 @@
                       :resource="authorizeResources.DemurrageDiscount.resource"
                       :resourceId="referencia.id"
                       :refresh="refreshAuthReqs"
+                      :resourceData="{ reference_number: referencia.reference_number }"
                     >
                       <template #auth>
                         <v-btn color="error" size="small" @click="onDiscountClick">Set discount</v-btn>
@@ -431,6 +432,7 @@
                           :resource="authorizeResources.DemurrageRevertToPartial.resource"
                           :resourceId="referencia.id"
                           :refresh="refreshAuthReqs"
+                          :resourceData="{ reference_number: referencia.reference_number }"
                         >
                           <template #auth>
                             <v-chip color="success" size="small">

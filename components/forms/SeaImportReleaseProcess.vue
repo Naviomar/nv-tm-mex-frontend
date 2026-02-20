@@ -177,7 +177,7 @@
                 <v-card v-if="tab === 'option-4'" flat>
                   <v-card-text>
                     <div v-if="!hasSentRevalidation">
-                      <SeaImportValidateElectronicRev :referenceId="reference.id" @update-reference="refresh" />
+                      <SeaImportValidateElectronicRev :referenceId="reference.id" :referenceNumber="reference.reference_number ?? null" @update-reference="refresh" />
                     </div>
                     <div v-if="hasSentRevalidation">
                       <div class="flex flex-col">
