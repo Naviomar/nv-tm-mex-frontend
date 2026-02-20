@@ -30,6 +30,20 @@
               hide-details
             />
           </div>
+          <div class="col-span-2">
+            <v-autocomplete
+              v-model="filters.resource"
+              :items="resourceTypeItems"
+              item-title="description"
+              item-value="resource"
+              density="compact"
+              label="Resource type"
+              clearable
+            />
+          </div>
+          <div class="col-span-2">
+            <v-text-field v-model="filters.resourceId" density="compact" label="Reference / Invoice #" clearable />
+          </div>
         </div>
         <div class="grid grid-cols-1 pt-4">
           <div class="flex gap-2">
@@ -211,11 +225,15 @@ const authRequestStore = useAuthRequestStore()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
 
+const resourceTypeItems = Object.values(authorizeResources)
+
 const filters = ref({
   id: null,
   search: '',
   deleted_status: null,
   requestedBy: null,
+  resource: null,
+  resourceId: '',
 })
 
 const catalogs = ref<any>({
@@ -395,6 +413,8 @@ const clearFilters = async () => {
     search: '',
     deleted_status: null,
     requestedBy: null,
+    resource: null,
+    resourceId: '',
   }
   authRequests.value.current_page = 1
   await getAuthRequests()
