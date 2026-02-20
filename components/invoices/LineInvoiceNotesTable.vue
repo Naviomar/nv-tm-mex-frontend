@@ -29,7 +29,7 @@
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="120">Actions</th>
+              <th class="text-left">Actions</th>
               <th class="text-left">Line</th>
               <th class="text-left">Serie-Folio</th>
               <th class="text-left">Invoice date</th>
@@ -51,7 +51,7 @@
               }"
             >
               <td>
-                <div class="flex gap-2 items-center h-10">
+                <div class="flex gap-2 items-center space-x-2">
                   
                   <template v-if="!item.deleted_at">
                     
