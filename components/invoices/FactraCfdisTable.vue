@@ -289,7 +289,7 @@
                         processName="supplier-work-past-date"
                         :requestKey="`${cfdi.id}`"
                         :displayName="cfdi.serie_folio || `Invoice ${cfdi.id}`"
-                        label="Request"
+                        label="Work Past Date / Credit Expired"
                         >
                         <template #auth>
                             <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
@@ -333,7 +333,7 @@
                         processName="supplier-work-past-date"
                         :requestKey="`${cfdi.id}`"
                         :displayName="cfdi.serie_folio || `Invoice ${cfdi.id}`"
-                        label="Request"
+                        label="Work Past Date / Credit Expired"
                         >
                         <template #auth>
                             <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
