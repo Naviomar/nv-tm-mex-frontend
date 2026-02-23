@@ -1081,10 +1081,8 @@ const syncFreeDays = async () => {
     title: '¿Sincronizar días libres?',
     content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente.`,
     confirmationText: 'Sincronizar',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
+    dialogProps: { persistent: true, maxWidth: 500 },
+    confirmationButtonProps: { color: 'primary' },
   })
   if (!confirmed) return
 
