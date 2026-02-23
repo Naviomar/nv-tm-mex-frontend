@@ -90,6 +90,17 @@
             item-value="id"
           />
         </div>
+        <div class="col-span-2">
+          <v-autocomplete
+            v-model="filters.has_demurrage"
+            density="compact"
+            label="Demurrages generated"
+            :items="[
+          { title: 'Yes', value: '1' },
+          { title: 'No', value: '0' }
+        ]"
+          />
+        </div>
       </div>
       <div v-if="filters.referencias.length > 0">
         <div>Filter by reference(s)</div>
@@ -241,6 +252,7 @@ const filters = ref({
   line_id: '',
   startDate: '',
   endDate: '',
+  has_demurrage: '',
 })
 
 const references = ref({
@@ -357,6 +369,7 @@ const clearFilters = async () => {
     line_id: '',
     startDate: '',
     endDate: '',
+    has_demurrage: '',
   }
   await getSeaImportReferences()
 }
