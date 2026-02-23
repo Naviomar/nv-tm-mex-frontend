@@ -71,10 +71,15 @@ const props = defineProps({
   refresh: { type: Boolean, default: false },
 })
 
-// Resolve a human-readable name: explicit displayName prop > processResources map > raw fallback
-const friendlyDisplayName = computed(() =>
-  getProcessDisplayName(props.processName, props.requestKey, props.displayName || null)
-)
+// Resolve a human-readable name: combine label + displayName, or fall back to processResources map
+const friendlyDisplayName = computed(() => {
+  // If displayName is provided, combine with label for a complete description
+  if (props.displayName) {
+    return `${props.label} — ${props.displayName}`
+  }
+  // Otherwise use the utility function which resolves from processResources
+  return getProcessDisplayName(props.processName, props.requestKey, null)
+})
 
 // States
 const showConfirmDialog = ref<any>(false)

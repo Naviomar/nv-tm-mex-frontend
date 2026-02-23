@@ -1077,10 +1077,15 @@ const getSourceLabel = (source: string) => {
 }
 
 const syncFreeDays = async () => {
-  const confirmed = await confirm.show(
-    '¿Sincronizar días libres?',
-    `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente.`
-  )
+  const confirmed = await confirm({
+    title: '¿Sincronizar días libres?',
+    content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente.`,
+    confirmationText: 'Sincronizar',
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+  })
   if (!confirmed) return
 
   try {

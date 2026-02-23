@@ -13,9 +13,9 @@
         <div class="grid grid-cols-3 gap-2">
           <div>
             <v-autocomplete
-              v-model="form.sea_region_id"
-              label="Sea Region *"
-              :items="seaRegions"
+              v-model="form.sea_traffic_id"
+              label="Sea Traffic *"
+              :items="seaTraffics"
               item-value="id"
               item-title="name"
               variant="solo-filled"
@@ -84,7 +84,7 @@
                 ></v-btn>
               </div>
             </td>
-            <td>{{ item.sea_region?.name || 'N/A' }}</td>
+            <td>{{ item.sea_traffic?.name || 'N/A' }}</td>
             <td>{{ item.import_free_days }}</td>
             <td>{{ item.export_free_days }}</td>
           </tr>
@@ -108,19 +108,19 @@ const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
 const showForm = ref(false)
-const seaRegions = ref<any[]>([])
+const seaTraffics = ref<any[]>([])
 const regionFreeDays = ref<any[]>([])
 
 const form = reactive({
   id: null as number | null,
-  sea_region_id: null as number | null,
+  sea_traffic_id: null as number | null,
   import_free_days: 0,
   export_free_days: 0,
 })
 
 const resetForm = () => {
   form.id = null
-  form.sea_region_id = null
+  form.sea_traffic_id = null
   form.import_free_days = 0
   form.export_free_days = 0
 }
@@ -139,7 +139,7 @@ const cancelForm = () => {
 
 const editRegionFreeDays = (item: any) => {
   form.id = item.id
-  form.sea_region_id = item.sea_region_id
+  form.sea_traffic_id = item.sea_traffic_id
   form.import_free_days = item.import_free_days
   form.export_free_days = item.export_free_days
   showForm.value = true
@@ -147,8 +147,8 @@ const editRegionFreeDays = (item: any) => {
 
 const saveRegionFreeDays = async () => {
   try {
-    if (!form.sea_region_id) {
-      snackbar.add({ type: 'warning', text: 'Please select a sea region' })
+    if (!form.sea_traffic_id) {
+      snackbar.add({ type: 'warning', text: 'Please select a sea traffic' })
       return
     }
 
@@ -194,10 +194,10 @@ const confirmDelete = async (regionFreeDaysId: number) => {
   }
 }
 
-const getSeaRegions = async () => {
+const getSeaTraffics = async () => {
   try {
     const response = await $api.consignees.getSeaRegionsForFreeDays()
-    seaRegions.value = response as any[]
+    seaTraffics.value = response as any[]
   } catch (e) {
     console.error(e)
   }
@@ -213,7 +213,7 @@ const getData = async () => {
 }
 
 onMounted(async () => {
-  await getSeaRegions()
+  await getSeaTraffics()
   await getData()
 })
 </script>
