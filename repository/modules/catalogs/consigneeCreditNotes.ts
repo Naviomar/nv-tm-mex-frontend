@@ -105,6 +105,10 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/export-invoices-to-excel`, fetchOptions)
   }
 
+  async restore(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/restore`, fetchOptions)
+  }
+
 }
 
 export default ConsigneeCreditNotesModule

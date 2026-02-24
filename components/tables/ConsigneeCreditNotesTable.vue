@@ -76,6 +76,51 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog para solicitar autorización de restauración -->
+    <v-dialog v-model="showRestoreDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="text-h6">
+          <v-icon>mdi-restore</v-icon> Restore Credit Note
+        </v-card-title>
+        <v-card-text>
+          <div class="mb-4">
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Credit Note: <strong>#{{ selectedCreditNote?.id }}</strong>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Customer: <strong>{{ selectedCreditNote?.consignee?.name }}</strong>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Amount: <strong>{{ formatToCurrency(selectedCreditNote?.amount) }}</strong>
+            </div>
+          </div>
+          <AuthorizeProcessSmart
+            ref="authorizeRestoreCN"
+            label="Request authorization to restore"
+            :resource="authorizeResources.RestoreCustomerCreditNote.resource"
+            :resourceId="String(selectedCreditNote?.id || '')"
+            :refresh="refreshAuthReqsRestore"
+            :resourceData="{ folio: selectedCreditNote?.external_folio || ('CN-' + selectedCreditNote?.id), consignee: selectedCreditNote?.consignee?.name }"
+          >
+            <template #auth>
+              <div class="flex flex-col gap-2">
+                <v-chip color="success" size="small">
+                  <v-icon>mdi-check</v-icon> Authorized
+                </v-chip>
+                <v-btn color="primary" size="small" @click="confirmRestoreCreditNote">
+                  <v-icon>mdi-restore</v-icon> Confirm Restore
+                </v-btn>
+              </div>
+            </template>
+          </AuthorizeProcessSmart>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" @click="closeRestoreDialog">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <div>
       <v-pagination
         v-model="creditNotes.current_page"
@@ -112,7 +157,7 @@
               <div class="flex gap-2">
                 <ViewButton :item="creditNote" @click="viewCreditNote(creditNote)" />
                 <EditButton :item="creditNote" @click="editCreditNote(creditNote)" />
-                <TrashButton :item="creditNote" @click="showConfirmDelete(creditNote)" />
+                <TrashButton :item="creditNote" @click="handleTrashButtonClick(creditNote)" />
               </div>
             </td>
             <td>#{{ creditNote.id }}</td>
@@ -156,6 +201,11 @@ const showCancelDialog = ref(false)
 const selectedCreditNote = ref<any>(null)
 const refreshAuthReqs = ref(false)
 const authorizeCancelCN = ref<any>(null)
+
+// Variables para el sistema de autorización de restauración
+const showRestoreDialog = ref(false)
+const refreshAuthReqsRestore = ref(false)
+const authorizeRestoreCN = ref<any>(null)
 
 const filters = ref({
   external_folio: '',
@@ -246,6 +296,17 @@ const clearFilters = async () => {
   await getData()
 }
 
+// Handler inteligente para TrashButton - decide entre cancelar o restaurar
+const handleTrashButtonClick = async (item: any) => {
+  if (item.deleted_at) {
+    // Si está eliminado, mostrar modal de autorización para restaurar
+    showConfirmRestore(item)
+  } else {
+    // Si no está eliminado, mostrar modal de cancelación
+    showConfirmDelete(item)
+  }
+}
+
 // Abrir el diálogo de autorización para cancelar
 const showConfirmDelete = async (item: any) => {
   selectedCreditNote.value = item
@@ -275,6 +336,39 @@ const confirmCancelCreditNote = async () => {
   } catch (e: any) {
     console.error(e)
     snackbar.add({ type: 'error', text: e?.data?.message || 'Error canceling credit note' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+// Abrir el diálogo de autorización para restaurar
+const showConfirmRestore = async (item: any) => {
+  selectedCreditNote.value = item
+  showRestoreDialog.value = true
+  refreshAuthReqsRestore.value = !refreshAuthReqsRestore.value
+}
+
+// Cerrar el diálogo de restauración
+const closeRestoreDialog = () => {
+  showRestoreDialog.value = false
+  selectedCreditNote.value = null
+}
+
+// Confirmar la restauración después de tener autorización
+const confirmRestoreCreditNote = async () => {
+  if (!selectedCreditNote.value) return
+  
+  try {
+    loadingStore.start()
+    await $api.consigneeCreditNotes.restore(selectedCreditNote.value.id)
+    snackbar.add({ type: 'success', text: 'Credit note restored successfully' })
+    closeRestoreDialog()
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.data?.message || 'Error restoring credit note' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()

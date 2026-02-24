@@ -59,7 +59,7 @@
               <div class="flex flex-col items-center gap-1 py-2">
                 <v-chip
                   v-for="(service, i) in getUniqueServices(supReqPayment)"
-                  :key="`supReqPayment-payinv-${i}`"
+                  :key="`supReqPayment-${index}-service-${i}`"
                   density="compact"
                   color="primary"
                 >
@@ -183,12 +183,14 @@ const getUniqueServices = (supReqPayment: any) => {
   let services: any = []
   // add reference_number to services array if it doesn't exist
   supReqPayment.pay_invoices?.forEach((payInvoice: any) => {
+    const referenceable = payInvoice.supplier_invoice?.referenceable
     if (
+      referenceable &&
       !services.find(
-        (service: any) => service.reference_number === payInvoice.supplier_invoice?.referenceable?.reference_number
+        (service: any) => service.reference_number === referenceable.reference_number
       )
     ) {
-      services.push(payInvoice.supplier_invoice?.referenceable)
+      services.push(referenceable)
     }
   })
 

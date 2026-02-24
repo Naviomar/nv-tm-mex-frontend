@@ -70,6 +70,12 @@ const authorizeResources = {
     description: 'Cancel Customer Credit Note',
     redirect: null,
   },
+  /** Restore a cancelled customer credit note */
+  RestoreCustomerCreditNote: {
+    resource: 'restore-customer-credit-note',
+    description: 'Restore Customer Credit Note',
+    redirect: null,
+  },
   /** Skip customs agent change charge during sea import revalidation */
   RevalidationSkipAgentChangeCharge: {
     resource: 'sea-import-revalidation-skip-agent-change-charge',
