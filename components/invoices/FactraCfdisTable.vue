@@ -436,9 +436,19 @@
                   {{ formatToCurrency(cfdi.amount_provisioned) }} {{ getCurrencyName(cfdi.currency_id) }}
                 </td>
                 <td class="whitespace-nowrap">
-                  <div v-for="(cfdiInvoice, index) in cfdi.invoices" :key="`cfdi-invoice-${index}`">
-                    <div>{{ cfdiInvoice.chargeable?.name }}</div>
-                  </div>
+                  <template v-if="cfdi.is_free_format">
+                    <div v-for="(charge, index) in cfdi.cfdi_charges" :key="`charge-${index}`" class="text-xs mb-1">
+                      <v-chip size="x-small" color="deep-purple" variant="tonal">
+                        {{ charge.charge?.name ? `${charge.charge.name} - ` : '' }}{{ charge.notes }}
+                      </v-chip>
+                    </div>
+                    <div v-if="!cfdi.cfdi_charges?.length" class="text-xs text-grey">Sin cargos</div>
+                  </template>
+                  <template v-else>
+                    <div v-for="(cfdiInvoice, index) in cfdi.invoices" :key="`cfdi-invoice-${index}`">
+                      <div>{{ cfdiInvoice.chargeable?.name }}</div>
+                    </div>
+                  </template>
                 </td>
                 <td>{{ formatDateOnlyString(cfdi.invoice_date) }}</td>
                 <td>{{ formatDateString(cfdi.created_at) }}</td>
