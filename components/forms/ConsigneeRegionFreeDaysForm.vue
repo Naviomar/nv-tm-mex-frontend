@@ -13,8 +13,8 @@
         <div class="grid grid-cols-3 gap-2">
           <div>
             <v-autocomplete
-              v-model="form.sea_traffic_id"
-              label="Sea Traffic *"
+              v-model="form.sea_region_id"
+              label="Sea Region *"
               :items="seaRegions"
               item-value="id"
               item-title="name"
@@ -113,14 +113,14 @@ const regionFreeDays = ref<any[]>([])
 
 const form = reactive({
   id: null as number | null,
-  sea_traffic_id: null as number | null,
+  sea_region_id: null as number | null,
   import_free_days: 0,
   export_free_days: 0,
 })
 
 const resetForm = () => {
   form.id = null
-  form.sea_traffic_id = null
+  form.sea_region_id = null
   form.import_free_days = 0
   form.export_free_days = 0
 }
@@ -139,7 +139,7 @@ const cancelForm = () => {
 
 const editRegionFreeDays = (item: any) => {
   form.id = item.id
-  form.sea_traffic_id = item.sea_traffic_id
+  form.sea_region_id = item.sea_region_id
   form.import_free_days = item.import_free_days
   form.export_free_days = item.export_free_days
   showForm.value = true
@@ -147,8 +147,8 @@ const editRegionFreeDays = (item: any) => {
 
 const saveRegionFreeDays = async () => {
   try {
-    if (!form.sea_traffic_id) {
-      snackbar.add({ type: 'warning', text: 'Please select a sea traffic' })
+    if (!form.sea_region_id) {
+      snackbar.add({ type: 'warning', text: 'Please select a sea region' })
       return
     }
 

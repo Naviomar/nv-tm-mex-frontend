@@ -52,6 +52,9 @@
                     {{ supplierCfdi.tipo_comprobante_name }}
                   </div>
                 </div>
+                <div v-if="supplierCfdi.is_free_format" class="mt-2">
+                  <v-chip color="deep-purple" size="small">Formato Libre</v-chip>
+                </div>
               </div>
             </div>
             <div class="grid grid-cols-2">
@@ -134,12 +137,45 @@
               </v-table>
             </div>
 
-            <div>
+            <!-- Cargos de formato libre -->
+            <div v-if="supplierCfdi.is_free_format" class="mb-4">
+              <v-card color="deep-purple-lighten-5" class="dark:bg-deep-purple-darken-4">
+                <v-card-title class="font-bold">
+                  <v-icon>mdi-tag-outline</v-icon>
+                  Cargos de Formato Libre
+                </v-card-title>
+                <v-card-text>
+                  <v-table density="compact">
+                    <thead>
+                      <tr>
+                        <th>Concepto</th>
+                        <th>Monto</th>
+                        <th>Notas</th>
+                        <th>Creado por</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="!supplierCfdi.cfdi_charges?.length">
+                        <td colspan="4" class="text-center">Sin cargos registrados</td>
+                      </tr>
+                      <tr v-for="charge in supplierCfdi.cfdi_charges" :key="charge.id">
+                        <td>{{ charge.charge?.name || 'Sin concepto' }}</td>
+                        <td>{{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(charge.amount) }}</td>
+                        <td class="text-xs">{{ charge.notes }}</td>
+                        <td>{{ charge.creator?.name }}</td>
+                      </tr>
+                    </tbody>
+                  </v-table>
+                </v-card-text>
+              </v-card>
+            </div>
+
+            <!-- Conceptos normales (solo para facturas no formato libre) -->
+            <div v-if="!supplierCfdi.is_free_format">
               <div class="font-bold py-4">Current concepts in invoice</div>
               <v-table density="compact">
                 <thead>
                   <tr>
-                    <th class="w-14">Actions</th>
                     <th>Service Ref#</th>
                     <th>Concept</th>
                     <th>Amount</th>
@@ -152,12 +188,9 @@
                 </thead>
                 <tbody>
                   <tr v-if="supplierCfdi.invoices?.length === 0">
-                    <td colspan="9" class="text-center">No concepts found</td>
+                    <td colspan="8" class="text-center">No concepts found</td>
                   </tr>
                   <tr v-for="(invoice, index) in supplierCfdi.invoices" :key="`current-invoice-${index}`">
-                    <td>
-                      <TrashButton :item="invoice" @click="confirmDeleteSupInvoice" />
-                    </td>
                     <td>{{ invoice.referenceable?.reference_number }}</td>
                     <td>{{ invoice.chargeable?.name }}</td>
                     <td>{{ getCurrencyName(invoice.currency_id) }} {{ formatToCurrency(invoice.amount) }}</td>

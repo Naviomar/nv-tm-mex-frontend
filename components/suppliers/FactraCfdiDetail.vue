@@ -259,11 +259,12 @@
                         />
                       </v-col>
                       <v-col cols="12" md="5">
-                        <v-textarea
+                        <v-combobox
                           v-model="newCfdiCharge.notes"
+                          :items="catalogs.previous_notes || []"
                           label="Notas (obligatorio) *"
                           density="compact"
-                          rows="2"
+                          clearable
                           :error-messages="chargeErrors.notes"
                         />
                       </v-col>
@@ -299,7 +300,7 @@
               </v-card>
             </div>
 
-            <div>
+            <div v-if="!supplierCfdi.is_free_format">
               <div class="font-bold py-4">Current concepts in invoice</div>
               <v-table density="compact">
                 <thead>
@@ -343,7 +344,7 @@
             </div>
 
             <!-- Add more concepts to invoice -->
-            <div>
+            <div v-if="!supplierCfdi.is_free_format">
               <div v-if="!canAddMoreSupplierPayConcepts">
                 <v-alert type="warning" density="compact">
                   La factura no se puede modificar, ya que el monto total ya se desglosó o no es un CFDI de tipo

@@ -295,7 +295,10 @@
                 </td>
                 <td>{{ invoice.cfdi?.serie_folio }}</td>
                 <td>{{ invoice.referenceable?.reference_number }}</td>
-                <td>{{ invoice.chargeable?.name }}</td>
+                <td>
+                  <div>{{ invoice.chargeable?.name }}</div>
+                  <div v-if="invoice.notes" class="text-xs text-grey-darken-1 italic">{{ invoice.notes }}</div>
+                </td>
                 <td>{{ formatToCurrency(invoice.amount) }}</td>
                 <td>{{ getCurrencyName(invoice.currency_id) }}</td>
                 <td class="text-green">{{ formatToCurrency(invoice.amount_iva) }}</td>
