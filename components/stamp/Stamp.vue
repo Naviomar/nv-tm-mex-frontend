@@ -33,20 +33,25 @@
         </div>
 
         <div class="grid grid-cols-7 gap-2 p-4 mb-4" v-if="fileOriginal || fileSealed">
-          <div class="col-span-4">
+          <div class="col-span-4" v-if="numPages > 1">
             <div>
               <span
                 class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-purple-500 text-white text-center text-sm font-bold"
               >
                 2
               </span>
-              <span class="ms-2">Seleccione la página deseada para agregar el sello.</span>
+              <span class="ms-2">Seleccione la página donde desea colocar el sello.</span>
             </div>
-            <div class="flex flex-wrap images-preview">
+            <div class="flex flex-wrap images-preview gap-2">
               <div v-for="(image, index) in app.imagesPreviews" :key="`preview-page-${index}`">
                 <img
                   v-if="image.value"
-                  class="hover:cursor-pointer hover:border border-solid border-black p-4"
+                  :class="[
+                    'hover:cursor-pointer p-1 transition-all',
+                    app.pageSelected === index
+                      ? 'border-4 border-blue-500 rounded shadow-md'
+                      : 'border border-gray-300 hover:border-gray-600',
+                  ]"
                   :src="image.value"
                   alt="Imagen"
                   width="150"
@@ -54,23 +59,22 @@
                 />
               </div>
             </div>
-            <div>
-              Selected page:
-              {{ app.pageSelected !== null ? app.pageSelected + 1 : 'N/A' }}
+            <div class="text-sm text-gray-500 mt-1">
+              Página seleccionada:
+              <strong>{{ app.pageSelected !== null ? app.pageSelected + 1 : 'N/A' }}</strong>
             </div>
           </div>
-
-          <div class="col-span-3">
+          <div :class="numPages > 1 ? 'col-span-3' : 'col-span-7'">
             <div>
               <span
                 class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-purple-500 text-white text-center text-sm font-bold"
               >
-                3
+                {{ numPages > 1 ? '3' : '2' }}
               </span>
               <span class="ms-2">Seleccione el tipo de sello y el tamaño del mismo.</span>
             </div>
             <div class="border-l border-black grid grid-cols-1 p-4">
-              <div class="flex">
+              <div class="flex mx-auto">
                 <div class="text-center">
                   <div :class="cssSealRevalidado" @click="app.generate('REVALIDACION')">
                     <div>
@@ -102,11 +106,11 @@
             <span
               class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-purple-500 text-white text-center text-sm font-bold"
             >
-              4
+              {{ numPages > 1 ? '4' : '3' }}
             </span>
             <span class="ms-2"
-              >Click y arrastre para colocar el sello en el lugar deseado
-              <i>"puede seleccionar otra página para agregar un nuevo sello"</i>
+              >Haga <strong>click</strong> sobre el PDF para colocar el sello. Puede arrastrarlo para reposicionarlo.
+              <span v-if="numPages > 1"><i>— puede seleccionar otra página en el paso anterior para agregar un sello adicional.</i></span>
             </span>
           </div>
           <canvas ref="canvasCustom" class="border" width="500" height="350"></canvas>
@@ -434,6 +438,27 @@ const app = reactive({
     }
   },
   stopDragging: function (event: any) {
+    const movedEnough = Math.abs(event.clientX - dragStartX) > 3 || Math.abs(event.clientY - dragStartY) > 3
+    if (isDragging && !movedEnough && app.stampSelected && app.pageSelected !== null) {
+      const canvas = app.canvas[app.pageSelected]?.value
+      const ctx = canvas?.getContext('2d')
+      const imageBlob = app.imagesPreviews[app.pageSelected]?.value
+      if (canvas && ctx && imageBlob) {
+        const clickX = event.clientX - canvas.getBoundingClientRect().left - sealWidth / 2
+        const clickY = event.clientY - canvas.getBoundingClientRect().top - sealHeight / 2
+        offsetX = clickX
+        offsetY = clickY
+        const imgPage = new Image()
+        imgPage.onload = () => {
+          ctx.clearRect(0, 0, 1200, 1500)
+          ctx.drawImage(imgPage, 0, 0, 1200, 1500)
+          ctx.drawImage(app.stampSelected, clickX, clickY, sealWidth, sealHeight)
+          drawHandles(ctx)
+          app.saveState(clickX, clickY)
+        }
+        imgPage.src = imageBlob
+      }
+    }
     isDragging = false
     isResizing = false
   },
@@ -605,7 +630,7 @@ const app = reactive({
     }
     image.src = dataUrl
 
-    snackbar.add({ type: 'success', text: 'Ahora de click en la página deseada para agregar el sello' })
+    snackbar.add({ type: 'success', text: 'Sello generado. Haga click en el paso 4 sobre el PDF para colocarlo.' })
 
     try {
       // const ctx2 = this.canvas[this.pageSelected]!.value.getContext('2d');
@@ -953,10 +978,9 @@ const previewPdfToSeal = async () => {
 
       const newImage = URL.createObjectURL(imageBlob)
       app.imagesPreviews[idx].value = newImage
-      app.transfer(newImage, idx, true)
       numPages.value += 1
     })
-    // app.transfer(app.imagesPreviews[0].value, 0, true)
+    if (app.imagesPreviews[0]?.value) app.transfer(app.imagesPreviews[0].value, 0, true)
   } catch (e) {
     console.error(e)
   } finally {
@@ -999,10 +1023,9 @@ const process = async () => {
       const blob = new Blob([uint8Array], { type: 'image/webp' })
       const newImage = URL.createObjectURL(blob)
       app.imagesPreviews[idx].value = newImage
-      app.transfer(newImage, idx, true)
     })
     console.log(app.imagesPreviews)
-    // app.transfer(app.imagesPreviews[0].value, 0, true)
+    if (app.imagesPreviews[0]?.value) app.transfer(app.imagesPreviews[0].value, 0, true)
     // app.imagesPreviews.forEach((image, index) => {
     //   console.log(image.value, index);
     //   if(index===0){
