@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-btn @click="router.back()" variant="outlined" size="small" class="mb-4">Back</v-btn>
+    <CatalogBackButton fallback-url="/maritime/import/demurrages/search" />
     <div class="mt-0">
       <div class="text-xl">Maritime import Reference - Demurrages</div>
       <div>Here you can view demurrages if available and calculate demurrage days.</div>
@@ -12,7 +12,6 @@
 </template>
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
 
 const referenciaId = route.params.id!.toString()
 </script>

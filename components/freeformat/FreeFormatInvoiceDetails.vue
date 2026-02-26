@@ -222,6 +222,7 @@
             <tr>
               <th class="w-5">Actions</th>
               <th class="font-bold! w-10">#</th>
+              <th class="font-bold!">External Folio</th>
               <th class="font-bold! text-right">Subtotal</th>
               <th class="font-bold! text-right">IVA</th>
               <th class="font-bold! text-right">Total</th>
@@ -237,6 +238,7 @@
                 </div>
               </td>
               <td>#{{ partyCreditNote.id }}</td>
+              <td>{{ partyCreditNote.external_folio || '-' }}</td>
               <td class="whitespace-nowrap text-right">
                 {{ getCurrencyName(partyCreditNote.currency_id) }}
                 {{

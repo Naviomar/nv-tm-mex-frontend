@@ -118,6 +118,14 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/update-bank-info`, fetchOptions)
   }
 
+  async searchPartyInvoiceForCn(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/search-party-invoice-for-cn`, fetchOptions)
+  }
+
   async createCreditNote(id: string, form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

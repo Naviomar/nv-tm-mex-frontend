@@ -75,6 +75,7 @@ const getCatalogStorageKey = (): string | null => {
 
   // Map routes to their filter storage keys
   const routeStorageMap: Record<string, string> = {
+    '/maritime/import/demurrages': 'demurrage-sea-import-filters',
     '/maritime/import': 'maritime-import-filters',
     '/maritime/export': 'maritime-export-filters',
     '/air/import': 'air-import-filters',

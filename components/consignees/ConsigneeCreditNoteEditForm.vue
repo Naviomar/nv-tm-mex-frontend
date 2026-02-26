@@ -9,32 +9,51 @@
           <v-card-subtitle> Only credit notes not used can be edited. </v-card-subtitle>
           <v-card-text>
             <div class="py-4">
-              <v-text-field v-model="consigneeCreditNote.external_folio" density="compact" label="External folio" />
-              <v-autocomplete
-                v-model="consigneeCreditNote.charge_id"
-                :items="onlyInvoiceConcepts"
-                item-value="id"
-                item-title="name"
-                density="compact"
-                label="Concept *"
-              />
-              <v-text-field
-                v-model="consigneeCreditNote.amount"
-                type="number"
-                density="compact"
-                label="Amount *"
-                @input="validateAmount"
-              />
-              <v-autocomplete
-                v-model="consigneeCreditNote.currency_id"
-                :items="currencies"
-                item-value="id"
-                item-title="name"
-                density="compact"
-                label="Currency *"
-                readonly
-              />
-              <v-textarea v-model="consigneeCreditNote.description" density="compact" label="Comments *" />
+              <v-text-field v-model="consigneeCreditNote.external_folio" density="compact" label="External folio" class="mb-2" />
+              <v-textarea v-model="consigneeCreditNote.description" density="compact" label="Comments *" class="mb-2" />
+
+              <div class="text-subtitle-2 font-bold mb-2">Concepts</div>
+
+              <div
+                v-for="(charge, idx) in editableCharges"
+                :key="`edit-charge-${idx}`"
+                class="grid grid-cols-[2fr_1fr_1fr] gap-3 mb-2 items-center"
+              >
+                <div>
+                  <div class="text-sm font-medium">{{ charge.charge_name }}</div>
+                  <div class="text-xs text-gray-500">Invoice #{{ charge.invoice_number }}</div>
+                </div>
+                <div>
+                  <v-text-field
+                    v-model.number="charge.amount"
+                    type="number"
+                    density="compact"
+                    label="Amount"
+                    hide-details
+                    :disabled="hasPayments"
+                    min="0"
+                    :max="charge.cn_available_balance"
+                    @update:model-value="validateChargeAmount(idx)"
+                  />
+                  <div class="text-xs" :class="charge.cn_available_balance > 0 ? 'text-green-600' : 'text-red-600'">
+                    Max: {{ formatToCurrency(charge.cn_available_balance ?? charge.amount) }}
+                  </div>
+                </div>
+                <div class="text-right text-sm font-medium">
+                  {{ formatToCurrency(charge.amount || 0) }}
+                </div>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="flex justify-between items-center mb-3">
+                <div class="text-lg font-bold">Total: {{ formatToCurrency(editTotal) }}</div>
+              </div>
+
+              <v-alert v-if="hasAmountExceeded" density="compact" type="error" variant="outlined" class="mb-2">
+                One or more amounts exceed the maximum available.
+              </v-alert>
+
               <div v-if="hasPayments">
                 <v-alert icon="mdi-alert" color="amber" density="compact">
                   This credit note has payments, it can't be edited.
@@ -46,7 +65,9 @@
                 </v-alert>
               </div>
               <div v-if="!hasPayments" class="flex justify-end">
-                <v-btn color="primary" @click="updateCreditNote"> Update credit note </v-btn>
+                <v-btn color="primary" :disabled="hasAmountExceeded || editTotal <= 0" @click="updateCreditNote">
+                  Update credit note
+                </v-btn>
               </div>
             </div>
 
@@ -132,21 +153,28 @@
         </v-card>
       </div>
       <div>
-        <v-card>
+        <v-card v-for="(inv, invIdx) in linkedInvoices" :key="`edit-inv-${invIdx}`" class="mb-3">
           <v-card-title>
-            <h4>Invoice related: {{ getInvoiceType }}</h4>
+            <h4>{{ getInvoiceTypeLabel(inv) }}</h4>
           </v-card-title>
           <v-card-text>
-            <div>
-              <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
-              <p>Linked services # {{ invoiceServices }}</p>
-              <p>
-                Amount: {{ getCurrencyName(invoiceRelated?.currency_id) }}
-                {{ formatToCurrency(invoiceRelated.total) }}
-              </p>
-              <p>Date: {{ formatDateString(invoiceRelated.created_at) }}</p>
-              <UserInfoBadge :item="invoiceRelated" />
-            </div>
+            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
+            <p>Linked services: {{ getInvoiceServices(inv) }}</p>
+            <p>
+              Amount: {{ getCurrencyName(inv.currency_id) }}
+              {{ formatToCurrency(inv.total) }}
+            </p>
+            <p>Date: {{ formatDateString(inv.created_at) }}</p>
+          </v-card-text>
+        </v-card>
+        <v-card v-if="linkedInvoices.length === 0 && consigneeCreditNote.invoice">
+          <v-card-title>
+            <h4>{{ getInvoiceType }}</h4>
+          </v-card-title>
+          <v-card-text>
+            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
+            <p>Amount: {{ formatToCurrency(consigneeCreditNote.invoice?.total) }}</p>
+            <p>Date: {{ formatDateString(consigneeCreditNote.invoice?.created_at) }}</p>
           </v-card-text>
         </v-card>
       </div>
@@ -154,7 +182,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { currencies } from '@/utils/data/systemData'
+import { formatToCurrency } from '@/utils/formatters'
 const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
@@ -171,103 +199,94 @@ const props = defineProps({
 const showPayments = ref(true)
 const consigneeCreditNote = ref<any>(null)
 
-const catalogs = ref<any>({
-  charges: [],
-})
+// Editable copy of charges built from the loaded credit note
+const editableCharges = ref<any[]>([])
+
+const buildEditableCharges = () => {
+  if (!consigneeCreditNote.value?.charges) return
+  editableCharges.value = consigneeCreditNote.value.charges.map((ch: any) => ({
+    id: ch.id,
+    charge_id: ch.charge_id,
+    charge_name: ch.charge?.name || `Concept #${ch.charge_id}`,
+    invoice_number: ch.invoice_charge?.invoice?.invoice_number ?? '-',
+    amount: parseFloat(ch.amount) || 0,
+    cn_available_balance: ch.cn_available_balance ?? null,
+  }))
+}
 
 const hasPayments = computed(() => {
-  if (!consigneeCreditNote.value.payments) return false
+  if (!consigneeCreditNote.value?.payments) return false
   return consigneeCreditNote.value.payments.length > 0
 })
 
-const invoiceRelated = computed(() => {
-  if (!consigneeCreditNote.value.invoice) return {}
-  return consigneeCreditNote.value.invoice
+const editTotal = computed(() => {
+  return editableCharges.value.reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
 })
 
-const invoiceServices = computed(() => {
-  if (!invoiceRelated.value.invoiceable) return '-'
-  // get reference_number from services
-  if (invoiceRelated.value.invoiceable?.class_name.includes('Air')) {
-    return invoiceRelated.value.invoiceable.services
-      .map((service: any) => service.air_reference?.reference_number)
-      .join(', ')
-  }
-  if (invoiceRelated.value.invoiceable?.class_name.includes('Sea')) {
-    return invoiceRelated.value.invoiceable.services
-      .map((service: any) => service.referencia?.reference_number)
-      .join(', ')
-  }
-  return 'No services found'
+const hasAmountExceeded = computed(() => {
+  return editableCharges.value.some((c: any) => {
+    if (c.cn_available_balance === null) return false
+    return parseFloat(c.amount) > c.cn_available_balance
+  })
 })
 
-const onlyInvoiceConcepts = computed(() => {
-  if (!consigneeCreditNote.value.invoice) return []
-  // filter catalogs.charges by consigneeCreditNote.invoice.invoice_charges.charge_id
-  return catalogs.value.charges.filter((charge: any) =>
-    consigneeCreditNote.value.invoice?.charges?.map((ic: any) => ic.charge_id).includes(charge.id)
-  )
-})
-
-const validateAmount = (e: any) => {
-  if (e.target.value < 0) {
-    consigneeCreditNote.value.amount = 0
-  }
-  // can't be more than the invoice amount
-  if (e.target.value > parseFloat(consigneeCreditNote.value.invoice.total)) {
-    snackbar.add({ type: 'warning', text: 'Amount can not be greater than the invoice total' })
-    consigneeCreditNote.value.amount = consigneeCreditNote.value.invoice.total
+const validateChargeAmount = (idx: number) => {
+  const charge = editableCharges.value[idx]
+  if (charge.amount < 0) charge.amount = 0
+  if (charge.cn_available_balance !== null && parseFloat(charge.amount) > charge.cn_available_balance) {
+    snackbar.add({ type: 'warning', text: `"${charge.charge_name}" exceeds max available (${charge.cn_available_balance})` })
   }
 }
 
+// Linked invoices - prefer the new M2M invoices array, fall back to single invoice
+const linkedInvoices = computed(() => {
+  if (consigneeCreditNote.value?.invoices?.length > 0) return consigneeCreditNote.value.invoices
+  return []
+})
+
+const getInvoiceTypeLabel = (inv: any) => {
+  if (!inv?.invoiceable_type) return `Invoice #${inv?.invoice_number ?? inv?.id}`
+  if (inv.invoiceable_type.includes('InvoiceSeaTm')) return `TM Sea Invoice #${inv.invoice_number}`
+  if (inv.invoiceable_type.includes('InvoiceSeaWm')) return `WM Sea Invoice #${inv.invoice_number}`
+  if (inv.invoiceable_type.includes('InvoiceAirTm')) return `TM Air Invoice #${inv.invoice_number}`
+  if (inv.invoiceable_type.includes('InvoiceAirWm')) return `WM Air Invoice #${inv.invoice_number}`
+  return `Invoice #${inv.invoice_number}`
+}
+
+const getInvoiceServices = (inv: any) => {
+  if (!inv?.invoiceable) return '-'
+  if (inv.invoiceable.class_name?.includes('Air'))
+    return (inv.invoiceable.services || []).map((s: any) => s.air_reference?.reference_number).join(', ') || '-'
+  if (inv.invoiceable.class_name?.includes('Sea'))
+    return (inv.invoiceable.services || []).map((s: any) => s.referencia?.reference_number).join(', ') || '-'
+  return '-'
+}
+
+// Backward compat: used when invoices[] is empty
 const getInvoiceType = computed(() => {
-  if (!invoiceRelated) return ''
-  if (invoiceRelated.value.invoiceable_type?.includes('InvoiceSeaTm')) {
-    return `TM Sea Invoice #${invoiceRelated.value.invoiceable_id}`
-  }
-  if (invoiceRelated.value.invoiceable_type?.includes('InvoiceSeaWm')) {
-    return `WM Sea Invoice #${invoiceRelated.value.invoiceable_id}`
-  }
-  if (invoiceRelated.value.invoiceable_type?.includes('InvoiceAirTm')) {
-    return `TM Air Invoice #${invoiceRelated.value.invoiceable_id}`
-  }
-  if (invoiceRelated.value.invoiceable_type?.includes('InvoiceAirWm')) {
-    return `WM Air Invoice #${invoiceRelated.value.invoiceable_id}`
-  }
+  const inv = consigneeCreditNote.value?.invoice
+  if (!inv) return ''
+  if (inv.invoiceable_type?.includes('InvoiceSeaTm')) return `TM Sea Invoice #${inv.invoiceable_id}`
+  if (inv.invoiceable_type?.includes('InvoiceSeaWm')) return `WM Sea Invoice #${inv.invoiceable_id}`
+  if (inv.invoiceable_type?.includes('InvoiceAirTm')) return `TM Air Invoice #${inv.invoiceable_id}`
+  if (inv.invoiceable_type?.includes('InvoiceAirWm')) return `WM Air Invoice #${inv.invoiceable_id}`
   return ''
 })
 
 const getInvoiceableType = (payment: any) => {
-  const invoiceableType = payment.chargeable?.invoice?.invoiceable_type
-  if (!invoiceableType) {
-    return 'Unknown'
-  }
-  if (invoiceableType.includes('InvoiceSeaTm')) {
-    return 'Sea TM'
-  }
-  if (invoiceableType.includes('InvoiceSeaWm')) {
-    return 'Sea WM'
-  }
-  if (invoiceableType.includes('InvoiceAirTm')) {
-    return 'Air TM'
-  }
-  if (invoiceableType.includes('InvoiceAirWm')) {
-    return 'Air WM'
-  }
+  const t = payment.chargeable?.invoice?.invoiceable_type
+  if (!t) return 'Unknown'
+  if (t.includes('InvoiceSeaTm')) return 'Sea TM'
+  if (t.includes('InvoiceSeaWm')) return 'Sea WM'
+  if (t.includes('InvoiceAirTm')) return 'Air TM'
+  if (t.includes('InvoiceAirWm')) return 'Air WM'
   return 'Unknown'
 }
 
 const viewInvoice = (payment: any) => {
-  const invoiceableType = payment.chargeable?.invoice?.invoiceable_type
-  if (invoiceableType.includes('InvoiceSeaTm')) {
-    router.push(`/invoices/search/tm-view-${payment.chargeable?.invoice?.invoiceable_id}`)
-    return
-  }
-  if (invoiceableType.includes('InvoiceSeaWm')) {
-    router.push(`/invoices/search/wm-view-${payment.chargeable?.invoice?.invoiceable_id}`)
-    return
-  }
-  // snackbar show error
+  const t = payment.chargeable?.invoice?.invoiceable_type
+  if (t?.includes('InvoiceSeaTm')) { router.push(`/invoices/search/tm-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
+  if (t?.includes('InvoiceSeaWm')) { router.push(`/invoices/search/wm-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
   snackbar.add({ type: 'error', text: 'Unknown invoice type' })
 }
 
@@ -276,73 +295,50 @@ const confirmDeleteCreditNotePayment = async (creditNotePayment: any) => {
     title: 'Are you sure?',
     confirmationText: 'Yes, delete',
     content: 'Please confirm this action.',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
+    dialogProps: { persistent: true, maxWidth: 500 },
+    confirmationButtonProps: { color: 'primary' },
   })
-
   if (result) {
     try {
       loadingStore.start()
       await $api.consigneeCreditNotes.deletePayment(consigneeCreditNote.value.id, creditNotePayment)
-      getCustomerCreditNote()
+      await getCustomerCreditNote()
     } catch (e) {
       console.error(e)
     } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
+      setTimeout(() => loadingStore.stop(), 250)
     }
   }
 }
 
 const updateCreditNote = async () => {
   try {
-    if (
-      !consigneeCreditNote.value.amount ||
-      !consigneeCreditNote.value.currency_id ||
-      !consigneeCreditNote.value.description ||
-      !consigneeCreditNote.value.charge_id
-    ) {
-      snackbar.add({ type: 'warning', text: 'Please fill all required fields' })
+    if (!consigneeCreditNote.value.description) {
+      snackbar.add({ type: 'warning', text: 'Comments are required' })
+      return
+    }
+    if (editTotal.value <= 0) {
+      snackbar.add({ type: 'warning', text: 'Total must be greater than 0' })
+      return
+    }
+    if (hasAmountExceeded.value) {
+      snackbar.add({ type: 'error', text: 'One or more amounts exceed the maximum available' })
       return
     }
     loadingStore.loading = true
     const body = {
       external_folio: consigneeCreditNote.value.external_folio,
-      amount: consigneeCreditNote.value.amount,
-      charge_id: consigneeCreditNote.value.charge_id,
-      currency_id: consigneeCreditNote.value.currency_id,
       description: consigneeCreditNote.value.description,
+      charges: editableCharges.value.map((c: any) => ({ id: c.id, amount: parseFloat(c.amount) })),
     }
     await $api.consigneeCreditNotes.updateNote(consigneeCreditNote.value.id, body)
     snackbar.add({ type: 'success', text: 'Credit note updated' })
     router.push('/invoices/search/credit-notes')
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
-
-const getCatalogs = async () => {
-  try {
-    loadingStore.loading = true
-    const response = await $api.charges.getAll()
-
-    catalogs.value.charges = response
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => loadingStore.stop(), 250)
   }
 }
 
@@ -351,15 +347,13 @@ const getCustomerCreditNote = async () => {
     loadingStore.loading = true
     const response = await $api.consigneeCreditNotes.getCreditNoteById(props.id.toString())
     consigneeCreditNote.value = response
+    buildEditableCharges()
   } catch (e) {
     console.error(e)
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => loadingStore.stop(), 250)
   }
 }
 
-await getCatalogs()
 await getCustomerCreditNote()
 </script>
