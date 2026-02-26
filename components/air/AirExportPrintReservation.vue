@@ -46,6 +46,14 @@
             density="compact"
             hint="Can contain alphanumeric characters"
           />
+
+          <h2 class="text-lg mb-2 mt-4">Commodity</h2>
+          <v-text-field
+            v-model="formData.commodity"
+            label="Commodity"
+            variant="outlined"
+            density="compact"
+          />
         </v-card-text>
       </v-card>
     </div>
@@ -109,6 +117,7 @@ const formData = ref({
   reservation_number: '',
   agency_name: '',
   agency_phone: '',
+  commodity: '',
 })
 
 // Initialize form data when reference data changes
@@ -118,6 +127,7 @@ watchEffect(() => {
       reservation_number: referenceData.value.reservation_number || '',
       agency_name: referenceData.value.shipper || '',
       agency_phone: referenceData.value.origin_ff?.contact_phone || '',
+      commodity: referenceData.value.commodity || '',
     }
   }
 })
