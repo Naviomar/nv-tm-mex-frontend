@@ -161,7 +161,7 @@
                 </div>
               </td>
               <td><v-chip size="x-small" color="purple">NC</v-chip></td>
-              <td><v-chip size="small" color="purple">CN #{{ row.id }}</v-chip></td>
+              <td><v-chip size="small" color="purple">CN #{{ row.id }}</v-chip> <v-chip size="small" color="purple">EF #{{ row.external_folio || '-' }}</v-chip></td>
               <td>{{ getPartyableType(row.party_invoice?.partyable_type) }}</td>
               <td class="whitespace-nowrap">{{ row.party_invoice?.partyable?.name }}</td>
               <td class="whitespace-nowrap font-bold">

@@ -165,7 +165,16 @@
             <td>{{ creditNote.consignee?.name }}</td>
             <td>{{ creditNote.description }}</td>
             <td>{{ getCNInvoiceServices(creditNote) }}</td>
-            <td class="whitespace-nowrap">{{ creditNote.invoice?.invoice_number }}</td>
+            <td class="whitespace-nowrap">
+              <template v-if="creditNote.invoices && creditNote.invoices.length > 1">
+                <v-chip v-for="(inv, iIdx) in creditNote.invoices" :key="`inv-${iIdx}`" size="x-small" class="mr-1">
+                  {{ inv.invoice_number }}
+                </v-chip>
+              </template>
+              <template v-else>
+                {{ creditNote.invoice?.invoice_number }}
+              </template>
+            </td>
             <td>{{ formatToCurrency(creditNote.amount) }}</td>
             <td>{{ formatToCurrency(creditNote.amount_available) }}</td>
             <td class="whitespace-nowrap">
@@ -258,19 +267,33 @@ const editCreditNote = (creditNote: any) => {
   router.push(`/invoices/search/credit-notes/edit-${creditNote.id}`)
 }
 
+const getServicesFromInvoice = (invoice: any) => {
+  if (!invoice?.invoiceable) return ''
+  if (invoice.invoiceable.class_name?.includes('Sea')) {
+    return (invoice.invoiceable.services || [])
+      .map((s: any) => s.referencia?.reference_number)
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (invoice.invoiceable.class_name?.includes('Air')) {
+    return (invoice.invoiceable.services || [])
+      .map((s: any) => s.air_reference?.reference_number)
+      .filter(Boolean)
+      .join(', ')
+  }
+  return ''
+}
+
 const getCNInvoiceServices = (creditNote: any) => {
-  if (!creditNote.invoice) return '-'
-  if (creditNote.invoice.invoiceable?.class_name.includes('Sea')) {
-    return (creditNote.invoice.invoiceable.services || [])
-      .map((service: any) => service.referencia?.reference_number)
-      .join(', ')
+  // Multi-invoice: collect services from all linked invoices
+  if (creditNote.invoices && creditNote.invoices.length > 0) {
+    const all = creditNote.invoices
+      .map((inv: any) => getServicesFromInvoice(inv))
+      .filter(Boolean)
+    return all.join(', ') || '-'
   }
-  if (creditNote.invoice.invoiceable?.class_name.includes('Air')) {
-    return (creditNote.invoice.invoiceable.services || [])
-      .map((service: any) => service.air_reference?.reference_number)
-      .join(', ')
-  }
-  return '-'
+  // Fallback: single invoice
+  return getServicesFromInvoice(creditNote.invoice) || '-'
 }
 
 const onClickFilters = async () => {

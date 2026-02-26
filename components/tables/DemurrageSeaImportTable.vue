@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mb-4">
+    <div class="mb-4" @keyup.enter="onClickFilters">
       <div class="grid grid-cols-12 gap-2">
         <div class="col-span-2">
           <v-autocomplete v-model="filters.year" :items="prefixYears" density="compact" label="Year" />
@@ -12,14 +12,25 @@
             label="Add reference #"
             hint="Separate multiple references with commas"
             @keyup.enter="addReferencia"
-          />
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add reference to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.masterBl"
             density="compact"
             label="Master BL"
-            @keyup.enter="getSeaImportReferences"
           />
         </div>
         <div class="col-span-2">
@@ -27,7 +38,6 @@
             v-model="filters.houseBl"
             density="compact"
             label="House BL"
-            @keyup.enter="getSeaImportReferences"
           />
         </div>
         <div class="col-span-4">
@@ -69,7 +79,6 @@
             v-model="filters.containerNumber"
             density="compact"
             label="Container #"
-            @keyup.enter="getSeaImportReferences"
           />
         </div>
         <div class="col-span-2">
@@ -77,7 +86,6 @@
             v-model="filters.bookingNum"
             density="compact"
             label="Booking number"
-            @keyup.enter="getSeaImportReferences"
           />
         </div>
         <div class="col-span-2">
@@ -115,9 +123,9 @@
           </v-chip>
         </div>
       </div>
-      <div class="flex space-x-3">
+      <div class="flex gap-4">
         <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-        <v-btn size="small" color="primary" @click="getSeaImportReferences"> Search </v-btn>
+        <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
     </div>
     <v-card>
@@ -222,6 +230,8 @@
 <script setup lang="ts">
 import { prefixYears } from '~/utils/date'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { useTableFilters } from '~/composables/useTableFilters'
+
 const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
@@ -236,10 +246,11 @@ const catalogs = ref({
   lines: [] as any,
 })
 
-const filters = ref({
+// Initial filter values
+const initialFilters = {
   year: '',
   referencia: '',
-  referencias: [] as any,
+  referencias: [] as string[],
   masterBl: '',
   houseBl: '',
   consignee_id: '',
@@ -253,6 +264,20 @@ const filters = ref({
   startDate: '',
   endDate: '',
   has_demurrage: '',
+}
+
+// Use the table filters composable for URL persistence
+const {
+  filters,
+  currentPage,
+  syncToUrl,
+  resetFilters: resetFiltersComposable,
+  setPage,
+  getFilteredUrl,
+  hasActiveFilters,
+} = useTableFilters(initialFilters, {
+  storageKey: 'demurrage-sea-import-filters',
+  arrayFields: ['referencias'],
 })
 
 const references = ref({
@@ -264,6 +289,10 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+// Expose getFilteredUrl for child components and back navigation
+const backUrl = computed(() => getFilteredUrl('/maritime/import/demurrages/search'))
+provide('catalogBackUrl', backUrl)
 
 const addReferencia = () => {
   if (filters.value.referencia) {
@@ -277,15 +306,30 @@ const addReferencia = () => {
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
+    // Sync to URL after adding references
+    syncToUrl()
   }
 }
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
+  syncToUrl()
+}
+
+const onClickFilters = async () => {
+  // Add any pending reference before searching
+  addReferencia()
+  // set current page to 1
+  currentPage.value = 1
+  references.value.current_page = 1
+  await syncToUrl()
+  await getSeaImportReferences()
 }
 
 const onClickPagination = async (page: number) => {
+  currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
   await getSeaImportReferences()
 }
 
@@ -294,12 +338,13 @@ const getSeaImportReferences = async () => {
     loadingStore.loading = true
     const response = await $api.demurrages.getSeaImportReferencias({
       query: {
-        page: references.value.current_page,
+        page: currentPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
+    references.value.current_page = currentPage.value
 
     if (references.value.data.length === 0) {
       snackbar.add({
@@ -310,8 +355,9 @@ const getSeaImportReferences = async () => {
   } catch (e) {
     console.error(e)
   } finally {
-    // timeout 1 second
-    loadingStore.stop()
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
   }
 }
 
@@ -349,32 +395,20 @@ const searchFfs = async (params: any) => {
   }
 }
 
-await getSeaImportFilters()
-await getSeaImportReferences()
-
 const clearFilters = async () => {
-  filters.value = {
-    year: '',
-    referencia: '',
-    referencias: [],
-    masterBl: '',
-    houseBl: '',
-    consignee_id: '',
-    ffId: '',
-    vesselId: '',
-    voyageDischargeId: '',
-    eta: '',
-    containerNumber: '',
-    bookingNum: '',
-    line_id: '',
-    startDate: '',
-    endDate: '',
-    has_demurrage: '',
-  }
+  await resetFiltersComposable()
+  references.value.current_page = 1
   await getSeaImportReferences()
 }
 
 const viewMaritimeReference = (item: any) => {
   router.push(`/maritime/import/demurrages/reference-${item.id}-demurrages`)
 }
+
+onMounted(async () => {
+  await getSeaImportFilters()
+  // Sync current page from composable after URL is loaded
+  references.value.current_page = currentPage.value
+  await getSeaImportReferences()
+})
 </script>

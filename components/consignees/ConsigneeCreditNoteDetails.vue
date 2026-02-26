@@ -43,9 +43,26 @@
           </div>
           <div>
             <div class="mb-2">
-              <v-chip variant="outlined" size="small">
+              <div v-if="creditNote.invoices && creditNote.invoices.length > 1" class="flex flex-wrap gap-1">
+                <v-chip v-for="(inv, idx) in creditNote.invoices" :key="`cn-inv-${idx}`" variant="outlined" size="small">
+                  {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
+                </v-chip>
+              </div>
+              <v-chip v-else variant="outlined" size="small">
                 {{ creditNoteInvoice }}
               </v-chip>
+            </div>
+            <div v-if="creditNote.charges && creditNote.charges.length > 0" class="mb-2">
+              <div class="text-sm font-bold mb-1">Concepts ({{ creditNote.charges.length }})</div>
+              <div v-for="(ch, idx) in creditNote.charges" :key="`cn-ch-${idx}`" class="text-sm flex justify-between items-center gap-2 mb-1">
+                <div>
+                  <div>{{ ch.charge?.name || 'Concept' }}</div>
+                  <div v-if="ch.invoice_charge?.invoice?.invoice_number" class="text-xs text-gray-500">
+                    Invoice #{{ ch.invoice_charge.invoice.invoice_number }}
+                  </div>
+                </div>
+                <span class="whitespace-nowrap">{{ formatToCurrency(ch.amount) }}</span>
+              </div>
             </div>
             <div class="flex gap-4">
               <PreviewCustomerCreditNote :id="creditNote.id" />
