@@ -38,7 +38,7 @@
           />
           <v-text-field v-model="formData.agency_phone" label="Agency Phone" variant="outlined" density="compact" />
 
-          <h2 class="text-lg mb-2">Reservation Number (AWB)</h2>
+          <h2 class="text-lg mb-2">Reservation Number (No.Res)</h2>
           <div class="flex items-start gap-2">
             <v-chip color="primary" variant="elevated" class="mt-1 font-mono font-bold text-lg" size="large">
               {{ airlinePrefix }}
@@ -72,11 +72,11 @@
               </template>
             </v-autocomplete>
           </div>
-          <!-- <div v-if="formData.reservation_number" class="mt-1 mb-2">
+          <div v-if="formData.reservation_number" class="mt-1 mb-2">
             <v-chip color="success" variant="tonal" size="small" prepend-icon="mdi-check-circle">
-              AWB: {{ formData.reservation_number }}
+              No.Res: {{ formData.reservation_number }}
             </v-chip>
-          </div> -->
+          </div>
           <v-alert v-if="guideNumberError" type="error" density="compact" variant="tonal" class="mb-2">
             {{ guideNumberError }}
           </v-alert>
