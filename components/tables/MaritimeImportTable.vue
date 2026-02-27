@@ -240,6 +240,13 @@
                     density="compact"
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
+                  <v-btn
+                    variant="text"
+                    icon="mdi-eye-outline"
+                    color="green-lighten-2"
+                    density="compact"
+                    @click="viewDetails(item)"
+                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
@@ -575,6 +582,10 @@ const clearFilters = async () => {
 
 const viewMaritimeReference = (item: any) => {
   router.push(`/maritime/import/${item.id}`)
+}
+
+const viewDetails = (item: any) => {
+  router.push(`/maritime/import/view-details-${item.id}`)
 }
 
 const confirmDeletion = async (item: any) => {

@@ -219,7 +219,7 @@
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
                     density="compact"
-                    @click="confirmDeletion(item)"
+                    @click="viewDetails(item)"
                   ></v-btn>
                 </div>
               </td>
@@ -469,6 +469,10 @@ const clearFilters = async () => {
 
 const viewMaritimeReference = (item: any) => {
   router.push(`/maritime/export/${item.id}`)
+}
+
+const viewDetails = (item: any) => {
+  router.push(`/maritime/export/view-details-${item.id}`)
 }
 
 const confirmDeletion = async (item: any) => {

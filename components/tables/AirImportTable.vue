@@ -188,6 +188,13 @@
                     density="compact"
                     @click="viewReference(item)"
                   ></v-btn>
+                  <v-btn
+                    variant="text"
+                    icon="mdi-eye-outline"
+                    color="green-lighten-2"
+                    density="compact"
+                    @click="viewDetails(item)"
+                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
@@ -443,6 +450,10 @@ const clearFilters = async () => {
 const viewReference = (item: any) => {
   console.log(item)
   router.push(`/air/import/operations-${item.id}`)
+}
+
+const viewDetails = (item: any) => {
+  router.push(`/air/import/view-details-${item.id}`)
 }
 
 const confirmDeletion = async (item: any) => {
