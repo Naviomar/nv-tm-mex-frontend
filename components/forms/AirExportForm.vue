@@ -23,7 +23,23 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div>
-            <InputText name="master_awb" density="compact" variant="solo-filled" label="Master AWB *" />
+            <v-autocomplete
+              v-model="selectedGuideNumber"
+              v-model:search="guideNumberSearch"
+              :items="filteredGuideNumbers"
+              item-title="full_number"
+              item-value="id"
+              label="Master AWB *"
+              variant="solo-filled"
+              density="compact"
+              :hint="detectedAirline ? `${detectedAirline.name} detected` : 'Enter prefix + number (e.g. 11200672700)'"
+              persistent-hint
+              :loading="loadingGuideNumbers"
+              no-data-text="No available guide numbers"
+              @update:model-value="onGuideNumberSelected"
+              @update:search="onGuideNumberSearch"
+              return-object
+            />
           </div>
           <div>
             <InputText
@@ -44,15 +60,37 @@
             <InputText name="destination" density="compact" variant="solo-filled" label="Destination *" />
           </div>
           <div>
-            <InputAutocomplete
-              name="airline_id"
+            <v-autocomplete
+              v-model="airlineIdValue"
               density="compact"
               label="Airline *"
               :items="catalogs.airlines"
               item-title="name"
               item-value="id"
               variant="solo-filled"
-            />
+              :hint="detectedAirline ? 'Auto-selected from Master AWB prefix' : ''"
+              persistent-hint
+            >
+              <template #item="{ props: itemProps, item }">
+                <v-list-item v-bind="itemProps">
+                  <template #prepend>
+                    <v-img
+                      v-if="item.raw.logo_url"
+                      :src="item.raw.logo_url"
+                      width="24"
+                      height="24"
+                      class="mr-2"
+                      @error="(e: Event) => onAirlineLogoError(e, item.raw.id)"
+                    >
+                      <template #error>
+                        <v-icon color="grey" size="24">mdi-airplane</v-icon>
+                      </template>
+                    </v-img>
+                    <v-icon v-else color="grey" size="24">mdi-airplane</v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
           </div>
         </div>
 
@@ -393,6 +431,34 @@ const creditDebitNotes = ref<any>([])
 
 const consigneeInfo = ref<any>(null)
 
+// Master AWB state
+const selectedGuideNumber = ref<any>(null)
+const guideNumberSearch = ref('')
+const detectedAirline = ref<any>(null)
+const availableGuideNumbers = ref<any[]>([])
+const loadingGuideNumbers = ref(false)
+const airlineLogoErrors = ref<Set<number>>(new Set())
+
+// Computed for airline_id binding
+const airlineIdValue = computed({
+  get: () => values.airline_id,
+  set: (val) => setFieldValue('airline_id', val)
+})
+
+// Filter guide numbers based on search input and add full_number property
+const filteredGuideNumbers = computed(() => {
+  const items = availableGuideNumbers.value.map((g: any) => ({
+    ...g,
+    full_number: `${g.airline?.prefix || ''}${g.guide_number}`
+  }))
+  
+  if (!guideNumberSearch.value) return items
+  const search = guideNumberSearch.value.trim()
+  return items.filter((g: any) => {
+    return g.full_number.includes(search) || g.guide_number.includes(search)
+  })
+})
+
 const cbms = ref([] as any)
 const cargos = ref([] as any)
 const routes = ref<any>([])
@@ -430,30 +496,76 @@ const totals = computed(() => {
     return acc + parseFloat(cbm.gross_weight)
   }, 0)
 
-  gross_weight = parseFloat(gross_weight.toFixed(2))
-
   return {
     packages,
     gross_weight,
   }
 })
 
-const executive = computed(() => {
-  if (consigneeInfo.value?.executive_active?.executive) {
-    const name = consigneeInfo.value?.executive_active?.executive?.name
-    let validTo = consigneeInfo.value?.executive_active?.valid_to
-    if (consigneeInfo.value?.executive_active?.undefined_time === 1) {
-      validTo = 'Indefinite'
-    }
-
-    return `${name} (Valid to: ${validTo})`
-  }
-  return ''
-})
-
-const { handleSubmit, values, errors, meta, setValues } = useForm({
+const { handleSubmit, values, errors, meta, setValues, setFieldValue } = useForm({
   validationSchema: schema,
 })
+
+const executive = computed(() => consigneeInfo.value?.executive_user?.name || '')
+
+// Handle search input in Master AWB autocomplete
+const onGuideNumberSearch = async (search: string) => {
+  guideNumberSearch.value = search || ''
+  
+  // Extract prefix from first 3 digits
+  const prefixMatch = search?.match(/^(\d{3})/)
+  
+  if (prefixMatch) {
+    const prefix = prefixMatch[1]
+    const airline = catalogs.value.airlines?.find((a: any) => 
+      String(a.prefix) === prefix
+    )
+    
+    if (airline && airline.id !== detectedAirline.value?.id) {
+      detectedAirline.value = airline
+      setFieldValue('airline_id', airline.id)
+      
+      // Fetch guide numbers for this airline
+      await fetchAvailableGuideNumbers(airline.id)
+    }
+  } else {
+    detectedAirline.value = null
+  }
+}
+
+// Handle guide number selection
+const onGuideNumberSelected = (item: any) => {
+  if (item) {
+    // Master AWB = prefix + guide_number (concatenated)
+    const prefix = item.airline?.prefix || ''
+    const masterAwb = `${prefix}${item.guide_number}`
+    setFieldValue('master_awb', masterAwb)
+    setFieldValue('guide_number_id', item.id)
+  } else {
+    setFieldValue('master_awb', '')
+    setFieldValue('guide_number_id', null)
+  }
+}
+
+// Fetch available guide numbers for airline
+const fetchAvailableGuideNumbers = async (airlineId: number) => {
+  try {
+    loadingGuideNumbers.value = true
+    const response = await $api.airlineGuideNumbers.getAvailable({ 
+      query: { airline_id: airlineId } 
+    })
+    availableGuideNumbers.value = response as any[]
+  } catch (e) {
+    console.error('Error fetching guide numbers:', e)
+  } finally {
+    loadingGuideNumbers.value = false
+  }
+}
+
+// Handle airline logo error
+const onAirlineLogoError = (e: Event, airlineId: number) => {
+  airlineLogoErrors.value.add(airlineId)
+}
 
 interface SearchParams {
   name?: string
@@ -566,6 +678,22 @@ await getCatalogs()
 const onSuccess = async () => {
   try {
     loadingStore.loading = true
+    
+    // Mark guide number as used if selected
+    if (values.guide_number_id) {
+      try {
+        await $api.airlineGuideNumbers.markAsUsed({
+          guide_number_id: values.guide_number_id,
+          air_reference_id: null,
+        })
+      } catch (e: any) {
+        console.error('Error marking guide number as used:', e)
+        snackbar.add({ type: 'error', text: e?.data?.message || 'Guide number already in use' })
+        loadingStore.stop()
+        return
+      }
+    }
+    
     const body = {
       ...values,
       cbms: cbms.value,
