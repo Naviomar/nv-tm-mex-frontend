@@ -72,14 +72,21 @@
               </template>
             </v-autocomplete>
           </div>
-          <div v-if="formData.reservation_number" class="mt-1 mb-2">
+          <!-- <div v-if="formData.reservation_number" class="mt-1 mb-2">
             <v-chip color="success" variant="tonal" size="small" prepend-icon="mdi-check-circle">
               AWB: {{ formData.reservation_number }}
             </v-chip>
-          </div>
+          </div> -->
           <v-alert v-if="guideNumberError" type="error" density="compact" variant="tonal" class="mb-2">
             {{ guideNumberError }}
           </v-alert>
+          <h2 class="text-lg mb-2 mt-4">Commodity</h2>
+          <v-text-field
+            v-model="formData.commodity"
+            label="Commodity"
+            variant="outlined"
+            density="compact"
+          />
         </v-card-text>
       </v-card>
     </div>
@@ -150,6 +157,7 @@ const formData = ref({
   reservation_number: '',
   agency_name: '',
   agency_phone: '',
+  commodity: '',
 })
 
 // Airline prefix computed from reference
@@ -164,6 +172,7 @@ watchEffect(() => {
       reservation_number: referenceData.value.reservation_number || '',
       agency_name: referenceData.value.shipper || '',
       agency_phone: referenceData.value.origin_ff?.contact_phone || '',
+      commodity: referenceData.value.commodity || '',
     }
   }
 })

@@ -262,10 +262,11 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
 
   async previewEmailPdf(id: string, fetchOptions?: FetchOptions) {
     fetchOptions = {
+      method: 'POST',
       responseType: 'blob',
       ...fetchOptions,
     }
-    return this.call('GET', `${this.RESOURCE}/${id}/preview-email-pdf`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/${id}/preview-email-pdf`, fetchOptions)
   }
 
   async sendEmailPdf(id: string, form: any, fetchOptions?: FetchOptions) {
@@ -274,7 +275,7 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
       body: form,
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/${id}/preview-email-pdf`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/${id}/send-email-pdf`, fetchOptions)
   }
 
   async checkDeletable(id: string, fetchOptions?: FetchOptions) {

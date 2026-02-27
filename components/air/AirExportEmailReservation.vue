@@ -43,6 +43,14 @@
               hint="Email message content"
             />
           </div>
+          <div>
+            <v-text-field
+              v-model="emailData.commodity"
+              label="Commodity"
+              density="compact"
+              variant="outlined"
+            />
+          </div>
         </div>
 
         <div class="mt-4 flex gap-2">
@@ -123,6 +131,7 @@ const emailData = ref({
   cc: '',
   subject: `Reservation for ${props.reference?.reference_number || 'Reference'}`,
   body: '',
+  commodity: '',
 })
 
 const { $api } = useNuxtApp()
@@ -130,6 +139,13 @@ const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const showModal = ref(false)
 const pdfUrl = ref<string | null>(null)
+const referenceData = ref<any>(null)
+
+watchEffect(() => {
+  if (referenceData.value) {
+    emailData.value.commodity = referenceData.value.commodity || ''
+  }
+})
 
 // Computed properties for airline detection
 const isChinaCargo = computed(() => props.reference?.airline_id === 27)
@@ -145,7 +161,20 @@ const openPreviewModal = async () => {
   try {
     loadingStore.start()
 
-    const response = (await $api.airExport.previewEmailPdf(props.id)) as any
+    const payload = {
+      to: emailData.value.to,
+      cc: emailData.value.cc,
+      subject: emailData.value.subject,
+      body: emailData.value.body,
+      email_data: {
+        commodity: emailData.value.commodity,
+      },
+    }
+    const fetchOptions = {
+      responseType: 'blob' as const,
+      body: payload,
+    }
+    const response = (await $api.airExport.previewEmailPdf(props.id, fetchOptions)) as any
 
     const blob = new Blob([response], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
@@ -173,9 +202,12 @@ const sendEmail = async () => {
       cc: emailData.value.cc,
       subject: emailData.value.subject,
       body: emailData.value.body,
+      email_data: {
+        commodity: emailData.value.commodity,
+      },
     }
 
-    const response = await $api.airExport.sendEmailPdf(props.id, payload)
+    await $api.airExport.sendEmailPdf(props.id, payload)
 
     snackbar.add({ type: 'success', text: 'Email sent successfully' })
 
@@ -230,6 +262,22 @@ onUnmounted(() => {
   if (pdfUrl.value) {
     window.URL.revokeObjectURL(pdfUrl.value)
   }
+})
+
+const fetchReferenceData = async () => {
+  try {
+    loadingStore.start()
+    const response = await $api.airExport.getReferenceById(props.id)
+    referenceData.value = response
+  } catch (error) {
+    console.error('Error fetching reference data:', error)
+  } finally {
+    loadingStore.stop()
+  }
+}
+
+onMounted(() => {
+  fetchReferenceData()
 })
 </script>
 
