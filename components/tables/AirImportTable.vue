@@ -188,13 +188,6 @@
                     density="compact"
                     @click="viewReference(item)"
                   ></v-btn>
-                  <v-btn
-                    variant="text"
-                    icon="mdi-eye-outline"
-                    color="green-lighten-2"
-                    density="compact"
-                    @click="confirmDeletion(item)"
-                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
