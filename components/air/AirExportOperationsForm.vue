@@ -1,14 +1,16 @@
 <template>
   <div>
+    <CancelledReferenceBanner :deleted-at="referenceData?.deleted_at" :reference-number="referenceData?.reference_number" />
     <v-card>
       <v-tabs v-model="currentTab" bg-color="secondary" fixed-tabs slider-color="gold" show-arrows>
-        <v-tab text="Details" prepend-icon="mdi-book-open-page-variant" value="1"></v-tab>
-        <v-tab text="Print Master" prepend-icon="mdi-printer-pos-outline" value="2"> </v-tab>
-        <v-tab text="Print House" prepend-icon="mdi-printer-pos-outline" value="3"> </v-tab>
-        <v-tab text="Print Reservation" prepend-icon="mdi-printer-outline" value="4" :disabled="!isReservationEnabled">
+        <v-tab text="Details" prepend-icon="mdi-book-open-page-variant" value="1" :disabled="isCancelled"></v-tab>
+        <v-tab text="Print Master" prepend-icon="mdi-printer-pos-outline" value="2" :disabled="isCancelled"> </v-tab>
+        <v-tab text="Print House" prepend-icon="mdi-printer-pos-outline" value="3" :disabled="isCancelled"> </v-tab>
+        <v-tab text="Print Reservation" prepend-icon="mdi-printer-outline" value="4" :disabled="isCancelled || !isReservationEnabled">
         </v-tab>
-        <v-tab text="Email Reservation" prepend-icon="mdi-email-outline" value="5" :disabled="!isReservationEnabled">
+        <v-tab text="Email Reservation" prepend-icon="mdi-email-outline" value="5" :disabled="isCancelled || !isReservationEnabled">
         </v-tab>
+        <v-tab text="Cancel" prepend-icon="mdi-delete-outline" value="6"> </v-tab>
       </v-tabs>
       <v-card-text>
         <v-window v-model="currentTab">
@@ -49,6 +51,9 @@
               @refresh-data="fetchReferenceData"
             />
           </v-window-item>
+          <v-window-item value="6">
+            <AirExportDeleteForm :id="props.id" serviceType="air-export" />
+          </v-window-item>
         </v-window>
       </v-card-text>
     </v-card>
@@ -68,6 +73,8 @@ const loadingStore = useLoadingStore()
 const currentTab = ref('1')
 const referenceData = ref<any>(null)
 const refreshKey = ref(0)
+
+const isCancelled = computed(() => !!referenceData.value?.deleted_at)
 
 // Provide a refresh function for all child tabs
 const refreshAllTabs = async () => {
@@ -90,6 +97,9 @@ const fetchReferenceData = async () => {
     loadingStore.start()
     const response = await $api.airExport.getReferenceById(props.id)
     referenceData.value = response
+    if (isCancelled.value) {
+      currentTab.value = '6'
+    }
   } catch (error) {
     console.error('Error fetching reference data:', error)
   } finally {

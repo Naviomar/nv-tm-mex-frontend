@@ -1,5 +1,6 @@
 <template>
   <div>
+    <CancelledReferenceBanner :deleted-at="airReference?.deleted_at" :reference-number="airReference?.reference_number" />
     <v-card class="mb-4">
       <v-card-title>
         <div class="flex justify-between">

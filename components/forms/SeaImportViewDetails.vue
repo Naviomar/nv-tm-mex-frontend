@@ -1,5 +1,6 @@
 <template>
   <div>
+    <CancelledReferenceBanner :deleted-at="referencia?.deleted_at" :reference-number="referencia?.reference_number" />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <v-card class="mb-4">

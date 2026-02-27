@@ -57,6 +57,7 @@ import AirExportModule from '~/repository/modules/catalogs/airExportReferences'
 import AirImportModule from '~/repository/modules/catalogs/airImportReferences'
 import AirServiceModule from '~/repository/modules/catalogs/airServices'
 import AirlineModule from '~/repository/modules/catalogs/airlines'
+import AirlineGuideNumbersModule from '~/repository/modules/catalogs/airlineGuideNumbers'
 import HandlerModule from '~/repository/modules/catalogs/handlers'
 import WarehouseModule from '~/repository/modules/catalogs/warehouses'
 import AirportModule from '~/repository/modules/catalogs/airports'
@@ -148,6 +149,7 @@ interface IApiInstance {
   airExport: AirExportModule
   airServices: AirServiceModule
   airlines: AirlineModule
+  airlineGuideNumbers: AirlineGuideNumbersModule
   airports: AirportModule
   handlers: HandlerModule
   warehouses: WarehouseModule
@@ -237,6 +239,7 @@ export function useApiFactory() {
     airServices: new AirServiceModule(client),
     airReferences: new AirReferenceModule(client),
     airlines: new AirlineModule(client),
+    airlineGuideNumbers: new AirlineGuideNumbersModule(client),
     airports: new AirportModule(client),
     handlers: new HandlerModule(client),
     warehouses: new WarehouseModule(client),

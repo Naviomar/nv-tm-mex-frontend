@@ -38,7 +38,7 @@
                     v-model="form.archivo"
                     density="compact"
                     label="Select a file to upload"
-                    accept=".xlsx"
+                    accept=".xlsx,.csv"
                     show-size
                     show-file-size
                     show-file-name

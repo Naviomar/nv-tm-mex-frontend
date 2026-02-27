@@ -1,6 +1,18 @@
 <template>
   <div>
     <div class="mb-4" @keyup.enter="onClickFilters">
+      <div class="flex items-center justify-between mb-2">
+        <v-btn
+          size="small"
+          variant="text"
+          :prepend-icon="showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+          @click="toggleFilters"
+        >
+          {{ showFilters ? 'Hide filters' : 'Show filters' }}
+        </v-btn>
+      </div>
+      <v-expand-transition>
+      <div v-show="showFilters">
       <div class="grid grid-cols-12 gap-2">
         <div class="col-span-2">
           <v-autocomplete
@@ -164,6 +176,8 @@
         </v-btn>
         <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
+      </div>
+      </v-expand-transition>
     </div>
     <v-card>
       <v-card-text>
@@ -177,7 +191,8 @@
         <div class="text-xs">
           Showing {{ references.from }} to {{ references.to }} from {{ references.total }} total records
         </div>
-        <v-table density="compact" fixed-header height="75vh">
+        <div class="catalog-table-wrapper">
+        <v-table density="compact" fixed-header>
           <thead>
             <tr>
               <th class="text-left" width="50">Actions</th>
@@ -218,7 +233,7 @@
               <td>
                 <div class="flex gap-2">
                   <v-btn
-                    v-if="item.deleted_at == null"
+                    v-if="!item.deleted_at"
                     variant="text"
                     icon="mdi-pencil-outline"
                     color="blue-lighten-2"
@@ -238,6 +253,7 @@
                 <UserInfoBadge :item="item">
                   <ServiceNumberLabel :service="item" />
                 </UserInfoBadge>
+                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
               </td>
               <td>
                 <div class="flex flex-col gap-1">
@@ -326,11 +342,12 @@
               </td>
               <td>{{ item.shipper?.name }}</td>
               <td>
-                <TrashButton :item="item" />
+                <TrashButton :item="item" serviceType="sea-import" @click="confirmDeletion" />
               </td>
             </tr>
           </tbody>
         </v-table>
+        </div>
         <v-pagination
           v-model="references.current_page"
           :length="references.last_page"
@@ -368,6 +385,13 @@ const catalogs = ref({
 })
 
 const containerViewer = ref(true)
+
+const FILTER_VISIBILITY_KEY = 'sea-import-filters-visible'
+const showFilters = ref(sessionStorage.getItem(FILTER_VISIBILITY_KEY) !== 'false')
+const toggleFilters = () => {
+  showFilters.value = !showFilters.value
+  sessionStorage.setItem(FILTER_VISIBILITY_KEY, String(showFilters.value))
+}
 
 // Initial filter values
 const initialFilters = {
@@ -563,8 +587,20 @@ const viewMaritimeReference = (item: any) => {
   router.push(`/maritime/import/${item.id}`)
 }
 
-const confirmDeletion = (item: any) => {
-  router.push(`/maritime/import/view-details-${item.id}`)
+const confirmDeletion = async (item: any) => {
+  try {
+    loadingStore.start()
+    await $api.referencias.deleteReference(item.id.toString())
+    snackbar.add({ type: 'success', text: `Reference ${item.reference_number} cancelled successfully` })
+    await getSeaImportReferences()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error cancelling reference' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 onMounted(() => {
