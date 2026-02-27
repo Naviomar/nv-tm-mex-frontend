@@ -178,6 +178,14 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/export-report-xlsx`, fetchOptions)
   }
 
+  async checkDeletable(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/check-deletable`, fetchOptions)
+  }
+
+  async deleteReference(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/delete-reference`, fetchOptions)
+  }
+
 }
 
 export default AirImportModule

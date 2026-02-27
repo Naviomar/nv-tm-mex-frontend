@@ -250,6 +250,14 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-export/${id}/sync-to-cl`, fetchOptions)
   }
 
+  async checkDeletableSeaExport(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-export/${id}/check-deletable`, fetchOptions)
+  }
+
+  async deleteReferenceExport(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/delete-reference`, fetchOptions)
+  }
+
 }
 
 export default ReferenciasExportModule

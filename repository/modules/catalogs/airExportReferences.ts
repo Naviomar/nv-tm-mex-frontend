@@ -278,6 +278,14 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/${id}/send-email-pdf`, fetchOptions)
   }
 
+  async checkDeletable(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/check-deletable`, fetchOptions)
+  }
+
+  async deleteReference(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/delete-reference`, fetchOptions)
+  }
+
 }
 
 export default AirExportModule

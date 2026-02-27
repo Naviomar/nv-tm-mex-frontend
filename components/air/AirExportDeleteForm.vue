@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card>
-      <v-card-title>Cancel {{ serviceType }} {{ serviceNumber }}</v-card-title>
+      <v-card-title>Cancel {{ serviceType }} {{ referencia?.reference_number }}</v-card-title>
       <v-card-text>
         <p class="text-base">
           In order to cancel a reference, the following requirements must be met for it to be available for deletion.
@@ -28,7 +28,7 @@
         </v-table>
         <div class="py-4">
           <v-btn color="red" :disabled="!canDelete" @click="deleteReference">
-            <v-icon>mdi-delete-outline</v-icon>Cancel Ref#{{ serviceNumber }}
+            <v-icon>mdi-delete-outline</v-icon>Cancel Ref#{{ referencia?.reference_number }}
           </v-btn>
         </div>
       </v-card-text>
@@ -43,7 +43,7 @@ const router = useRouter()
 
 const props = defineProps({
   id: {
-    type: Number,
+    type: [Number, String],
     required: true,
   },
   serviceType: {
@@ -53,7 +53,6 @@ const props = defineProps({
 })
 
 const referencia = ref<any>({})
-const serviceNumber = computed(() => referencia.value?.reference_number)
 const loading = ref(false)
 const canDelete = ref(false)
 const validationChecks = ref<any[]>([])
@@ -61,10 +60,9 @@ const validationChecks = ref<any[]>([])
 const deleteReference = async () => {
   try {
     loadingStore.start()
-    await $api.referencias.deleteReference(props.id.toString())
+    await $api.airExport.deleteReference(props.id.toString())
     snackbar.add({ type: 'success', text: 'Reference deleted successfully' })
-
-    router.push('/maritime/import')
+    router.push('/air/export')
   } catch (e) {
     console.error(e)
   } finally {
@@ -74,12 +72,11 @@ const deleteReference = async () => {
   }
 }
 
-const getSeaImportDetails = async () => {
+const getDetails = async () => {
   try {
     loadingStore.start()
-    const response = (await $api.referencias.getSeaImportIntermodalById(props.id.toString())) as any
-
-    referencia.value = response.referencia
+    const response = (await $api.airExport.getReferenceById(props.id.toString())) as any
+    referencia.value = response
   } catch (e) {
     console.error(e)
   } finally {
@@ -92,20 +89,14 @@ const getSeaImportDetails = async () => {
 const checkDeletable = async () => {
   try {
     loading.value = true
-    const response = (await $api.referencias.checkDeletableSeaImport(props.id.toString())) as any
+    const response = (await $api.airExport.checkDeletable(props.id.toString())) as any
     canDelete.value = response.can_delete
 
     const allChecks = [
-      { type: 'demurrages', label: 'Demurrages', count: 0 },
-      { type: 'proformas_tm', label: 'Proformas TM', count: 0 },
-      { type: 'proformas_wm', label: 'Proformas WM', count: 0 },
       { type: 'invoices_tm', label: 'Customer invoices (TM)', count: 0 },
       { type: 'invoices_wm', label: 'Customer invoices (WM)', count: 0 },
       { type: 'ff_notes', label: 'Freight forwarder notes (Credit/Debit)', count: 0 },
       { type: 'supplier_invoices', label: 'Supplier invoices', count: 0 },
-      { type: 'line_invoice_refs', label: 'Freight line invoices', count: 0 },
-      { type: 'arrival_notys', label: 'Arrival notifications', count: 0 },
-      { type: 'revalidation', label: 'Revalidation', count: 0 },
     ]
 
     for (const check of allChecks) {
@@ -123,6 +114,6 @@ const checkDeletable = async () => {
   }
 }
 
-await getSeaImportDetails()
+await getDetails()
 await checkDeletable()
 </script>

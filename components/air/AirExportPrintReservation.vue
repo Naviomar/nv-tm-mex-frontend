@@ -38,15 +38,48 @@
           />
           <v-text-field v-model="formData.agency_phone" label="Agency Phone" variant="outlined" density="compact" />
 
-          <h2 class="text-lg mb-2">Reservation Number</h2>
-          <v-text-field
-            v-model="formData.reservation_number"
-            label="Reservation Number"
-            variant="outlined"
-            density="compact"
-            hint="Can contain alphanumeric characters"
-          />
-
+          <h2 class="text-lg mb-2">Reservation Number (No.Res)</h2>
+          <div class="flex items-start gap-2">
+            <v-chip color="primary" variant="elevated" class="mt-1 font-mono font-bold text-lg" size="large">
+              {{ airlinePrefix }}
+            </v-chip>
+            <span class="mt-3 text-lg font-bold">-</span>
+            <v-autocomplete
+              v-model="selectedGuideNumberId"
+              :items="availableGuideNumbers"
+              item-title="guide_number"
+              item-value="id"
+              label="Select guide number"
+              variant="outlined"
+              density="compact"
+              :loading="loadingGuideNumbers"
+              no-data-text="No available guide numbers for this airline"
+              class="flex-grow"
+              @update:search="onSearchGuideNumber"
+              @update:model-value="onGuideNumberSelected"
+              clearable
+              @click:clear="onClearGuideNumber"
+            >
+              <template #item="{ props: itemProps, item }">
+                <v-list-item v-bind="itemProps">
+                  <template #prepend>
+                    <v-icon color="success" size="small">mdi-checkbox-blank-circle</v-icon>
+                  </template>
+                  <v-list-item-subtitle>
+                    {{ airlinePrefix }}-{{ item.raw.guide_number }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
+          </div>
+          <div v-if="formData.reservation_number" class="mt-1 mb-2">
+            <v-chip color="success" variant="tonal" size="small" prepend-icon="mdi-check-circle">
+              No.Res: {{ formData.reservation_number }}
+            </v-chip>
+          </div>
+          <v-alert v-if="guideNumberError" type="error" density="compact" variant="tonal" class="mb-2">
+            {{ guideNumberError }}
+          </v-alert>
           <h2 class="text-lg mb-2 mt-4">Commodity</h2>
           <v-text-field
             v-model="formData.commodity"
@@ -112,12 +145,24 @@ const showModal = ref(false)
 const pdfUrl = ref<string | null>(null)
 const referenceData = ref<any>(null)
 
+// Guide number state
+const availableGuideNumbers = ref<any[]>([])
+const selectedGuideNumberId = ref<number | null>(null)
+const loadingGuideNumbers = ref(false)
+const guideNumberError = ref('')
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
 // Form data for additional information
 const formData = ref({
   reservation_number: '',
   agency_name: '',
   agency_phone: '',
   commodity: '',
+})
+
+// Airline prefix computed from reference
+const airlinePrefix = computed(() => {
+  return props.reference?.airline?.prefix || '---'
 })
 
 // Initialize form data when reference data changes
@@ -142,9 +187,78 @@ const airlineName = computed(() => {
   return props.reference?.airline?.name || 'Unknown Airline'
 })
 
+// Fetch available guide numbers for this airline
+const fetchAvailableGuideNumbers = async (search?: string) => {
+  if (!props.reference?.airline_id) return
+  try {
+    loadingGuideNumbers.value = true
+    const query: any = { airline_id: props.reference.airline_id }
+    if (search) query.search = search
+
+    const response = await $api.airlineGuideNumbers.getAvailable({ query })
+    availableGuideNumbers.value = response as any[]
+  } catch (e) {
+    console.error('Error fetching guide numbers:', e)
+  } finally {
+    loadingGuideNumbers.value = false
+  }
+}
+
+const onSearchGuideNumber = (search: string) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    fetchAvailableGuideNumbers(search)
+  }, 300)
+}
+
+const onGuideNumberSelected = (id: number | null) => {
+  guideNumberError.value = ''
+  if (!id) {
+    formData.value.reservation_number = ''
+    return
+  }
+  const selected = availableGuideNumbers.value.find((g: any) => g.id === id)
+  if (selected) {
+    formData.value.reservation_number = `${airlinePrefix.value}-${selected.guide_number}`
+  }
+}
+
+const onClearGuideNumber = () => {
+  selectedGuideNumberId.value = null
+  formData.value.reservation_number = ''
+  guideNumberError.value = ''
+}
+
+// Mark guide number as used when printing
+const markGuideNumberAsUsed = async () => {
+  if (!selectedGuideNumberId.value) return true // no guide number selected, allow manual
+  try {
+    await $api.airlineGuideNumbers.markAsUsed({
+      guide_number_id: selectedGuideNumberId.value,
+      air_reference_id: props.id,
+    })
+    return true
+  } catch (e: any) {
+    console.error('Error marking guide number as used:', e)
+    guideNumberError.value = e?.data?.message || 'This guide number is already in use. Please select another one.'
+    // Refresh available list
+    await fetchAvailableGuideNumbers()
+    return false
+  }
+}
+
 const openPreviewModal = async () => {
   try {
     loadingStore.start()
+
+    // If a guide number is selected, mark it as used first
+    if (selectedGuideNumberId.value) {
+      const success = await markGuideNumberAsUsed()
+      if (!success) {
+        loadingStore.stop()
+        return
+      }
+    }
 
     // Send form data in the request body
     const fetchOptions = {
@@ -224,7 +338,8 @@ const fetchReferenceData = async () => {
     loadingStore.start()
     const response = await $api.airExport.getReferenceById(props.id)
     referenceData.value = response
-    console.log(response)
+    // Load available guide numbers for this airline
+    await fetchAvailableGuideNumbers()
   } catch (error) {
     console.error('Error fetching reference data:', error)
   } finally {
