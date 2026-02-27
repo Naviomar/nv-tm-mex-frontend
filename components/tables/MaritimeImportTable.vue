@@ -240,13 +240,6 @@
                     density="compact"
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
-                  <v-btn
-                    variant="text"
-                    icon="mdi-trash-can-outline"
-                    color="red-lighten-2"
-                    density="compact"
-                    @click="confirmDeletion(item)"
-                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
