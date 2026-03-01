@@ -84,6 +84,7 @@ import DashboardModule from '~/repository/modules/catalogs/dashboard'
 import ReportsModule from '~/repository/modules/catalogs/reports'
 import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDelayRates'
 import AlertsModule from '~/repository/modules/alerts'
+import LegacyModule from '~/repository/modules/legacy'
 
 interface IApiInstance {
   audit: AuditModule
@@ -170,6 +171,7 @@ interface IApiInstance {
   trackingEvents: TrackingEventModule
   containerDelayRates: ContainerDelayRatesModule
   alerts: AlertsModule
+  legacy: LegacyModule
 }
 
 export function useApiFactory() {
@@ -261,6 +263,7 @@ export function useApiFactory() {
     trackingEvents: new TrackingEventModule(client),
     containerDelayRates: new ContainerDelayRatesModule(client),
     alerts: new AlertsModule(client),
+    legacy: new LegacyModule(client),
   }
 
   return modules

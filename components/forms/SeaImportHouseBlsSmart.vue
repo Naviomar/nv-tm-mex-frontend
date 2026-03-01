@@ -245,21 +245,26 @@ function isFileOrArrayOfFiles(variable: any) {
 }
 
 // watch
+let _updatingFromProp = false
 watch(
   () => props.currentHouseBls,
   (currentHouseBls) => {
-    if (currentHouseBls) {
+    if (currentHouseBls && JSON.stringify(currentHouseBls) !== JSON.stringify(houseBls.value)) {
+      _updatingFromProp = true
       houseBls.value = [...currentHouseBls]
+      nextTick(() => { _updatingFromProp = false })
     }
   },
   { immediate: true }
 )
 
-// emit transhipments
+// emit houseBls
 watch(
   () => houseBls.value,
   (houseBls) => {
-    emit('update:houseBls', houseBls)
+    if (!_updatingFromProp) {
+      emit('update:houseBls', houseBls)
+    }
   },
   { deep: true }
 )
@@ -398,4 +403,10 @@ const editHouseBl = (houseBl: any, index: number) => {
     removeHouseBl(houseBl, index)
   }
 }
+
+const setItems = (items: any[]) => {
+  houseBls.value = [...items]
+}
+
+defineExpose({ setItems })
 </script>

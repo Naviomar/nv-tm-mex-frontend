@@ -114,22 +114,26 @@ const toggleForm = () => {
 }
 
 // watch
+let _updatingFromProp = false
 watch(
   () => props.currentContainers,
   (currentContainers) => {
-    if (currentContainers) {
+    if (currentContainers && JSON.stringify(currentContainers) !== JSON.stringify(containers.value)) {
+      _updatingFromProp = true
       containers.value = [...currentContainers]
-      console.log('containers', containers)
+      nextTick(() => { _updatingFromProp = false })
     }
   },
   { immediate: true }
 )
 
-// emit transhipments
+// emit containers
 watch(
   () => containers.value,
   (containers) => {
-    emit('update:containers', containers)
+    if (!_updatingFromProp) {
+      emit('update:containers', containers)
+    }
   },
   { deep: true }
 )
@@ -154,4 +158,10 @@ const addContainer = (container: any) => {
 const removeContainer = (index: number) => {
   containers.value.splice(index, 1)
 }
+
+const setItems = (items: any[]) => {
+  containers.value = [...items]
+}
+
+defineExpose({ setItems })
 </script>
