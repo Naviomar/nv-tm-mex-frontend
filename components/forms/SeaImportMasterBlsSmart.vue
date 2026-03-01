@@ -217,11 +217,14 @@ const onClickShowLogs = (masterBl: any) => {
 }
 
 // watch
+let _updatingFromProp = false
 watch(
   () => props.currentMasterBls,
   (currentMasterBls) => {
-    if (currentMasterBls) {
+    if (currentMasterBls && JSON.stringify(currentMasterBls) !== JSON.stringify(masterBls.value)) {
+      _updatingFromProp = true
       masterBls.value = [...currentMasterBls]
+      nextTick(() => { _updatingFromProp = false })
     }
   },
   { immediate: true }
@@ -230,7 +233,9 @@ watch(
 watch(
   () => masterBls.value,
   (masterBls) => {
-    emit('update:masterBls', masterBls)
+    if (!_updatingFromProp) {
+      emit('update:masterBls', masterBls)
+    }
   },
   { deep: true }
 )
@@ -326,4 +331,10 @@ const editMasterBl = (masterBl: any, index: number) => {
     removeMasterBl(masterBl, index)
   }
 }
+
+const setItems = (items: any[]) => {
+  masterBls.value = [...items]
+}
+
+defineExpose({ setItems })
 </script>

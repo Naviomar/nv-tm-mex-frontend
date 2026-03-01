@@ -272,6 +272,30 @@ function onInvalidSubmit({ values, errors, results }: any) {
 
 const onVoyageClickSave = handleSubmit(onSuccess, onInvalidSubmit)
 
+const addLegacyDestination = (portName: string, etaDate: string) => {
+  const normalize = (str: string): string =>
+    str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+  const matchedPort = catalogs.value.ports.find((port: any) => {
+    const pName = normalize(port.name || port.country_port || '')
+    const search = normalize(portName)
+    return pName.includes(search) || search.includes(pName)
+  })
+
+  if (matchedPort) {
+    form.value.destinations.push({
+      pod: matchedPort,
+      eta_date: etaDate,
+      arrival_date: null,
+    })
+  }
+}
+
+defineExpose({
+  setValues,
+  addLegacyDestination,
+})
+
 onMounted(async () => {
   await getVoyageCatalogs()
   if (route.query.vessel_id) {
