@@ -4,7 +4,13 @@
       <div class="col-span-6">
         <div class="mb-4">
           <InputText density="compact" name="name" label="Name *" />
-          <v-btn color="primary" size="small" @click="searchSuppliersByName"> Search similar </v-btn>
+          <button
+            type="button"
+            @click="searchSuppliersByName"
+            class="mt-2 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Search similar
+          </button>
           <div v-if="hasSimilarSuppliers" class="py-4 bg-slate-200 dark:bg-neutral-700 mb-4 border-dotted border-2">
             <div class="text-sm font-bold">Suppliers with similar name:</div>
             <div class="max-h-96 overflow-y-auto">
@@ -31,8 +37,19 @@
           <InputText density="compact" name="tax_number" label="RFC *" />
         </div>
         <div class="flex justify-center items-center">
-          <v-btn class="mr-4" color="secondary" to="/configuration/suppliers"> Cancel </v-btn>
-          <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+          <NuxtLink
+            to="/configuration/suppliers"
+            class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+          >
+            Cancel
+          </NuxtLink>
+          <button
+            type="button"
+            @click="validateBeforeCreate"
+            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Save
+          </button>
         </div>
       </div>
       <div class="col-span-6">
@@ -90,6 +107,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await searchSuppliersByName()
+  if (similiarSuppliers.value.length === 0) {
+    saveSupplier()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -142,7 +163,8 @@ const searchSuppliersByName = async () => {
       name: values.name,
     }
     const response = await $api.suppliers.searchByName(body)
-    similiarSuppliers.value = response
+    const items = Array.isArray(response) ? response : []
+    similiarSuppliers.value = props.id ? items.filter((supplier: any) => String(supplier.id) !== String(props.id)) : items
   } catch (e) {
     console.error(e)
   } finally {

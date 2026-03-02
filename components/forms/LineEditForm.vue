@@ -47,8 +47,19 @@
             </div>
 
             <div class="flex justify-end items-center">
-              <v-btn class="mr-4" color="secondary" to="/configuration/lines"> Cancel </v-btn>
-              <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+              <NuxtLink
+                to="/configuration/lines"
+                class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+              >
+                Cancel
+              </NuxtLink>
+              <button
+                type="button"
+                @click="validateBeforeCreate"
+                class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                Save
+              </button>
             </div>
           </v-card-text>
         </v-card>
@@ -65,7 +76,13 @@
             <div class="flex justify-between">
               <div>Internal transit file(s)</div>
               <div>
-                <v-btn icon="mdi-plus" size="x-small" color="success" @click="toggleTransitFiles"></v-btn>
+                <button
+                  type="button"
+                  @click="toggleTransitFiles"
+                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                >
+                  +
+                </button>
               </div>
             </div>
           </v-card-title>
@@ -82,8 +99,20 @@
                 </div>
                 <div class="col-span-2">
                   <div class="flex justify-end items-center">
-                    <v-btn class="mr-4" color="secondary" @click="toggleTransitFiles"> Cancel </v-btn>
-                    <v-btn color="primary" @click="saveTransitFiles"> Save </v-btn>
+                    <button
+                      type="button"
+                      @click="toggleTransitFiles"
+                      class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      @click="saveTransitFiles"
+                      class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    >
+                      Save
+                    </button>
                   </div>
                 </div>
               </div>
@@ -100,7 +129,12 @@
                 <tr v-for="(itfile, index) in line?.internal_transit_files" :key="`internal-file-${index}`">
                   <td>
                     <div class="flex gap-2">
-                      <v-btn size="small" variant="text" icon="mdi-delete-outline" color="red-lighten-2"></v-btn>
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </td>
                   <td><ButtonDownloadS3Object :s3Path="itfile.attachment" /></td>
@@ -120,7 +154,13 @@
             <div class="flex justify-between">
               <div>Automatic charges in references</div>
               <div>
-                <v-btn icon="mdi-plus" size="x-small" color="success" @click="automaticCharges.toggleForm"></v-btn>
+                <button
+                  type="button"
+                  @click="automaticCharges.toggleForm"
+                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                >
+                  +
+                </button>
               </div>
             </div>
           </v-card-title>
@@ -207,8 +247,20 @@
               </div>
               <div class="">
                 <div class="flex justify-end items-center mb-4">
-                  <v-btn class="mr-4" color="secondary" @click="automaticCharges.toggleForm"> Cancel </v-btn>
-                  <v-btn color="primary" @click="automaticCharges.save"> Save </v-btn>
+                  <button
+                    type="button"
+                    @click="automaticCharges.toggleForm"
+                    class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    @click="automaticCharges.save"
+                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
             </div>
@@ -295,7 +347,6 @@ const id = route.params.id
 // ---- Similares ----
 const similarItems = ref<any>([])
 const showSimilarDialog = ref(false)
-const hasSimilars = computed(() => similarItems.value.length > 0)
 
 const line = ref<any>({})
 
@@ -314,7 +365,8 @@ const fetchSimilarLines = async () => {
     loadingStore.loading = true
     const body = { name: values.name }
     const response = await $api.lines.searchByName(body)
-    similarItems.value = response
+    const items = Array.isArray(response) ? response : []
+    similarItems.value = id ? items.filter((item: any) => String(item.id) !== String(id)) : items
   } catch (e) {
     console.error(e)
   } finally {
@@ -331,6 +383,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await fetchSimilarLines()
+  if (similarItems.value.length === 0) {
+    saveLine()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -472,7 +528,7 @@ const useAutomaticCharges = () => {
         line_id: id,
         ...form.value,
       }
-      const response = await $api.lines.saveAutomaticCharge(route.params.id!.toString(), body)
+      await $api.lines.saveAutomaticCharge(route.params.id!.toString(), body)
       snackbar.add({ type: 'success', text: 'Automatic charge added' })
       await getData()
       clearForm()
@@ -505,7 +561,7 @@ const getData = async () => {
   try {
     loadingStore.start()
     await $api.lines.getById(route.params.id!.toString()).then((res: any) => {
-      res.country_id = res?.country_id // Solo el id, no el objeto
+      res.country_id = res?.country_id ?? res?.country?.id ?? null
       line.value = res
       setValues(res)
     })

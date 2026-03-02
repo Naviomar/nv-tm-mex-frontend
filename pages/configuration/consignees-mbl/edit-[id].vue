@@ -10,7 +10,6 @@
 </template>
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
 
 const id = route.params.id!.toString()
 </script>
