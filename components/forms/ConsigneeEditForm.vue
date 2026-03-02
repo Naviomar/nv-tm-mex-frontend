@@ -12,7 +12,13 @@
             >
               <div>
                 <InputText name="name" density="compact" variant="solo-filled" label="Name *" />
-                <v-btn color="primary" size="small" @click="searchCustomersByName"> Search similar </v-btn>
+                <button
+                  type="button"
+                  @click="searchCustomersByName"
+                  class="mt-2 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                >
+                  Search similar
+                </button>
                 <div
                   v-if="hasSimilarCustomers"
                   class="py-4 bg-slate-200 dark:bg-neutral-700 mb-4 border-dotted border-2"
@@ -218,7 +224,13 @@
                     </div>
                   </div>
                   <div class="mb-4">
-                    <v-btn color="brown" size="small" @click="updateRebateImport">Update Rebate</v-btn>
+                    <button
+                      type="button"
+                      @click="updateRebateImport"
+                      class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+                    >
+                      Update Rebate
+                    </button>
                   </div>
 
                   <div class="font-bold text-lg">Maritime Export</div>
@@ -250,7 +262,13 @@
                     </div>
                   </div>
                   <div class="mb-4">
-                    <v-btn color="brown" size="small" @click="updateRebateExport">Update Rebate</v-btn>
+                    <button
+                      type="button"
+                      @click="updateRebateExport"
+                      class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+                    >
+                      Update Rebate
+                    </button>
                   </div>
                 </v-card-text>
               </v-card>
@@ -263,8 +281,18 @@
               </div>
 
               <div class="flex justify-end items-center">
-                <v-btn class="mr-4" color="secondary" to="/configuration/customers"> Cancel </v-btn>
-                <v-btn color="primary" type="submit"> Save </v-btn>
+                <NuxtLink
+                  to="/configuration/customers"
+                  class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                >
+                  Cancel
+                </NuxtLink>
+                <button
+                  type="submit"
+                  class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                >
+                  Save
+                </button>
               </div>
             </VeeForm>
           </v-card-text>
@@ -276,7 +304,13 @@
             <div class="flex justify-between">
               <div>Executive(s)</div>
               <div>
-                <v-btn icon="mdi-plus" size="x-small" color="success" @click="toggleExecutiveForm"></v-btn>
+                <button
+                  type="button"
+                  @click="toggleExecutiveForm"
+                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                >
+                  +
+                </button>
               </div>
             </div>
           </v-card-title>
@@ -323,8 +357,19 @@
                 </div>
                 <div class="col-span-2">
                   <div class="flex justify-end items-center">
-                    <v-btn class="mr-4" color="secondary" @click="toggleExecutiveForm"> Cancel </v-btn>
-                    <v-btn color="primary" type="submit"> Save </v-btn>
+                    <button
+                      type="button"
+                      @click="toggleExecutiveForm"
+                      class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    >
+                      Save
+                    </button>
                   </div>
                 </div>
               </div>
@@ -343,14 +388,13 @@
                 <tr v-for="(item, index) in consignee?.consignee_executives" :key="`consig-exec-${index}`">
                   <td>
                     <div class="flex gap-2">
-                      <v-btn
-                        size="small"
-                        variant="text"
-                        icon="mdi-delete-outline"
-                        color="red-lighten-2"
-                        density="compact"
+                      <button
+                        type="button"
                         @click="showConfirmDelete(item.id)"
-                      ></v-btn>
+                        class="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </td>
                   <td>{{ item.executive.name }}</td>
@@ -456,7 +500,8 @@ const searchCustomersByName = async () => {
       name: values!.name,
     }
     const response = await $api.consignees.searchByName(body)
-    similiarCustomers.value = response
+    const items = Array.isArray(response) ? response : []
+    similiarCustomers.value = items.filter((customer: any) => String(customer.id) !== String(id))
   } catch (e) {
     console.error(e)
   } finally {
@@ -489,6 +534,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await searchCustomersByName()
+  if (similiarCustomers.value.length === 0) {
+    await saveConsignee()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -557,7 +606,7 @@ const updateRebateExport = async () => {
 const saveExecutive = async (values: any) => {
   try {
     loadingStore.start()
-    const response = await $api.consignees.updateExecutive(id!.toString(), values)
+    await $api.consignees.updateExecutive(id!.toString(), values)
 
     const resSuccess = await $api.consignees.getById(id!.toString())
     consignee.value.consignee_executives = resSuccess.consignee_executives
@@ -592,7 +641,7 @@ const showConfirmDelete = async (consigneeExecutiveId: any) => {
   if (result) {
     try {
       loadingStore.start()
-      const response = await $api.consignees.deleteConsignee(consigneeExecutiveId)
+      await $api.consignees.deleteConsignee(consigneeExecutiveId)
       snackbar.add({
         type: 'success',
         text: 'Executive deleted successfully',

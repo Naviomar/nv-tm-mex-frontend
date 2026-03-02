@@ -80,7 +80,7 @@
             v-for="(ref, index) in filters.referencias"
             :key="`ref-search-${ref}`"
             closable
-            @click:close="removeReferencia(index)"
+            @click:close="removeReferencia(Number(index))"
           >
             {{ ref }}
           </v-chip>
@@ -135,7 +135,7 @@
               <td class="whitespace-nowrap">
                 <ServiceNumberLabel :service="item" />
               </td>
-              <td>{{ item.consignee?.name }}</td>
+              <td class="min-w-80">{{ item.consignee?.name }}</td>
               <td>
                 <div class="flex flex-col gap-1">
                   <v-chip
@@ -169,7 +169,7 @@
                   </v-chip>
                 </div>
               </td>
-              <td>{{ item.po_num }}</td>
+              <td class="text-wrap max-w-96">{{ item.po_num }}</td>
               <td>
                 <div v-if="item.arrival_notys?.length <= 0">
                   <v-chip size="small" variant="elevated" color="error">Not sent</v-chip>
@@ -181,7 +181,7 @@
                     size="small"
                     color="blue-darken-2"
                   >
-                    #{{ index + 1 }} -
+                    #{{ Number(index) + 1 }} -
                     {{ formatDateString(noty.created_at) }}
                   </v-chip>
                 </div>

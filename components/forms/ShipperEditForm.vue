@@ -4,7 +4,13 @@
       <div class="col-span-6">
         <div>
           <InputText density="compact" name="name" label="Name *" />
-          <v-btn color="primary" size="small" @click="searchShippersByName"> Search similar </v-btn>
+          <button
+            type="button"
+            @click="searchShippersByName"
+            class="mt-2 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Search similar
+          </button>
           <div v-if="hasSimilarShippers">
             <div class="text-sm font-bold">Results:</div>
             <div v-for="shipper in similiarShippers" :key="shipper.id" class="p-1">
@@ -45,8 +51,19 @@
         </div>
 
         <div class="flex justify-center items-center">
-          <v-btn class="mr-4" color="secondary" to="/configuration/shippers"> Cancel </v-btn>
-          <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+          <NuxtLink
+            to="/configuration/shippers"
+            class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+          >
+            Cancel
+          </NuxtLink>
+          <button
+            type="button"
+            @click="validateBeforeCreate"
+            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Save
+          </button>
         </div>
       </div>
       <div class="col-span-6">
@@ -104,7 +121,7 @@ const { handleSubmit, values, setValues } = useForm({
 })
 
 const onSuccess = async (values: any) => {
-  const response = await $api.shippers.update(props.id, values)
+  await $api.shippers.update(props.id, values)
 
   snackbar.add({ type: 'success', text: 'Record updated' })
   router.push('/configuration/shippers')
@@ -120,6 +137,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await searchShippersByName()
+  if (similiarShippers.value.length === 0) {
+    saveShipper()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -136,7 +157,8 @@ const searchShippersByName = async () => {
       name: values.name,
     }
     const response = await $api.shippers.searchByName(body)
-    similiarShippers.value = response
+    const items = Array.isArray(response) ? response : []
+    similiarShippers.value = items.filter((shipper: any) => String(shipper.id) !== String(props.id))
   } catch (e) {
     console.error(e)
   } finally {

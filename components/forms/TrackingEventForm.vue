@@ -20,13 +20,30 @@
         </div>
 
         <div class="flex justify-center items-center mt-4">
-          <v-btn class="mr-4" color="secondary" to="/configuration/tracking-events"> Cancel </v-btn>
-          <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+          <NuxtLink
+            to="/configuration/tracking-events"
+            class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+          >
+            Cancel
+          </NuxtLink>
+          <button
+            type="button"
+            @click="validateBeforeCreate"
+            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Save
+          </button>
         </div>
       </div>
 
       <div class="col-span-6">
-        <v-btn color="primary" size="small" @click="fetchSimilarEvents"> Search similar </v-btn>
+        <button
+          type="button"
+          @click="fetchSimilarEvents"
+          class="mb-2 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+        >
+          Search similar
+        </button>
 
         <div
           v-if="similarItems.length > 0"
@@ -87,7 +104,8 @@ const fetchSimilarEvents = async () => {
     loadingStore.loading = true
     const body = { name: values.name }
     const response = await $api.trackingEvents.searchByName(body)
-    similarItems.value = response
+    const items = Array.isArray(response) ? response : []
+    similarItems.value = props.id ? items.filter((event: any) => String(event.id) !== String(props.id)) : items
   } catch (e) {
     console.error(e)
   } finally {
@@ -103,6 +121,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await fetchSimilarEvents()
+  if (similarItems.value.length === 0) {
+    saveTrackingEvent()
+    return
+  }
   showSimilarDialog.value = true
 }
 
