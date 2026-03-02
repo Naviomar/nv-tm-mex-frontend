@@ -156,22 +156,26 @@ const hasCargoType = computed(() => {
 })
 
 // watch
+let _updatingFromProp = false
 watch(
   () => props.currentContainers,
   (currentContainers) => {
-    if (currentContainers) {
+    if (currentContainers && JSON.stringify(currentContainers) !== JSON.stringify(containers.value)) {
+      _updatingFromProp = true
       containers.value = [...currentContainers]
-      // console.log('containers', containers)
+      nextTick(() => { _updatingFromProp = false })
     }
   },
   { immediate: true }
 )
 
-// emit transhipments
+// emit containers
 watch(
   () => containers.value,
   (containers) => {
-    emit('update:containers', containers)
+    if (!_updatingFromProp) {
+      emit('update:containers', containers)
+    }
   },
   { deep: true }
 )
@@ -270,4 +274,10 @@ const removeContainer = (container: any, index: number) => {
     hasPendingChanges.value = true
   }
 }
+
+const setItems = (items: any[]) => {
+  containers.value = [...items]
+}
+
+defineExpose({ setItems })
 </script>
