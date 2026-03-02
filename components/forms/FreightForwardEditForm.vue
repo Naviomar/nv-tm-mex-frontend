@@ -47,8 +47,19 @@
               <InputText density="compact" name="zip_code" label="Zip code" />
             </div>
             <div class="flex justify-end items-center">
-              <v-btn class="mr-4" color="secondary" to="/configuration/freight-forwarders"> Cancel </v-btn>
-              <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+              <NuxtLink
+                to="/configuration/freight-forwarders"
+                class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+              >
+                Cancel
+              </NuxtLink>
+              <button
+                type="button"
+                @click="validateBeforeCreate"
+                class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                Save
+              </button>
             </div>
           </v-card-text>
         </v-card>
@@ -80,7 +91,6 @@ const id = route.params.id
 
 const similarNames = ref<any>([])
 const showSimilarDialog = ref(false) // Controls dialog visibility
-const hasSimilarNames = computed(() => similarNames.value.length > 0)
 
 const { handleSubmit, values, errors, setValues } = useForm({
   validationSchema: schema,
@@ -102,6 +112,10 @@ const validateBeforeCreate = async () => {
     return
   }
   await searchFFAgentByName()
+  if (similarNames.value.length === 0) {
+    confirmCreateFreightForwarder()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -112,7 +126,8 @@ const searchFFAgentByName = async () => {
       name: values.name,
     }
     const response = await $api.freightForwarders.searchByName(body)
-    similarNames.value = response
+    const items = Array.isArray(response) ? response : []
+    similarNames.value = items.filter((ff: any) => String(ff.id) !== String(id))
   } catch (e) {
     console.error(e)
   } finally {

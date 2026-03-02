@@ -316,7 +316,7 @@
                     size="small"
                     color="blue-darken-2"
                   >
-                    #{{ index + 1 }} -
+                    #{{ Number(index) + 1 }} -
                     {{ formatDateString(noty.created_at) }}
                   </v-chip>
                 </div>
@@ -373,8 +373,6 @@ const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
-const currentYear = new Date().getFullYear()
-
 const catalogs = ref({
   consignees: [] as any,
   freights: [] as any,
@@ -423,9 +421,7 @@ const {
   currentPage,
   syncToUrl,
   resetFilters: resetFiltersComposable,
-  setPage,
   getFilteredUrl,
-  hasActiveFilters,
 } = useTableFilters(initialFilters, {
   storageKey: 'maritime-import-filters',
   arrayFields: ['referencias'],
@@ -474,6 +470,7 @@ const searchLines = async (search: SearchParams) => {
       type: 'error',
       text: 'Error fetching freight lines',
     })
+    console.error(error)
   }
 }
 

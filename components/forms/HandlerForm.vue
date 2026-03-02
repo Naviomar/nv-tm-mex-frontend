@@ -10,8 +10,19 @@
         </div>
 
         <div class="flex justify-center items-center">
-          <v-btn class="mr-4" color="secondary" to="/configuration/handlers"> Cancel </v-btn>
-          <v-btn color="primary" @click="saveCharge"> Save </v-btn>
+          <NuxtLink
+            to="/configuration/handlers"
+            class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+          >
+            Cancel
+          </NuxtLink>
+          <button
+            type="button"
+            @click="saveCharge"
+            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -21,7 +32,6 @@
 import { schema } from '~/forms/handlerForm'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
-const loadingStore = useLoadingStore()
 const router = useRouter()
 
 const props = defineProps({
@@ -41,10 +51,6 @@ watch(
   },
   { immediate: true }
 )
-
-const catalogs = ref<any>({
-  countries: [],
-})
 
 const { handleSubmit, setValues } = useForm({
   validationSchema: schema,
@@ -73,21 +79,6 @@ function onInvalidSubmit({ values, errors, results }: any) {
 }
 
 const saveCharge = handleSubmit(onSuccess, onInvalidSubmit)
-
-const getCatalogs = async () => {
-  try {
-    loadingStore.start()
-    const response = await $api.handlers.getFormCatalogs()
-
-    catalogs.value = response
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
 onMounted(async () => {
   // await getCatalogs()

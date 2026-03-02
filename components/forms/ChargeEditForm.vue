@@ -15,7 +15,13 @@
                 label="Name *"
                 hint="Changing the name is not possible"
               />
-              <v-btn color="primary" size="small" @click="searchChargesByName"> Search similar </v-btn>
+              <button
+                type="button"
+                @click="searchChargesByName"
+                class="mt-2 inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                Search similar
+              </button>
               <div v-if="hasSimilarCharges" class="py-4 bg-slate-200 dark:bg-neutral-700 mb-4 border-dotted border-2">
                 <div class="text-sm font-bold">Charges with similar name:</div>
                 <div class="max-h-96 overflow-y-auto">
@@ -79,8 +85,19 @@
             </div>
 
             <div class="flex justify-center items-center">
-              <v-btn class="mr-4" color="secondary" to="/configuration/charges"> Cancel </v-btn>
-              <v-btn color="primary" @click="validateBeforeUpdate"> Save changes </v-btn>
+              <NuxtLink
+                to="/configuration/charges"
+                class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+              >
+                Cancel
+              </NuxtLink>
+              <button
+                type="button"
+                @click="validateBeforeUpdate"
+                class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              >
+                Save changes
+              </button>
             </div>
           </v-card-text>
         </v-card>
@@ -146,7 +163,13 @@
             <div class="flex justify-between">
               <div>Invoice similar name(s)</div>
               <div>
-                <v-btn icon="mdi-plus" size="x-small" color="success" @click="toggleCfdiForm"></v-btn>
+                <button
+                  type="button"
+                  @click="toggleCfdiForm"
+                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                >
+                  +
+                </button>
               </div>
             </div>
           </v-card-title>
@@ -157,8 +180,20 @@
               </div>
               <div class="col-span-2">
                 <div class="flex justify-end items-center">
-                  <v-btn class="mr-4" color="secondary" @click="toggleCfdiForm"> Cancel </v-btn>
-                  <v-btn color="primary" @click="saveCfdiName"> Save </v-btn>
+                  <button
+                    type="button"
+                    @click="toggleCfdiForm"
+                    class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    @click="saveCfdiName"
+                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
             </div>
@@ -173,14 +208,13 @@
                 <tr v-for="(item, index) in charge?.cfdi_names" :key="`consig-exec-${index}`">
                   <td>
                     <div class="flex gap-2">
-                      <v-btn
-                        size="small"
-                        density="compact"
-                        variant="text"
-                        icon="mdi-delete-outline"
-                        color="red-lighten-2"
+                      <button
+                        type="button"
                         @click="deleteCfdiName(item.id)"
-                      ></v-btn>
+                        class="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </td>
                   <td>{{ item.name }}</td>
@@ -274,6 +308,10 @@ const validateBeforeUpdate = async () => {
     return
   }
   await searchChargesByName()
+  if (similiarCharges.value.length === 0) {
+    confirmUpdate()
+    return
+  }
   showSimilarDialog.value = true
 }
 
@@ -284,7 +322,8 @@ const searchChargesByName = async () => {
       name: charge.value.name,
     }
     const response = await $api.charges.searchByName(body)
-    similiarCharges.value = response
+    const items = Array.isArray(response) ? response : []
+    similiarCharges.value = items.filter((item: any) => String(item.id) !== String(props.id))
   } catch (e) {
     console.error(e)
   } finally {
