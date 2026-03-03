@@ -4,7 +4,7 @@
       <div class="col-span-2">
         <v-card>
           <v-card-title>
-            <h3>Customer Credit Note - Edit Form</h3>
+            <h3>{{ consigneeCreditNote?.type === 'party' ? 'Free Format' : 'Customer' }} Credit Note - Edit Form</h3>
           </v-card-title>
           <v-card-subtitle> Only credit notes not used can be edited. </v-card-subtitle>
           <v-card-text>
@@ -153,30 +153,54 @@
         </v-card>
       </div>
       <div>
-        <v-card v-for="(inv, invIdx) in linkedInvoices" :key="`edit-inv-${invIdx}`" class="mb-3">
-          <v-card-title>
-            <h4>{{ getInvoiceTypeLabel(inv) }}</h4>
-          </v-card-title>
-          <v-card-text>
-            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
-            <p>Linked services: {{ getInvoiceServices(inv) }}</p>
-            <p>
-              Amount: {{ getCurrencyName(inv.currency_id) }}
-              {{ formatToCurrency(inv.total) }}
-            </p>
-            <p>Date: {{ formatDateString(inv.created_at) }}</p>
-          </v-card-text>
-        </v-card>
-        <v-card v-if="linkedInvoices.length === 0 && consigneeCreditNote.invoice">
-          <v-card-title>
-            <h4>{{ getInvoiceType }}</h4>
-          </v-card-title>
-          <v-card-text>
-            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
-            <p>Amount: {{ formatToCurrency(consigneeCreditNote.invoice?.total) }}</p>
-            <p>Date: {{ formatDateString(consigneeCreditNote.invoice?.created_at) }}</p>
-          </v-card-text>
-        </v-card>
+        <!-- Party type: show party invoice info -->
+        <template v-if="consigneeCreditNote?.type === 'party'">
+          <v-card v-if="consigneeCreditNote.party_invoice" class="mb-3">
+            <v-card-title>
+              <h4>Free Format Invoice #{{ consigneeCreditNote.party_invoice?.invoice?.invoice_number }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Party: {{ consigneeCreditNote.party_invoice?.partyable?.name }}</p>
+              <p>Type: {{ consigneeCreditNote.inv_type?.toUpperCase() }}</p>
+              <p>Date: {{ formatDateString(consigneeCreditNote.party_invoice?.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+          <v-card v-for="(pi, piIdx) in (consigneeCreditNote.party_invoices || [])" :key="`edit-pi-${piIdx}`" class="mb-3">
+            <v-card-title>
+              <h4>Free Format Invoice #{{ pi.invoice?.invoice_number }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Party: {{ pi.partyable?.name }}</p>
+            </v-card-text>
+          </v-card>
+        </template>
+        <!-- Customer type: show service invoice info -->
+        <template v-else>
+          <v-card v-for="(inv, invIdx) in linkedInvoices" :key="`edit-inv-${invIdx}`" class="mb-3">
+            <v-card-title>
+              <h4>{{ getInvoiceTypeLabel(inv) }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
+              <p>Linked services: {{ getInvoiceServices(inv) }}</p>
+              <p>
+                Amount: {{ getCurrencyName(inv.currency_id) }}
+                {{ formatToCurrency(inv.total) }}
+              </p>
+              <p>Date: {{ formatDateString(inv.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+          <v-card v-if="linkedInvoices.length === 0 && consigneeCreditNote.invoice">
+            <v-card-title>
+              <h4>{{ getInvoiceType }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
+              <p>Amount: {{ formatToCurrency(consigneeCreditNote.invoice?.total) }}</p>
+              <p>Date: {{ formatDateString(consigneeCreditNote.invoice?.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+        </template>
       </div>
     </div>
   </div>

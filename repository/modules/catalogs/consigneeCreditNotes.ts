@@ -97,6 +97,14 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/charge/update-cfdi-name`, fetchOptions)
   }
 
+  async searchPartyInvoice(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/search-party-invoice`, fetchOptions)
+  }
+
   async exportInvoicesToExcel(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',
