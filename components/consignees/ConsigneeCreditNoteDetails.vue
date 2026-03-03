@@ -55,21 +55,13 @@
           <div>
             <div class="mb-2">
               <template v-if="creditNote.type === 'party'">
-                <v-chip v-if="creditNote.party_invoice?.invoice?.invoice_number" variant="outlined" size="small" color="purple" class="mr-1">
-                  Free Format Invoice #{{ creditNote.party_invoice.invoice.invoice_number }}
-                </v-chip>
-                <v-chip v-for="(pi, idx) in (creditNote.party_invoices || [])" :key="`cn-pi-${idx}`" variant="outlined" size="small" color="purple" class="mr-1">
-                  Free Format Invoice #{{ pi.invoice?.invoice_number }}
+                <v-chip v-for="(pi, idx) in allPartyInvoices" :key="`cn-pi-${idx}`" variant="outlined" size="small" color="purple" class="mr-1">
+                  Invoice #{{ pi.invoice?.invoice_number }}
                 </v-chip>
               </template>
               <template v-else>
-                <div v-if="creditNote.invoices && creditNote.invoices.length > 1" class="flex flex-wrap gap-1">
-                  <v-chip v-for="(inv, idx) in creditNote.invoices" :key="`cn-inv-${idx}`" variant="outlined" size="small">
-                    {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
-                  </v-chip>
-                </div>
-                <v-chip v-else variant="outlined" size="small">
-                  {{ creditNoteInvoice }}
+                <v-chip v-for="(inv, idx) in linkedInvoices" :key="`cn-inv-${idx}`" variant="outlined" size="small" class="mr-1">
+                  {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
                 </v-chip>
               </template>
             </div>
@@ -173,7 +165,7 @@
                         <td>
                           <v-chip color="blue" text-color="white" small @click="viewInvoice(payment)">
                             <v-icon>mdi-eye-outline</v-icon>{{ getInvoiceableType(payment) }} Invoice #{{
-                              payment.chargeable?.invoice?.invoiceable_id
+                              payment.chargeable?.invoice?.invoice_number
                             }}
                           </v-chip>
                         </td>
@@ -406,6 +398,28 @@ const referenciaNumber = computed(() => {
     return ''
   }
   return creditNote.value?.invoice?.invoiceable?.referencia?.reference_number
+})
+
+// Linked invoices - M2M invoices array
+const linkedInvoices = computed(() => {
+  if (creditNote.value?.invoices?.length > 0) return creditNote.value.invoices
+  if (creditNote.value?.invoice) return [creditNote.value.invoice]
+  return []
+})
+
+// All party invoices - M2M party_invoices array
+const allPartyInvoices = computed(() => {
+  const invoices = []
+  if (creditNote.value?.party_invoice) invoices.push(creditNote.value.party_invoice)
+  if (creditNote.value?.party_invoices?.length > 0) invoices.push(...creditNote.value.party_invoices)
+  // Remove duplicates by invoice_id
+  const seen = new Set()
+  return invoices.filter(pi => {
+    if (!pi?.invoice?.id) return false
+    if (seen.has(pi.invoice.id)) return false
+    seen.add(pi.invoice.id)
+    return true
+  })
 })
 
 const getInvoiceType = (invoice: any) => {
