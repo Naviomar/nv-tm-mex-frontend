@@ -732,7 +732,20 @@ const isRefDeleted = computed(() => {
 })
 
 const lineResponsableVessels = computed(() => {
-  return catalogs.value.vessels.filter((vessel: any) => vessel.line_id === values.line_id)
+  const filtered = catalogs.value.vessels.filter((vessel: any) => vessel.line_id === values.line_id)
+  
+  // Si hay un vessel seleccionado y no está en la lista filtrada, agregarlo
+  if (values.vessel_departure_id) {
+    const isInFiltered = filtered.some((v: any) => v.id === values.vessel_departure_id)
+    if (!isInFiltered) {
+      const currentVessel = catalogs.value.vessels.find((v: any) => v.id === values.vessel_departure_id)
+      if (currentVessel) {
+        return [currentVessel, ...filtered]
+      }
+    }
+  }
+  
+  return filtered
 })
 
 const refreshVessels = async (value: any) => {
