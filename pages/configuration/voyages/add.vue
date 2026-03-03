@@ -57,7 +57,10 @@
                     {{ item.id_srv === 'IM' ? 'Import' : 'Export' }}
                   </v-chip>
                 </td>
-                <td>{{ item.linea }}</td>
+                <td>
+                  <v-chip size="x-small" color="blue" variant="tonal">{{ item.linea?.substring(0, 3) || '' }}</v-chip>
+                  <span class="text-xs text-grey ml-1">{{ item.linea }}</span>
+                </td>
                 <td>
                   <v-btn size="x-small" color="orange" variant="text" icon="mdi-arrow-right-bold" />
                 </td>
@@ -127,8 +130,8 @@ const onLegacySearch = (value: string | null) => {
 
 const selectLegacyVoyage = async (item: any) => {
   try {
-    // Find matching vessel in new system
-    const matchingVessel = await $api.legacy.findMatchingVessel(item.barco) as any
+    // Find matching vessel in new system using vessel name + line code
+    const matchingVessel = await $api.legacy.findMatchingVessel(item.barco, item.linea || undefined) as any
 
     const formComponent = voyageFormRef.value
 

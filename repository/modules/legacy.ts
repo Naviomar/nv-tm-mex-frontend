@@ -11,10 +11,10 @@ class LegacyModule extends FetchFactory<any> {
     })
   }
 
-  async findMatchingVessel(name: string, fetchOptions?: FetchOptions) {
+  async findMatchingVessel(name: string, lineCode?: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/find-matching-vessel`, {
       ...fetchOptions,
-      query: { name },
+      query: { name, ...(lineCode && { line_code: lineCode }) },
     })
   }
 
