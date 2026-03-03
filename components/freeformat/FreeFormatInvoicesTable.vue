@@ -157,7 +157,7 @@
             <template v-else-if="row._record_type === 'credit_note'">
               <td>
                 <div class="flex flex-col items-center gap-1">
-                  <ViewButton :item="row" @click="viewInvoice(row.party_invoice)" />
+                  <ViewButton :item="row" @click="viewCreditNote(row)" />
                 </div>
               </td>
               <td><v-chip size="x-small" color="purple">NC</v-chip></td>
@@ -323,6 +323,11 @@ await getData()
 const viewInvoice = (invoice: any) => {
   if (!invoice?.id) { snackbar.add({ type: 'warning', text: 'Invoice not found' }); return }
   router.push(`/invoices/search/free-format/view-${invoice.id}`)
+}
+
+const viewCreditNote = (creditNote: any) => {
+  if (!creditNote?.id) { snackbar.add({ type: 'warning', text: 'Credit note not found' }); return }
+  router.push(`/invoices/search/credit-notes/view-${creditNote.id}`)
 }
 
 const exportToExcel = async () => {

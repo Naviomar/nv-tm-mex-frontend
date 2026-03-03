@@ -7,7 +7,7 @@
       :disabled="loadingStore.loading"
       @click="previewInvoice"
       :size="size"
-      >View Customer Credit Note PDF</v-btn
+      >View Credit Note PDF</v-btn
     >
     <v-dialog v-model="proformaDialog.show" fullscreen>
       <v-card>

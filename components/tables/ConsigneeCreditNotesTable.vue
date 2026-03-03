@@ -2,10 +2,40 @@
   <div>
     <div @keyup.enter="onClickFilters">
       <div class="font-bold mb-2">Filters</div>
-      <div class="grid grid-cols-4 gap-4 mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div><v-text-field v-model="filters.dateFrom" type="date" label="Date from" density="compact" hide-details /></div>
+        <div><v-text-field v-model="filters.dateTo" type="date" label="Date to" density="compact" hide-details /></div>
         <div>
-          <ACustomerSearch v-model="filters.consigneeId" />
+          <v-autocomplete
+            v-model="filters.partyable_type"
+            :items="partyables"
+            item-value="value"
+            item-title="name"
+            label="Party"
+            density="compact"
+            hide-details
+            clearable
+            @update:model-value="clearPartyableId"
+          />
         </div>
+        <div>
+          <AGlobalSearch
+            v-if="filters.partyable_type === 'App\\Models\\Mexico\\Consignee'"
+            :onSearch="searchCustomers"
+            v-model="filters.partyable_id"
+            validate-key="partyable_id"
+            label="Customer"
+          />
+          <AGlobalSearch
+            v-if="filters.partyable_type === 'App\\Models\\Mexico\\Supplier'"
+            :onSearch="searchSuppliers"
+            v-model="filters.partyable_id"
+            validate-key="partyable_id"
+            label="Supplier"
+          />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div>
           <v-text-field v-model="filters.external_folio" type="text" label="Credit Note #" density="compact" hide-details />
         </div>
@@ -18,12 +48,21 @@
             label="Invoice type"
             density="compact"
             hide-details
+            clearable
           />
         </div>
         <div>
-          <v-text-field v-model="filters.dateFrom" type="date" label="Date from" density="compact" hide-details />
+          <v-autocomplete
+            v-model="filters.deleted_status"
+            :items="deletedStatus"
+            item-value="value"
+            item-title="name"
+            label="Status"
+            density="compact"
+            hide-details
+            clearable
+          />
         </div>
-        <div><v-text-field v-model="filters.dateTo" type="date" label="Date to" density="compact" hide-details /></div>
       </div>
       <div class="flex gap-2">
         <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
@@ -135,7 +174,8 @@
             <th>Actions</th>
             <th>Folio</th>
             <th>External folio</th>
-            <th>Customer</th>
+            <th>Type</th>
+            <th>Customer / Party</th>
             <th>Notes</th>
             <th>Services related</th>
             <th>Invoice related</th>
@@ -162,11 +202,31 @@
             </td>
             <td>#{{ creditNote.id }}</td>
             <td>{{ creditNote.external_folio }}</td>
-            <td>{{ creditNote.consignee?.name }}</td>
+            <td>
+              <v-chip :color="creditNote.type === 'party' ? 'purple' : 'blue'" size="x-small">
+                {{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }}
+              </v-chip>
+            </td>
+            <td>
+              <template v-if="creditNote.type === 'party'">
+                {{ creditNote.party_invoice?.partyable?.name }}
+              </template>
+              <template v-else>
+                {{ creditNote.consignee?.name }}
+              </template>
+            </td>
             <td>{{ creditNote.description }}</td>
             <td>{{ getCNInvoiceServices(creditNote) }}</td>
             <td class="whitespace-nowrap">
-              <template v-if="creditNote.invoices && creditNote.invoices.length > 1">
+              <template v-if="creditNote.type === 'party'">
+                <v-chip v-if="creditNote.party_invoice?.invoice?.invoice_number" size="x-small" color="purple" class="mr-1">
+                  {{ creditNote.party_invoice.invoice.invoice_number }}
+                </v-chip>
+                <v-chip v-for="(pi, piIdx) in (creditNote.party_invoices || [])" :key="`pi-${piIdx}`" size="x-small" color="purple" class="mr-1">
+                  {{ pi.invoice?.invoice_number }}
+                </v-chip>
+              </template>
+              <template v-else-if="creditNote.invoices && creditNote.invoices.length > 1">
                 <v-chip v-for="(inv, iIdx) in creditNote.invoices" :key="`inv-${iIdx}`" size="x-small" class="mr-1">
                   {{ inv.invoice_number }}
                 </v-chip>
@@ -219,10 +279,11 @@ const authorizeRestoreCN = ref<any>(null)
 const filters = ref({
   external_folio: '',
   inv_type: '',
-  consigneeId: '',
+  partyable_type: '',
+  partyable_id: '',
+  deleted_status: '',
   dateFrom: '',
   dateTo: '',
-  invoiceId: '',
 })
 
 const catalogs = ref({
@@ -236,6 +297,37 @@ const creditNotes = ref({
   perPage: 10,
   last_page: 1,
 })
+
+const cnTypes = [
+  { name: 'Customer', value: 'customer' },
+  { name: 'Free Format', value: 'party' },
+]
+
+const partyables = [
+  { name: 'Customer', value: 'App\\Models\\Mexico\\Consignee' },
+  { name: 'Supplier', value: 'App\\Models\\Mexico\\Supplier' },
+  { name: 'Freight line', value: 'App\\Models\\Mexico\\Line' },
+  { name: 'Custom agent', value: 'App\\Models\\Mexico\\CustomAgent' },
+]
+
+const deletedStatus = [
+  { name: 'Active', value: 'active' },
+  { name: 'Cancelled', value: 'deleted' },
+]
+
+const clearPartyableId = () => {
+  filters.value.partyable_id = ''
+}
+
+const searchCustomers = async (search: any) => {
+  const response = await $api.consignees.searchConsignees({ query: search }) as any
+  return response || []
+}
+
+const searchSuppliers = async (search: any) => {
+  const response = await $api.suppliers.searchSuppliers({ query: search }) as any
+  return response || []
+}
 
 const invoiceTypes = [
   { value: 'tm', name: 'TM' },
@@ -311,10 +403,11 @@ const clearFilters = async () => {
   filters.value = {
     external_folio: '',
     inv_type: '',
-    consigneeId: '',
+    partyable_type: '',
+    partyable_id: '',
+    deleted_status: '',
     dateFrom: '',
     dateTo: '',
-    invoiceId: '',
   }
   await getData()
 }

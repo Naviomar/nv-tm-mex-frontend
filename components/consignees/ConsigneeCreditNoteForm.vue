@@ -3,7 +3,19 @@
     <div class="grid grid-cols-2 gap-4">
       <!-- Left column: Search & Form -->
       <div>
+        <!-- Mode selector -->
         <v-card class="mb-4">
+          <v-card-text>
+            <div class="font-bold mb-2">Credit Note Type</div>
+            <v-btn-toggle v-model="cnMode" mandatory color="primary" density="compact" class="mb-2">
+              <v-btn value="customer">Customer Invoice</v-btn>
+              <v-btn value="party">Free Format Invoice</v-btn>
+            </v-btn-toggle>
+          </v-card-text>
+        </v-card>
+
+        <!-- Search: Customer service invoice -->
+        <v-card v-if="cnMode === 'customer'" class="mb-4">
           <v-card-title>
             <h3>Search customer service invoice (Sea/Air - Import/Export)</h3>
           </v-card-title>
@@ -32,8 +44,24 @@
           </v-card-text>
         </v-card>
 
-        <!-- Selected invoices list -->
-        <v-card v-if="selectedInvoices.length > 0" class="mb-4">
+        <!-- Search: Free format invoice -->
+        <v-card v-if="cnMode === 'party'" class="mb-4">
+          <v-card-title>
+            <h3>Search free format invoice</h3>
+          </v-card-title>
+          <v-card-subtitle> Search free format invoices by invoice number to create a credit note. </v-card-subtitle>
+          <v-card-text>
+            <div class="grid grid-cols-2 gap-4">
+              <v-text-field v-model="partyFilters.invoiceNumber" density="compact" type="text" label="Invoice #" @keyup.enter="searchAndAddPartyInvoice" />
+            </div>
+            <div class="flex">
+              <v-btn color="primary" size="small" @click="searchAndAddPartyInvoice"> Search & add invoice </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- Selected invoices list: Customer mode -->
+        <v-card v-if="cnMode === 'customer' && selectedInvoices.length > 0" class="mb-4">
           <v-card-title>
             <h3>Selected invoices ({{ selectedInvoices.length }})</h3>
           </v-card-title>
@@ -53,10 +81,30 @@
           </v-card-text>
         </v-card>
 
-        <!-- Credit Note Form -->
-        <v-card v-if="selectedInvoices.length > 0">
+        <!-- Selected invoices list: Party mode -->
+        <v-card v-if="cnMode === 'party' && selectedPartyInvoices.length > 0" class="mb-4">
           <v-card-title>
-            <h3>Credit Note for - {{ consigneeName }}</h3>
+            <h3>Selected free format invoices ({{ selectedPartyInvoices.length }})</h3>
+          </v-card-title>
+          <v-card-text>
+            <div v-for="(pi, piIdx) in selectedPartyInvoices" :key="`sel-pi-${piIdx}`" class="mb-3">
+              <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded px-3 py-2">
+                <div>
+                  <span class="font-bold">Invoice #{{ pi.invoice?.invoice_number }}</span>
+                  <span class="text-sm ml-2">{{ pi.partyable?.name }}</span>
+                </div>
+                <v-btn icon size="x-small" color="red" variant="text" @click="removePartyInvoice(piIdx)">
+                  <v-icon size="16">mdi-close</v-icon>
+                </v-btn>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- Credit Note Form -->
+        <v-card v-if="hasInvoicesSelected">
+          <v-card-title>
+            <h3>Credit Note for - {{ entityName }}</h3>
           </v-card-title>
           <v-card-text>
             <v-text-field v-model="form.external_folio" density="compact" label="External folio" />
@@ -69,7 +117,8 @@
             <div
               v-for="(charge, index) in allCharges"
               :key="`charge-${index}`"
-              class="grid grid-cols-[2fr_1fr_1fr] gap-3 mb-1 items-center"
+              class="grid gap-3 mb-1 items-center"
+              :class="cnMode === 'party' ? 'grid-cols-[2fr_1fr_auto_1fr]' : 'grid-cols-[2fr_1fr_1fr]'"
             >
               <div>
                 <div class="text-sm font-medium">{{ charge.charge_name }}</div>
@@ -90,8 +139,14 @@
                   Max: {{ formatToCurrency(charge.max_available) }}
                 </div>
               </div>
+              <div v-if="cnMode === 'party'" class="flex items-center">
+                <v-checkbox v-model="charge.is_con_iva" label="IVA" density="compact" hide-details />
+              </div>
               <div class="text-right text-sm">
                 {{ formatToCurrency(charge.amount || 0) }}
+                <div v-if="cnMode === 'party' && charge.is_con_iva" class="text-xs text-gray-500">
+                  + IVA {{ formatToCurrency((charge.amount || 0) * 0.16) }}
+                </div>
               </div>
             </div>
 
@@ -132,32 +187,49 @@
       </div>
 
       <!-- Right column: Invoice details & history -->
-      <div v-if="selectedInvoices.length > 0">
-        <v-card v-for="(inv, invIdx) in selectedInvoices" :key="`detail-${invIdx}`" class="mb-4">
-          <v-card-title>
-            <h4>
-              Invoice {{ inv.inv_type.toUpperCase() }} #{{ inv.serviceInvoice.invoice?.invoice_number }}
-              <v-btn color="primary" size="small" variant="outlined" class="ml-2" @click="viewServiceInvoice(inv)">
-                View invoice
-              </v-btn>
-            </h4>
-          </v-card-title>
-          <v-card-text>
-            <div>
-              <p>Customer: {{ inv.serviceInvoice.consignee?.name }}</p>
-              <p>Linked services # {{ getInvoiceServices(inv.serviceInvoice) }}</p>
-              <p>
-                Amount: {{ getCurrencyName(inv.serviceInvoice.invoice?.currency_id) }}
-                {{ formatToCurrency(inv.serviceInvoice.invoice?.total) }}
-              </p>
-              <p>Date: {{ formatDateString(inv.serviceInvoice.created_at) }}</p>
-            </div>
-          </v-card-text>
-        </v-card>
+      <div v-if="hasInvoicesSelected">
+        <!-- Customer mode: service invoice details -->
+        <template v-if="cnMode === 'customer'">
+          <v-card v-for="(inv, invIdx) in selectedInvoices" :key="`detail-${invIdx}`" class="mb-4">
+            <v-card-title>
+              <h4>
+                Invoice {{ inv.inv_type.toUpperCase() }} #{{ inv.serviceInvoice.invoice?.invoice_number }}
+                <v-btn color="primary" size="small" variant="outlined" class="ml-2" @click="viewServiceInvoice(inv)">
+                  View invoice
+                </v-btn>
+              </h4>
+            </v-card-title>
+            <v-card-text>
+              <div>
+                <p>Customer: {{ inv.serviceInvoice.consignee?.name }}</p>
+                <p>Linked services # {{ getInvoiceServices(inv.serviceInvoice) }}</p>
+                <p>
+                  Amount: {{ getCurrencyName(inv.serviceInvoice.invoice?.currency_id) }}
+                  {{ formatToCurrency(inv.serviceInvoice.invoice?.total) }}
+                </p>
+                <p>Date: {{ formatDateString(inv.serviceInvoice.created_at) }}</p>
+              </div>
+            </v-card-text>
+          </v-card>
+        </template>
+
+        <!-- Party mode: party invoice details -->
+        <template v-if="cnMode === 'party'">
+          <v-card v-for="(pi, piIdx) in selectedPartyInvoices" :key="`pi-detail-${piIdx}`" class="mb-4">
+            <v-card-title>
+              <h4>Free Format Invoice #{{ pi.invoice?.invoice_number }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Party: {{ pi.partyable?.name }}</p>
+              <p>Type: {{ pi.inv_type?.toUpperCase() }}</p>
+              <p>Date: {{ formatDateString(pi.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+        </template>
 
         <v-card v-if="lastCreditNotes.length > 0">
           <v-card-title>
-            <h4>Last credit notes for {{ consigneeName }}</h4>
+            <h4>Last credit notes for {{ entityName }}</h4>
           </v-card-title>
           <v-card-text>
             <div v-for="(cn, index) in lastCreditNotes" :key="`last-cn-${index}`">
@@ -183,14 +255,21 @@ const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
+const cnMode = ref<'customer' | 'party'>('customer')
+
 const filters = reactive({
   inv_type: null as string | null,
   inv_service: null as string | null,
   invoiceId: null as string | null,
 })
 
+const partyFilters = reactive({
+  invoiceNumber: null as string | null,
+})
+
 // Multiple invoices support
 const selectedInvoices = ref<any[]>([])
+const selectedPartyInvoices = ref<any[]>([])
 const lastCreditNotes = ref<any[]>([])
 
 const form = reactive({
@@ -202,14 +281,29 @@ const form = reactive({
 // All charges from all selected invoices, each with amount input
 const allCharges = ref<any[]>([])
 
-const consigneeName = computed(() => {
+const entityName = computed(() => {
+  if (cnMode.value === 'party') {
+    if (selectedPartyInvoices.value.length === 0) return ''
+    return selectedPartyInvoices.value[0].partyable?.name ?? ''
+  }
   if (selectedInvoices.value.length === 0) return ''
   return selectedInvoices.value[0].serviceInvoice.consignee?.name ?? ''
 })
 
-const totalCreditNoteAmount = computed(() => {
-  return allCharges.value.reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
+const hasInvoicesSelected = computed(() => {
+  if (cnMode.value === 'party') return selectedPartyInvoices.value.length > 0
+  return selectedInvoices.value.length > 0
 })
+
+const totalCreditNoteAmount = computed(() => {
+  return allCharges.value.reduce((sum: number, c: any) => {
+    const amt = parseFloat(c.amount) || 0
+    const iva = (cnMode.value === 'party' && c.is_con_iva) ? round2(amt * 0.16) : 0
+    return sum + amt + iva
+  }, 0)
+})
+
+const round2 = (v: number) => Math.round(v * 100) / 100
 
 const hasAmountExceeded = computed(() => {
   return allCharges.value.some((c: any) => parseFloat(c.amount) > c.max_available)
@@ -348,6 +442,69 @@ const removeInvoice = (index: number) => {
   }
 }
 
+// ─── Party invoice methods ─────────────────────────────────
+const searchAndAddPartyInvoice = async () => {
+  try {
+    if (!partyFilters.invoiceNumber) {
+      snackbar.add({ type: 'warning', text: 'Please enter an invoice number' })
+      return
+    }
+
+    const alreadyAdded = selectedPartyInvoices.value.some(
+      (pi: any) => pi.invoice?.invoice_number == partyFilters.invoiceNumber
+    )
+    if (alreadyAdded) {
+      snackbar.add({ type: 'warning', text: 'This invoice is already added' })
+      return
+    }
+
+    loadingStore.loading = true
+    const body = { invoice_number: partyFilters.invoiceNumber }
+    const response: any = await $api.consigneeCreditNotes.searchPartyInvoice(body)
+
+    if (!response.partyInvoice) {
+      snackbar.add({ type: 'warning', text: 'Free format invoice not found' })
+      return
+    }
+
+    selectedPartyInvoices.value.push(response.partyInvoice)
+    form.currency_id = response.partyInvoice.currency_id
+
+    rebuildPartyCharges()
+    partyFilters.invoiceNumber = null
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const removePartyInvoice = (index: number) => {
+  selectedPartyInvoices.value.splice(index, 1)
+  rebuildPartyCharges()
+  if (selectedPartyInvoices.value.length === 0) {
+    form.currency_id = null
+  }
+}
+
+const rebuildPartyCharges = () => {
+  allCharges.value = []
+  for (const pi of selectedPartyInvoices.value) {
+    const invoiceCharges = pi.invoice?.charges || []
+    for (const ic of invoiceCharges) {
+      allCharges.value.push({
+        invoice_charge_id: ic.id,
+        charge_id: ic.charge_id,
+        charge_name: ic.charge?.name || ic.final_name || `Charge #${ic.charge_id}`,
+        invoice_number: pi.invoice?.invoice_number,
+        max_available: parseFloat(ic.cn_available_balance ?? ic.pending_balance) || 0,
+        amount: 0,
+        is_con_iva: false,
+      })
+    }
+  }
+}
+
 const saveCreditNote = async () => {
   try {
     const activeCharges = allCharges.value.filter((c: any) => parseFloat(c.amount) > 0)
@@ -366,29 +523,48 @@ const saveCreditNote = async () => {
 
     loadingStore.loading = true
 
-    // Build service_invoices array for multi-invoice support
-    const serviceInvoicesMap = new Map<string, any>()
-    for (const inv of selectedInvoices.value) {
-      const key = `${inv.serviceInvoice.class_name}-${inv.serviceInvoice.id}`
-      if (!serviceInvoicesMap.has(key)) {
-        serviceInvoicesMap.set(key, {
-          invoice_class_name: inv.serviceInvoice.class_name,
-          service_invoice_id: inv.serviceInvoice.id,
-        })
-      }
-    }
+    let body: any
 
-    const body = {
-      service_invoices: Array.from(serviceInvoicesMap.values()),
-      external_folio: form.external_folio,
-      charges: activeCharges.map((c: any) => ({
-        invoice_charge_id: c.invoice_charge_id,
-        charge_id: c.charge_id,
-        amount: parseFloat(c.amount),
-      })),
-      currency_id: form.currency_id,
-      description: form.description,
-      inv_type: selectedInvoices.value[0]?.inv_type,
+    if (cnMode.value === 'party') {
+      // Free format mode
+      body = {
+        type: 'party',
+        party_invoice_ids: selectedPartyInvoices.value.map((pi: any) => pi.id),
+        external_folio: form.external_folio,
+        charges: activeCharges.map((c: any) => ({
+          invoice_charge_id: c.invoice_charge_id,
+          charge_id: c.charge_id,
+          amount: parseFloat(c.amount),
+          is_con_iva: c.is_con_iva || false,
+        })),
+        currency_id: form.currency_id,
+        description: form.description,
+      }
+    } else {
+      // Customer mode
+      const serviceInvoicesMap = new Map<string, any>()
+      for (const inv of selectedInvoices.value) {
+        const key = `${inv.serviceInvoice.class_name}-${inv.serviceInvoice.id}`
+        if (!serviceInvoicesMap.has(key)) {
+          serviceInvoicesMap.set(key, {
+            invoice_class_name: inv.serviceInvoice.class_name,
+            service_invoice_id: inv.serviceInvoice.id,
+          })
+        }
+      }
+
+      body = {
+        service_invoices: Array.from(serviceInvoicesMap.values()),
+        external_folio: form.external_folio,
+        charges: activeCharges.map((c: any) => ({
+          invoice_charge_id: c.invoice_charge_id,
+          charge_id: c.charge_id,
+          amount: parseFloat(c.amount),
+        })),
+        currency_id: form.currency_id,
+        description: form.description,
+        inv_type: selectedInvoices.value[0]?.inv_type,
+      }
     }
 
     await $api.consigneeCreditNotes.createNote(body)

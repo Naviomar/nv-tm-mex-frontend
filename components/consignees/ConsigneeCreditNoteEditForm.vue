@@ -4,7 +4,7 @@
       <div class="col-span-2">
         <v-card>
           <v-card-title>
-            <h3>Customer Credit Note - Edit Form</h3>
+            <h3>{{ consigneeCreditNote?.type === 'party' ? 'Free Format' : 'Customer' }} Credit Note - Edit Form</h3>
           </v-card-title>
           <v-card-subtitle> Only credit notes not used can be edited. </v-card-subtitle>
           <v-card-text>
@@ -120,7 +120,7 @@
                       <td>
                         <v-chip color="blue" text-color="white" size="small" @click="viewInvoice(payment)">
                           <v-icon>mdi-eye-outline</v-icon>{{ getInvoiceableType(payment) }} Invoice #{{
-                            payment.chargeable?.invoice?.invoiceable_id
+                            payment.chargeable?.invoice?.invoice_number
                           }}
                         </v-chip>
                       </td>
@@ -153,30 +153,36 @@
         </v-card>
       </div>
       <div>
-        <v-card v-for="(inv, invIdx) in linkedInvoices" :key="`edit-inv-${invIdx}`" class="mb-3">
-          <v-card-title>
-            <h4>{{ getInvoiceTypeLabel(inv) }}</h4>
-          </v-card-title>
-          <v-card-text>
-            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
-            <p>Linked services: {{ getInvoiceServices(inv) }}</p>
-            <p>
-              Amount: {{ getCurrencyName(inv.currency_id) }}
-              {{ formatToCurrency(inv.total) }}
-            </p>
-            <p>Date: {{ formatDateString(inv.created_at) }}</p>
-          </v-card-text>
-        </v-card>
-        <v-card v-if="linkedInvoices.length === 0 && consigneeCreditNote.invoice">
-          <v-card-title>
-            <h4>{{ getInvoiceType }}</h4>
-          </v-card-title>
-          <v-card-text>
-            <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
-            <p>Amount: {{ formatToCurrency(consigneeCreditNote.invoice?.total) }}</p>
-            <p>Date: {{ formatDateString(consigneeCreditNote.invoice?.created_at) }}</p>
-          </v-card-text>
-        </v-card>
+        <!-- Party type: show party invoice info -->
+        <template v-if="consigneeCreditNote?.type === 'party'">
+          <v-card v-for="(pi, piIdx) in allPartyInvoices" :key="`edit-pi-${piIdx}`" class="mb-3">
+            <v-card-title>
+              <h4>Invoice #{{ pi.invoice?.invoice_number }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Party: {{ pi.partyable?.name }}</p>
+              <p>Type: {{ consigneeCreditNote.inv_type?.toUpperCase() }}</p>
+              <p>Date: {{ formatDateString(pi.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+        </template>
+        <!-- Customer type: show service invoice info -->
+        <template v-else>
+          <v-card v-for="(inv, invIdx) in linkedInvoices" :key="`edit-inv-${invIdx}`" class="mb-3">
+            <v-card-title>
+              <h4>{{ getInvoiceTypeLabel(inv) }}</h4>
+            </v-card-title>
+            <v-card-text>
+              <p>Customer: {{ consigneeCreditNote.consignee?.name }}</p>
+              <p>Linked services: {{ getInvoiceServices(inv) }}</p>
+              <p>
+                Amount: {{ getCurrencyName(inv.currency_id) }}
+                {{ formatToCurrency(inv.total) }}
+              </p>
+              <p>Date: {{ formatDateString(inv.created_at) }}</p>
+            </v-card-text>
+          </v-card>
+        </template>
       </div>
     </div>
   </div>
@@ -238,10 +244,26 @@ const validateChargeAmount = (idx: number) => {
   }
 }
 
-// Linked invoices - prefer the new M2M invoices array, fall back to single invoice
+// Linked invoices - M2M invoices array
 const linkedInvoices = computed(() => {
   if (consigneeCreditNote.value?.invoices?.length > 0) return consigneeCreditNote.value.invoices
+  if (consigneeCreditNote.value?.invoice) return [consigneeCreditNote.value.invoice]
   return []
+})
+
+// All party invoices - M2M party_invoices array
+const allPartyInvoices = computed(() => {
+  const invoices = []
+  if (consigneeCreditNote.value?.party_invoice) invoices.push(consigneeCreditNote.value.party_invoice)
+  if (consigneeCreditNote.value?.party_invoices?.length > 0) invoices.push(...consigneeCreditNote.value.party_invoices)
+  // Remove duplicates by invoice_id
+  const seen = new Set()
+  return invoices.filter(pi => {
+    if (!pi?.invoice?.id) return false
+    if (seen.has(pi.invoice.id)) return false
+    seen.add(pi.invoice.id)
+    return true
+  })
 })
 
 const getInvoiceTypeLabel = (inv: any) => {

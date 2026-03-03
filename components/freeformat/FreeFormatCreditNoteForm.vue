@@ -120,8 +120,9 @@ const showDialog = async () => {
       partyable_id: props.partyInvoice.partyable_id,
       partyable_type: props.partyInvoice.partyable_type,
     }) as any
-    if (result && !result.message) {
-      selectedPartyInvoices.value = [result]
+    const pi = result?.partyInvoice ?? result
+    if (pi && !pi.message) {
+      selectedPartyInvoices.value = [pi]
       rebuildCharges()
     }
   } catch (e) {
@@ -180,16 +181,17 @@ const searchPartyInvoice = async () => {
       partyable_id: props.partyInvoice.partyable_id,
       partyable_type: props.partyInvoice.partyable_type,
     }) as any
+    const pi = result?.partyInvoice ?? result
 
-    if (!result || result.message) {
-      snackbar.add({ type: 'error', text: result?.message || 'Invoice not found' })
+    if (!pi || pi.message) {
+      snackbar.add({ type: 'error', text: pi?.message || 'Invoice not found' })
       return
     }
 
-    selectedPartyInvoices.value.push(result)
+    selectedPartyInvoices.value.push(pi)
     rebuildCharges()
     searchInvoiceNumber.value = ''
-    snackbar.add({ type: 'success', text: `Invoice #${result.invoice?.invoice_number} added` })
+    snackbar.add({ type: 'success', text: `Invoice #${pi.invoice?.invoice_number} added` })
   } catch (e: any) {
     snackbar.add({ type: 'error', text: e?.data?.message || 'Invoice not found' })
   } finally {

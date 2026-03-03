@@ -8,7 +8,7 @@
       <v-col cols="12" md="12">
         <v-card>
           <v-card-title>
-            <h3>Customer - Credit notes</h3>
+            <h3>Credit Notes</h3>
           </v-card-title>
           <v-card-text>
             <div class="flex gap-3">

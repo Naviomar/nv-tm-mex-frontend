@@ -2,7 +2,7 @@
   <div>
     <v-card class="py-4" color="">
       <v-card-title>
-        <h3>Customer - Credit note #{{ creditNote.id }} Details</h3>
+        <h3>{{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }} - Credit note #{{ creditNote.id }} Details</h3>
       </v-card-title>
       <v-card-text>
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -13,11 +13,22 @@
               <div>External Folio</div>
               <div>#{{ creditNote.external_folio || '-' }}</div>
               <div>Credit note type</div>
-              <div>{{ creditNote.inv_type }}</div>
-              <div>Customer</div>
-              <div>{{ creditNote.consignee?.name }}</div>
-              <div>Customer Group</div>
-              <div>{{ creditNote.consignee.consignee_group?.name }}</div>
+              <div>
+                <v-chip :color="creditNote.type === 'party' ? 'purple' : 'blue'" size="x-small">
+                  {{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }}
+                </v-chip>
+                {{ creditNote.inv_type?.toUpperCase() }}
+              </div>
+              <template v-if="creditNote.type === 'party'">
+                <div>Party</div>
+                <div>{{ creditNote.party_invoice?.partyable?.name || '-' }}</div>
+              </template>
+              <template v-else>
+                <div>Customer</div>
+                <div>{{ creditNote.consignee?.name }}</div>
+                <div>Customer Group</div>
+                <div>{{ creditNote.consignee?.consignee_group?.name }}</div>
+              </template>
               <div>Concept</div>
               <div>
                 <CreditNoteChargeCfdiName :creditNote="creditNote" :names="chargeCfdiNames" />
@@ -43,14 +54,16 @@
           </div>
           <div>
             <div class="mb-2">
-              <div v-if="creditNote.invoices && creditNote.invoices.length > 1" class="flex flex-wrap gap-1">
-                <v-chip v-for="(inv, idx) in creditNote.invoices" :key="`cn-inv-${idx}`" variant="outlined" size="small">
+              <template v-if="creditNote.type === 'party'">
+                <v-chip v-for="(pi, idx) in allPartyInvoices" :key="`cn-pi-${idx}`" variant="outlined" size="small" color="purple" class="mr-1">
+                  Invoice #{{ pi.invoice?.invoice_number }}
+                </v-chip>
+              </template>
+              <template v-else>
+                <v-chip v-for="(inv, idx) in linkedInvoices" :key="`cn-inv-${idx}`" variant="outlined" size="small" class="mr-1">
                   {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
                 </v-chip>
-              </div>
-              <v-chip v-else variant="outlined" size="small">
-                {{ creditNoteInvoice }}
-              </v-chip>
+              </template>
             </div>
             <div v-if="creditNote.charges && creditNote.charges.length > 0" class="mb-2">
               <div class="text-sm font-bold mb-1">Concepts ({{ creditNote.charges.length }})</div>
@@ -74,40 +87,41 @@
         <v-card class="py-4">
           <div class="grid grid-cols-1 md:grid-cols-12">
             <div class="col-span-1 md:col-span-3 px-2">
-              <h1 class="text-lg font-bold leading-none">Pay same customer/group invoices using</h1>
-              <div class="max-w-xs mx-auto bg-white dark:bg-neutral-100! rounded-lg shadow-md overflow-hidden mt-2">
+              <h1 v-if="creditNote.type !== 'party'" class="text-lg font-bold leading-none">Pay same customer/group invoices using</h1>
+              <h1 v-else class="text-lg font-bold leading-none">Credit Note Summary</h1>
+              <div class="max-w-xs mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden mt-2">
                 <div class="px-4 py-2">
                   <h2 class="text-lg font-medium">Credit Note #{{ creditNote.id }}</h2>
                 </div>
                 <div class="px-4 py-5 sm:p-6">
                   <div class="flex flex-col items-start justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-600">Customer</span>
-                    <span class="text-base font-medium">{{ creditNote.consignee?.name }}</span>
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ creditNote.type === 'party' ? 'Party' : 'Customer' }}</span>
+                    <span class="text-base font-medium">{{ creditNote.type === 'party' ? creditNote.party_invoice?.partyable?.name : creditNote.consignee?.name }}</span>
                   </div>
                   <div class="flex flex-row items-center justify-between mb-4">
                     <div class="flex flex-col items-start">
-                      <span class="text-sm font-medium text-gray-600">Created at</span>
+                      <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Created at</span>
                       <span class="text-lg font-medium">{{ formatDateOnlyString(creditNote.created_at) }}</span>
                     </div>
                   </div>
                   <div class="flex flex-row items-center justify-between">
                     <div class="flex flex-col items-start">
-                      <span class="text-sm font-medium text-gray-600">Amount</span>
+                      <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</span>
                       <span class="text-lg font-medium">{{ formatToCurrency(creditNote.amount) }}</span>
                     </div>
                     <div class="flex flex-col items-start">
-                      <span class="text-sm font-medium text-gray-600">Available Balance</span>
+                      <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Available Balance</span>
                       <span class="text-lg font-bold">{{ formatToCurrency(creditNote.amount_available) }}</span>
                     </div>
                   </div>
                   <div class="flex flex-col items-center justify-end">
-                    <span class="text-sm font-medium text-gray-600">Used</span>
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Used</span>
                     <span class="text-lg font-medium">{{
                       formatToCurrency(creditNote.amount - creditNote.amount_available)
                     }}</span>
                   </div>
-                  <div class="flex flex-col items-center justify-end bg-slate-200">
-                    <span class="text-sm font-medium text-gray-600">Amount to Pay</span>
+                  <div class="flex flex-col items-center justify-end bg-slate-200 dark:bg-slate-700">
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Amount to Pay</span>
                     <span class="text-lg font-medium">{{ formatToCurrency(amountToPayTotal) }}</span>
                   </div>
                 </div>
@@ -151,7 +165,7 @@
                         <td>
                           <v-chip color="blue" text-color="white" small @click="viewInvoice(payment)">
                             <v-icon>mdi-eye-outline</v-icon>{{ getInvoiceableType(payment) }} Invoice #{{
-                              payment.chargeable?.invoice?.invoiceable_id
+                              payment.chargeable?.invoice?.invoice_number
                             }}
                           </v-chip>
                         </td>
@@ -180,7 +194,7 @@
                 </v-card-text>
               </v-card>
 
-              <v-card v-if="hasCreditNoteAmountAvailable && !isDeleted" color="blue-grey-lighten-5" class="mb-4">
+              <v-card v-if="creditNote.type !== 'party' && hasCreditNoteAmountAvailable && !isDeleted" color="blue-grey-lighten-5" class="mb-4">
                 <v-card-title>
                   <div class="flex justify-between">
                     <div class="flex items-center gap-2">
@@ -384,6 +398,28 @@ const referenciaNumber = computed(() => {
     return ''
   }
   return creditNote.value?.invoice?.invoiceable?.referencia?.reference_number
+})
+
+// Linked invoices - M2M invoices array
+const linkedInvoices = computed(() => {
+  if (creditNote.value?.invoices?.length > 0) return creditNote.value.invoices
+  if (creditNote.value?.invoice) return [creditNote.value.invoice]
+  return []
+})
+
+// All party invoices - M2M party_invoices array
+const allPartyInvoices = computed(() => {
+  const invoices = []
+  if (creditNote.value?.party_invoice) invoices.push(creditNote.value.party_invoice)
+  if (creditNote.value?.party_invoices?.length > 0) invoices.push(...creditNote.value.party_invoices)
+  // Remove duplicates by invoice_id
+  const seen = new Set()
+  return invoices.filter(pi => {
+    if (!pi?.invoice?.id) return false
+    if (seen.has(pi.invoice.id)) return false
+    seen.add(pi.invoice.id)
+    return true
+  })
 })
 
 const getInvoiceType = (invoice: any) => {
