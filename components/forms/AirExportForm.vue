@@ -23,8 +23,8 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div>
-            <v-autocomplete
-              v-model="selectedGuideNumber"
+            <v-combobox
+              v-model="masterAwbValue"
               v-model:search="guideNumberSearch"
               :items="filteredGuideNumbers"
               item-title="full_number"
@@ -32,11 +32,11 @@
               label="Master AWB *"
               variant="solo-filled"
               density="compact"
-              :hint="detectedAirline ? `${detectedAirline.name} detected` : 'Enter prefix + number (e.g. 11200672700)'"
+              :hint="detectedAirline ? `${detectedAirline.name} detected` : 'Type directly or select from available guide numbers'"
               persistent-hint
               :loading="loadingGuideNumbers"
-              no-data-text="No available guide numbers"
-              @update:model-value="onGuideNumberSelected"
+              no-data-text="No available guide numbers (you can still type manually)"
+              @update:model-value="onMasterAwbChange"
               @update:search="onGuideNumberSearch"
               return-object
             />
@@ -432,12 +432,13 @@ const creditDebitNotes = ref<any>([])
 const consigneeInfo = ref<any>(null)
 
 // Master AWB state
-const selectedGuideNumber = ref<any>(null)
+const masterAwbValue = ref<any>(null)
 const guideNumberSearch = ref('')
 const detectedAirline = ref<any>(null)
 const availableGuideNumbers = ref<any[]>([])
 const loadingGuideNumbers = ref(false)
 const airlineLogoErrors = ref<Set<number>>(new Set())
+const manualMasterAwb = ref(false)
 
 // Computed for airline_id binding
 const airlineIdValue = computed({
@@ -508,7 +509,7 @@ const { handleSubmit, values, errors, meta, setValues, setFieldValue } = useForm
 
 const executive = computed(() => consigneeInfo.value?.executive_user?.name || '')
 
-// Handle search input in Master AWB autocomplete
+// Handle search input in Master AWB combobox
 const onGuideNumberSearch = async (search: string) => {
   guideNumberSearch.value = search || ''
   
@@ -523,7 +524,10 @@ const onGuideNumberSearch = async (search: string) => {
     
     if (airline && airline.id !== detectedAirline.value?.id) {
       detectedAirline.value = airline
-      setFieldValue('airline_id', airline.id)
+      // Only set airline if not already set, to avoid clearing Master AWB
+      if (!values.airline_id) {
+        setFieldValue('airline_id', airline.id)
+      }
       
       // Fetch guide numbers for this airline
       await fetchAvailableGuideNumbers(airline.id)
@@ -533,17 +537,29 @@ const onGuideNumberSearch = async (search: string) => {
   }
 }
 
-// Handle guide number selection
-const onGuideNumberSelected = (item: any) => {
-  if (item) {
-    // Master AWB = prefix + guide_number (concatenated)
+// Handle Master AWB change (selection or direct input)
+const onMasterAwbChange = (item: any) => {
+  if (!item) {
+    setFieldValue('master_awb', '')
+    setFieldValue('guide_number_id', null)
+    manualMasterAwb.value = false
+    return
+  }
+  
+  // Check if it's a guide number object (selected from list)
+  if (typeof item === 'object' && item.id && item.guide_number) {
+    // Selected from available guide numbers
     const prefix = item.airline?.prefix || ''
     const masterAwb = `${prefix}${item.guide_number}`
     setFieldValue('master_awb', masterAwb)
     setFieldValue('guide_number_id', item.id)
+    manualMasterAwb.value = false
   } else {
-    setFieldValue('master_awb', '')
+    // Direct text input
+    const masterAwb = typeof item === 'string' ? item : item.full_number || ''
+    setFieldValue('master_awb', masterAwb)
     setFieldValue('guide_number_id', null)
+    manualMasterAwb.value = true
   }
 }
 
