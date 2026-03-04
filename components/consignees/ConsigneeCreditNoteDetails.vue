@@ -128,7 +128,7 @@
               </div>
             </div>
             <div class="col-span-1 md:col-span-9">
-              <v-card class="mb-4">
+              <v-card v-if="creditNote.type === 'customer'" class="mb-4">
                 <v-card-title>
                   <div class="flex justify-between">
                     <div class="flex items-center gap-2">
