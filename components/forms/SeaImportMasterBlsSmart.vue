@@ -262,7 +262,7 @@ const clearValues = () => {
       name: '',
       can_be_delivered: null,
       comments: null,
-      consignee_mbl_id: undefined,
+      consignee_mbl_id: null,
       type: null,
       attachment: null,
     },

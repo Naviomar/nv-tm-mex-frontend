@@ -131,7 +131,7 @@ const schemaMasterBl = toTypedSchema(
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
     name: yup.string().required('Master BL number is required'),
-    consignee_mbl_id: yup.string().required('Consignee is required'),
+    consignee_mbl_id: yup.number().nullable().required('Consignee MBL is required. Please select a consignee from the list.').typeError('Consignee MBL is required'),
     can_be_delivered: yup.string().nullable(),
     comments: yup.string().nullable(),
     type: yup.string().nullable(),

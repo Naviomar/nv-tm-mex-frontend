@@ -192,11 +192,11 @@
                     <v-btn color="purple" @click="goToModule(bankMovement.id)">Go to payment BL</v-btn>
                   </div>
                   <div v-if="!isPayBlSchedule">
-                    <span class="text-sm">Press ENTER to add the invoice number to search</span>
+                    <span class="text-sm">{{ searchFieldHint }}</span>
                     <v-text-field
                       v-model="filters.invoiceNumber"
                       density="compact"
-                      label="Add Invoice numbers to search"
+                      :label="searchFieldLabel"
                       @keyup.enter="addInvoiceToSearch"
                     />
                   </div>
@@ -216,9 +216,9 @@
                   </div>
                   <div class="flex gap-2 mt-4">
                     <v-btn color="secondary" @click="clearSearchInvoices">Clear</v-btn>
-                    <v-btn color="primary" :loading="loadingStore.loading" @click="searchInvoices"
-                      >Search invoice(s)</v-btn
-                    >
+                    <v-btn color="primary" :loading="loadingStore.loading" @click="searchInvoices">
+                      {{ searchButtonText }}
+                    </v-btn>
                   </div>
                 </div>
               </div>
@@ -388,6 +388,66 @@ const typeInvoicesByMovementType = computed(() => {
     return typeInvoices.filter((type: any) => type.withdrawal)
   }
   return []
+})
+
+const isInvoiceBasedType = computed(() => {
+  const invoiceTypes = ['InvoiceSeaTm', 'InvoiceSeaWm', 'InvoiceAirTm', 'InvoiceAirWm', 'PartyInvoice']
+  return invoiceTypes.includes(filters.value.typeInvoice)
+})
+
+const isRequestBasedType = computed(() => {
+  const requestTypes = ['FfPayment', 'SupplierReqPayment', 'ReqAdvancePayment', 'ReqRefund', 'ReqDemurrage', 'ReqDetention']
+  return requestTypes.includes(filters.value.typeInvoice)
+})
+
+const searchFieldLabel = computed(() => {
+  if (!filters.value.typeInvoice) return 'Add numbers to search'
+  
+  if (isInvoiceBasedType.value) {
+    return 'Add invoice numbers to search'
+  }
+  
+  if (isRequestBasedType.value) {
+    const labels: Record<string, string> = {
+      'FfPayment': 'Add F.F. payment request ID/folio',
+      'SupplierReqPayment': 'Add supplier request payment folio',
+      'ReqAdvancePayment': 'Add advance payment request folio',
+      'ReqRefund': 'Add refund request folio',
+      'ReqDemurrage': 'Add demurrage request folio',
+      'ReqDetention': 'Add detention request folio'
+    }
+    return labels[filters.value.typeInvoice] || 'Add request folio'
+  }
+  
+  return 'Add numbers to search'
+})
+
+const searchFieldHint = computed(() => {
+  if (!filters.value.typeInvoice) return 'Press ENTER to add numbers to search'
+  
+  if (isInvoiceBasedType.value) {
+    return 'Press ENTER to add the invoice number to search'
+  }
+  
+  if (isRequestBasedType.value) {
+    return 'Press ENTER to add the request ID/folio to search'
+  }
+  
+  return 'Press ENTER to add numbers to search'
+})
+
+const searchButtonText = computed(() => {
+  if (!filters.value.typeInvoice) return 'Search'
+  
+  if (isInvoiceBasedType.value) {
+    return 'Search invoice(s)'
+  }
+  
+  if (isRequestBasedType.value) {
+    return 'Search request(s)'
+  }
+  
+  return 'Search'
 })
 
 const addInvoiceToSearch = () => {

@@ -219,20 +219,17 @@
             <td>{{ getCNInvoiceServices(creditNote) }}</td>
             <td class="whitespace-nowrap">
               <template v-if="creditNote.type === 'party'">
-                <v-chip v-if="creditNote.party_invoice?.invoice?.invoice_number" size="x-small" color="purple" class="mr-1">
-                  {{ creditNote.party_invoice.invoice.invoice_number }}
-                </v-chip>
-                <v-chip v-for="(pi, piIdx) in (creditNote.party_invoices || [])" :key="`pi-${piIdx}`" size="x-small" color="purple" class="mr-1">
+                <v-chip v-for="(pi, piIdx) in getAllPartyInvoices(creditNote)" :key="`pi-${piIdx}`" size="x-small" color="purple" class="mr-1">
                   {{ pi.invoice?.invoice_number }}
                 </v-chip>
               </template>
-              <template v-else-if="creditNote.invoices && creditNote.invoices.length > 1">
-                <v-chip v-for="(inv, iIdx) in creditNote.invoices" :key="`inv-${iIdx}`" size="x-small" class="mr-1">
+              <template v-else-if="getLinkedInvoices(creditNote).length > 0">
+                <v-chip v-for="(inv, iIdx) in getLinkedInvoices(creditNote)" :key="`inv-${iIdx}`" size="x-small" color="blue" class="mr-1">
                   {{ inv.invoice_number }}
                 </v-chip>
               </template>
               <template v-else>
-                {{ creditNote.invoice?.invoice_number }}
+                <span class="text-gray-500">-</span>
               </template>
             </td>
             <td>{{ formatToCurrency(creditNote.amount) }}</td>
@@ -386,6 +383,26 @@ const getCNInvoiceServices = (creditNote: any) => {
   }
   // Fallback: single invoice
   return getServicesFromInvoice(creditNote.invoice) || '-'
+}
+
+const getLinkedInvoices = (creditNote: any) => {
+  if (creditNote.invoices && creditNote.invoices.length > 0) return creditNote.invoices
+  if (creditNote.invoice) return [creditNote.invoice]
+  return []
+}
+
+const getAllPartyInvoices = (creditNote: any) => {
+  const invoices = []
+  if (creditNote.party_invoice) invoices.push(creditNote.party_invoice)
+  if (creditNote.party_invoices?.length > 0) invoices.push(...creditNote.party_invoices)
+  // Remove duplicates by invoice_id
+  const seen = new Set()
+  return invoices.filter(pi => {
+    if (!pi?.invoice?.id) return false
+    if (seen.has(pi.invoice.id)) return false
+    seen.add(pi.invoice.id)
+    return true
+  })
 }
 
 const onClickFilters = async () => {

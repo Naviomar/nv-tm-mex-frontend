@@ -118,11 +118,12 @@
       <div class="text-xs">
         Showing {{ bankMovements.from }} to {{ bankMovements.to }} from {{ bankMovements.total }} total records
       </div>
-      <v-table density="compact" fixed-header height="75vh">
-        <thead>
-          <tr>
-            <th class="font-bold!"></th>
-            <th class="font-bold!">Actions</th>
+      <div class="table-scroll-container">
+        <v-table density="compact" fixed-header height="75vh">
+          <thead>
+            <tr>
+              <th class="font-bold!"></th>
+              <th class="font-bold!">Actions</th>
             <th class="font-bold!">Movement date</th>
             <th class="font-bold!">Bank</th>
             <th class="font-bold!">Movement type</th>
@@ -225,6 +226,7 @@
           </tr>
         </tbody>
       </v-table>
+      </div>
       <v-pagination
         v-model="bankMovements.current_page"
         :length="bankMovements.last_page"
@@ -538,3 +540,44 @@ onMounted(async () => {
   await getBankMovements()
 })
 </script>
+
+<style scoped>
+/* Enhanced scrollbars */
+.table-scroll-container {
+  max-height: 75vh;
+  overflow: auto;
+  position: relative;
+  border-radius: 8px;
+}
+
+/* Webkit scrollbars (Chrome, Safari, Edge) */
+.table-scroll-container::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748b, #475569);
+}
+
+.table-scroll-container::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox */
+.table-scroll-container {
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #f1f5f9;
+}
+</style>
