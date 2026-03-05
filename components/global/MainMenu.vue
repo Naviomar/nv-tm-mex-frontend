@@ -138,6 +138,7 @@
       ></v-list-item>
       <v-list-item title="Alert types" prepend-icon="mdi-bell-cog" to="/system/alert-types"></v-list-item>
       <v-list-item title="Support tickets" prepend-icon="mdi-ticket-outline" to="/system/support-tickets"></v-list-item>
+      <v-list-item title="System Logs" prepend-icon="mdi-console" to="/system/system-logs"></v-list-item>
       <v-list-item title="Audit" prepend-icon="mdi-history" to="/system/audit-log"></v-list-item>
       <v-list-item title="Wiki" prepend-icon="mdi-book-outline" to="/wiki"></v-list-item>
     </v-list-group>

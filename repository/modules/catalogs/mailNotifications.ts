@@ -83,6 +83,46 @@ class MailNotificationsModule extends FetchFactory<any> {
     }
     return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
   }
+
+  async getConsigneeEmails(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/consignee-emails`, fetchOptions)
+  }
+
+  async searchConsigneeEmails(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/search-consignee-emails`, fetchOptions)
+  }
+
+  async linkConsigneeEmail(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/link-consignee-email`, fetchOptions)
+  }
+
+  async unlinkConsigneeEmail(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/unlink-consignee-email`, fetchOptions)
+  }
+
+  async copyFromNotification(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/copy-from-notification`, fetchOptions)
+  }
+
+  async bulkLinkConsigneeEmails(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/bulk-link-consignee-emails`, fetchOptions)
+  }
 }
 
 export default MailNotificationsModule

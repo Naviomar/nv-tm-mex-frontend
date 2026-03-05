@@ -1,158 +1,371 @@
 <template>
-  <div class="px-4 py-6 w-full max-w-6xl mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <Button variant="ghost" @click="goBack">Back</Button>
-      <h1 class="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Mail notification #{{ id }}</h1>
-    </div>
+  <v-container fluid>
+    <v-btn color="slate" size="small" variant="outlined" class="mb-4" @click="goBack">
+      Back
+    </v-btn>
+    
+    <v-card>
+      <v-card-title>
+        <h3>Mail notification #{{ id }}</h3>
+      </v-card-title>
+      
+      <v-card-text>
+        <v-tabs v-model="activeTab" bg-color="secondary" class="mb-4">
+          <v-tab value="general" prepend-icon="mdi-information-outline">
+            General Info
+          </v-tab>
+          <v-tab value="emails" prepend-icon="mdi-email-multiple">
+            Consignee Emails
+            <v-chip v-if="emailsCount > 0" size="x-small" color="primary" class="ml-2">
+              {{ emailsCount }}
+            </v-chip>
+          </v-tab>
+        </v-tabs>
 
-    <Card class="mail-notification-edit-card">
-      <div class="p-6 space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Left column: form fields -->
-          <div class="space-y-4">
-            <Input :model-value="shortName" label="Name" readonly />
-            <Input
-              :model-value="description"
-              label="Description *"
-              placeholder="Description"
-              :error="descriptionError"
-              @input="onDescriptionInput"
-            />
-            <div class="flex gap-2 pt-2">
-              <Button to="/system/mail-notifications" variant="secondary">Cancel</Button>
-              <Button variant="primary" @click="saveCharge">Save</Button>
-            </div>
-          </div>
+        <v-tabs-window v-model="activeTab">
+          <v-tabs-window-item value="general">
+            <v-card flat>
+              <v-card-text>
+                <v-row>
+                  <!-- Left column: form fields -->
+                  <v-col cols="12" md="6">
+                    <v-text-field
+                      :model-value="shortName"
+                      label="Name"
+                      variant="outlined"
+                      density="comfortable"
+                      readonly
+                    />
+                    <v-text-field
+                      :model-value="description"
+                      label="Description *"
+                      placeholder="Description"
+                      variant="outlined"
+                      density="comfortable"
+                      :error-messages="descriptionError"
+                      @update:model-value="setDescription"
+                    />
+                    <div class="d-flex gap-2">
+                      <v-btn to="/system/mail-notifications" variant="outlined" color="slate">
+                        Cancel
+                      </v-btn>
+                      <v-btn color="primary" @click="saveCharge">
+                        Save
+                      </v-btn>
+                    </div>
+                  </v-col>
 
-          <!-- Right column: departments & users -->
-          <div class="space-y-6">
-            <!-- Departments -->
-            <div class="space-y-3">
-              <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Departments</div>
-              <div class="flex flex-wrap gap-2 items-end">
-                <div class="flex-1 min-w-[140px]">
-                  <Select v-model="form.department" label="Select department">
-                    <option :value="null">Select…</option>
-                    <option v-for="d in availableDepartments" :key="d.id" :value="d.id">
-                      {{ d.name }}
-                    </option>
-                  </Select>
-                </div>
-                <Button variant="primary" size="sm" @click="linkDepartment">Add</Button>
-              </div>
-              <Table class="mail-notification-tables">
-                <thead>
-                  <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50">
-                    <th class="h-9 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">Name</th>
-                    <th class="h-9 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-20">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(department, index) in linkedDepartments"
-                    :key="`department-${index}`"
-                    class="border-b border-zinc-100 dark:border-zinc-800/80 last:border-0 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30"
-                  >
-                    <td class="px-3 py-2 flex justify-between items-center gap-2 text-zinc-900 dark:text-zinc-100">
-                      {{ department.name }}
-                      <UserInfoBadge :item="department" />
-                    </td>
-                    <td class="px-3 py-2 text-zinc-900 dark:text-zinc-100 text-center">
-                      <TrashButton :item="department" @click="unlinkDepartment(department)" />
-                    </td>
-                  </tr>
-                  <tr v-if="linkedDepartments.length === 0">
-                    <td colspan="2" class="px-3 py-4 text-center text-zinc-500 dark:text-zinc-400 text-sm">
-                      No departments linked
-                    </td>
-                  </tr>
-                </tbody>
-              </Table>
-            </div>
+                  <!-- Right column: departments & users -->
+                  <v-col cols="12" md="6">
+                    <!-- Departments -->
+                    <div class="mb-6">
+                      <div class="text-subtitle-1 font-weight-bold mb-3">Departments</div>
+                      <div class="d-flex gap-2 align-end mb-3">
+                        <v-select
+                          v-model="form.department"
+                          :items="availableDepartments"
+                          item-title="name"
+                          item-value="id"
+                          label="Select department"
+                          variant="outlined"
+                          density="comfortable"
+                          class="flex-grow-1"
+                        />
+                        <v-btn color="primary" size="small" @click="linkDepartment">
+                          Add
+                        </v-btn>
+                      </div>
+                      <v-table density="compact">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th width="100">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(department, index) in linkedDepartments" :key="`department-${index}`">
+                            <td>
+                              <div class="d-flex justify-space-between align-center">
+                                {{ department.name }}
+                                <UserInfoBadge :item="department" />
+                              </div>
+                            </td>
+                            <td class="text-center">
+                              <v-btn
+                                icon="mdi-delete"
+                                size="x-small"
+                                variant="text"
+                                color="error"
+                                @click="unlinkDepartment(department)"
+                              />
+                            </td>
+                          </tr>
+                          <tr v-if="linkedDepartments.length === 0">
+                            <td colspan="2" class="text-center text-grey pa-4">
+                              No departments linked
+                            </td>
+                          </tr>
+                        </tbody>
+                      </v-table>
+                    </div>
 
-            <!-- Users -->
-            <div class="space-y-3">
-              <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Users</div>
-              <div class="space-y-2">
-                <div class="flex flex-wrap gap-3 items-center">
-                  <div class="flex-1 min-w-[160px]">
-                    <Input v-model="userSearch" placeholder="Filter by email or name…" />
+                    <!-- Users -->
+                    <div>
+                      <div class="text-subtitle-1 font-weight-bold mb-3">Users</div>
+                      <div class="d-flex gap-2 align-center mb-3">
+                        <v-text-field
+                          v-model="userSearch"
+                          placeholder="Filter by email or name…"
+                          variant="outlined"
+                          density="compact"
+                          hide-details
+                          class="flex-grow-1"
+                        />
+                        <div class="d-flex align-center gap-2">
+                          <span class="text-caption">Default type:</span>
+                          <v-select
+                            v-model="defaultNotifyType"
+                            :items="['CC', 'BCC']"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            style="width: 100px"
+                          />
+                        </div>
+                      </div>
+                      <v-card variant="outlined" class="mb-3" style="max-height: 200px; overflow-y: auto">
+                        <div
+                          v-for="u in filteredAvailableUsers"
+                          :key="u.id"
+                          class="d-flex align-center gap-2 pa-2 hover-bg"
+                        >
+                          <span class="flex-grow-1 text-truncate text-body-2" :title="u.email">{{
+                            u.email
+                          }}</span>
+                          <v-select
+                            :model-value="getUserPendingType(u.id)"
+                            :items="['CC', 'BCC']"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            style="width: 80px"
+                            @update:model-value="setUserPendingType(u.id, $event)"
+                          />
+                          <v-btn size="small" color="primary" @click="linkUserQuick(u)">
+                            Add
+                          </v-btn>
+                        </div>
+                        <div v-if="filteredAvailableUsers.length === 0" class="pa-3 text-center text-grey">
+                          {{ userSearch ? 'No users match the filter.' : 'All users are already linked.' }}
+                        </div>
+                      </v-card>
+                      <v-table density="compact">
+                        <thead>
+                          <tr>
+                            <th>User email</th>
+                            <th>Notification type</th>
+                            <th width="100">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(user, index) in linkedUsers" :key="`user-${index}`">
+                            <td>{{ user.name }}</td>
+                            <td>
+                              <div class="d-flex justify-space-between align-center">
+                                {{ user.pivot?.type }}
+                                <UserInfoBadge :item="user.pivot" />
+                              </div>
+                            </td>
+                            <td class="text-center">
+                              <v-btn
+                                icon="mdi-delete"
+                                size="x-small"
+                                variant="text"
+                                color="error"
+                                @click="unlinkUser(user)"
+                              />
+                            </td>
+                          </tr>
+                          <tr v-if="linkedUsers.length === 0">
+                            <td colspan="3" class="text-center text-grey pa-4">
+                              No users linked
+                            </td>
+                          </tr>
+                        </tbody>
+                      </v-table>
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-tabs-window-item>
+
+          <v-tabs-window-item value="emails">
+            <v-card flat>
+              <v-card-text>
+                <!-- Bulk Operations Section -->
+                <v-card variant="tonal" color="blue-grey-lighten-5" class="mb-4">
+                  <v-card-title class="text-subtitle-1">Bulk Operations</v-card-title>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <div class="text-caption mb-2">Copy from another notification</div>
+                        <div class="d-flex gap-2">
+                          <v-select
+                            v-model="bulkForm.sourceNotificationId"
+                            :items="otherNotifications"
+                            item-title="short_name"
+                            item-value="id"
+                            label="Select notification..."
+                            variant="outlined"
+                            density="comfortable"
+                            class="flex-grow-1"
+                          />
+                          <v-select
+                            v-model="bulkForm.copyType"
+                            :items="['TO', 'CC', 'BCC']"
+                            variant="outlined"
+                            density="comfortable"
+                            style="width: 100px"
+                          />
+                          <v-btn color="primary" size="small" @click="copyFromNotification">
+                            Copy
+                          </v-btn>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+
+                <!-- Search and Add Emails -->
+                <div class="mb-4">
+                  <div class="d-flex justify-space-between align-center mb-3">
+                    <div class="text-subtitle-1 font-weight-bold">Manage Emails</div>
+                    <div class="d-flex gap-2">
+                      <v-text-field
+                        v-model="emailSearch"
+                        placeholder="Search customer or email..."
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        style="width: 250px"
+                        @input="searchEmails"
+                      />
+                      <v-select
+                        v-model="defaultEmailType"
+                        :items="['TO', 'CC', 'BCC']"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        style="width: 100px"
+                      />
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">Default type:</span>
-                    <Select v-model="defaultNotifyType">
-                      <option value="CC">CC</option>
-                      <option value="BCC">BCC</option>
-                    </Select>
-                  </div>
-                </div>
-                <div
-                  class="max-h-48 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-800"
-                >
-                  <div
-                    v-for="u in filteredAvailableUsers"
-                    :key="u.id"
-                    class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40"
-                  >
-                    <span class="flex-1 min-w-0 truncate text-sm text-zinc-900 dark:text-zinc-100" :title="u.email">{{
-                      u.email
-                    }}</span>
-                    <select
-                      :value="getUserPendingType(u.id)"
-                      class="h-8 w-20 shrink-0 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 text-xs text-zinc-900 dark:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
-                      @change="setUserPendingType(u.id, ($event.target as HTMLSelectElement).value)"
+
+                  <!-- Available Emails to Add -->
+                  <v-card v-if="searchResults.length > 0" variant="outlined" class="mb-4" style="max-height: 300px; overflow-y: auto">
+                    <div
+                      v-for="email in searchResults"
+                      :key="email.id"
+                      class="d-flex align-center gap-3 pa-3 border-b"
                     >
-                      <option value="CC">CC</option>
-                      <option value="BCC">BCC</option>
-                    </select>
-                    <Button size="sm" variant="primary" @click="linkUserQuick(u)">Add</Button>
-                  </div>
-                  <p
-                    v-if="filteredAvailableUsers.length === 0"
-                    class="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400"
-                  >
-                    {{ userSearch ? 'No users match the filter.' : 'All users are already linked.' }}
-                  </p>
+                      <div class="flex-grow-1">
+                        <div class="text-body-2 font-weight-medium">{{ email.email }}</div>
+                        <div class="text-caption text-grey">
+                          {{ email.consignee?.name }} ({{ email.consignee?.code }})
+                        </div>
+                      </div>
+                      <v-select
+                        :model-value="getPendingEmailType(email.id)"
+                        :items="['TO', 'CC', 'BCC']"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        style="width: 80px"
+                        @update:model-value="setPendingEmailType(email.id, $event)"
+                      />
+                      <v-btn size="small" color="primary" @click="linkEmail(email)">
+                        Add
+                      </v-btn>
+                    </div>
+                  </v-card>
                 </div>
-              </div>
-              <Table class="mail-notification-tables">
-                <thead>
-                  <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50">
-                    <th class="h-9 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">User email</th>
-                    <th class="h-9 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400">
-                      Notification type (CC / BCC)
-                    </th>
-                    <th class="h-9 px-3 text-left font-medium text-zinc-600 dark:text-zinc-400 w-20">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(user, index) in linkedUsers"
-                    :key="`user-${index}`"
-                    class="border-b border-zinc-100 dark:border-zinc-800/80 last:border-0 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30"
+
+                <!-- Linked Emails Table -->
+                <div>
+                  <div class="d-flex justify-space-between align-center mb-3">
+                    <div class="text-subtitle-1 font-weight-bold">Assigned Emails</div>
+                    <v-chip size="small" color="primary">
+                      Total: {{ linkedEmails?.total ?? 0 }}
+                    </v-chip>
+                  </div>
+                  <div class="mb-3">
+                    <v-text-field
+                      v-model="linkedEmailsSearch"
+                      placeholder="Filter linked emails..."
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      @input="loadLinkedEmails"
+                    />
+                  </div>
+                  <v-data-table
+                    :headers="emailHeaders"
+                    :items="linkedEmails?.data ?? []"
+                    :items-per-page="-1"
+                    density="comfortable"
+                    hide-default-footer
                   >
-                    <td class="px-3 py-2 text-zinc-900 dark:text-zinc-100">{{ user.name }}</td>
-                    <td class="px-3 py-2 flex justify-between items-center gap-2 text-zinc-900 dark:text-zinc-100">
-                      {{ user.pivot?.type }}
-                      <UserInfoBadge :item="user.pivot" />
-                    </td>
-                    <td class="px-3 py-2 text-zinc-900 dark:text-zinc-100 text-center">
-                      <TrashButton :item="user" @click="unlinkUser(user)" />
-                    </td>
-                  </tr>
-                  <tr v-if="linkedUsers.length === 0">
-                    <td colspan="3" class="px-3 py-4 text-center text-zinc-500 dark:text-zinc-400 text-sm">
-                      No users linked
-                    </td>
-                  </tr>
-                </tbody>
-              </Table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
-  </div>
+                    <template #item.email="{ item }">
+                      {{ item.email }}
+                    </template>
+                    <template #item.customer="{ item }">
+                      <div>
+                        <div class="text-body-2">{{ item.consignee?.name }}</div>
+                        <div class="text-caption text-grey">{{ item.consignee?.code }}</div>
+                      </div>
+                    </template>
+                    <template #item.type="{ item }">
+                      <v-chip
+                        size="small"
+                        :color="item.pivot?.type === 'TO' ? 'blue' : item.pivot?.type === 'CC' ? 'green' : 'purple'"
+                      >
+                        {{ item.pivot?.type }}
+                      </v-chip>
+                    </template>
+                    <template #item.actions="{ item }">
+                      <v-btn
+                        icon="mdi-delete"
+                        size="x-small"
+                        variant="text"
+                        color="error"
+                        @click="unlinkEmail(item)"
+                      />
+                    </template>
+                    <template #no-data>
+                      <div class="text-center pa-4 text-grey">
+                        No emails assigned yet
+                      </div>
+                    </template>
+                  </v-data-table>
+
+                  <!-- Pagination -->
+                  <div v-if="linkedEmails && linkedEmails.last_page > 1" class="d-flex justify-center mt-4">
+                    <v-pagination
+                      :model-value="linkedEmails.current_page"
+                      :length="linkedEmails.last_page"
+                      :total-visible="7"
+                      @update:model-value="onEmailsPaginationClick"
+                    />
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-tabs-window-item>
+        </v-tabs-window>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 <script setup lang="ts">
 import { useField } from 'vee-validate'
@@ -169,6 +382,7 @@ const goBack = () => {
   router.back()
 }
 
+const activeTab = ref<'general' | 'emails'>('general')
 const linkedUsers = ref<any[]>([])
 const linkedDepartments = ref<any[]>([])
 const users = ref<any[]>([])
@@ -179,6 +393,28 @@ const form = reactive({
 const userSearch = ref('')
 const defaultNotifyType = ref<'CC' | 'BCC'>('CC')
 const userPendingTypes = ref<Record<number, string>>({})
+
+const linkedEmails = ref<any>(null)
+const linkedEmailsSearch = ref('')
+const searchResults = ref<any[]>([])
+const emailSearch = ref('')
+const defaultEmailType = ref<'TO' | 'CC' | 'BCC'>('TO')
+const emailPendingTypes = ref<Record<number, string>>({})
+const otherNotifications = ref<any[]>([])
+const bulkForm = reactive({
+  sourceNotificationId: null as number | null,
+  copyType: 'TO' as 'TO' | 'CC' | 'BCC',
+})
+const searchTimeout = ref<any>(null)
+
+const emailsCount = computed(() => linkedEmails.value?.total ?? 0)
+
+const emailHeaders = [
+  { title: 'Email', key: 'email', sortable: false },
+  { title: 'Customer', key: 'customer', sortable: false },
+  { title: 'Type', key: 'type', sortable: false },
+  { title: 'Actions', key: 'actions', sortable: false, align: 'center' },
+]
 
 const { setValues, handleSubmit } = useForm({
   validationSchema: schema,
@@ -288,8 +524,119 @@ const unlinkDepartment = async (department: any) => {
   snackbar.add({ type: 'success', text: 'Department unlinked' })
 }
 
+function getPendingEmailType(emailId: number) {
+  return emailPendingTypes.value[emailId] ?? defaultEmailType.value
+}
+
+function setPendingEmailType(emailId: number, type: string) {
+  emailPendingTypes.value[emailId] = type
+}
+
+async function loadLinkedEmails() {
+  try {
+    linkedEmails.value = await $api.mailNotifications.getConsigneeEmails(id, {
+      query: {
+        page: linkedEmails.value?.current_page ?? 1,
+        limit: 20,
+        search: linkedEmailsSearch.value,
+      },
+    })
+  } catch (error) {
+    console.error('Error loading linked emails:', error)
+  }
+}
+
+async function searchEmails() {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+
+  searchTimeout.value = setTimeout(async () => {
+    if (emailSearch.value.trim().length < 2) {
+      searchResults.value = []
+      return
+    }
+
+    try {
+      searchResults.value = await $api.mailNotifications.searchConsigneeEmails(id, {
+        query: {
+          search: emailSearch.value,
+          limit: 20,
+        },
+      })
+    } catch (error) {
+      console.error('Error searching emails:', error)
+    }
+  }, 300)
+}
+
+async function linkEmail(email: any) {
+  const type = getPendingEmailType(email.id)
+  try {
+    await $api.mailNotifications.linkConsigneeEmail(id, {
+      consignee_email_id: email.id,
+      type,
+    })
+    snackbar.add({ type: 'success', text: 'Email assigned successfully' })
+    searchResults.value = searchResults.value.filter((e: any) => e.id !== email.id)
+    await loadLinkedEmails()
+  } catch (error) {
+    console.error('Error linking email:', error)
+    snackbar.add({ type: 'error', text: 'Error assigning email' })
+  }
+}
+
+async function unlinkEmail(email: any) {
+  try {
+    await $api.mailNotifications.unlinkConsigneeEmail(id, {
+      consignee_email_id: email.id,
+    })
+    snackbar.add({ type: 'success', text: 'Email removed successfully' })
+    await loadLinkedEmails()
+  } catch (error) {
+    console.error('Error unlinking email:', error)
+    snackbar.add({ type: 'error', text: 'Error removing email' })
+  }
+}
+
+async function copyFromNotification() {
+  if (!bulkForm.sourceNotificationId) {
+    snackbar.add({ type: 'warning', text: 'Please select a notification to copy from' })
+    return
+  }
+
+  try {
+    const response = await $api.mailNotifications.copyFromNotification(id, {
+      source_notification_id: bulkForm.sourceNotificationId,
+      type: bulkForm.copyType,
+    })
+    snackbar.add({
+      type: 'success',
+      text: `${response.count} emails copied successfully`,
+    })
+    bulkForm.sourceNotificationId = null
+    await loadLinkedEmails()
+  } catch (error) {
+    console.error('Error copying notifications:', error)
+    snackbar.add({ type: 'error', text: 'Error copying notifications' })
+  }
+}
+
+function onEmailsPaginationClick(page: number) {
+  if (linkedEmails.value) {
+    linkedEmails.value.current_page = page
+  }
+  loadLinkedEmails()
+}
+
 onMounted(async () => {
   users.value = await $api.users.getAllUsers()
   departments.value = await $api.departments.getAllDepartments()
+  
+  const allNotifications = await $api.mailNotifications.getMailNotifications()
+  otherNotifications.value = (allNotifications?.data ?? []).filter((n: any) => n.id !== parseInt(id))
+  
+  // Load email count immediately on mount
+  await loadLinkedEmails()
 })
 </script>
