@@ -77,6 +77,7 @@ const darkMode = useDarkMode()
 const config = useRuntimeConfig()
 const router = useRouter()
 const { connect: connectAlertsSocket, disconnect: disconnectAlertsSocket } = useAlertsSocket()
+const { connect: connectPresence, disconnect: disconnectPresence } = useSystemPresence()
 
 const currentYear = computed(() => new Date().getFullYear())
 const appName = computed(() => config.public.appName)
@@ -116,6 +117,9 @@ onMounted(() => {
   
   // Connect to alerts socket
   connectAlertsSocket()
+  
+  // Connect to system presence (global)
+  connectPresence()
 })
 
 onBeforeUnmount(() => {
@@ -124,6 +128,9 @@ onBeforeUnmount(() => {
   
   // Disconnect alerts socket
   disconnectAlertsSocket()
+  
+  // Disconnect system presence
+  disconnectPresence()
 })
 
 const goToHome = () => {
