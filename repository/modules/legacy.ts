@@ -46,6 +46,13 @@ class LegacyModule extends FetchFactory<any> {
       query: { referencia, type },
     })
   }
+
+  async getLegacyCharges(legacyReference: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/charges`, {
+      ...fetchOptions,
+      query: { legacy_reference: legacyReference },
+    })
+  }
 }
 
 export default LegacyModule
