@@ -1048,6 +1048,13 @@ const process = async () => {
   }
 }
 const saveSeal = async () => {
+  const hasAnyStamp = app.states.some(state => state.stamp !== null)
+  
+  if (!hasAnyStamp) {
+    snackbar.add({ type: 'warning', text: 'Debe sellar al menos una página del PDF antes de guardar' })
+    return
+  }
+
   try {
     loadingIndicator.start()
     loadingStore.start()
