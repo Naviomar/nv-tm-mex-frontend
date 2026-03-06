@@ -44,6 +44,17 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/charges-pending-invoice`, fetchOptions)
   }
 
+  async getComparativeChart(years: number[]) {
+    return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
+      body: { years }
+    })
+  }
+
+  async getYearlyComparative(params: { years: number[], refresh?: boolean }) {
+    return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
+      body: params
+    })
+  }
 
 }
 
