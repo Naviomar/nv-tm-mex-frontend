@@ -1,100 +1,145 @@
 <template>
   <div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-48">
-      <div>
-        <v-card class="mb-4">
-          <v-card-title>
-            <div class="font-bold">Customer TM {{ invoiceType }} #{{ invoiceTm.invoice.invoice_number }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <v-card class="mb-4">
+        <v-card-title>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+          <div class="font-bold">Customer TM {{ invoiceType }} #{{ invoiceTm.invoice.invoice_number }}</div>
 
-            <div class="flex gap-4 items-center">
-              <v-chip
-                :color="isPaid ? 'green' : 'warning'"
-                text-color="white"
-                size="small"
-                class="capitalize"
-                v-if="!isCancelled"
+          <div class="flex flex-wrap gap-2 md:gap-4 items-center">
+            <v-chip
+              :color="isPaid ? 'green' : 'warning'"
+              text-color="white"
+              size="small"
+              class="capitalize"
+              v-if="!isCancelled"
+            >
+              {{ isPaid ? 'Paid' : 'Payment pending' }}
+            </v-chip>
+            <div v-if="invoiceTm.from_deleted_invoice">
+              <v-chip size="small" color="red"
+                >Linked to deleted invoice #{{ invoiceTm.from_deleted_invoice }}</v-chip
               >
-                {{ isPaid ? 'Paid' : 'Payment pending' }}
-              </v-chip>
-              <div v-if="invoiceTm.from_deleted_invoice">
-                <v-chip size="small" color="red"
-                  >Linked to deleted invoice #{{ invoiceTm.from_deleted_invoice }}</v-chip
-                >
-              </div>
             </div>
-          </v-card-title>
-          <v-card-text>
-            <div v-if="isFreeFormat" class="grid grid-cols-2">
-              <div class="font-bold">Free format</div>
-              <div class="font-bold">No reference linked</div>
-            </div>
-
-            <div class="grid grid-cols-2">
-              <div>Customer</div>
-              <div>{{ invoiceTm.consignee?.name }}</div>
-              <div>Regimen Fiscal</div>
-              <div>{{ invoiceTm.regimen_fiscal }}</div>
-              <div>RFC</div>
-              <div>{{ invoiceTm.rfc }}</div>
-              <div>Uso CFDI</div>
-              <div>{{ invoiceTm.uso_cfdi }}</div>
-              <div>Método de pago</div>
-              <div>{{ invoiceTm.metodo_pago }}</div>
-              <div>Forma de pago</div>
-              <div>{{ invoiceTm.forma_pago }}</div>
-
-              <div>Address</div>
-              <div>{{ invoiceTm.address }}</div>
-
-              <div class="col-span-2 py-1">
-                <v-divider></v-divider>
-              </div>
-              <div>Amount</div>
-              <div>
-                {{ getCurrencyName(invoiceTm.invoice?.currency_id) }} {{ formatToCurrency(invoiceTm.invoice?.total) }}
-              </div>
-              <div v-if="invoiceTm.invoice?.currency_id != 2">USD Exchange rate</div>
-              <div v-if="invoiceTm.invoice?.currency_id != 2">
-                {{ formatToCurrency(1 / invoiceTm.exchange_rate) }}
-              </div>
-              <div class="col-span-2 py-1">
-                <v-divider></v-divider>
-              </div>
-            </div>
-            <div class="flex justify-around gap-2 mb-2">
-              <PreviewTmInvoice service="air" :invoice="invoiceTm" />
-              <div v-if="!isCancelled" class="flex flex-col gap-2">
-                <v-btn v-if="isProforma" color="warning" size="small" @click="onEditProformaClick"
-                  ><v-icon>mdi-pencil-outline</v-icon>Edit proforma</v-btn
-                >
-
-                <v-btn v-if="isProforma" color="red" size="small" @click="onDeleteProformaClick"
-                  ><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn
-                >
-
-                <v-btn v-if="isProforma" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
-                  ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
-                >
-              </div>
-              <AuthorizeProcessSmart
-                v-if="!isCancelled && !isProforma"
-                label="Cancel TM invoice"
-                :resource="authorizeResources.CancelInvoiceTmAir.resource"
-                :resourceId="invoiceTm.id"
-              >
-                <template #auth>
-                  <v-btn color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
-                </template>
-              </AuthorizeProcessSmart>
-            </div>
-            <v-alert v-if="isCancelled" density="compact" type="error" elevation="2">
-              <div>This invoice has been cancelled at {{ formatDateString(invoiceTm.cancelled_at) }}</div>
-              <div>Reason: {{ invoiceTm.cancelled_reason }}</div>
-              <div>Cancelled by: {{ invoiceTm.cancel_by?.name }}</div>
+          </div>
+          </div>
+        </v-card-title>
+        <v-card-text>
+          <div v-if="isFreeFormat" class="mb-4">
+            <v-alert type="info" variant="tonal" density="compact">
+              <div class="font-semibold">Free format - No reference linked</div>
             </v-alert>
-          </v-card-text>
-        </v-card>
-      </div>
+          </div>
+
+          <!-- Customer & Amount Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <v-card variant="tonal" color="blue">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon size="32" color="blue-darken-2">mdi-account-circle</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-blue-darken-1 font-semibold mb-1">CUSTOMER</div>
+                    <div class="font-bold text-base">{{ invoiceTm.consignee?.name }}</div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-card variant="tonal" color="green">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon size="32" color="green-darken-2">mdi-cash-multiple</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-green-darken-1 font-semibold mb-1">AMOUNT</div>
+                    <div class="font-bold text-xl">{{ getCurrencyName(invoiceTm.invoice?.currency_id) }} {{ formatToCurrency(invoiceTm.invoice?.total) }}</div>
+                    <div v-if="invoiceTm.invoice?.currency_id != 2" class="text-sm mt-1">
+                      <span class="text-grey-darken-1">Exchange Rate:</span> {{ formatToCurrency(1 / invoiceTm.exchange_rate) }}
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+
+          <!-- Fiscal Information -->
+          <v-card variant="tonal" color="purple" class="mb-4">
+            <v-card-text>
+              <div class="flex items-center gap-2 mb-3">
+                <v-icon color="purple-darken-2">mdi-file-document-outline</v-icon>
+                <div class="text-sm font-bold text-purple-darken-2">FISCAL INFORMATION</div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">RFC</div>
+                  <div class="font-semibold">{{ invoiceTm.rfc }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Régimen Fiscal</div>
+                  <div class="font-semibold">{{ invoiceTm.regimen_fiscal }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Uso CFDI</div>
+                  <div class="font-semibold">{{ invoiceTm.uso_cfdi }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Método de pago</div>
+                  <div class="font-semibold">{{ invoiceTm.metodo_pago }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Forma de pago</div>
+                  <div class="font-semibold">{{ invoiceTm.forma_pago }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- Address -->
+          <v-card variant="tonal" color="orange" class="mb-4">
+            <v-card-text>
+              <div class="flex items-start gap-3">
+                <v-icon color="orange-darken-2">mdi-map-marker</v-icon>
+                <div class="flex-1">
+                  <div class="text-xs text-orange-darken-1 font-semibold mb-1">ADDRESS</div>
+                  <div class="font-medium">{{ invoiceTm.address || 'No address provided' }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-divider class="my-4"></v-divider>
+          <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
+            <PreviewTmInvoice service="air" :invoice="invoiceTm" />
+            <div v-if="!isCancelled" class="flex flex-col gap-2">
+              <v-btn v-if="isProforma" color="warning" size="small" @click="onEditProformaClick"
+                ><v-icon>mdi-pencil-outline</v-icon>Edit proforma</v-btn
+              >
+
+              <v-btn v-if="isProforma" color="red" size="small" @click="onDeleteProformaClick"
+                ><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn
+              >
+
+              <v-btn v-if="isProforma" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
+                ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
+              >
+            </div>
+            <AuthorizeProcessSmart
+              v-if="!isCancelled && !isProforma"
+              label="Cancel TM invoice"
+              :resource="authorizeResources.CancelInvoiceTmAir.resource"
+              :resourceId="invoiceTm.id"
+            >
+              <template #auth>
+                <v-btn color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
+              </template>
+            </AuthorizeProcessSmart>
+          </div>
+          <v-alert v-if="isCancelled" density="compact" type="error" elevation="2">
+            <div>This invoice has been cancelled at {{ formatDateString(invoiceTm.cancelled_at) }}</div>
+            <div>Reason: {{ invoiceTm.cancelled_reason }}</div>
+            <div>Cancelled by: {{ invoiceTm.cancel_by?.name }}</div>
+          </v-alert>
+        </v-card-text>
+      </v-card>
       <div>
         <v-card v-if="isProforma && !isCancelled" density="compact" class="mb-2">
           <v-card-title
@@ -106,7 +151,7 @@
             </ClientOnly>
           </v-card-text>
         </v-card>
-
+    
         <v-card v-if="!isFreeFormat" color="" class="mb-4">
           <v-card-title><div class="font-bold">Linked services</div></v-card-title>
           <v-card-text>
@@ -132,140 +177,144 @@
             </div>
           </v-card-text>
         </v-card>
-        <v-card v-if="invoiceTm.uuid" color="grey-lighten-4" class="mb-4">
-          <v-card-title><div class="font-bold">CFDI Linked</div></v-card-title>
-          <v-card-text>
-            <div class="text-xs font-bold mb-4">
-              CFDI UUID:
-              <div>{{ invoiceTm.uuid }}</div>
-            </div>
-            <div class="flex flex-col space-y-4">
-              <ButtonDownloadS3Object
-                v-if="isFileString(invoiceTm.pdf_attachment)"
-                :s3Path="invoiceTm.pdf_attachment"
-              />
-              <ButtonDownloadS3Object
-                v-if="isFileString(invoiceTm.xml_attachment)"
-                :s3Path="invoiceTm.xml_attachment"
-              />
-            </div>
-          </v-card-text>
-          <v-card-actions class="justify-end">
-            <v-btn size="x-small" color="red" @click="formCfdiDialog.showDialog">
-              <v-icon>mdi-close-circle-outline</v-icon>
-              Remove CFDI link
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <SendCustomerInvoiceByEmail :id="$props.id" :invoice="invoiceTm" invoice_type="tm" />
       </div>
-      <div class="col-span-2">
-        <v-card v-if="isProforma" color="blue-lighten-4" class="mb-4">
-          <v-card-title
-            ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
-          >
-          <v-card-text>
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th class="font-bold! w-5">#</th>
-                  <th class="font-bold!">Service</th>
-                  <th class="font-bold!">Concept</th>
-                  <th class="font-bold!">Amount</th>
-                  <th class="font-bold!">IVA</th>
-                  <th class="font-bold! text-right">Subtotal</th>
-                  <th class="font-bold!">Generated by</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
-                  <td>{{ charge.id }}</td>
-                  <td>{{ charge.serviceable?.reference_number }}</td>
-                  <td>
-                    <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
-                  </td>
-                  <td>{{ formatToCurrency(charge.amount) }}</td>
-                  <td>{{ formatToCurrency(charge.amount_iva) }}</td>
-                  <td class="text-right">
-                    {{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(getTmConceptTotal(charge)) }}
-                  </td>
-                  <td>{{ charge.creator?.name }}</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="5" class="text-right font-bold">Total</td>
-                  <td class="font-bold text-right">{{ formatToCurrency(invoiceTmTotal) }}</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </v-table>
-          </v-card-text>
-        </v-card>
+    </div>
+    <div>
+      <v-card v-if="invoiceTm.uuid" color="grey-lighten-4" class="mb-4">
+        <v-card-title><div class="font-bold">CFDI Linked</div></v-card-title>
+        <v-card-text>
+          <div class="text-xs font-bold mb-4">
+            CFDI UUID:
+            <div>{{ invoiceTm.uuid }}</div>
+          </div>
+          <div class="flex flex-col space-y-4">
+            <ButtonDownloadS3Object
+              v-if="isFileString(invoiceTm.pdf_attachment)"
+              :s3Path="invoiceTm.pdf_attachment"
+            />
+            <ButtonDownloadS3Object
+              v-if="isFileString(invoiceTm.xml_attachment)"
+              :s3Path="invoiceTm.xml_attachment"
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn size="x-small" color="red" @click="formCfdiDialog.showDialog">
+            <v-icon>mdi-close-circle-outline</v-icon>
+            Remove CFDI link
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+      <SendCustomerInvoiceByEmail :id="$props.id" :invoice="invoiceTm" invoice_type="tm" />
+      <v-card v-if="isProforma" color="blue-lighten-4" class="mb-4">
+        <v-card-title
+          ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
+        >
+        <v-card-text>
+          <div class="overflow-x-auto">
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th class="font-bold! w-5">#</th>
+                <th class="font-bold!">Service</th>
+                <th class="font-bold!">Concept</th>
+                <th class="font-bold!">Amount</th>
+                <th class="font-bold!">IVA</th>
+                <th class="font-bold! text-right">Subtotal</th>
+                <th class="font-bold!">Generated by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
+                <td>{{ charge.id }}</td>
+                <td>{{ charge.serviceable?.reference_number }}</td>
+                <td>
+                  <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
+                </td>
+                <td>{{ formatToCurrency(charge.amount) }}</td>
+                <td>{{ formatToCurrency(charge.amount_iva) }}</td>
+                <td class="text-right">
+                  {{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(getTmConceptTotal(charge)) }}
+                </td>
+                <td>{{ charge.creator?.name }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-right font-bold">Total</td>
+                <td class="font-bold text-right">{{ formatToCurrency(invoiceTmTotal) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </v-table>
+          </div>
+        </v-card-text>
+      </v-card>
 
-        <v-card v-if="!isProforma" color="grey-lighten-4" class="mb-4">
-          <v-card-title
-            ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
-          >
-          <v-card-text>
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th class="font-bold! w-5">#</th>
-                  <th class="font-bold!">Ref #</th>
-                  <th class="font-bold!">Concept</th>
-                  <th class="font-bold!">Amount</th>
-                  <th class="font-bold!">+ iva</th>
-                  <th class="font-bold! text-right">Subtotal</th>
-                  <th class="text-left">Pending</th>
-                  <th class="font-bold!">Status</th>
-                  <th class="font-bold!">Payment(s)</th>
-                  <th class="font-bold!">Generated by</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
-                  <td>{{ charge.id }}</td>
-                  <td>{{ getReferenceNumber(charge.chargeable.air_reference_id) }}</td>
-                  <td>
-                    <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
-                  </td>
-                  <td class="text-right">{{ formatToCurrency(charge.amount) }}</td>
-                  <td class="text-right">{{ formatToCurrency(charge.amount_iva) }}</td>
-                  <td class="text-right">{{ formatToCurrency(getTmConceptTotal(charge)) }}</td>
-                  <td class="text-right">{{ formatToCurrency(charge.pending_balance) }}</td>
-                  <td>
-                    <v-chip
-                      :color="charge.pending_balance > 0 ? 'red' : 'green'"
-                      text-color="white"
-                      small
-                      class="capitalize"
+      <v-card v-if="!isProforma" color="grey-lighten-4" class="mb-4">
+        <v-card-title
+          ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
+        >
+        <v-card-text>
+          <div class="overflow-x-auto">
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th class="font-bold! w-5">#</th>
+                <th class="font-bold!">Ref #</th>
+                <th class="font-bold!">Concept</th>
+                <th class="font-bold!">Amount</th>
+                <th class="font-bold!">+ iva</th>
+                <th class="font-bold! text-right">Subtotal</th>
+                <th class="text-left">Pending</th>
+                <th class="font-bold!">Status</th>
+                <th class="font-bold!">Payment(s)</th>
+                <th class="font-bold!">Generated by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
+                <td>{{ charge.id }}</td>
+                <td>{{ getReferenceNumber(charge.chargeable.air_reference_id) }}</td>
+                <td>
+                  <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
+                </td>
+                <td class="text-right">{{ formatToCurrency(charge.amount) }}</td>
+                <td class="text-right">{{ formatToCurrency(charge.amount_iva) }}</td>
+                <td class="text-right">{{ formatToCurrency(getTmConceptTotal(charge)) }}</td>
+                <td class="text-right">{{ formatToCurrency(charge.pending_balance) }}</td>
+                <td>
+                  <v-chip
+                    :color="charge.pending_balance > 0 ? 'red' : 'green'"
+                    text-color="white"
+                    small
+                    class="capitalize"
+                  >
+                    {{ charge.pending_balance > 0 ? 'Pending' : 'Paid' }}
+                  </v-chip>
+                </td>
+                <td>
+                  <div v-for="(payment, index) in charge.payments" :key="`payment-${index}`">
+                    <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
+                      ><v-icon>mdi-eye-outline</v-icon>{{ paymentableName(payment) }} #{{ payment.id }}
+                      {{ formatToCurrency(payment.amount) }}</v-chip
                     >
-                      {{ charge.pending_balance > 0 ? 'Pending' : 'Paid' }}
-                    </v-chip>
-                  </td>
-                  <td>
-                    <div v-for="(payment, index) in charge.payments" :key="`payment-${index}`">
-                      <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
-                        ><v-icon>mdi-eye-outline</v-icon>{{ paymentableName(payment) }} #{{ payment.id }}
-                        {{ formatToCurrency(payment.amount) }}</v-chip
-                      >
-                    </div>
-                  </td>
-                  <td>{{ charge.creator?.name }}</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="5" class="text-right font-bold">Total</td>
-                  <td class="font-bold text-right">{{ formatToCurrency(invoiceTmTotal) }}</td>
-                  <td colspan="4"></td>
-                </tr>
-              </tfoot>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </div>
+                  </div>
+                </td>
+                <td>{{ charge.creator?.name }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="text-right font-bold">Total</td>
+                <td class="font-bold text-right">{{ formatToCurrency(invoiceTmTotal) }}</td>
+                <td colspan="4"></td>
+              </tr>
+            </tfoot>
+          </v-table>
+          </div>
+        </v-card-text>
+      </v-card>
     </div>
     <v-dialog v-model="showCancelDialog" max-width="400">
       <v-card>
