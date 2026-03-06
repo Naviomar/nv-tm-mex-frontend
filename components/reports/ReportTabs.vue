@@ -27,6 +27,25 @@
       <!-- Content Area -->
       <v-card-text class="pa-6">
         <v-tabs-window v-model="tab" class="tabs-content">
+          <!-- Default empty state -->
+          <v-tabs-window-item value="">
+            <div class="empty-state">
+              <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-chart-box-outline</v-icon>
+              <h3 class="text-h5 font-weight-medium text-grey-darken-2 mb-2">No Report Selected</h3>
+              <p class="text-body-1 text-grey-darken-1 mb-4 text-center" style="max-width: 400px;">
+                Select a report from the tabs above to view the data and analytics
+              </p>
+              <v-btn
+                color="primary"
+                variant="tonal"
+                @click="tab = viewMode === 'charts' ? 'charts-tab' : 'sea-tab'"
+              >
+                <v-icon start>mdi-arrow-right</v-icon>
+                View First {{ viewMode === 'charts' ? 'Chart' : 'Report' }}
+              </v-btn>
+            </div>
+          </v-tabs-window-item>
+          
           <!-- Charts Content -->
           <v-tabs-window-item v-if="viewMode === 'charts'" value="charts-tab">
             <ComparativeChart />
@@ -117,16 +136,33 @@ const currentMenuItems = computed(() => {
 })
 
 // Auto-switch to first tab when view mode changes
-watch(() => props.viewMode, (newMode) => {
-  if (newMode === 'charts') {
-    tab.value = 'charts-tab'
-  } else {
-    tab.value = 'sea-tab'
+watch(() => props.viewMode, (newMode, oldMode) => {
+  // Only switch if mode actually changed or tab is empty
+  if (newMode !== oldMode || !tab.value) {
+    nextTick(() => {
+      if (newMode === 'charts') {
+        tab.value = 'charts-tab'
+      } else {
+        tab.value = 'sea-tab'
+      }
+    })
   }
-})
+}, { immediate: true })
 </script>
 
 <style scoped>
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 40px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  border: 2px dashed #cbd5e1;
+}
+
 .reports-container {
   width: 100%;
   padding: 16px;
