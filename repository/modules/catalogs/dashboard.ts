@@ -16,6 +16,14 @@ class DashboardModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/billing-global-dash`, fetchOptions)
   }
 
+  async getSeaCaptureStats(params?: any, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-capture-stats`, { ...fetchOptions, params })
+  }
+
+  async getAirCaptureStats(params?: any, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/air-capture-stats`, { ...fetchOptions, params })
+  }
+
 }
 
 export default DashboardModule

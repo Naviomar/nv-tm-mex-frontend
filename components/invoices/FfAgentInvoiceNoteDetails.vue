@@ -4,7 +4,7 @@
       <div>
         <v-card class="mb-4">
           <v-card-title>
-            <div class="grid grid-cols-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
                 <div class="font-bold">Agent F.F. Note #{{ ffNote.service_folio }}</div>
                 <div>
@@ -30,45 +30,81 @@
             </div>
           </v-card-title>
           <v-card-text>
-            <div v-if="!isRefLinked" class="grid grid-cols-2">
-              <v-alert type="warning" variant="outlined" density="compact" class="font-bold py-0!"
-                >No service linked</v-alert
-              >
+            <div v-if="!isRefLinked" class="mb-4">
+              <v-alert type="warning" variant="tonal" density="compact">
+                <div class="font-semibold">No service linked</div>
+              </v-alert>
             </div>
-            <div class="grid grid-cols-[auto_1fr] space-x-4">
-              <div v-if="isRefLinked" class="font-bold">Reference #</div>
-              <div v-if="isRefLinked" class="font-bold">{{ ffNote.serviceable?.reference_number }}</div>
-              <div>SystemId</div>
-              <div>{{ ffNote.id }}</div>
-              <div>From</div>
-              <div>{{ ffNote.inbound === 1 ? 'From agent' : 'From TM' }}</div>
-              <div>Type</div>
-              <div>{{ ffNote.type === 'C' ? 'Credit' : 'Debit' }}</div>
 
-              <div>F.F. Agent</div>
-              <div>{{ ffNote.forwarder?.name }}</div>
+            <!-- Reference & Agent Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <v-card variant="tonal" :color="ffNote.inbound === 1 ? 'indigo' : 'cyan'">
+                <v-card-text>
+                  <div class="flex items-start gap-3">
+                    <v-icon size="32" :color="ffNote.inbound === 1 ? 'indigo-darken-2' : 'cyan-darken-2'">mdi-truck-delivery</v-icon>
+                    <div class="flex-1">
+                      <div class="text-xs font-semibold mb-1" :class="ffNote.inbound === 1 ? 'text-indigo-darken-1' : 'text-cyan-darken-1'">FREIGHT FORWARDER</div>
+                      <div class="font-bold text-base">{{ ffNote.forwarder?.name }}</div>
+                      <div class="text-sm mt-1">
+                        <span class="text-grey-darken-1">{{ ffNote.inbound === 1 ? 'From Agent' : 'From TM' }}</span>
+                      </div>
+                      <div v-if="isRefLinked" class="mt-2">
+                        <div class="text-xs text-grey-darken-1">Reference</div>
+                        <div class="font-semibold">{{ ffNote.serviceable?.reference_number }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
 
-              <div><v-divider class="mb-2"></v-divider></div>
-              <div></div>
-
-              <div>Total amount</div>
-              <div>{{ formatToCurrency(ffNote.amount_total) }} {{ ffNote.currency?.code }}</div>
-
-              <div v-if="ffNote.exchange_rate != 1">USD Exchange rate</div>
-              <div v-if="ffNote.exchange_rate != 1">{{ formatToCurrency(1 / ffNote.exchange_rate) }}</div>
-
-              <div><v-divider class="my-2"></v-divider></div>
-              <div></div>
-
-              <div>Created by</div>
-              <div>{{ ffNote.creator?.name }}</div>
-              <div>@</div>
-              <div>{{ formatDateString(ffNote.created_at) }}</div>
-
-              <div>Additional notes:</div>
-              <div>{{ ffNote.notes }}</div>
+              <v-card variant="tonal" :color="ffNote.type === 'C' ? 'green' : 'red'">
+                <v-card-text>
+                  <div class="flex items-start gap-3">
+                    <v-icon size="32" :color="ffNote.type === 'C' ? 'green-darken-2' : 'red-darken-2'">{{ ffNote.type === 'C' ? 'mdi-cash-plus' : 'mdi-cash-minus' }}</v-icon>
+                    <div class="flex-1">
+                      <div class="text-xs font-semibold mb-1" :class="ffNote.type === 'C' ? 'text-green-darken-1' : 'text-red-darken-1'">{{ ffNote.type === 'C' ? 'CREDIT NOTE' : 'DEBIT NOTE' }}</div>
+                      <div class="font-bold text-xl">{{ formatToCurrency(ffNote.amount_total) }} {{ ffNote.currency?.code }}</div>
+                      <div v-if="ffNote.exchange_rate != 1" class="text-sm mt-1">
+                        <span class="text-grey-darken-1">Exchange Rate:</span> {{ formatToCurrency(1 / ffNote.exchange_rate) }}
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
-            <div class="flex justify-around gap-2 mb-2">
+
+            <!-- System Info Card -->
+            <v-card variant="tonal" color="grey" class="mb-4">
+              <v-card-text>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div class="text-xs text-grey-darken-1 mb-1">System ID</div>
+                    <div class="font-semibold">{{ ffNote.id }}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-grey-darken-1 mb-1">Created by</div>
+                    <div class="font-semibold">{{ ffNote.creator?.name }}</div>
+                    <div class="text-xs">{{ formatDateString(ffNote.created_at) }}</div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <!-- Additional Notes -->
+            <v-card v-if="ffNote.notes" variant="tonal" color="amber" class="mb-4">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon color="amber-darken-2">mdi-note-text</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-amber-darken-1 font-semibold mb-1">ADDITIONAL NOTES</div>
+                    <div class="font-medium">{{ ffNote.notes }}</div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-divider class="my-4"></v-divider>
+            <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
               <div v-if="ffNote.inbound === 0">
                 <v-btn size="small" variant="tonal" @click="previewTmFfNotePdf(ffNote)"
                   ><v-icon>mdi-printer-eye</v-icon>PDF</v-btn

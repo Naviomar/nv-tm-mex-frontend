@@ -7,7 +7,7 @@
             <div class="font-bold">Freight line invoice #{{ lineInvoice.serie_folio }}</div>
           </v-card-title>
           <v-card-text>
-            <div class="grid grid-cols-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
               <div class="font-bold">Freight line</div>
               <div class="col-span-2 font-bold">{{ lineInvoice.line?.name }}</div>
 
@@ -18,7 +18,7 @@
 
               <div class="font-bold">Total related MBLs</div>
               <div class="col-span-2">
-                <div class="flex gap-4 mb-4">
+                <div class="flex flex-wrap gap-2 md:gap-4 mb-4">
                   <v-chip color="amber" v-for="(ref, index) in lineInvoice.refs" :key="`ref-${index}`"
                     >{{ ref.referencia?.reference_number }} {{ ref.master_bl?.name }} -
                     {{ formatToCurrency(ref.amount) }}</v-chip
@@ -41,6 +41,7 @@
           <div class="font-bold">Linked references</div>
         </v-card-title>
         <v-card-text>
+          <div class="overflow-x-auto">
           <v-table density="compact">
             <thead>
               <tr>
@@ -101,6 +102,7 @@
               </tr>
             </tbody>
           </v-table>
+          </div>
         </v-card-text>
       </v-card>
     </div>

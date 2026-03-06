@@ -1,11 +1,11 @@
 <template>
   <div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-48">
-      <div>
-        <v-card class="mb-4">
-          <v-card-title>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <v-card class="mb-4">
+        <v-card-title>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
             <div class="font-bold">Customer WM {{ invoiceType }} #{{ invoiceWm.invoice.invoice_number }}</div>
-            <div class="flex gap-4 items-center">
+            <div class="flex flex-wrap gap-2 md:gap-4 items-center">
               <v-chip
                 :color="isPaid ? 'green' : 'warning'"
                 text-color="white"
@@ -21,31 +21,58 @@
                 >
               </div>
             </div>
+            </div>
           </v-card-title>
           <v-card-text>
-            <div class="grid grid-cols-2">
-              <div>Customer</div>
-              <div>{{ invoiceWm.consignee?.name }}</div>
-              <div>RFC</div>
-              <div>{{ invoiceWm.rfc }}</div>
-              <div>Address</div>
-              <div>{{ invoiceWm.address }}</div>
-              <div class="col-span-2 py-1">
-                <v-divider></v-divider>
-              </div>
-              <div>Amount</div>
-              <div>
-                {{ getCurrencyName(invoiceWm.invoice?.currency_id) }} {{ formatToCurrency(invoiceWm.invoice?.total) }}
-              </div>
-              <div v-if="invoiceWm.invoice?.currency_id != 2">USD Exchange rate</div>
-              <div v-if="invoiceWm.invoice?.currency_id != 2">
-                {{ formatToCurrency(1 / invoiceWm.exchange_rate) }}
-              </div>
-              <div class="col-span-2 py-1">
-                <v-divider></v-divider>
-              </div>
+            <!-- Customer & Amount Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <v-card variant="tonal" color="blue">
+                <v-card-text>
+                  <div class="flex items-start gap-3">
+                    <v-icon size="32" color="blue-darken-2">mdi-account-circle</v-icon>
+                    <div class="flex-1">
+                      <div class="text-xs text-blue-darken-1 font-semibold mb-1">CUSTOMER</div>
+                      <div class="font-bold text-base">{{ invoiceWm.consignee?.name }}</div>
+                      <div class="text-sm mt-2">
+                        <div class="text-xs text-grey-darken-1">RFC</div>
+                        <div class="font-semibold">{{ invoiceWm.rfc }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <v-card variant="tonal" color="green">
+                <v-card-text>
+                  <div class="flex items-start gap-3">
+                    <v-icon size="32" color="green-darken-2">mdi-cash-multiple</v-icon>
+                    <div class="flex-1">
+                      <div class="text-xs text-green-darken-1 font-semibold mb-1">AMOUNT</div>
+                      <div class="font-bold text-xl">{{ getCurrencyName(invoiceWm.invoice?.currency_id) }} {{ formatToCurrency(invoiceWm.invoice?.total) }}</div>
+                      <div v-if="invoiceWm.invoice?.currency_id != 2" class="text-sm mt-1">
+                        <span class="text-grey-darken-1">Exchange Rate:</span> {{ formatToCurrency(1 / invoiceWm.exchange_rate) }}
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
             </div>
-            <div class="flex justify-around gap-2 mb-2">
+
+            <!-- Address -->
+            <v-card variant="tonal" color="orange" class="mb-4">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon color="orange-darken-2">mdi-map-marker</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-orange-darken-1 font-semibold mb-1">ADDRESS</div>
+                    <div class="font-medium">{{ invoiceWm.address || 'No address provided' }}</div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-divider class="my-4"></v-divider>
+            <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
               <PreviewWmInvoice service="sea" :invoice="invoiceWm" />
               <div v-if="!isCancelled" class="flex flex-col gap-2">
                 <v-btn v-if="isProforma" color="warning" size="small" @click="onEditProformaClick"
@@ -78,8 +105,7 @@
               <div>Cancelled by: {{ invoiceWm.cancel_by?.name }}</div>
             </v-alert>
           </v-card-text>
-        </v-card>
-      </div>
+      </v-card>
       <div>
         <v-card v-if="isProforma && !isCancelled" density="compact" class="mb-2">
           <v-card-title
@@ -117,14 +143,16 @@
             </div>
           </v-card-text>
         </v-card>
-        <SendCustomerInvoiceByEmail :id="$props.id" :invoice="invoiceWm" invoice_type="wm" />
       </div>
-      <div class="col-span-2">
-        <v-card v-if="isProforma" color="blue-lighten-4" class="mb-4">
+    </div>
+    <div>
+      <SendCustomerInvoiceByEmail :id="$props.id" :invoice="invoiceWm" invoice_type="wm" />
+      <v-card v-if="isProforma" color="blue-lighten-4" class="mb-4">
           <v-card-title
             ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
           >
           <v-card-text>
+            <div class="overflow-x-auto">
             <v-table density="compact">
               <thead>
                 <tr>
@@ -154,6 +182,7 @@
                 </tr>
               </tfoot>
             </v-table>
+            </div>
           </v-card-text>
         </v-card>
 
@@ -162,6 +191,7 @@
             ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
           >
           <v-card-text>
+            <div class="overflow-x-auto">
             <v-table density="compact">
               <thead>
                 <tr>
@@ -217,9 +247,9 @@
                 </tr>
               </tfoot>
             </v-table>
+            </div>
           </v-card-text>
         </v-card>
-      </div>
     </div>
     <v-dialog v-model="showCancelDialog" max-width="400">
       <v-card>
