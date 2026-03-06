@@ -1,233 +1,268 @@
 <template>
-  <div>
-    <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
-      <div class="font-bold mb-2">Billing Dashboard</div>
-      <!-- Filters -->
-      <v-card class="mb-6" flat>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="d-flex justify-center">
-              <v-date-input v-model="filters.from" label="From" density="compact" hide-details />
-              <v-date-input v-model="filters.to" label="To" density="compact" hide-details />
+  <div class="billing-dashboard">
+    <!-- Professional Filter Section -->
+    <v-card class="filter-section elevation-0 mb-6">
+      <v-card-text class="pa-6">
+        <div class="filter-header mb-5">
+          <div class="flex items-center gap-3">
+            <div class="filter-icon">
+              <v-icon color="white" size="22">mdi-filter-variant</v-icon>
             </div>
-            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" />
-            <div class="flex gap-2 items-center">
-              <v-btn size="small" color="" variant="text" @click="clearFilters">Clear</v-btn>
-              <v-btn size="small" color="primary" @click="applyFilters">Apply</v-btn>
+            <div>
+              <div class="filter-title">Advanced Filters</div>
+              <div class="filter-subtitle">Refine your data view</div>
             </div>
           </div>
-        </v-card-text>
-      </v-card>
-      <div class="mb-4 px-2 text-sm text-gray-600 dark:text-gray-300">
-        <span class="font-bold">Filters applied:</span>
-        <template v-if="dateRangeFromTo.from && dateRangeFromTo.to">
-          <span>
-            Date range:
-            {{ new Date(dateRangeFromTo.from).toLocaleDateString('en-CA') }} –
-            {{ new Date(dateRangeFromTo.to).toLocaleDateString('en-CA') }}
-          </span>
-        </template>
-        <template v-if="filters.customer_id">
-          <span class="ml-0"> | Customer ID: {{ filters.customer_id }} </span>
-        </template>
-      </div>
-      <v-card>
-        <v-card-title class="text-overline"> Customer invoices </v-card-title>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <v-card>
-              <v-card-title class="text-overline"> Total invoices </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">{{ report.total_invoices }}</div>
-              </v-card-text>
-            </v-card>
+          <v-chip color="green-lighten-4" size="small" class="font-semibold">
+            <v-icon start size="16">mdi-database-search</v-icon>
+            {{ report.total_invoices }} Invoices
+          </v-chip>
+        </div>
 
-            <v-card>
-              <v-card-title class="text-overline"> TM Invoices </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_tm_invoices }}
-                </div>
-              </v-card-text>
-            </v-card>
-
-            <v-card>
-              <v-card-title class="text-overline"> WM Invoices </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_wm_invoices }}
-                </div>
-              </v-card-text>
-            </v-card>
-
-            <v-card>
-              <v-card-title class="text-overline"> Unique customers </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.unique_customers }}
-                </div>
-                <div class="text-xs font-bold">Customers</div>
-                <!-- Icon to the right and behind -->
-                <v-icon
-                  icon="mdi-account-group-outline"
-                  size="64"
-                  class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-                />
-                <v-btn size="x-small" variant="text" @click="dialogCustomer = true"> View list </v-btn>
-              </v-card-text>
-            </v-card>
-
-            <div class="col-span-1 md:col-span-4">
-              <div
-                v-for="(values, currency) in report.amounts_by_currency"
-                :key="currency"
-                class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-              >
-                <v-card>
-                  <v-card-title class="text-overline"> TOTAL AMOUNT ({{ currency }}) </v-card-title>
-                  <v-card-text>
-                    <div class="text-blue-darken-3 text-2xl font-weight-bold">
-                      {{ formatToCurrency(values.total) }}
-                    </div>
-                    <div class="text-xs font-bold">All Invoices in {{ currency }}</div>
-                    <v-icon
-                      icon="mdi-cash-multiple"
-                      size="64"
-                      class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-10 z-0"
-                    />
-                  </v-card-text>
-                </v-card>
-
-                <v-card>
-                  <v-card-title class="text-overline"> TOTAL PAID ({{ currency }}) </v-card-title>
-                  <v-card-text>
-                    <div class="text-green-darken-3 text-2xl font-weight-bold">
-                      {{ formatToCurrency(values.paid) }}
-                    </div>
-                    <div class="text-xs font-bold">Paid Invoices in {{ currency }}</div>
-                    <v-icon
-                      icon="mdi-check-circle"
-                      size="64"
-                      class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-10 z-0"
-                    />
-                  </v-card-text>
-                </v-card>
-              </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-9 gap-4 overflow-x-auto">
+          <div class="md:col-span-3">
+            <label class="filter-label">Start Date</label>
+            <v-date-input
+              v-model="filters.from"
+              prepend-icon=""
+              prepend-inner-icon="$calendar"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              class="modern-input"
+            />
           </div>
+          <div class="md:col-span-3">
+            <label class="filter-label">End Date</label>
+            <v-date-input
+              v-model="filters.to"
+              prepend-icon=""
+              prepend-inner-icon="$calendar"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              class="modern-input"
+            />
+          </div>
+          <div class="md:col-span-4">
+            <label class="filter-label">Customer</label>
+            <ACustomerSearch v-model="filters.customer_id" hide-details />
+          </div>
+          <div class="md:col-span-2 flex items-end gap-2">
+            <v-btn variant="outlined" color="grey-darken-1" block @click="clearFilters" class="modern-btn">
+              <v-icon start>mdi-refresh</v-icon>
+              Reset
+            </v-btn>
+            <v-btn variant="flat" color="primary" block @click="applyFilters" class="modern-btn">
+              <v-icon start>mdi-magnify</v-icon>
+              Search
+            </v-btn>
+          </div>
+        </div>
+
+        <div v-if="filters.from || filters.to" class="flex items-center gap-2 mt-4 pt-4 border-t border-grey-200">
+          <span class="text-xs font-semibold text-grey-600">Active Filters:</span>
+          <v-chip v-if="filters.from" size="small" color="primary" variant="tonal" closable @click:close="filters.from = null">
+            From: {{ filters.from }}
+          </v-chip>
+          <v-chip v-if="filters.to" size="small" color="primary" variant="tonal" closable @click:close="filters.to = null">
+            To: {{ filters.to }}
+          </v-chip>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <v-card class="elevation-3 rounded-lg overflow-hidden stat-card">
+        <div class="bg-gradient-to-br from-green-500 to-green-700 pa-4 text-white">
+          <div class="flex items-center justify-between">
+            <v-icon size="40" class="opacity-90">mdi-file-document-multiple</v-icon>
+            <v-chip size="small" color="white" variant="flat" class="font-bold">Total</v-chip>
+          </div>
+        </div>
+        <v-card-text class="pa-4">
+          <div class="text-4xl font-bold text-green-700 dark:text-green-400 mb-1">
+            {{ report.total_invoices }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">All Invoices</div>
         </v-card-text>
       </v-card>
 
-      <v-card class="my-2">
-        <v-card-title class="text-overline"> TM Invoices by Service </v-card-title>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <v-card>
-              <v-card-title class="text-overline"> Maritime Import </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_sea_import_tm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
-            <v-card>
-              <v-card-title class="text-overline"> Maritime Export </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_sea_export_tm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
-
-            <v-card>
-              <v-card-title class="text-overline"> Air Import </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_air_import_tm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
-            <v-card>
-              <v-card-title class="text-overline"> Air Export </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_air_export_tm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
+      <v-card class="elevation-3 rounded-lg overflow-hidden stat-card">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-700 pa-4 text-white">
+          <div class="flex items-center justify-between">
+            <v-icon size="40" class="opacity-90">mdi-file-document</v-icon>
+            <v-chip size="small" color="white" variant="flat" class="font-bold">TM</v-chip>
           </div>
+        </div>
+        <v-card-text class="pa-4">
+          <div class="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-1">
+            {{ report.total_tm_invoices }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">TM Invoices</div>
         </v-card-text>
       </v-card>
 
-      <v-card class="my-2">
-        <v-card-title class="text-overline"> WM Invoices by Service </v-card-title>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <v-card>
-              <v-card-title class="text-overline"> Maritime Import </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_sea_import_wm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
+      <v-card class="elevation-3 rounded-lg overflow-hidden stat-card">
+        <div class="bg-gradient-to-br from-orange-500 to-orange-700 pa-4 text-white">
+          <div class="flex items-center justify-between">
+            <v-icon size="40" class="opacity-90">mdi-file-document-outline</v-icon>
+            <v-chip size="small" color="white" variant="flat" class="font-bold">WM</v-chip>
+          </div>
+        </div>
+        <v-card-text class="pa-4">
+          <div class="text-4xl font-bold text-orange-700 dark:text-orange-400 mb-1">
+            {{ report.total_wm_invoices }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">WM Invoices</div>
+        </v-card-text>
+      </v-card>
 
-              <v-divider></v-divider>
-            </v-card>
-            <v-card>
-              <v-card-title class="text-overline"> Maritime Export </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_sea_export_wm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
-
-            <v-card>
-              <v-card-title class="text-overline"> Air Import </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_air_import_wm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
-            <v-card>
-              <v-card-title class="text-overline"> Air Export </v-card-title>
-              <v-card-text>
-                <div class="text-blue-darken-3 text-h3 font-weight-bold">
-                  {{ report.total_air_export_wm }}
-                </div>
-                <div class="text-xs font-bold"># Invoices</div>
-              </v-card-text>
-
-              <v-divider></v-divider>
-            </v-card>
+      <v-card class="elevation-3 rounded-lg overflow-hidden stat-card cursor-pointer" @click="dialogCustomer = true">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-700 pa-4 text-white">
+          <div class="flex items-center justify-between">
+            <v-icon size="40" class="opacity-90">mdi-account-group</v-icon>
+            <v-chip size="small" color="white" variant="flat" class="font-bold">Customers</v-chip>
+          </div>
+        </div>
+        <v-card-text class="pa-4">
+          <div class="text-4xl font-bold text-purple-700 dark:text-purple-400 mb-1">
+            {{ report.unique_customers }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium flex items-center gap-1">
+            Unique Customers
+            <v-icon size="14">mdi-eye</v-icon>
           </div>
         </v-card-text>
       </v-card>
     </div>
 
-    <v-card class="my-4">
-      <v-card-title class="text-overline"> Totals by Service and Currency </v-card-title>
-      <v-card-text>
+    <!-- Currency Totals -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div v-for="(values, currency) in report.amounts_by_currency" :key="currency">
+        <v-card class="elevation-2 rounded-lg">
+          <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 pa-3 text-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <v-icon size="28">mdi-currency-usd</v-icon>
+                <span class="font-semibold text-lg">{{ currency }} Summary</span>
+              </div>
+            </div>
+          </div>
+          <v-card-text class="pa-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs text-grey-600 dark:text-grey-400 mb-1 font-medium">Total Amount</div>
+                <div class="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                  {{ formatToCurrency(values.total) }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-grey-600 dark:text-grey-400 mb-1 font-medium">Total Paid</div>
+                <div class="text-2xl font-bold text-green-700 dark:text-green-400">
+                  {{ formatToCurrency(values.paid) }}
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </div>
+    </div>
+
+    <!-- TM Invoices by Service -->
+    <v-card class="elevation-2 rounded-lg mb-6">
+      <div class="bg-gradient-to-r from-blue-500 to-blue-600 pa-3 text-white">
+        <div class="flex items-center gap-2">
+          <v-icon size="28">mdi-file-chart</v-icon>
+          <span class="font-semibold text-lg">TM Invoices by Service</span>
+        </div>
+      </div>
+      <v-card-text class="pa-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-grey-darken-4">
+            <v-icon color="blue" size="32" class="mb-2">mdi-ferry</v-icon>
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
+              {{ report.total_sea_import_tm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Import</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-darken-4">
+            <v-icon color="teal" size="32" class="mb-2">mdi-ship-wheel</v-icon>
+            <div class="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
+              {{ report.total_sea_export_tm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Export</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-darken-4">
+            <v-icon color="indigo" size="32" class="mb-2">mdi-airplane-landing</v-icon>
+            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-400 mb-1">
+              {{ report.total_air_import_tm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Import</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-darken-4">
+            <v-icon color="cyan" size="32" class="mb-2">mdi-airplane-takeoff</v-icon>
+            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-400 mb-1">
+              {{ report.total_air_export_tm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Export</div>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- WM Invoices by Service -->
+    <v-card class="elevation-2 rounded-lg mb-6">
+      <div class="bg-gradient-to-r from-orange-500 to-orange-600 pa-3 text-white">
+        <div class="flex items-center gap-2">
+          <v-icon size="28">mdi-file-chart-outline</v-icon>
+          <span class="font-semibold text-lg">WM Invoices by Service</span>
+        </div>
+      </div>
+      <v-card-text class="pa-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-grey-darken-4">
+            <v-icon color="blue" size="32" class="mb-2">mdi-ferry</v-icon>
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
+              {{ report.total_sea_import_wm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Import</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-darken-4">
+            <v-icon color="teal" size="32" class="mb-2">mdi-ship-wheel</v-icon>
+            <div class="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
+              {{ report.total_sea_export_wm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Export</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-darken-4">
+            <v-icon color="indigo" size="32" class="mb-2">mdi-airplane-landing</v-icon>
+            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-400 mb-1">
+              {{ report.total_air_import_wm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Import</div>
+          </div>
+          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-darken-4">
+            <v-icon color="cyan" size="32" class="mb-2">mdi-airplane-takeoff</v-icon>
+            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-400 mb-1">
+              {{ report.total_air_export_wm }}
+            </div>
+            <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Export</div>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Totals by Service and Currency -->
+    <v-card class="elevation-2 rounded-lg">
+      <div class="bg-gradient-to-r from-purple-500 to-purple-600 pa-3 text-white">
+        <div class="flex items-center gap-2">
+          <v-icon size="28">mdi-chart-box</v-icon>
+          <span class="font-semibold text-lg">Totals by Service and Currency</span>
+        </div>
+      </div>
+      <v-card-text class="pa-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <BillingAmountCard
             v-for="[key, value] in Object.entries(report).filter(([k]) => k.startsWith('total_amount_'))"
@@ -255,7 +290,7 @@
         <v-divider />
 
         <v-card-text>
-          <v-list v-if="report.customers?.length" f density="compact">
+          <v-list v-if="report.customers?.length" density="compact">
             <v-list-item v-for="(customer, index) in report.customers" :key="index">
               <v-list-item-title class="font-medium">
                 {{ customer.name || 'Unnamed' }}
@@ -401,9 +436,97 @@ const applyFilters = async () => {
 }
 
 const clearFilters = () => {
-  filters.value.dateRange = getDateRange(firstDayLastMonth, lastDayCurrentMonth)
+  filters.value.from = getDateString(firstDayLastMonth)
+  filters.value.to = getDateString(lastDayCurrentMonth)
   filters.value.customer_id = null
-  // Optionally, refetch the dashboard data without filters
   applyFilters()
 }
+
+onMounted(() => {
+  applyFilters()
+})
 </script>
+
+<style scoped>
+.billing-dashboard {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filter Section */
+.filter-section {
+  background: white;
+  border-radius: 16px !important;
+  border: 1px solid #e5e7eb;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.3px;
+}
+
+.filter-subtitle {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modern-input {
+  border-radius: 10px;
+}
+
+.modern-btn {
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+/* Cards */
+.stat-card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+</style>

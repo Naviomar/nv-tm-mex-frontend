@@ -1,195 +1,245 @@
 <template>
-  <div>
-    <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
-      <div class="font-bold">Maritime Dashboard</div>
-      <!-- Filters -->
-      <v-card class="mb-6" flat>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="d-flex justify-center">
-              <v-date-input v-model="filters.from" label="From" density="compact" hide-details />
-              <v-date-input v-model="filters.to" label="To" density="compact" hide-details />
+  <div class="maritime-dashboard">
+    <!-- Professional Filter Section -->
+    <v-card class="filter-section elevation-0 mb-6">
+      <v-card-text class="pa-6">
+        <div class="filter-header mb-5">
+          <div class="flex items-center gap-3">
+            <div class="filter-icon">
+              <v-icon color="white" size="22">mdi-filter-variant</v-icon>
             </div>
-            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" />
-            <div class="flex gap-2 items-center">
-              <v-btn size="small" color="" variant="text" @click="clearFilters">Clear</v-btn>
-              <v-btn size="small" color="primary" @click="applyFilters">Apply</v-btn>
+            <div>
+              <div class="filter-title">Advanced Filters</div>
+              <div class="filter-subtitle">Refine your data view</div>
             </div>
+          </div>
+          <v-chip color="blue-lighten-4" size="small" class="font-semibold">
+            <v-icon start size="16">mdi-database-search</v-icon>
+            {{ report.total_import + report.total_export }} Records
+          </v-chip>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-9 gap-4 overflow-x-auto">
+          <div class="md:col-span-3">
+            <label class="filter-label">Start Date</label>
+            <v-date-input
+              v-model="filters.from"
+              prepend-icon=""
+              prepend-inner-icon="$calendar"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              class="modern-input"
+            />
+          </div>
+          <div class="md:col-span-3">
+            <label class="filter-label">End Date</label>
+            <v-date-input
+              v-model="filters.to"
+              prepend-icon=""
+              prepend-inner-icon="$calendar"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              class="modern-input"
+            />
+          </div>
+          <div class="md:col-span-4">
+            <label class="filter-label">Customer</label>
+            <ACustomerSearch v-model="filters.customer_id" hide-details />
+          </div>
+          <div class="md:col-span-2 flex items-end gap-2">
+            <v-btn variant="outlined" color="grey-darken-1" block @click="clearFilters" class="modern-btn">
+              <v-icon start>mdi-refresh</v-icon>
+              Reset
+            </v-btn>
+            <v-btn variant="flat" color="primary" block @click="applyFilters" class="modern-btn">
+              <v-icon start>mdi-magnify</v-icon>
+              Search
+            </v-btn>
+          </div>
+        </div>
+
+        <div v-if="filters.from || filters.to" class="flex items-center gap-2 mt-4 pt-4 border-t border-grey-200">
+          <span class="text-xs font-semibold text-grey-600">Active Filters:</span>
+          <v-chip v-if="filters.from" size="small" color="primary" variant="tonal" closable @click:close="filters.from = null">
+            From: {{ filters.from }}
+          </v-chip>
+          <v-chip v-if="filters.to" size="small" color="primary" variant="tonal" closable @click:close="filters.to = null">
+            To: {{ filters.to }}
+          </v-chip>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Primary Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <v-card class="metric-card elevation-2" @click="openStats('sea-import')">
+        <div class="metric-header import-gradient">
+          <div class="metric-icon-wrapper">
+            <v-icon size="36" color="white">mdi-ship-wheel</v-icon>
+          </div>
+          <div class="metric-badge">
+            <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">IMPORT</v-chip>
+            <v-btn icon size="x-small" variant="text" color="white">
+              <v-icon size="16">mdi-chart-line</v-icon>
+            </v-btn>
+          </div>
+        </div>
+        <v-card-text class="pa-5">
+          <div class="metric-value import-color">
+            {{ report.total_import }}
+          </div>
+          <div class="metric-label">Sea Import References</div>
+          <div class="metric-trend">
+            <v-icon size="14" color="success">mdi-trending-up</v-icon>
+            <span class="text-xs text-success font-semibold">Active</span>
           </div>
         </v-card-text>
       </v-card>
-      <div class="mb-4 px-2 text-sm text-gray-600 dark:text-gray-300">
-        <span class="font-bold">Filters applied:</span>
-        <template v-if="dateRangeFromTo.from && dateRangeFromTo.to">
-          <span>
-            Date range:
-            {{ new Date(dateRangeFromTo.from).toLocaleDateString('en-CA') }} –
-            {{ new Date(dateRangeFromTo.to).toLocaleDateString('en-CA') }}
-          </span>
-        </template>
-        <template v-if="filters.customer_id">
-          <span class="ml-0"> | Customer ID: {{ filters.customer_id }} </span>
-        </template>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <v-card>
-          <v-card-title class="text-overline"> Total Import </v-card-title>
-          <v-card-text>
-            <!-- Number in front -->
-            <div class="text-blue-darken-3 text-h3 font-weight-bold z-10 relative">
-              {{ report.total_import }}
-            </div>
-            <div class="text-xs font-bold">References</div>
 
-            <!-- Icon to the right and behind -->
-            <v-icon icon="mdi-ferry" size="64" class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0" />
-          </v-card-text>
-        </v-card>
+      <v-card class="metric-card elevation-2" @click="openStats('sea-export')">
+        <div class="metric-header export-gradient">
+          <div class="metric-icon-wrapper">
+            <v-icon size="36" color="white">mdi-ferry</v-icon>
+          </div>
+          <div class="metric-badge">
+            <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">EXPORT</v-chip>
+            <v-btn icon size="x-small" variant="text" color="white">
+              <v-icon size="16">mdi-chart-line</v-icon>
+            </v-btn>
+          </div>
+        </div>
+        <v-card-text class="pa-5">
+          <div class="metric-value export-color">
+            {{ report.total_export }}
+          </div>
+          <div class="metric-label">Sea Export References</div>
+          <div class="metric-trend">
+            <v-icon size="14" color="success">mdi-trending-up</v-icon>
+            <span class="text-xs text-success font-semibold">Active</span>
+          </div>
+        </v-card-text>
+      </v-card>
 
-        <v-card>
-          <v-card-title class="text-overline"> Total Export </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_export }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-            <!-- Icon to the right and behind -->
-            <v-icon icon="mdi-ferry" size="64" class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0" />
-          </v-card-text>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Unique customers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.unique_customers }}
-            </div>
-            <div class="text-xs font-bold">Customers</div>
-            <!-- Icon to the right and behind -->
-            <v-icon
-              icon="mdi-account-group-outline"
-              size="64"
-              class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-            />
-            <v-btn size="x-small" variant="text" @click="dialogCustomer = true"> View list </v-btn>
-          </v-card-text>
-        </v-card>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <v-card>
-          <v-card-title class="text-overline"> Pending arrival noty </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.pending_arrival_noty }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-          </v-card-text>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-bell-outline"
-            color="red"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-
-          <v-divider></v-divider>
-
-          <div class="px-4 text-xs">Maritime Import</div>
-        </v-card>
-        <v-card>
-          <v-card-title class="text-overline"> Pending revalidation </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.pending_revalidation }}
-            </div>
-            <div class="text-xs font-bold">References</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-file-sign"
-            color="orange"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-
-          <div class="px-4 text-xs">Maritime Import</div>
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Import Containers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_containers_import }}
-            </div>
-            <div class="text-xs font-bold">Containers</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-train-car-container"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Export Containers </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.total_containers_export }}
-            </div>
-            <div class="text-xs font-bold">Containers</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-train-car-container"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Booking confirmation </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.export_bookings }}
-            </div>
-            <div class="text-xs font-bold">Export References</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-ticket-confirmation-outline"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-
-        <v-card>
-          <v-card-title class="text-overline"> Import demurrages </v-card-title>
-          <v-card-text>
-            <div class="text-blue-darken-3 text-h3 font-weight-bold">
-              {{ report.import_demurrages }}
-            </div>
-            <div class="text-xs font-bold">Containers (amount > 0)</div>
-          </v-card-text>
-
-          <v-divider></v-divider>
-          <!-- Icon to the right and behind -->
-          <v-icon
-            icon="mdi-timer-outline"
-            size="64"
-            class="absolute! right-4 top-1/2 -translate-y-1/2 opacity-30 z-0"
-          />
-        </v-card>
-      </div>
+      <v-card class="metric-card elevation-2 cursor-pointer" @click="dialogCustomer = true">
+        <div class="metric-header customer-gradient">
+          <div class="metric-icon-wrapper">
+            <v-icon size="36" color="white">mdi-account-group</v-icon>
+          </div>
+          <div class="metric-badge">
+            <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">CLIENTS</v-chip>
+          </div>
+        </div>
+        <v-card-text class="pa-5">
+          <div class="metric-value customer-color">
+            {{ report.unique_customers }}
+          </div>
+          <div class="metric-label">Unique Customers</div>
+          <div class="metric-action">
+            <v-icon size="14" color="purple">mdi-eye-outline</v-icon>
+            <span class="text-xs text-purple font-semibold">View List</span>
+          </div>
+        </v-card-text>
+      </v-card>
     </div>
+
+    <!-- Secondary Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="red" size="32">mdi-bell-alert</v-icon>
+            <v-chip size="small" color="red" variant="flat" class="text-white">Pending</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.pending_arrival_noty }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Arrival Notifications</div>
+          <v-divider class="my-2"></v-divider>
+          <div class="text-xs text-grey-500">Maritime Import</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="orange" size="32">mdi-file-document-check</v-icon>
+            <v-chip size="small" color="orange" variant="flat" class="text-white">Action Required</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.pending_revalidation }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Pending Revalidations</div>
+          <v-divider class="my-2"></v-divider>
+          <div class="text-xs text-grey-500">Maritime Import</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="deep-orange" size="32">mdi-timer-alert</v-icon>
+            <v-chip size="small" color="deep-orange" variant="flat" class="text-white">Charges</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.import_demurrages }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Demurrage Containers</div>
+          <v-divider class="my-2"></v-divider>
+          <div class="text-xs text-grey-500">Amount > 0</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="indigo" size="32">mdi-package-variant</v-icon>
+            <v-chip size="small" color="indigo" variant="flat" class="text-white">Import</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.total_containers_import }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Import Containers</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="cyan" size="32">mdi-package-variant-closed</v-icon>
+            <v-chip size="small" color="cyan" variant="flat" class="text-white">Export</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.total_containers_export }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Export Containers</div>
+        </v-card-text>
+      </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="green" size="32">mdi-checkbox-marked-circle</v-icon>
+            <v-chip size="small" color="green" variant="flat" class="text-white">Confirmed</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.export_bookings }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Booking Confirmations</div>
+        </v-card-text>
+      </v-card>
+    </div>
+
+    <CaptureStatsChart
+      v-model="showStatsChart"
+      :title="statsConfig.title"
+      :subtitle="statsConfig.subtitle"
+      :icon="statsConfig.icon"
+      :stat-type="statsConfig.type"
+      :gradient-class="statsConfig.gradient"
+      :chip-color="statsConfig.chipColor"
+    />
 
     <v-dialog v-model="dialogCustomer" max-width="500">
       <v-card>
@@ -204,7 +254,7 @@
         <v-divider />
 
         <v-card-text>
-          <v-list v-if="report.customers?.length" f density="compact">
+          <v-list v-if="report.customers?.length" density="compact">
             <v-list-item v-for="(customer, index) in report.customers" :key="index">
               <v-list-item-title class="font-medium">
                 {{ customer.name || 'Unnamed' }}
@@ -316,4 +366,223 @@ const clearFilters = () => {
   filters.value.customer_id = null
   applyFilters()
 }
+
+const showStatsChart = ref(false)
+const statsConfig = ref({
+  title: '',
+  subtitle: '',
+  icon: '',
+  type: '',
+  gradient: '',
+  chipColor: ''
+})
+
+const openStats = (type: string) => {
+  if (type === 'sea-import') {
+    statsConfig.value = {
+      title: 'Maritime Import Statistics',
+      subtitle: 'Capture trends over time',
+      icon: 'mdi-ship-wheel',
+      type: 'sea-import',
+      gradient: 'from-blue-500 to-blue-700',
+      chipColor: 'blue'
+    }
+  } else {
+    statsConfig.value = {
+      title: 'Maritime Export Statistics',
+      subtitle: 'Capture trends over time',
+      icon: 'mdi-ferry',
+      type: 'sea-export',
+      gradient: 'from-teal-500 to-teal-700',
+      chipColor: 'teal'
+    }
+  }
+  showStatsChart.value = true
+}
+
+onMounted(() => {
+  applyFilters()
+})
 </script>
+
+<style scoped>
+.maritime-dashboard {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filter Section */
+.filter-section {
+  background: white;
+  border-radius: 16px !important;
+  border: 1px solid #e5e7eb;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.3px;
+}
+
+.filter-subtitle {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modern-input {
+  border-radius: 10px;
+}
+
+.modern-btn {
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+/* Metric Cards */
+.metric-card {
+  border-radius: 16px !important;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #f3f4f6;
+}
+
+.metric-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+.metric-header {
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.import-gradient {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.export-gradient {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+}
+
+.customer-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+}
+
+.metric-icon-wrapper {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.metric-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-value {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+
+.import-color {
+  color: #2563eb;
+}
+
+.export-color {
+  color: #0d9488;
+}
+
+.customer-color {
+  color: #7c3aed;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-trend,
+.metric-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Secondary Metrics */
+.stat-card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+</style>
