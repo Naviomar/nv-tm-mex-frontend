@@ -18,8 +18,9 @@
 
           <SwitchDarkLightMode />
 
-          <UserInfoNav path="/profile" />
-
+          <!-- <div class="hidden md:block"> -->
+            <UserInfoNav path="/profile" />
+          <!-- </div> -->
           <!-- Alerts Button -->
           <AlertsButton />
 

@@ -171,7 +171,7 @@
     </div>
 
     <!-- TM Invoices by Service -->
-    <v-card class="elevation-2 rounded-lg mb-6">
+    <v-card class="elevation-2 rounded-lg mb-6 invoice-section-card">
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 pa-3 text-white">
         <div class="flex items-center gap-2">
           <v-icon size="28">mdi-file-chart</v-icon>
@@ -180,30 +180,30 @@
       </div>
       <v-card-text class="pa-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-grey-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800">
             <v-icon color="blue" size="32" class="mb-2">mdi-ferry</v-icon>
-            <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300 mb-1">
               {{ report.total_sea_import_tm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Import</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800">
             <v-icon color="teal" size="32" class="mb-2">mdi-ship-wheel</v-icon>
-            <div class="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
+            <div class="text-3xl font-bold text-teal-700 dark:text-teal-300 mb-1">
               {{ report.total_sea_export_tm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Export</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800">
             <v-icon color="indigo" size="32" class="mb-2">mdi-airplane-landing</v-icon>
-            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-400 mb-1">
+            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">
               {{ report.total_air_import_tm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Import</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-100 dark:border-cyan-800">
             <v-icon color="cyan" size="32" class="mb-2">mdi-airplane-takeoff</v-icon>
-            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-400 mb-1">
+            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-300 mb-1">
               {{ report.total_air_export_tm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Export</div>
@@ -213,7 +213,7 @@
     </v-card>
 
     <!-- WM Invoices by Service -->
-    <v-card class="elevation-2 rounded-lg mb-6">
+    <v-card class="elevation-2 rounded-lg mb-6 invoice-section-card">
       <div class="bg-gradient-to-r from-orange-500 to-orange-600 pa-3 text-white">
         <div class="flex items-center gap-2">
           <v-icon size="28">mdi-file-chart-outline</v-icon>
@@ -222,30 +222,30 @@
       </div>
       <v-card-text class="pa-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-grey-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800">
             <v-icon color="blue" size="32" class="mb-2">mdi-ferry</v-icon>
-            <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-1">
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300 mb-1">
               {{ report.total_sea_import_wm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Import</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800">
             <v-icon color="teal" size="32" class="mb-2">mdi-ship-wheel</v-icon>
-            <div class="text-3xl font-bold text-teal-700 dark:text-teal-400 mb-1">
+            <div class="text-3xl font-bold text-teal-700 dark:text-teal-300 mb-1">
               {{ report.total_sea_export_wm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Maritime Export</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800">
             <v-icon color="indigo" size="32" class="mb-2">mdi-airplane-landing</v-icon>
-            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-400 mb-1">
+            <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">
               {{ report.total_air_import_wm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Import</div>
           </div>
-          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-darken-4">
+          <div class="text-center pa-3 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-100 dark:border-cyan-800">
             <v-icon color="cyan" size="32" class="mb-2">mdi-airplane-takeoff</v-icon>
-            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-400 mb-1">
+            <div class="text-3xl font-bold text-cyan-700 dark:text-cyan-300 mb-1">
               {{ report.total_air_export_wm }}
             </div>
             <div class="text-sm text-grey-700 dark:text-grey-300 font-medium">Air Export</div>
@@ -465,9 +465,14 @@ onMounted(() => {
 
 /* Filter Section */
 .filter-section {
-  background: white;
+  background: rgb(var(--v-theme-surface));
   border-radius: 16px !important;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .filter-section {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .filter-header {
@@ -488,13 +493,13 @@ onMounted(() => {
 .filter-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.3px;
 }
 
 .filter-subtitle {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   margin-top: 2px;
 }
 
@@ -502,10 +507,11 @@ onMounted(() => {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #374151;
+  color: rgb(var(--v-theme-on-surface));
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  opacity: 0.87;
 }
 
 .modern-input {
@@ -523,10 +529,25 @@ onMounted(() => {
 .stat-card {
   transition: all 0.3s ease;
   border-radius: 12px !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .stat-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Invoice Section Cards */
+.invoice-section-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .invoice-section-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 </style>

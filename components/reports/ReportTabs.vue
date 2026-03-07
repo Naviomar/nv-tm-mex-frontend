@@ -163,6 +163,11 @@ watch(() => props.viewMode, (newMode, oldMode) => {
   border: 2px dashed #cbd5e1;
 }
 
+.theme--dark .empty-state {
+  background: linear-gradient(135deg, rgba(var(--v-theme-surface), 0.5) 0%, rgba(var(--v-theme-surface), 0.3) 100%);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
 .reports-container {
   width: 100%;
   padding: 16px;
@@ -174,6 +179,10 @@ watch(() => props.viewMode, (newMode, oldMode) => {
 
 .modern-tabs {
   border-bottom: 2px solid #e0e0e0;
+}
+
+.theme--dark .modern-tabs {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
 }
 
 .tab-item {
@@ -203,8 +212,16 @@ watch(() => props.viewMode, (newMode, oldMode) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+.theme--dark :deep(.v-btn-toggle) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 :deep(.v-btn-toggle .v-btn--active) {
   background: white !important;
   color: rgb(var(--v-theme-primary)) !important;
+}
+
+.theme--dark :deep(.v-btn-toggle .v-btn--active) {
+  background: rgb(var(--v-theme-surface)) !important;
 }
 </style>

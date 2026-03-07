@@ -12,61 +12,60 @@
             <p class="dashboard-subtitle">Real-time insights and operational metrics</p>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 items-center gap-3">
           <v-chip color="rgba(255,255,255,0.2)" variant="flat" class="text-white font-semibold">
             <v-icon start size="18">mdi-clock-outline</v-icon>
             {{ currentTime }}
           </v-chip>
-          <v-chip color="success" variant="flat" class="font-semibold">
-            <v-icon start size="16">mdi-check-circle</v-icon>
-            Live
-          </v-chip>
+          <div>
+            <v-chip color="success" variant="flat" class="font-semibold">
+              <v-icon start size="16">mdi-check-circle</v-icon>
+              Live
+            </v-chip>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Modern Tab Navigation -->
-    <v-card class="tab-card elevation-3 mx-6 mt-n8" style="position: relative; z-index: 2;">
-
-      <v-tabs
-        v-model="tab"
-        align-tabs="center"
-        height="72"
-        slider-color="primary"
-        bg-color="white"
-        color="primary"
-        class="modern-tabs"
-      >
-        <v-tab value="sea-tab" class="tab-item">
-          <div class="tab-content">
-            <v-icon size="28">mdi-ferry</v-icon>
-            <div class="tab-text">
-              <div class="tab-label">Maritime</div>
-              <div class="tab-desc">Import & Export</div>
+    <div class="mx-7">
+      <v-card class="tab-card elevation-3 mt-n8" style="position: relative; z-index: 2;">
+        <v-tabs
+          v-model="tab"
+          align-tabs="center"
+          height="72"
+          class="modern-tabs"
+        >
+          <v-tab value="sea-tab" class="tab-item">
+            <div class="tab-content">
+              <v-icon size="28">mdi-ferry</v-icon>
+              <div class="tab-text">
+                <div class="tab-label">Maritime</div>
+                <div class="tab-desc">Import & Export</div>
+              </div>
             </div>
-          </div>
-        </v-tab>
-        <v-tab value="air-tab" class="tab-item">
-          <div class="tab-content">
-            <v-icon size="28">mdi-airplane</v-icon>
-            <div class="tab-text">
-              <div class="tab-label">Air Freight</div>
-              <div class="tab-desc">Cargo Operations</div>
+          </v-tab>
+          <v-tab value="air-tab" class="tab-item">
+            <div class="tab-content">
+              <v-icon size="28">mdi-airplane</v-icon>
+              <div class="tab-text">
+                <div class="tab-label">Air Freight</div>
+                <div class="tab-desc">Cargo Operations</div>
+              </div>
             </div>
-          </div>
-        </v-tab>
-        <v-tab v-if="canViewBilling" value="billing-tab" class="tab-item">
-          <div class="tab-content">
-            <v-icon size="28">mdi-currency-usd</v-icon>
-            <div class="tab-text">
-              <div class="tab-label">Billing</div>
-              <div class="tab-desc">Financial Data</div>
+          </v-tab>
+          <v-tab v-if="canViewBilling" value="billing-tab" class="tab-item">
+            <div class="tab-content">
+              <v-icon size="28">mdi-currency-usd</v-icon>
+              <div class="tab-text">
+                <div class="tab-label">Billing</div>
+                <div class="tab-desc">Financial Data</div>
+              </div>
             </div>
-          </div>
-        </v-tab>
-      </v-tabs>
-    </v-card>
-
+          </v-tab>
+        </v-tabs>
+      </v-card>
+    </div>
     <!-- Dashboard Content -->
     <div class="dashboard-content">
       <v-tabs-window v-model="tab">
@@ -111,7 +110,11 @@ onMounted(() => {
 <style scoped>
 .dashboard-container {
   min-height: 100vh;
-  background: transparent;
+  background: rgb(var(--v-theme-surface));
+}
+
+.theme--dark .dashboard-container {
+  background: rgb(var(--v-theme-surface));
 }
 
 .dashboard-header {
@@ -164,13 +167,27 @@ onMounted(() => {
 }
 
 .tab-card {
+  max-width: 1400px;
+  margin: 0 auto;
   border-radius: 16px !important;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .tab-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
 .modern-tabs {
   border-radius: 16px;
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-primary));
+}
+
+.theme--dark .modern-tabs {
+  background: rgb(var(--v-theme-surface));
 }
 
 .tab-item {
@@ -205,7 +222,7 @@ onMounted(() => {
 
 .dashboard-content {
   padding: 2rem;
-  max-width: fit-content;
+  max-width: 1400px;
   margin: 0 auto;
 }
 </style>
