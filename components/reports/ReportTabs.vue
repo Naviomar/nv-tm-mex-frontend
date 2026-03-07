@@ -5,8 +5,6 @@
       <!-- Horizontal Tabs -->
       <v-tabs
         v-model="tab"
-        bg-color="grey-lighten-4"
-        color="primary"
         align-tabs="start"
         show-arrows
         class="modern-tabs"
@@ -178,7 +176,7 @@ watch(() => props.viewMode, (newMode, oldMode) => {
 }
 
 .modern-tabs {
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid rgba(var(--v-border-color), var(--v-border-opacity));;
 }
 
 .theme--dark .modern-tabs {

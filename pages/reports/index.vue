@@ -4,11 +4,11 @@
       <v-col cols="12">
         <div class="d-flex align-center justify-space-between mb-6">
           <div>
-            <h1 class="text-h5 font-weight-bold text-grey-darken-3 dark:text-grey-lighten-2 mb-2">
+            <h1 class="text-h5 font-weight-bold mb-2">
               <v-icon size="40" color="primary" class="mr-3">mdi-chart-box-multiple</v-icon>
               Reports & Analytics
             </h1>
-            <p class="text-body-1 text-grey-darken-1 dark:text-grey-lighten-1">
+            <p class="text-body-1">
               Comprehensive reporting and data visualization tools for business intelligence
             </p>
           </div>
@@ -49,13 +49,13 @@ definePageMeta({
 
 <style scoped>
 .reports-page-container {
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  background: rgb(var(--v-theme-surface));
   min-height: 100vh;
 }
 
 .theme--dark .reports-page-container,
 :deep(.theme--dark) .reports-page-container {
-  background: linear-gradient(135deg, rgb(var(--v-theme-surface)) 0%, rgb(var(--v-theme-background)) 100%);
+  background: rgb(var(--v-theme-surface));
 }
 
 :deep(.v-btn-toggle) {
