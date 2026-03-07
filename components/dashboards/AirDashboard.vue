@@ -48,7 +48,7 @@
             <label class="filter-label">Customer</label>
             <ACustomerSearch v-model="filters.customer_id" hide-details />
           </div>
-          <div class="md:col-span-2 flex items-end gap-2">
+          <div class="grid grid-cols-1 md:grid-cols-2 md:col-span-2 items-end gap-2">
             <v-btn variant="outlined" color="grey-darken-1" block @click="clearFilters" class="modern-btn">
               <v-icon start>mdi-refresh</v-icon>
               Reset

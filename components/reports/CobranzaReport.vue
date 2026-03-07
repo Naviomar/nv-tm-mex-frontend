@@ -215,7 +215,7 @@ const clearFilters = () => {
 }
 
 .report-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 12px;
   overflow: hidden;
 }
@@ -277,10 +277,10 @@ const clearFilters = () => {
 }
 
 .filters-section {
-  background: #f9fafb;
+  background: rgb(var(--v-theme-surface));
   padding: 20px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .filters-title {

@@ -21,72 +21,37 @@
             <v-icon color="primary" size="20" class="mr-2">mdi-filter-outline</v-icon>
             <span>Report Filters</span>
           </div>
-          
+
           <v-row>
             <v-col cols="12" md="4">
-              <v-date-picker
-                v-model="filters.fromDate"
-                label="From Date"
-                density="compact"
-                hide-details
-                :max="filters.toDate"
-                :first-day-of-week="1"
-                locale="es"
-                variant="outlined"
-              />
+              <v-date-picker v-model="filters.fromDate" label="From Date" density="compact" hide-details
+                :max="filters.toDate" :first-day-of-week="1" locale="es" variant="outlined" />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-date-picker
-                v-model="filters.toDate"
-                label="To Date"
-                density="compact"
-                hide-details
-                :min="filters.fromDate"
-                :first-day-of-week="1"
-                locale="es"
-                variant="outlined"
-              />
+              <v-date-picker v-model="filters.toDate" label="To Date" density="compact" hide-details
+                :min="filters.fromDate" :first-day-of-week="1" locale="es" variant="outlined" />
             </v-col>
 
             <v-col cols="12" md="4">
-              <ACustomerSearch 
-                v-model="filters.customer_id" 
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
-              />
+              <ACustomerSearch v-model="filters.customer_id" :hide-details="true" density="compact"
+                variant="outlined" />
             </v-col>
           </v-row>
 
           <v-row class="mt-4">
             <v-col cols="12" class="d-flex justify-end gap-2">
-              <v-btn 
-                variant="outlined" 
-                color="grey" 
-                @click="clearFilters"
-                prepend-icon="mdi-filter-off"
-              >
+              <v-btn variant="outlined" color="grey" @click="clearFilters" prepend-icon="mdi-filter-off">
                 Clear Filters
               </v-btn>
-              <v-btn 
-                color="primary" 
-                @click="applyFilters"
-                prepend-icon="mdi-download"
-                :loading="loadingStore.loading"
-              >
+              <v-btn color="primary" @click="applyFilters" prepend-icon="mdi-download" :loading="loadingStore.loading">
                 Generate Report
               </v-btn>
             </v-col>
           </v-row>
         </div>
 
-        <v-alert
-          type="info"
-          variant="tonal"
-          class="mt-6"
-          density="compact"
-        >
+        <v-alert type="info" variant="tonal" class="mt-6" density="compact">
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
@@ -169,16 +134,86 @@ const clearFilters = () => {
 </script>
 
 <style scoped>
-.report-container { width: 100%; }
-.report-card { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-.report-header { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); position: relative; overflow: hidden; }
-.report-header::before { content: ''; position: absolute; top: -50%; right: -10%; width: 40%; height: 200%; background: rgba(255, 255, 255, 0.05); transform: rotate(-15deg); }
-.header-content { position: relative; z-index: 1; padding: 20px 24px; }
-.header-left { display: flex; align-items: center; gap: 16px; }
-.icon-wrapper { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-.header-text { color: white; }
-.report-title { font-size: 1.5rem; font-weight: 700; margin: 0; line-height: 1.2; }
-.report-subtitle { font-size: 0.875rem; margin: 4px 0 0 0; opacity: 0.9; }
-.filters-section { background: #f9fafb; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; }
-.filters-title { display: flex; align-items: center; font-size: 0.875rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+.report-container {
+  width: 100%;
+}
+
+.report-card {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.report-header {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 40%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.05);
+  transform: rotate(-15deg);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrapper {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-text {
+  color: white;
+}
+
+.report-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.report-subtitle {
+  font-size: 0.875rem;
+  margin: 4px 0 0 0;
+  opacity: 0.9;
+}
+
+.filters-section {
+  background: rgb(var(--v-theme-surface));
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.filters-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 </style>

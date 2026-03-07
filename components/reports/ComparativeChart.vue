@@ -561,8 +561,8 @@ const chartConfig = computed(() => {
   width: 100%;
   min-height: 500px;
   padding: 20px;
-  background: #fafafa;
-  border-radius: 8px;
+  background: rgb(var(--v-theme-surface));
+  border-radius: 16px;
 }
 
 .theme--dark .chart-wrapper {
@@ -585,7 +585,7 @@ const chartConfig = computed(() => {
 
 .stat-label {
   font-size: 0.75rem;
-  color: #666;
+  color: rgba(var(--v-theme-on-surface), 0.7);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -594,7 +594,7 @@ const chartConfig = computed(() => {
 .stat-value {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .hover-card {
@@ -676,7 +676,7 @@ const chartConfig = computed(() => {
 }
 
 .header-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
   line-height: 1.2;
@@ -698,11 +698,11 @@ const chartConfig = computed(() => {
 
 /* Professional Cards */
 .year-card-professional {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));;
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
+  background: rgb(var(--v-theme-surface));
 }
 
 .theme--dark .year-card-professional {
@@ -722,9 +722,9 @@ const chartConfig = computed(() => {
 }
 
 .card-header-pro {
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background: linear-gradient(135deg, rgba(var(--v-theme-surface), 0.5) 0%, rgba(var(--v-theme-surface), 0.3) 100%);
   padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .theme--dark .card-header-pro {
@@ -740,7 +740,7 @@ const chartConfig = computed(() => {
 .year-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.5px;
 }
 
@@ -758,7 +758,7 @@ const chartConfig = computed(() => {
   align-items: center;
   gap: 16px;
   padding: 20px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   transition: background-color 0.2s ease;
 }
 
@@ -771,7 +771,7 @@ const chartConfig = computed(() => {
 }
 
 .stat-item-pro:hover {
-  background-color: #f9fafb;
+  background-color: rgba(var(--v-theme-surface), 0.1);
 }
 
 .theme--dark .stat-item-pro:hover {
@@ -807,7 +807,7 @@ const chartConfig = computed(() => {
 .stat-label-pro {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  color: rgba(var(--v-theme-on-surface), 0.7);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -820,7 +820,7 @@ const chartConfig = computed(() => {
 .stat-value-pro {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1;
   margin-bottom: 4px;
 }
@@ -831,7 +831,7 @@ const chartConfig = computed(() => {
 
 .stat-meta {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: rgba(var(--v-theme-on-surface), 0.5);
   font-weight: 500;
 }
 
