@@ -188,7 +188,7 @@ const updateChartData = () => {
     return new Date(s.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   })
 
-  const data = stats.value.map(s => s.total)
+  const data = stats.value.map(s => parseInt(s.total) || 0)
   totalCaptures.value = data.reduce((sum, val) => sum + val, 0)
 
   chartData.value = {

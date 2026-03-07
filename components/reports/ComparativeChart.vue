@@ -38,48 +38,67 @@
       </div>
 
       <v-card-text class="pa-6">
-        <v-row class="mb-6">
-          <v-col cols="12" md="8">
-            <div class="d-flex align-center gap-4">
-              <v-select
-                v-model="selectedYears"
-                :items="availableYears"
-                label="Select Years to Compare"
-                multiple
-                chips
-                closable-chips
-                variant="outlined"
-                color="primary"
-                density="comfortable"
-                hide-details
-                :disabled="loading"
-              >
-                <template #prepend-inner>
-                  <v-icon color="primary">mdi-calendar-range</v-icon>
-                </template>
-              </v-select>
-              <v-btn
-                color="primary"
-                variant="elevated"
-                size="large"
-                :loading="loading"
-                :disabled="selectedYears.length === 0"
-                @click="loadChartData()"
-              >
-                <v-icon start>mdi-chart-line</v-icon>
-                Generate Chart
-              </v-btn>
-            </div>
-          </v-col>
+        <v-row class="mb-4">
           <v-col cols="12" md="4">
-            <v-card variant="tonal" color="info" class="h-100">
-              <v-card-text class="d-flex align-center justify-center h-100">
-                <div class="text-center">
-                  <v-icon size="24" color="info">mdi-information</v-icon>
-                  <div class="text-caption mt-1">Select up to 5 years</div>
-                </div>
-              </v-card-text>
-            </v-card>
+            <v-select
+              v-model="selectedYears"
+              :items="availableYears"
+              label="Select Years to Compare"
+              multiple
+              chips
+              closable-chips
+              variant="outlined"
+              color="primary"
+              density="comfortable"
+              hide-details
+              :disabled="loading"
+            >
+              <template #prepend-inner>
+                <v-icon color="primary">mdi-calendar-range</v-icon>
+              </template>
+            </v-select>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="selectedEjecutivo"
+              :items="ejecutivos"
+              item-title="name"
+              item-value="id"
+              label="Filter by Ejecutivo"
+              variant="outlined"
+              color="primary"
+              density="comfortable"
+              hide-details
+              clearable
+              :disabled="loading"
+            >
+              <template #prepend-inner>
+                <v-icon color="primary">mdi-account-tie</v-icon>
+              </template>
+            </v-select>
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-checkbox
+              v-model="includeProfit"
+              label="Include Profit"
+              color="primary"
+              density="comfortable"
+              hide-details
+              :disabled="loading"
+            />
+          </v-col>
+          <v-col cols="12" md="3" class="d-flex align-center gap-2">
+            <v-btn
+              color="primary"
+              variant="elevated"
+              block
+              :loading="loading"
+              :disabled="selectedYears.length === 0"
+              @click="loadChartData()"
+            >
+              <v-icon start>mdi-chart-line</v-icon>
+              Generate Chart
+            </v-btn>
           </v-col>
         </v-row>
 
@@ -175,8 +194,9 @@
 <script setup lang="ts">
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController } from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController)
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController, ChartDataLabels)
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -185,6 +205,9 @@ const selectedYears = ref<number[]>([])
 const chartData = ref<any>(null)
 const loading = ref(false)
 const refreshing = ref(false)
+const includeProfit = ref(true)
+const selectedEjecutivo = ref<number | null>(null)
+const ejecutivos = ref<any[]>([])
 
 const cachedYears = computed(() => {
   if (!chartData.value) return 0
@@ -223,7 +246,7 @@ const getYearColor = (year: number): string => {
   return colors[year % colors.length] || 'blue'
 }
 
-const getYearGradient = (year: number): string => {
+const getYearGradient = (year: number) => {
   const gradients = [
     'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -234,7 +257,7 @@ const getYearGradient = (year: number): string => {
     'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
     'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
   ]
-  return gradients[year % gradients.length] || gradients[0]
+  return gradients[year % gradients.length] ?? gradients[0]
 }
 
 const formatNumber = (value: number) => {
@@ -256,11 +279,16 @@ const loadChartData = async (forceRefresh = false) => {
   
   try {
     const params: any = {
-      years: selectedYears.value
+      years: selectedYears.value,
+      includeProfit: includeProfit.value
     }
     
     if (forceRefresh) {
       params.refresh = true
+    }
+    
+    if (selectedEjecutivo.value) {
+      params.ejecutivo_id = selectedEjecutivo.value
     }
     
     const { data } = await $api.reports.getYearlyComparative(params)
@@ -288,6 +316,19 @@ const refreshData = () => {
   loadChartData(true)
 }
 
+const loadEjecutivos = async () => {
+  try {
+    const { data } = await $api.reports.getEjecutivos()
+    ejecutivos.value = data || []
+  } catch (error) {
+    console.error('Error loading ejecutivos:', error)
+  }
+}
+
+onMounted(() => {
+  loadEjecutivos()
+})
+
 const chartConfig = computed(() => {
   if (!chartData.value || !Array.isArray(chartData.value)) return null
 
@@ -297,8 +338,8 @@ const chartConfig = computed(() => {
     const teusData = yearData?.months?.map((m: any) => m.teus) || []
     const profitData = yearData?.months?.map((m: any) => m.profit) || []
     const colorIndex = index % yearColors.length
-    const color = yearColors[colorIndex] || yearColors[0]
-    const profitColor = profitLineColors[colorIndex] || profitLineColors[0]
+    const color = yearColors[colorIndex] ?? yearColors[0]
+    const profitColor = profitLineColors[colorIndex] ?? profitLineColors[0]
     
     // TEUs Bar Chart
     datasets.push({
@@ -372,26 +413,30 @@ const chartConfig = computed(() => {
             generateLabels: (chart: any) => {
               const datasets = chart.data.datasets
               return datasets.map((dataset: any, i: number) => {
-                const yearLabel = dataset.label?.split(' - ')[0] ?? dataset.label ?? ''
-                const yearData = chartData.value?.find((y: any) => y.year.toString() === yearLabel)
-                const totalTeus = yearData?.total_teus ?? 0
-                const withoutEta = yearData?.without_eta?.teus ?? 0
-                
-                let label = `${yearLabel}: ${formatNumber(totalTeus)}`
-                if (withoutEta > 0 && i === datasets.length - 1) {
-                  label += ` | sin ETA ${yearLabel}: ${formatNumber(withoutEta)}`
+                // Only show TEUs datasets in legend (skip profit lines)
+                if (!dataset.label?.includes('Profit')) {
+                  const yearLabel = dataset.label?.split(' - ')[0] ?? ''
+                  const yearData = chartData.value?.find((y: any) => y.year.toString() === yearLabel)
+                  const totalTeus = yearData?.total_teus ?? 0
+                  const withoutEta = yearData?.without_eta?.teus ?? 0
+                  
+                  let label = `${yearLabel}: ${formatNumber(totalTeus)}`
+                  if (withoutEta > 0) {
+                    label += ` | sin ETA: ${formatNumber(withoutEta)}`
+                  }
+                  
+                  return {
+                    text: label,
+                    fillStyle: dataset.backgroundColor,
+                    strokeStyle: dataset.borderColor,
+                    lineWidth: 2,
+                    hidden: false,
+                    index: i,
+                    datasetIndex: i
+                  }
                 }
-                
-                return {
-                  text: label,
-                  fillStyle: dataset.backgroundColor,
-                  strokeStyle: dataset.borderColor,
-                  lineWidth: 2,
-                  hidden: false,
-                  index: i,
-                  datasetIndex: i
-                }
-              })
+                return null
+              }).filter(Boolean)
             }
           }
         },
@@ -427,6 +472,23 @@ const chartConfig = computed(() => {
               return `\nTotal TEUs: ${formatNumber(totalTeus)}\nTotal Profit: ${formatCurrency(totalProfit)}`
             }
           }
+        }
+      },
+      plugins: {
+        datalabels: {
+          display: (context: any) => {
+            // Only show labels on bars (TEUs), not on lines (Profit)
+            return context.dataset.type === 'bar'
+          },
+          anchor: 'end' as const,
+          align: 'top' as const,
+          formatter: (value: any) => formatNumber(value),
+          color: '#1976d2',
+          font: {
+            weight: 'bold' as const,
+            size: 10
+          },
+          offset: 4
         }
       },
       scales: {
@@ -501,6 +563,10 @@ const chartConfig = computed(() => {
   padding: 20px;
   background: #fafafa;
   border-radius: 8px;
+}
+
+.theme--dark .chart-wrapper {
+  background: rgba(var(--v-theme-surface), 0.5);
 }
 
 .stats-grid {
@@ -639,16 +705,31 @@ const chartConfig = computed(() => {
   background: white;
 }
 
+.theme--dark .year-card-professional {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .year-card-professional:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
   border-color: #d1d5db;
 }
 
+.theme--dark .year-card-professional:hover {
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .card-header-pro {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.theme--dark .card-header-pro {
+  background: linear-gradient(135deg, rgba(var(--v-theme-surface), 0.5) 0%, rgba(var(--v-theme-surface), 0.3) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .year-badge {
@@ -661,6 +742,10 @@ const chartConfig = computed(() => {
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.5px;
+}
+
+.theme--dark .year-number {
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .stats-grid-pro {
@@ -677,12 +762,20 @@ const chartConfig = computed(() => {
   transition: background-color 0.2s ease;
 }
 
+.theme--dark .stat-item-pro {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .stat-item-pro:last-child {
   border-bottom: none;
 }
 
 .stat-item-pro:hover {
   background-color: #f9fafb;
+}
+
+.theme--dark .stat-item-pro:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .stat-icon-pro {
@@ -720,6 +813,10 @@ const chartConfig = computed(() => {
   margin-bottom: 4px;
 }
 
+.theme--dark .stat-label-pro {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
 .stat-value-pro {
   font-size: 1.5rem;
   font-weight: 700;
@@ -728,9 +825,17 @@ const chartConfig = computed(() => {
   margin-bottom: 4px;
 }
 
+.theme--dark .stat-value-pro {
+  color: rgb(var(--v-theme-on-surface));
+}
+
 .stat-meta {
   font-size: 0.75rem;
   color: #9ca3af;
   font-weight: 500;
+}
+
+.theme--dark .stat-meta {
+  color: rgba(var(--v-theme-on-surface), 0.5);
 }
 </style>

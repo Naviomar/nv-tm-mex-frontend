@@ -50,10 +50,14 @@ class ReportsModule extends FetchFactory<any> {
     })
   }
 
-  async getYearlyComparative(params: { years: number[], refresh?: boolean }) {
+  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, ejecutivo_id?: number }) {
     return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
       body: params
     })
+  }
+
+  async getEjecutivos() {
+    return this.call('GET', `${this.RESOURCE}/ejecutivos`)
   }
 
 }

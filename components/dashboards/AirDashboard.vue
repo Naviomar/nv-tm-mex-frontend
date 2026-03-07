@@ -442,9 +442,14 @@ onMounted(() => {
 
 /* Filter Section */
 .filter-section {
-  background: white;
+  background: rgb(var(--v-theme-surface));
   border-radius: 16px !important;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .filter-section {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .filter-header {
@@ -465,13 +470,13 @@ onMounted(() => {
 .filter-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.3px;
 }
 
 .filter-subtitle {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   margin-top: 2px;
 }
 
@@ -479,10 +484,11 @@ onMounted(() => {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #374151;
+  color: rgb(var(--v-theme-on-surface));
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  opacity: 0.87;
 }
 
 .modern-input {
@@ -502,7 +508,7 @@ onMounted(() => {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #f3f4f6;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
 }
 
 .metric-card:hover {
@@ -598,6 +604,11 @@ onMounted(() => {
 .stat-card {
   transition: all 0.3s ease;
   border-radius: 12px !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .stat-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .stat-card:hover {
