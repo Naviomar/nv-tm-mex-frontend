@@ -60,80 +60,102 @@
       </div>
     </v-form>
     <v-card>
-      <v-card-text>
-        <v-table density="compact">
-          <thead>
-            <tr>
-              <th class="text-left" width="50">Actions</th>
-              <th class="text-left"># ID</th>
-              <th class="text-left">Reference</th>
-              <th class="text-left">Charge</th>
-              <th class="text-left">Container</th>
-              <th class="text-left">Amount</th>
-              <th class="text-left">Payments</th>
-              <th class="text-left">Refunded</th>
-              <th class="text-left">Created at</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(servicePayment, index) in servicePayments.data"
-              :key="`service-payment-${index}`"
-              :class="{ 'bg-red-100! dark:bg-red-900!': servicePayment.deleted_at }"
-            >
-              <td>
-                <div class="flex gap-2">
-                  <ViewButton :item="servicePayment" @click="viewServicePayment(servicePayment)" />
-                  <TrashButton :can-restore="false" :item="servicePayment" @click="showConfirmDelete" />
-                </div>
-              </td>
-              <td>{{ servicePayment.id }}</td>
-              <td class="whitespace-nowrap">{{ servicePayment.serviceable?.reference_number }}</td>
-              <td>{{ servicePayment.charge?.name }}</td>
-              <td>{{ servicePayment.container?.container_number }}</td>
+      <div class="my-2">
+        <div class="overflow-x-auto">
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th class="text-left min-w-[100px]" width="50">Actions</th>
+                <th class="text-left min-w-[80px]"># ID</th>
+                <th class="text-left min-w-[100px]">Type</th>
+                <th class="text-left min-w-[150px]">Reference</th>
+                <th class="text-left min-w-[120px]">Charge</th>
+                <th class="text-left min-w-[120px]">Container</th>
+                <th class="text-left min-w-[120px]">Amount</th>
+                <th class="text-left min-w-[150px]">Payments</th>
+                <th class="text-left min-w-[100px]">Refunded</th>
+                <th class="text-left min-w-[150px]">Created at</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(servicePayment, index) in servicePayments.data"
+                :key="`service-payment-${index}`"
+                :class="{ 'bg-red-100! dark:bg-red-900!': servicePayment.deleted_at }"
+              >
+                <td>
+                  <div class="flex gap-2">
+                    <ViewButton :item="servicePayment" @click="viewServicePayment(servicePayment)" />
+                    <TrashButton :can-restore="false" :item="servicePayment" @click="showConfirmDelete" />
+                  </div>
+                </td>
+                <td>{{ servicePayment.id }}</td>
+                <td class="whitespace-nowrap">
+                  <v-chip v-if="servicePayment.serviceable_type" color="primary" size="x-small">
+                    Service
+                  </v-chip>
+                  <v-chip v-else color="orange" size="x-small">
+                    Free Format
+                  </v-chip>
+                </td>
+                <td class="whitespace-nowrap">
+                  <span v-if="servicePayment.serviceable_type">{{ servicePayment.serviceable?.reference_number }}</span>
+                  <div v-else class="flex flex-col gap-1">
+                    <span class="text-gray-500 italic">Free Format</span>
+                    <span v-if="servicePayment.customer_id" class="text-xs">
+                      Customer: {{ servicePayment.customer?.name }}
+                    </span>
+                    <span v-if="servicePayment.custom_agent_id" class="text-xs">
+                      Customs Agent: {{ servicePayment.custom_agent?.name }}
+                    </span>
+                  </div>
+                </td>
+                <td>{{ servicePayment.charge?.name }}</td>
+                <td>{{ servicePayment.container?.container_number }}</td>
 
-              <td class="whitespace-nowrap text-right">
-                {{ getCurrencyName(servicePayment.currency_id) }} {{ formatToCurrency(servicePayment.amount) }}
-              </td>
-              <td>
-                <div v-for="(payment, index) in servicePayment.payments" :key="`payment-${index}`">
-                  <PaymentableLabelLink :payment="payment" />
-                </div>
-              </td>
-              <td>
-                <div class="flex flex-col gap-2">
-                  <template v-if="servicePayment.req_refund_payment">
-                    <v-chip
-                      :color="servicePayment.req_refund_payment.req_refund.invoice.is_paid ? 'green' : 'red'"
-                      size="small"
-                    >
-                      Refund #{{ servicePayment.req_refund_payment.req_refund_id }} —
-                      {{ servicePayment.req_refund_payment.req_refund.invoice.is_paid ? 'Paid' : 'Pending' }}
-                    </v-chip>
-                  </template>
+                <td class="whitespace-nowrap text-right">
+                  {{ getCurrencyName(servicePayment.currency_id) }} {{ formatToCurrency(servicePayment.amount) }}
+                </td>
+                <td>
+                  <div v-for="(payment, index) in servicePayment.payments" :key="`payment-${index}`">
+                    <PaymentableLabelLink :payment="payment" />
+                  </div>
+                </td>
+                <td>
+                  <div class="flex flex-col gap-2">
+                    <template v-if="servicePayment.req_refund_payment">
+                      <v-chip
+                        :color="servicePayment.req_refund_payment.req_refund.invoice.is_paid ? 'green' : 'red'"
+                        size="small"
+                      >
+                        Refund #{{ servicePayment.req_refund_payment.req_refund_id }} —
+                        {{ servicePayment.req_refund_payment.req_refund.invoice.is_paid ? 'Paid' : 'Pending' }}
+                      </v-chip>
+                    </template>
 
-                  <template v-else>
-                    <v-chip color="amber" size="small">Not refunded</v-chip>
-                  </template>
-                </div>
-              </td>
+                    <template v-else>
+                      <v-chip color="amber" size="small">Not refunded</v-chip>
+                    </template>
+                  </div>
+                </td>
 
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="servicePayment">
-                  {{ formatDateString(servicePayment.created_at) }}
-                </UserInfoBadge>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-pagination
-          v-model="servicePayments.current_page"
-          :length="servicePayments.last_page"
-          rounded="circle"
-          density="compact"
-          @update:model-value="onClickPagination"
-        ></v-pagination>
-      </v-card-text>
+                <td class="whitespace-nowrap">
+                  <UserInfoBadge :item="servicePayment">
+                    {{ formatDateString(servicePayment.created_at) }}
+                  </UserInfoBadge>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </div>
+      <v-pagination
+        v-model="servicePayments.current_page"
+        :length="servicePayments.last_page"
+        rounded="circle"
+        density="compact"
+        @update:model-value="onClickPagination"
+      ></v-pagination>
     </v-card>
   </div>
 </template>

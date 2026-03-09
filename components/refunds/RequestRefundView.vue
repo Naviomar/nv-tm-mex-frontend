@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title>Request refund #{{ props.id }}</v-card-title>
       <v-card-text>
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <v-card>
             <v-card-title>
               <div class="flex justify-between gap-2">
@@ -16,7 +16,7 @@
               </div>
             </v-card-title>
             <v-card-text>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>Beneficiary</div>
                 <div>
                   {{ reqRefund.beneficiary?.name }} ({{ beneficiaryType }})
@@ -76,29 +76,29 @@
                 </VeeForm>
               </div>
               <div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">Bank:</div>
-                  <div class="col-span-2">{{ reqRefund.bank }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.bank }}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">Beneficary name:</div>
-                  <div class="col-span-2">{{ reqRefund.beneficiary_name }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.beneficiary_name }}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">Account number:</div>
-                  <div class="col-span-2">{{ reqRefund.account_number }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.account_number }}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">ABA:</div>
-                  <div class="col-span-2">{{ reqRefund.aba }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.aba }}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">Swift:</div>
-                  <div class="col-span-2">{{ reqRefund.swift }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.swift }}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                   <div class="font-bold">IBAN:</div>
-                  <div class="col-span-2">{{ reqRefund.iban }}</div>
+                  <div class="sm:col-span-2">{{ reqRefund.iban }}</div>
                 </div>
 
                 <div class="flex justify-start gap-2">
@@ -136,38 +136,53 @@
           </div>
         </div>
         <div class="grid grid-cols-1 gap-4">
-          <v-table density="compact">
-            <thead>
-              <tr>
-                <th class="w-10">Actions</th>
-                <th>Service Ref#</th>
-                <th>Concept</th>
-                <th>Amount</th>
-                <th>Currency</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="reqRefund.refund_payments?.length === 0">
-                <td colspan="5" class="text-center">No concepts found</td>
-              </tr>
-              <tr v-for="(refundPayment, index) in reqRefund.refund_payments" :key="`refund-payment-${index}`">
-                <td>
-                  <div v-if="!isPaid">
-                    <TrashButton :item="refundPayment" @click="() => checkUserAndExecute(reqRefund.created_by, showConfirmDelete)" />
-                  </div>
-                </td>
-                <td>{{ refundPayment.payable?.serviceable?.reference_number }}</td>
-                <td>
-                  <div>{{ refundPayment.payable?.charge?.name }}</div>
-                  <div v-if="refundPayment.payable.container">
-                    <div>Container: {{ refundPayment.payable.container.container_number }}</div>
-                  </div>
-                </td>
-                <td>{{ formatToCurrency(refundPayment.amount) }}</td>
-                <td>{{ getCurrencyName(refundPayment.currency_id) }}</td>
-              </tr>
-            </tbody>
-          </v-table>
+          <div class="overflow-x-auto">
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="w-10 min-w-[80px]">Actions</th>
+                  <th class="min-w-[150px]">Service/Type</th>
+                  <th class="min-w-[150px]">Concept</th>
+                  <th class="min-w-[100px]">Amount</th>
+                  <th class="min-w-[80px]">Currency</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="reqRefund.refund_payments?.length === 0">
+                  <td colspan="5" class="text-center">No concepts found</td>
+                </tr>
+                <tr v-for="(refundPayment, index) in reqRefund.refund_payments" :key="`refund-payment-${index}`">
+                  <td>
+                    <div v-if="!isPaid">
+                      <TrashButton :item="refundPayment" @click="() => checkUserAndExecute(reqRefund.created_by, showConfirmDelete)" />
+                    </div>
+                  </td>
+                  <td>
+                    <div v-if="refundPayment.payable?.serviceable?.reference_number">
+                      {{ refundPayment.payable?.serviceable?.reference_number }}
+                    </div>
+                    <div v-else class="flex flex-col gap-1">
+                      <v-chip color="orange" size="x-small">Free Format</v-chip>
+                      <span v-if="refundPayment.payable?.customer_id" class="text-xs">
+                        Customer: {{ refundPayment.payable?.customer?.name }}
+                      </span>
+                      <span v-if="refundPayment.payable?.custom_agent_id" class="text-xs">
+                        Customs Agent: {{ refundPayment.payable?.custom_agent?.name }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div>{{ refundPayment.payable?.charge?.name }}</div>
+                    <div v-if="refundPayment.payable?.container">
+                      <div class="text-xs">Container: {{ refundPayment.payable.container.container_number }}</div>
+                    </div>
+                  </td>
+                  <td class="whitespace-nowrap">{{ formatToCurrency(refundPayment.amount) }}</td>
+                  <td>{{ getCurrencyName(refundPayment.currency_id) }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
         </div>
       </v-card-text>
     </v-card>

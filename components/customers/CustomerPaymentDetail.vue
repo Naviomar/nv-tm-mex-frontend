@@ -7,9 +7,29 @@
             <div class="font-bold">Customer Payment #{{ servicePayment.id }}</div>
           </v-card-title>
           <v-card-text>
-            <div class="grid grid-cols-2">
-              <div class="font-bold">Reference linked</div>
-              <div class="font-bold">{{ servicePayment.serviceable?.reference_number }}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="font-bold">Payment Type</div>
+              <div class="font-bold">
+                <v-chip v-if="servicePayment.serviceable_type" color="primary" size="small">
+                  Service Payment
+                </v-chip>
+                <v-chip v-else color="orange" size="small">
+                  Free Format
+                </v-chip>
+              </div>
+
+              <div v-if="servicePayment.serviceable_type" class="font-bold">Reference linked</div>
+              <div v-if="servicePayment.serviceable_type" class="font-bold">{{ servicePayment.serviceable?.reference_number }}</div>
+
+              <div v-if="!servicePayment.serviceable_type" class="font-bold">Owner</div>
+              <div v-if="!servicePayment.serviceable_type" class="font-bold">
+                <span v-if="servicePayment.customer_id">
+                  Customer: {{ servicePayment.customer?.name }}
+                </span>
+                <span v-if="servicePayment.custom_agent_id">
+                  Customs Agent: {{ servicePayment.custom_agent?.name }}
+                </span>
+              </div>
 
               <div>Charge</div>
               <div>{{ servicePayment.charge?.name }}</div>

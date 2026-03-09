@@ -32,72 +32,82 @@
         density="compact"
         @update:model-value="onClickPagination"
       ></v-pagination>
-      <v-table density="compact">
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Folio</th>
-            <th>Beneficiary</th>
-            <th>Services</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Created at</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(refund, index) in refunds.data"
-            :key="`refund-${index}`"
-            :class="{
-              'dark:hover:bg-gray-700 hover:bg-slate-300': true,
-              'bg-red-100! dark:bg-red-900!': refund.deleted_at,
-            }"
-          >
-            <td>
-              <div class="flex gap-2">
-                <ViewButton :item="refund" @click="viewItem(refund)" />
-                <div v-if="refund.deleted_at == null">
-                  <TrashButton
-                    :item="refund"
-                    @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
-                  />
+      <div class="overflow-x-auto">
+        <v-table density="compact">
+          <thead>
+            <tr>
+              <th class="min-w-[100px]">Actions</th>
+              <th class="min-w-[80px]">Folio</th>
+              <th class="min-w-[150px]">Beneficiary</th>
+              <th class="min-w-[200px]">Services</th>
+              <th class="min-w-[120px]">Amount</th>
+              <th class="min-w-[120px]">Status</th>
+              <th class="min-w-[150px]">Created at</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(refund, index) in refunds.data"
+              :key="`refund-${index}`"
+              :class="{
+                'dark:hover:bg-gray-700 hover:bg-slate-300': true,
+                'bg-red-100! dark:bg-red-900!': refund.deleted_at,
+              }"
+            >
+              <td>
+                <div class="flex gap-2">
+                  <ViewButton :item="refund" @click="viewItem(refund)" />
+                  <div v-if="refund.deleted_at == null">
+                    <TrashButton
+                      :item="refund"
+                      @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
+                    />
+                  </div>
                 </div>
-              </div>
-            </td>
-            <td>{{ refund.id }}</td>
-            <td>
-              {{ refund.beneficiary?.name }}
-              <span v-if="refund.beneficiary?.deleted_at"> (Eliminado)</span>
-            </td>
-            <td>
-              <div class="flex flex-col items-center gap-1 py-2">
-                <v-chip
-                  v-for="(refundPay, i) in refund.refund_payments"
-                  :key="`refund-pay-${i}`"
-                  density="compact"
-                  color="primary"
-                >
-                  {{ refundPay.payable?.serviceable?.reference_number }}
-                </v-chip>
-              </div>
-            </td>
-            <td>{{ getCurrencyName(refund.currency_id) }} {{ formatToCurrency(getTotalRefund(refund)) }}</td>
-            <td>
-              <div class="flex flex-col items-center gap-1">
-                <v-chip size="small" :color="refund.invoice?.is_paid == 1 ? 'green' : 'red'">{{
-                  refund.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
-                }}</v-chip>
-                <InvoiceChargePaymentsView :invoice="refund.invoice" />
-              </div>
-            </td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="refund">
-                {{ formatDateString(refund.created_at) }}
-              </UserInfoBadge>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+              </td>
+              <td>{{ refund.id }}</td>
+              <td>
+                {{ refund.beneficiary?.name }}
+                <span v-if="refund.beneficiary?.deleted_at"> (Eliminado)</span>
+              </td>
+              <td>
+                <div class="flex flex-col items-start gap-1 py-2">
+                  <template v-if="hasServicePayments(refund)">
+                    <v-chip
+                      v-for="(refundPay, i) in refund.refund_payments"
+                      :key="`refund-pay-${i}`"
+                      density="compact"
+                      color="primary"
+                      size="x-small"
+                    >
+                      {{ refundPay.payable?.serviceable?.reference_number }}
+                    </v-chip>
+                  </template>
+                  <v-chip v-else color="orange" size="x-small" class="mb-1">
+                    Free Format
+                  </v-chip>
+                  <div v-if="!hasServicePayments(refund)" class="text-xs text-gray-600">
+                    {{ refund.refund_payments?.length || 0 }} payment(s)
+                  </div>
+                </div>
+              </td>
+              <td class="whitespace-nowrap">{{ getCurrencyName(refund.currency_id) }} {{ formatToCurrency(getTotalRefund(refund)) }}</td>
+              <td>
+                <div class="flex flex-col items-start gap-1">
+                  <v-chip size="small" :color="refund.invoice?.is_paid == 1 ? 'green' : 'red'">{{  refund.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
+                  }}</v-chip>
+                  <InvoiceChargePaymentsView :invoice="refund.invoice" />
+                </div>
+              </td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="refund">
+                  {{ formatDateString(refund.created_at) }}
+                </UserInfoBadge>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
       <v-pagination
         v-model="refunds.current_page"
         :length="refunds.last_page"
@@ -201,6 +211,10 @@ const getTotalRefund = (refund: any) => {
       return acc + parseFloat(curr.amount)
     }, 0) || 0
   )
+}
+
+const hasServicePayments = (refund: any) => {
+  return refund.refund_payments?.some((payment: any) => payment.payable?.serviceable?.reference_number)
 }
 
 const viewItem = (reqRefund: any) => {

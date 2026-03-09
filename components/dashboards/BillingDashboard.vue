@@ -2,7 +2,19 @@
   <div class="billing-dashboard">
     <!-- Professional Filter Section -->
     <v-card class="filter-section elevation-0 mb-6">
-      <v-card-text class="pa-6">
+      <v-card-title class="pa-4 pb-4">
+        <v-btn
+          variant="text"
+          color="primary"
+          @click="showFilters = !showFilters"
+          class="text-none font-semibold"
+        >
+          <v-icon start>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+        </v-btn>
+      </v-card-title>
+      <v-expand-transition>
+        <v-card-text v-show="showFilters" class="pa-6">
         <div class="filter-header mb-5">
           <div class="flex items-center gap-3">
             <div class="filter-icon">
@@ -69,7 +81,8 @@
             To: {{ filters.to }}
           </v-chip>
         </div>
-      </v-card-text>
+        </v-card-text>
+      </v-expand-transition>
     </v-card>
 
     <!-- Overview Cards -->
@@ -139,7 +152,7 @@
     </div>
 
     <!-- Currency Totals -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-1">
       <div v-for="(values, currency) in report.amounts_by_currency" :key="currency">
         <v-card class="elevation-2 rounded-lg">
           <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 pa-3 text-white">
@@ -345,6 +358,7 @@ const filters = ref<any>({
 })
 
 const dialogCustomer = ref(false)
+const showFilters = ref(false)
 
 const report = ref<any>({
   total_invoices: 0,
@@ -466,7 +480,7 @@ onMounted(() => {
 /* Filter Section */
 .filter-section {
   background: rgb(var(--v-theme-surface));
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
@@ -483,7 +497,7 @@ onMounted(() => {
 
 .filter-icon {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -515,11 +529,11 @@ onMounted(() => {
 }
 
 .modern-input {
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .modern-btn {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.3px;
@@ -528,7 +542,7 @@ onMounted(() => {
 /* Cards */
 .stat-card {
   transition: all 0.3s ease;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
