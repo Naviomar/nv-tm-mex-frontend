@@ -118,7 +118,7 @@ onMounted(() => {
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b67f6 50%, #0670d4 100%);
   padding: 2.5rem 2rem 5rem;
   position: relative;
   overflow: hidden;
@@ -147,7 +147,7 @@ onMounted(() => {
 
 .dashboard-icon {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 12px;
   backdrop-filter: blur(10px);
 }
@@ -169,7 +169,7 @@ onMounted(() => {
 .tab-card {
   max-width: 1400px;
   margin: 0 auto;
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
   background: rgb(var(--v-theme-surface));
@@ -181,7 +181,7 @@ onMounted(() => {
 }
 
 .modern-tabs {
-  border-radius: 16px;
+  border-radius: 8px;
   background: rgb(var(--v-theme-surface));
   color: rgb(var(--v-theme-primary));
 }

@@ -1,11 +1,54 @@
 <template>
   <div>
-    <v-card>
+    <v-card color="blue-lighten-4" class="mb-4">
+      <v-card-title class="font-bold! text-base!">📋 Select search type</v-card-title>
+      <v-card-text>
+        <v-radio-group v-model="searchType" :inline="$vuetify.display.smAndUp">
+          <v-radio label="By Service" value="service" />
+          <v-radio label="Free Format (by beneficiary)" value="free-format" color="orange" />
+        </v-radio-group>
+      </v-card-text>
+    </v-card>
+    <v-card v-if="searchType === 'service'">
       <v-card-title>
         <h3>Search global references</h3>
       </v-card-title>
       <v-card-text>
         <SearchGlobalReferences @update="setReferences" />
+      </v-card-text>
+    </v-card>
+    <v-card v-else color="orange-lighten-4">
+      <v-card-title class="font-bold! text-base!">💰 Free Format Refund Search</v-card-title>
+      <v-card-text>
+        <v-alert type="info" variant="tonal" class="mb-4">
+          Search for Free Format payments by beneficiary (customer or customs agent)
+        </v-alert>
+        <div class="mb-4">
+          <v-autocomplete
+            v-model="form.beneficiary_type"
+            :items="[
+              { value: 'customer', name: 'Customer' },
+              { value: 'custom_agent', name: 'Customs agent' },
+            ]"
+            item-title="name"
+            item-value="value"
+            label="Beneficiary type"
+            density="compact"
+          />
+        </div>
+        <div v-if="form.beneficiary_type === 'customer'" class="mb-4">
+          <ACustomerSearch v-model="form.beneficiaryId" label="Select Customer" />
+        </div>
+        <div v-if="form.beneficiary_type === 'custom_agent'" class="mb-4">
+          <ACustomsAgentSearch v-model="form.beneficiaryId" label="Select Customs Agent" />
+        </div>
+        <v-btn
+          v-if="form.beneficiaryId"
+          color="primary"
+          @click="searchFreeFormatPayments"
+        >
+          Search Free Format Payments
+        </v-btn>
       </v-card-text>
     </v-card>
     <div v-if="hasReferences" class="py-4">
@@ -22,43 +65,48 @@
     </div>
     <div v-if="hasReferences && hasCurrency" class="py-4">
       <div class="font-bold text-lg mb-4">Available payments in services</div>
-      <v-table density="compact">
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Service</th>
-            <th>Concept</th>
-            <th>Payment amount</th>
-            <th>Created at</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(servicePayment, i) in servicePaymentsByCurrency" :key="`serv-pay-${i}`">
-            <td>
-              <v-checkbox
-                v-model="servicePayment.selected"
-                density="compact"
-                label="Select payment to refund"
-                :disabled="servicePayment.req_refund_payment != null"
-                hide-details
-              />
-              <v-alert v-if="servicePayment.req_refund_payment != null" color="error" variant="tonal" density="compact">
-                Refund already requested in Req #{{ servicePayment.req_refund_payment.req_refund_id }}
-                <v-btn
-                  color="error"
-                  size="small"
-                  @click="onClickViewRefund(servicePayment.req_refund_payment.req_refund_id)"
-                  >View</v-btn
-                >
-              </v-alert>
-            </td>
-            <td>#{{ servicePayment.serviceable?.reference_number }}</td>
-            <td>{{ servicePayment.charge?.name }}</td>
-            <td>{{ formatToCurrency(servicePayment.amount) }} {{ getCurrencyName(servicePayment.currency_id) }}</td>
-            <td>{{ formatDateString(servicePayment.created_at) }}</td>
-          </tr>
-        </tbody>
-      </v-table>
+      <div class="overflow-x-auto">
+        <v-table density="compact">
+          <thead>
+            <tr>
+              <th>Actions</th>
+              <th>Service</th>
+              <th>Concept</th>
+              <th>Payment amount</th>
+              <th>Created at</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(servicePayment, i) in servicePaymentsByCurrency" :key="`serv-pay-${i}`">
+              <td>
+                <v-checkbox
+                  v-model="servicePayment.selected"
+                  density="compact"
+                  label="Select payment to refund"
+                  :disabled="servicePayment.req_refund_payment != null"
+                  hide-details
+                />
+                <v-alert v-if="servicePayment.req_refund_payment != null" color="error" variant="tonal" density="compact">
+                  Refund already requested in Req #{{ servicePayment.req_refund_payment.req_refund_id }}
+                  <v-btn
+                    color="error"
+                    size="small"
+                    @click="onClickViewRefund(servicePayment.req_refund_payment.req_refund_id)"
+                    >View</v-btn
+                  >
+                </v-alert>
+              </td>
+              <td>
+                <span v-if="servicePayment.serviceable">#{{ servicePayment.serviceable?.reference_number }}</span>
+                <v-chip v-else color="orange" size="x-small">Free Format</v-chip>
+              </td>
+              <td>{{ servicePayment.charge?.name }}</td>
+              <td>{{ formatToCurrency(servicePayment.amount) }} {{ getCurrencyName(servicePayment.currency_id) }}</td>
+              <td>{{ formatDateString(servicePayment.created_at) }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
 
       <!-- Total amount selected in view box -->
       <div class="flex items-center">
@@ -77,6 +125,9 @@
       </div>
 
       <div class="font-bold text-lg my-4">Datos bancarios del beneficiario</div>
+      <v-alert v-if="isFreeFormatSearch" type="info" variant="tonal" density="compact" class="mb-4">
+        Beneficiary auto-filled from Free Format search
+      </v-alert>
       <v-autocomplete
         v-model="form.beneficiary_type"
         :items="[
@@ -86,17 +137,27 @@
         item-title="name"
         item-value="value"
         label="Beneficiary type"
+        :readonly="isFreeFormatSearch"
+        :variant="isFreeFormatSearch ? 'filled' : 'outlined'"
       />
       <div v-if="isCustomerType" class="mb-4">
         <div>
-          <ACustomerSearch v-model="form.beneficiaryId" label="Beneficiario (customer)" />
+          <ACustomerSearch 
+            v-model="form.beneficiaryId" 
+            label="Beneficiario (customer)" 
+            :readonly="isFreeFormatSearch"
+          />
         </div>
 
         <CustomerSelectBankAccount v-model="form.bank" :id="form.beneficiaryId" />
       </div>
       <div v-if="isCustomsAgentType" class="mb-4">
         <div>
-          <ACustomsAgentSearch v-model="form.beneficiaryId" label="Beneficiario (Customs Agent)" />
+          <ACustomsAgentSearch 
+            v-model="form.beneficiaryId" 
+            label="Beneficiario (Customs Agent)" 
+            :readonly="isFreeFormatSearch"
+          />
         </div>
 
         <CustomsAgentSelectBankAccount v-model="form.bank" :id="form.beneficiaryId" />
@@ -106,7 +167,7 @@
         <v-card>
           <v-card-title>Customer bank account selected:</v-card-title>
           <v-card-text>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="grid grid-cols-2 gap-0">
                 <div class="font-bold">Bank:</div>
                 <div>
@@ -157,6 +218,8 @@ const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
+const searchType = ref('service')
+
 const servicesResult = ref<any>({
   serviceType: '',
   services: [],
@@ -168,6 +231,8 @@ const form = ref<any>({
   beneficiaryId: null,
   bank: null,
 })
+
+const isFreeFormatSearch = computed(() => searchType.value === 'free-format')
 
 const servicePayments = ref<any>([])
 
@@ -241,6 +306,44 @@ const onClickRequestRefund = async () => {
     const response: any = await $api.refunds.requestRefund(body)
     snackbar.add({ type: 'success', text: 'Refund requested' })
     router.push(`/refunds/view-${response.id}`)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const searchFreeFormatPayments = async () => {
+  try {
+    loadingStore.start()
+    const body = {
+      service_type: 'FF',
+      beneficiary_type: form.value.beneficiary_type,
+      beneficiary_id: form.value.beneficiaryId,
+    }
+    const response: any = await $api.refunds.searchByServices(body)
+    if (response.length <= 0) {
+      snackbar.add({ type: 'info', text: 'No Free Format payments found for this beneficiary' })
+    }
+
+    servicePayments.value = response
+      .map((payment: any) => {
+        return {
+          ...payment,
+          selected: false,
+        }
+      })
+      .sort((a: any, b: any) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+    
+    servicesResult.value.services = [{ id: 'free-format' }]
+    
+    // Auto-fill beneficiary fields for Free Format
+    // The beneficiary_type and beneficiaryId are already set from the search form
+    // They will be locked via readonly attribute
   } catch (error) {
     console.error(error)
   } finally {

@@ -2,7 +2,19 @@
   <div class="maritime-dashboard">
     <!-- Professional Filter Section -->
     <v-card class="filter-section elevation-0 mb-6">
-      <v-card-text class="pa-6">
+      <v-card-title class="pa-4 pb-4">
+        <v-btn
+          variant="text"
+          color="primary"
+          @click="showFilters = !showFilters"
+          class="text-none font-semibold"
+        >
+          <v-icon start>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+        </v-btn>
+      </v-card-title>
+      <v-expand-transition>
+        <v-card-text v-show="showFilters" class="pa-6">
         <div class="filter-header mb-5">
           <div class="flex items-center gap-3">
             <div class="filter-icon">
@@ -69,7 +81,8 @@
             To: {{ filters.to }}
           </v-chip>
         </div>
-      </v-card-text>
+        </v-card-text>
+      </v-expand-transition>
     </v-card>
 
     <!-- Primary Metrics -->
@@ -145,7 +158,7 @@
     </div>
 
     <!-- Secondary Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-1">
       <v-card class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
@@ -298,6 +311,7 @@ const filters = ref<any>({
 })
 
 const dialogCustomer = ref(false)
+const showFilters = ref(false)
 
 const report = ref<any>({
   total_import: 0,
@@ -424,7 +438,7 @@ onMounted(() => {
 /* Filter Section */
 .filter-section {
   background: rgb(var(--v-theme-surface));
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
@@ -441,7 +455,7 @@ onMounted(() => {
 
 .filter-icon {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -473,11 +487,11 @@ onMounted(() => {
 }
 
 .modern-input {
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .modern-btn {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.3px;
@@ -485,7 +499,7 @@ onMounted(() => {
 
 /* Metric Cards */
 .metric-card {
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -502,7 +516,7 @@ onMounted(() => {
 }
 
 .metric-header {
-  padding: 1.25rem;
+  padding: .3rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -535,7 +549,7 @@ onMounted(() => {
 
 .metric-icon-wrapper {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -588,7 +602,7 @@ onMounted(() => {
 /* Secondary Metrics */
 .stat-card {
   transition: all 0.3s ease;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
 }
 
 .stat-card:hover {
