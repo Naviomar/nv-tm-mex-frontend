@@ -1,62 +1,116 @@
 <template>
-  <div>
-    <div class="p-4 bg-sky-100 dark:bg-neutral-800 rounded-lg">
-      <div class="font-bold">Cobranza Report</div>
-      <!-- Filters -->
-      <v-card class="mb-6" flat>
-        <v-card-text>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- 'From' date picker -->
-            <div class="d-flex justify-center">
+  <div class="report-container">
+    <v-card elevation="0" class="report-card">
+      <!-- Professional Header -->
+      <div class="report-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="icon-wrapper">
+              <v-icon color="white" size="28">mdi-currency-usd</v-icon>
+            </div>
+            <div class="header-text">
+              <h2 class="report-title">Cobranza Report</h2>
+              <p class="report-subtitle">Collection tracking for maritime and air references</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <v-card-text class="pa-6">
+        <div class="filters-section">
+          <div class="filters-title mb-4">
+            <v-icon color="primary" size="20" class="mr-2">mdi-filter-outline</v-icon>
+            <span>Report Filters</span>
+          </div>
+          
+          <v-row>
+            <v-col cols="12" md="3">
               <v-date-picker
                 v-model="filters.fromDate"
-                label="From"
+                label="From Date"
                 density="compact"
                 hide-details
                 :max="filters.toDate"
                 :first-day-of-week="1"
                 locale="es"
+                variant="outlined"
               />
-            </div>
+            </v-col>
 
-            <!-- 'To' date picker -->
-            <div class="d-flex justify-center">
+            <v-col cols="12" md="3">
               <v-date-picker
                 v-model="filters.toDate"
-                label="To"
+                label="To Date"
                 density="compact"
                 hide-details
                 :min="filters.fromDate"
                 :first-day-of-week="1"
                 locale="es"
+                variant="outlined"
               />
-            </div>
+            </v-col>
 
-            <!-- Customer Search -->
-            <ACustomerSearch v-model="filters.customer_id" :hide-details="true" />
+            <v-col cols="12" md="3">
+              <ACustomerSearch 
+                v-model="filters.customer_id" 
+                :hide-details="true"
+                density="compact"
+                variant="outlined"
+              />
+            </v-col>
 
-            <!-- Service Type Filter -->
-            <v-select
-              v-model="filters.service_type"
-              :items="serviceTypeOptions"
-              item-title="label"
-              item-value="value"
-              label="Tipo de Servicio"
-              density="compact"
-              hide-details
-              clearable
-            />
+            <v-col cols="12" md="3">
+              <v-select
+                v-model="filters.service_type"
+                :items="serviceTypeOptions"
+                item-title="label"
+                item-value="value"
+                label="Service Type"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-map-marker-path"
+              />
+            </v-col>
+          </v-row>
 
-            <!-- Action buttons -->
-            <div class="flex gap-2 items-center">
-              <v-btn size="small" color="" variant="text" @click="clearFilters">Clear</v-btn>
-              <v-btn size="small" color="primary" @click="applyFilters">Apply</v-btn>
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-      <div>Este reporte incluye la cobranza de todas las referencias marítimas y aéreas.</div>
-    </div>
+          <v-row class="mt-4">
+            <v-col cols="12" class="d-flex justify-end gap-2">
+              <v-btn 
+                variant="outlined" 
+                color="grey" 
+                @click="clearFilters"
+                prepend-icon="mdi-filter-off"
+              >
+                Clear Filters
+              </v-btn>
+              <v-btn 
+                color="primary" 
+                @click="applyFilters"
+                prepend-icon="mdi-download"
+                :loading="loadingStore.loading"
+              >
+                Generate Report
+              </v-btn>
+            </v-col>
+          </v-row>
+        </div>
+
+        <v-alert
+          type="info"
+          variant="tonal"
+          class="mt-6"
+          density="compact"
+        >
+          <template #prepend>
+            <v-icon>mdi-information-outline</v-icon>
+          </template>
+          This report includes collection data from all maritime and air import/export references.
+        </v-alert>
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
@@ -154,3 +208,88 @@ const clearFilters = () => {
   applyFilters() // Optionally, refetch the report without filters
 }
 </script>
+
+<style scoped>
+.report-container {
+  width: 100%;
+}
+
+.report-card {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.report-header {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 40%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.05);
+  transform: rotate(-15deg);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrapper {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-text {
+  color: white;
+}
+
+.report-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.report-subtitle {
+  font-size: 0.875rem;
+  margin: 4px 0 0 0;
+  opacity: 0.9;
+}
+
+.filters-section {
+  background: rgb(var(--v-theme-surface));
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.filters-title {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+</style>

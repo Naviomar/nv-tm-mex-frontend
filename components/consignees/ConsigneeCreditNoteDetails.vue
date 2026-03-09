@@ -1,88 +1,188 @@
 <template>
   <div>
-    <v-card class="py-4" color="">
-      <v-card-title>
-        <h3>{{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }} - Credit note #{{ creditNote.id }} Details</h3>
-      </v-card-title>
-      <v-card-text>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <div class="grid grid-cols-2 gap-1">
-              <div>Folio</div>
-              <div>#{{ creditNote.id }}</div>
-              <div>External Folio</div>
-              <div>#{{ creditNote.external_folio || '-' }}</div>
-              <div>Credit note type</div>
-              <div>
-                <v-chip :color="creditNote.type === 'party' ? 'purple' : 'blue'" size="x-small">
-                  {{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }}
-                </v-chip>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <v-card class="mb-4">
+        <v-card-title>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+            <div class="font-bold">
+              {{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }} Credit Note #{{ creditNote.id }}
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+              <v-chip :color="creditNote.type === 'party' ? 'purple' : 'blue'" size="small">
+                {{ creditNote.type === 'party' ? 'Free Format' : 'Customer' }}
+              </v-chip>
+              <v-chip color="orange" size="small" v-if="creditNote.inv_type">
                 {{ creditNote.inv_type?.toUpperCase() }}
-              </div>
-              <template v-if="creditNote.type === 'party'">
-                <div>Party</div>
-                <div>{{ creditNote.party_invoice?.partyable?.name || '-' }}</div>
-              </template>
-              <template v-else>
-                <div>Customer</div>
-                <div>{{ creditNote.consignee?.name }}</div>
-                <div>Customer Group</div>
-                <div>{{ creditNote.consignee?.consignee_group?.name }}</div>
-              </template>
-              <div>Concept</div>
-              <div>
-                <CreditNoteChargeCfdiName :creditNote="creditNote" :names="chargeCfdiNames" />
-              </div>
-              <div>Currency</div>
-              <div>{{ creditNote.currency?.name }}</div>
-              <div>Amount</div>
-              <div>{{ formatToCurrency(creditNote.amount) }}</div>
-              <div>Amount available</div>
-              <div>{{ formatToCurrency(creditNote.amount_available) }}</div>
-              <div>Comments</div>
-              <div>{{ creditNote.description }}</div>
-              <div class="col-span-2">
-                <v-divider></v-divider>
-              </div>
-              <div v-if="creditNote.deleted_at" class="col-span-2">
-                <v-alert density="compact" type="error"
-                  >This credit note is deleted by {{ creditNote.deletor?.name }} @
-                  {{ formatDateString(creditNote.deleted_at) }}</v-alert
-                >
-              </div>
+              </v-chip>
             </div>
           </div>
-          <div>
-            <div class="mb-2">
-              <template v-if="creditNote.type === 'party'">
-                <v-chip v-for="(pi, idx) in allPartyInvoices" :key="`cn-pi-${idx}`" variant="outlined" size="small" color="purple" class="mr-1">
-                  Invoice #{{ pi.invoice?.invoice_number }}
-                </v-chip>
-              </template>
-              <template v-else>
-                <v-chip v-for="(inv, idx) in linkedInvoices" :key="`cn-inv-${idx}`" variant="outlined" size="small" class="mr-1">
-                  {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
-                </v-chip>
-              </template>
-            </div>
-            <div v-if="creditNote.charges && creditNote.charges.length > 0" class="mb-2">
-              <div class="text-sm font-bold mb-1">Concepts ({{ creditNote.charges.length }})</div>
-              <div v-for="(ch, idx) in creditNote.charges" :key="`cn-ch-${idx}`" class="text-sm flex justify-between items-center gap-2 mb-1">
-                <div>
-                  <div>{{ ch.charge?.name || 'Concept' }}</div>
-                  <div v-if="ch.invoice_charge?.invoice?.invoice_number" class="text-xs text-gray-500">
-                    Invoice #{{ ch.invoice_charge.invoice.invoice_number }}
+        </v-card-title>
+        <v-card-text>
+          <!-- Party/Customer Information Card -->
+          <v-card variant="tonal" color="blue" class="mb-4">
+            <v-card-text>
+              <div class="flex items-start gap-3">
+                <v-icon size="32" color="blue-darken-2">{{ creditNote.type === 'party' ? 'mdi-domain' : 'mdi-account-circle' }}</v-icon>
+                <div class="flex-1">
+                  <div class="text-xs text-blue-darken-1 font-semibold mb-1">{{ creditNote.type === 'party' ? 'PARTY' : 'CUSTOMER' }}</div>
+                  <div class="font-bold text-base">
+                    {{ creditNote.type === 'party' ? (creditNote.party_invoice?.partyable?.name || '-') : creditNote.consignee?.name }}
+                  </div>
+                  <div v-if="creditNote.type === 'customer' && creditNote.consignee?.consignee_group?.name" class="text-sm mt-1">
+                    <span class="text-grey-darken-1">Group:</span> <span class="font-semibold">{{ creditNote.consignee.consignee_group.name }}</span>
                   </div>
                 </div>
-                <span class="whitespace-nowrap">{{ formatToCurrency(ch.amount) }}</span>
               </div>
-            </div>
-            <div class="flex gap-4">
-              <PreviewCustomerCreditNote :id="creditNote.id" />
-              <v-btn v-if="false" color="primary" size="small" variant="outlined" @click="emailCreditNote">Email</v-btn>
-            </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- Amount Information Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <v-card variant="tonal" color="green">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon size="32" color="green-darken-2">mdi-cash-multiple</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-green-darken-1 font-semibold mb-1">AMOUNT</div>
+                    <div class="font-bold text-xl">{{ creditNote.currency?.name }} {{ formatToCurrency(creditNote.amount) }}</div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-card variant="tonal" color="teal">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon size="32" color="teal-darken-2">mdi-wallet</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-teal-darken-1 font-semibold mb-1">AVAILABLE</div>
+                    <div class="font-bold text-xl">{{ formatToCurrency(creditNote.amount_available) }}</div>
+                    <div class="text-sm mt-1">
+                      <span class="text-grey-darken-1">Used:</span> {{ formatToCurrency(creditNote.amount - creditNote.amount_available) }}
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
           </div>
-        </div>
+
+          <!-- Folios Card -->
+          <v-card variant="tonal" color="purple" class="mb-4">
+            <v-card-text>
+              <div class="flex items-center gap-2 mb-3">
+                <v-icon color="purple-darken-2">mdi-file-document-outline</v-icon>
+                <div class="text-sm font-bold text-purple-darken-2">FOLIO INFORMATION</div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Internal Folio</div>
+                  <div class="font-semibold">#{{ creditNote.id }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-grey-darken-1 mb-1">External Folio</div>
+                  <div class="font-semibold">{{ creditNote.external_folio || '-' }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- Comments -->
+          <v-card variant="tonal" color="orange" class="mb-4" v-if="creditNote.description">
+            <v-card-text>
+              <div class="flex items-start gap-3">
+                <v-icon color="orange-darken-2">mdi-comment-text</v-icon>
+                <div class="flex-1">
+                  <div class="text-xs text-orange-darken-1 font-semibold mb-1">COMMENTS</div>
+                  <div class="font-medium">{{ creditNote.description }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-divider class="my-4"></v-divider>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <PreviewCustomerCreditNote :id="creditNote.id" />
+            <v-btn v-if="false" color="primary" size="small" variant="outlined" @click="emailCreditNote">
+              <v-icon>mdi-email-outline</v-icon>Email
+            </v-btn>
+          </div>
+
+          <v-alert v-if="creditNote.deleted_at" density="compact" type="error" elevation="2" class="mt-4">
+            <div>This credit note was deleted at {{ formatDateString(creditNote.deleted_at) }}</div>
+            <div>Deleted by: {{ creditNote.deletor?.name }}</div>
+          </v-alert>
+        </v-card-text>
+      </v-card>
+
+      <div>
+        <!-- Linked Invoices Card -->
+        <v-card color="grey-lighten-4" class="mb-4">
+          <v-card-title><div class="font-bold">Linked Invoices</div></v-card-title>
+          <v-card-text>
+            <template v-if="creditNote.type === 'party'">
+              <v-chip v-for="(pi, idx) in allPartyInvoices" :key="`cn-pi-${idx}`" variant="outlined" size="small" color="purple" class="mr-1 mb-1">
+                Invoice #{{ pi.invoice?.invoice_number }}
+              </v-chip>
+              <div v-if="allPartyInvoices.length === 0" class="text-grey-darken-1 text-sm">No invoices linked</div>
+            </template>
+            <template v-else>
+              <v-chip v-for="(inv, idx) in linkedInvoices" :key="`cn-inv-${idx}`" variant="outlined" size="small" class="mr-1 mb-1">
+                {{ getInvoiceType(inv) }} #{{ inv.invoice_number }}
+              </v-chip>
+              <div v-if="linkedInvoices.length === 0" class="text-grey-darken-1 text-sm">No invoices linked</div>
+            </template>
+          </v-card-text>
+        </v-card>
+      </div>
+    </div>
+
+    <!-- Concepts Table -->
+    <div class="mb-4" v-if="creditNote.charges && creditNote.charges.length > 0">
+      <v-card>
+        <v-card-title><div class="font-bold">Concepts ({{ creditNote.charges.length }})</div></v-card-title>
+        <v-card-text>
+          <div class="overflow-x-auto">
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="font-bold! w-5">#</th>
+                  <th class="font-bold!">Concept</th>
+                  <th class="font-bold!">Related Invoice</th>
+                  <th class="font-bold! text-right">Amount</th>
+                  <th class="font-bold! text-right">IVA</th>
+                  <th class="font-bold! text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(ch, idx) in creditNote.charges" :key="`cn-ch-${idx}`">
+                  <td>{{ idx + 1 }}</td>
+                  <td>
+                    <div class="font-medium">{{ ch.charge?.name || 'Concept' }}</div>
+                  </td>
+                  <td>
+                    <v-chip v-if="ch.invoice_charge?.invoice?.invoice_number" size="x-small" variant="outlined">
+                      Invoice #{{ ch.invoice_charge.invoice.invoice_number }}
+                    </v-chip>
+                    <span v-else class="text-grey-darken-1">-</span>
+                  </td>
+                  <td class="text-right">{{ formatToCurrency(ch.amount) }}</td>
+                  <td class="text-right">{{ formatToCurrency(ch.amount_iva || 0) }}</td>
+                  <td class="text-right font-semibold">{{ formatToCurrency(parseFloat(ch.amount) + parseFloat(ch.amount_iva || 0)) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="text-right font-bold">Total Credit Note</td>
+                  <td class="font-bold text-right">{{ formatToCurrency(creditNote.amount) }}</td>
+                </tr>
+              </tfoot>
+            </v-table>
+          </div>
+        </v-card-text>
+      </v-card>
+    </div>
+
+    <!-- Payment Section -->
 
         <v-card class="py-4">
           <div class="grid grid-cols-1 md:grid-cols-12">
@@ -331,8 +431,6 @@
             </div>
           </div>
         </v-card>
-      </v-card-text>
-    </v-card>
   </div>
 </template>
 <script setup lang="ts">

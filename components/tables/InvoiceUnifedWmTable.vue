@@ -1,8 +1,8 @@
 <template>
   <div>
     <div @keyup.enter="onClickFilters">
-      <div class="font-bold mb-2">Filters</div>
-      <div class="grid grid-cols-5 gap-5">
+      <div class="font-bold text-lg mb-3">Filters</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         <div><v-text-field v-model="filters.from" density="compact" type="date" label="Date from" /></div>
         <div><v-text-field v-model="filters.to" density="compact" type="date" label="Date to" /></div>
         <div>
@@ -104,7 +104,7 @@
           />
         </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-3">
         <div class="">
           <div class="font-bold text-base">Invoice number multiline</div>
           <v-textarea
@@ -122,9 +122,9 @@
             </div>
           </v-btn>
         </div>
-        <div class="col-span-4">
-          <div v-if="filters.ids.length > 0" class="flex gap-2 px-2">Searching invoices #</div>
-          <div class="flex gap-2 px-2">
+        <div class="lg:col-span-4">
+          <div v-if="filters.ids.length > 0" class="font-semibold mb-2">Searching invoices #</div>
+          <div class="flex flex-wrap gap-2">
             <v-chip
               v-for="(folio, index) in filters.ids"
               size="small"
@@ -139,9 +139,9 @@
         </div>
       </div>
 
-      <div v-if="filters.referencias.length > 0" class="mb-4">
-        <div>Filter by reference(s)</div>
-        <div class="flex gap-2">
+      <div v-if="filters.referencias.length > 0" class="my-4">
+        <div class="font-semibold mb-2">Filter by reference(s)</div>
+        <div class="flex flex-wrap gap-2">
           <v-chip
             v-for="(ref, index) in filters.referencias"
             :key="`ref-search-${ref}`"
@@ -153,13 +153,13 @@
         </div>
       </div>
 
-      <div class="flex gap-4">
+      <div class="flex flex-wrap gap-2 my-4">
         <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
         <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
         <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
       </div>
     </div>
-    <div>
+    <div class="mt-6">
       <v-pagination
         v-model="wmInvoices.current_page"
         :length="wmInvoices.last_page"
@@ -170,6 +170,7 @@
       <div class="text-xs">
         Showing {{ wmInvoices.from }} to {{ wmInvoices.to }} from {{ wmInvoices.total }} total records
       </div>
+      <div class="overflow-x-auto">
       <v-table density="compact" fixed-header height="75vh">
         <thead>
           <tr>
@@ -278,13 +279,7 @@
           </tr>
         </tbody>
       </v-table>
-      <v-pagination
-        v-model="wmInvoices.current_page"
-        :length="wmInvoices.last_page"
-        rounded="circle"
-        @update:model-value="onClickPagination"
-        density="compact"
-      ></v-pagination>
+      </div>
     </div>
   </div>
 </template>

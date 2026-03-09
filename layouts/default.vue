@@ -8,18 +8,20 @@
             <div class="flex items-center">
               <img
                 :src="darkMode.isDark ? '/tm-logo.png' : '/tm-logo-black.png'"
-                width="120"
+                width="80"
                 class="cursor-pointer"
                 @click="goToHome"
               />
-              {{ appName }}
+              
+              <span class="md:flex hidden ml-2 text-lg font-semibold">{{ appName }}</span>
             </div>
           </v-app-bar-title>
 
           <SwitchDarkLightMode />
 
-          <UserInfoNav path="/profile" />
-
+          <!-- <div class="hidden md:block"> -->
+            <UserInfoNav path="/profile" />
+          <!-- </div> -->
           <!-- Alerts Button -->
           <AlertsButton />
 

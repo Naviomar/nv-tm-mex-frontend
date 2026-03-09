@@ -14,7 +14,7 @@
     </div>
     <img :src="avatar" v-if="false" alt="avatar" class="rounded-full w-10 h-10" />
 
-    <div class="flex flex-col gap-1">
+    <div class="md:flex md:flex-col md:gap-1 hidden">
       <span class="text-sm font-semibold">{{ user.name }}</span>
       <span class="text-xs">{{ user.email }}</span>
     </div>

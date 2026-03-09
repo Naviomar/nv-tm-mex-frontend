@@ -8,8 +8,7 @@
       <InvoiceAirTmDetail v-if="isAirInvoice" :id="id.toString()" />
     </div>
     <div v-if="isProforma" class="mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+      <div class="space-y-4">
           <v-card color="blue-lighten-4" class="mb-4">
             <v-card-title
               ><div class="font-bold">{{ invoiceType }} TM #{{ invoiceTm.invoice.invoice_number }}</div></v-card-title
@@ -18,7 +17,7 @@
               <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceTm.created_at) }}</div>
             </v-card-subtitle>
             <v-card-text>
-              <div class="grid grid-cols-3">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div class="font-bold">Reference(s)</div>
                 <div class="col-span-2">
                   <div v-for="(service, index) in invoiceTm.services" :key="`service-${index}`" class="font-bold">
@@ -142,14 +141,12 @@
                 item-value="name"
               />
 
-              <div class="flex justify-around gap-2 mt-4 mb-2">
+              <div class="flex flex-col sm:flex-row justify-around gap-2 mt-4 mb-2">
                 <v-btn size="small" color="primary" @click="onSaveChangesClick">Save changes</v-btn>
                 <PreviewTmInvoice :service="invService" :invoice="invoiceTm" />
               </div>
             </v-card-text>
           </v-card>
-        </div>
-        <div>
           <v-card v-if="isProforma" density="compact" class="mb-2">
             <v-card-title
               ><div class="text-base">Updates available until: {{ expirationDate }}</div>
@@ -243,12 +240,11 @@
               </div>
             </v-card-text>
           </v-card>
-        </div>
-        <div class="col-span-2">
           <v-card color="blue-lighten-4" class="mb-4">
             <v-card-title><div class="font-bold">Invoice detail</div></v-card-title>
             <v-card-text>
               <v-btn v-if="false" color="primary" size="small" @click="toggleConceptForm">New concept</v-btn>
+              <div class="overflow-x-auto">
               <div v-if="showConceptForm" class="py-2">
                 <SeaImportChargeProformaForm
                   :catalogs="catalogs"
@@ -339,13 +335,13 @@
                   </tr>
                 </tfoot>
               </v-table>
+              </div>
 
               <div class="flex justify-center py-4">
                 <v-btn color="primary" size="small" @click="onSaveChangesClick">Save changes</v-btn>
               </div>
             </v-card-text>
           </v-card>
-        </div>
       </div>
     </div>
     <v-dialog v-model="removeConceptForm.show" max-width="500">
