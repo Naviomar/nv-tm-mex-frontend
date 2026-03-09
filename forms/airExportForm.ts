@@ -16,6 +16,7 @@ const schema = toTypedSchema(
     ff_id: yup.string().nullable(),
     rate: yup.string().nullable(),
     locked_at: yup.string().nullable(),
+    house_awb: yup.string().nullable(),
   })
 )
 

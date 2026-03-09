@@ -17,7 +17,13 @@
             <InputText name="master_awb" density="compact" variant="solo-filled" label="Master AWB *" />
           </div>
           <div>
-            <InputText name="house_awb" density="compact" variant="solo-filled" label="House AWB *" hide-details />
+            <InputText 
+              name="house_awb" 
+              density="compact" 
+              variant="solo-filled" 
+              label="House AWB *" 
+              hide-details
+            />
             <div class="flex gap-2">
               <AirExportHouseAwbs :airReference="airReference" @refresh="getData" />
               <v-btn size="x-small" color="green" @click="addNewHouseAwb" class="mb-2"
