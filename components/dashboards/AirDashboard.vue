@@ -1,5 +1,5 @@
 <template>
-  <div class="air-dashboard">
+  <div class="air-dashboard modern-dashboard-bg">
     <!-- Professional Filter Section -->
     <v-card class="filter-section elevation-0 mb-6">
       <v-card-title class="pa-4 pb-4">
@@ -87,23 +87,20 @@
 
     <!-- Primary Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-      <v-card class="metric-card elevation-2" @click="openStats('air-import')">
+      <v-card v-if="canViewAirImportPrimary" class="metric-card elevation-2" @click="openStats('air-import')">
         <div class="metric-header import-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-airplane-landing</v-icon>
           </div>
           <div class="metric-badge">
             <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">IMPORT</v-chip>
-            <v-btn icon size="x-small" variant="text" color="white">
-              <v-icon size="16">mdi-chart-line</v-icon>
-            </v-btn>
           </div>
         </div>
         <v-card-text class="pa-5">
           <div class="metric-value import-color">
             {{ report.total_import }}
           </div>
-          <div class="metric-label">Air Import References</div>
+          <div class="metric-label">Import References (Air)</div>
           <div class="metric-trend">
             <v-icon size="14" color="success">mdi-trending-up</v-icon>
             <span class="text-xs text-success font-semibold">Active</span>
@@ -111,23 +108,20 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="metric-card elevation-2" @click="openStats('air-export')">
+      <v-card v-if="canViewAirExportPrimary" class="metric-card elevation-2" @click="openStats('air-export')">
         <div class="metric-header export-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-airplane-takeoff</v-icon>
           </div>
           <div class="metric-badge">
             <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">EXPORT</v-chip>
-            <v-btn icon size="x-small" variant="text" color="white">
-              <v-icon size="16">mdi-chart-line</v-icon>
-            </v-btn>
           </div>
         </div>
         <v-card-text class="pa-5">
           <div class="metric-value export-color">
             {{ report.total_export }}
           </div>
-          <div class="metric-label">Air Export References</div>
+          <div class="metric-label">Export References (Air)</div>
           <div class="metric-trend">
             <v-icon size="14" color="success">mdi-trending-up</v-icon>
             <span class="text-xs text-success font-semibold">Active</span>
@@ -135,7 +129,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="metric-card elevation-2 cursor-pointer" @click="dialogCustomer = true">
+      <v-card v-if="canViewCustomers" class="metric-card elevation-2 cursor-pointer" @click="dialogCustomer = true">
         <div class="metric-header customer-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-account-group</v-icon>
@@ -148,7 +142,7 @@
           <div class="metric-value customer-color">
             {{ report.unique_customers }}
           </div>
-          <div class="metric-label">Unique Customers</div>
+          <div class="metric-label">Customers in References</div>
           <div class="metric-action">
             <v-icon size="14" color="purple">mdi-eye-outline</v-icon>
             <span class="text-xs text-purple font-semibold">View List</span>
@@ -157,9 +151,29 @@
       </v-card>
     </div>
 
+    <!-- Inline Charts - Visible by default for authorized users -->
+    <div v-if="canViewCharts" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-6">
+      <CaptureStatsInline
+        title="Air Import Trends"
+        subtitle="Daily capture statistics"
+        icon="mdi-airplane-landing"
+        stat-type="air-import"
+        gradient-class="from-indigo-500 to-indigo-700"
+        chip-color="indigo"
+      />
+      <CaptureStatsInline
+        title="Air Export Trends"
+        subtitle="Daily capture statistics"
+        icon="mdi-airplane-takeoff"
+        stat-type="air-export"
+        gradient-class="from-cyan-500 to-cyan-700"
+        chip-color="cyan"
+      />
+    </div>
+
     <!-- Secondary Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-1">
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewPendingNotifications" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
             <v-icon color="red" size="32">mdi-bell-alert</v-icon>
@@ -168,13 +182,13 @@
           <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
             {{ report.pending_notification }}
           </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400">Pending Notifications</div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Pending Arrival Notifications</div>
           <v-divider class="my-2"></v-divider>
           <div class="text-xs text-grey-500">Air Import</div>
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewPendingReleases" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
             <v-icon color="orange" size="32">mdi-file-document-check</v-icon>
@@ -192,7 +206,7 @@
 
     <!-- CBM Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewAirImportCBM" class="elevation-2 rounded-lg">
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 pa-3 text-white">
           <div class="flex items-center gap-2">
             <v-icon size="28">mdi-package-variant</v-icon>
@@ -223,7 +237,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewAirExportCBM" class="elevation-2 rounded-lg">
         <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 pa-3 text-white">
           <div class="flex items-center gap-2">
             <v-icon size="28">mdi-package-variant-closed</v-icon>
@@ -255,17 +269,7 @@
       </v-card>
     </div>
 
-    <CaptureStatsChart
-      v-model="showStatsChart"
-      :title="statsConfig.title"
-      :subtitle="statsConfig.subtitle"
-      :icon="statsConfig.icon"
-      :stat-type="statsConfig.type"
-      :gradient-class="statsConfig.gradient"
-      :chip-color="statsConfig.chipColor"
-    />
-
-    <v-dialog v-model="dialogCustomer" max-width="500">
+    <v-dialog v-model="dialogCustomer" max-width="700">
       <v-card>
         <v-card-title>
           <div class="flex items-center justify-between">
@@ -277,15 +281,25 @@
 
         <v-divider />
 
-        <v-card-text>
-          <v-list v-if="report.customers?.length" density="compact">
-            <v-list-item v-for="(customer, index) in report.customers" :key="index">
-              <v-list-item-title class="font-medium">
-                {{ customer.name || 'Unnamed' }}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-          <div v-else class="text-sm text-gray-500">No customers found.</div>
+        <v-card-text class="pa-0">
+          <v-data-table
+            v-if="report.customers?.length"
+            :headers="customerHeaders"
+            :items="report.customers"
+            :items-per-page="10"
+            density="compact"
+            class="elevation-0"
+          >
+            <template #item.name="{ item }: any">
+              <span class="font-medium">{{ item.name }}</span>
+            </template>
+            <template #item.total_references="{ item }: any">
+              <v-chip size="small" color="primary" variant="tonal">
+                {{ item.total_references }}
+              </v-chip>
+            </template>
+          </v-data-table>
+          <div v-else class="text-sm text-gray-500 pa-4">No customers found.</div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -297,6 +311,57 @@ const snackbar = useSnackbar()
 const router = useRouter()
 const route = useRoute()
 const loadingStore = useLoadingStore()
+const { hasPermission, user: currentUser } = useCheckUser()
+
+// Helper function to check if user has any of the specified roles
+const checkUserHasAnyRole = (roles: string[]) => {
+  if (!currentUser.value) return false
+  return currentUser.value.roles?.some((role: any) => roles.includes(role.name)) || false
+}
+
+// Granular permission checks for each section
+const canViewAirImportPrimary = computed(() => {
+  return hasPermission('dashboard-air-import-primary') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewAirExportPrimary = computed(() => {
+  return hasPermission('dashboard-air-export-primary') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewCustomers = computed(() => {
+  return canViewAirImportPrimary.value || canViewAirExportPrimary.value
+})
+
+const canViewAirImportCBM = computed(() => {
+  return hasPermission('dashboard-air-import-cbm') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewAirExportCBM = computed(() => {
+  return hasPermission('dashboard-air-export-cbm') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewPendingNotifications = computed(() => {
+  return hasPermission('dashboard-air-import-notifications') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewPendingReleases = computed(() => {
+  return hasPermission('dashboard-air-import-releases') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewCharts = computed(() => {
+  return hasPermission('dashboard-charts') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+// Check if user has ANY dashboard permission
+const hasAnyDashboardPermission = computed(() => {
+  return canViewAirImportPrimary.value || 
+         canViewAirExportPrimary.value || 
+         canViewAirImportCBM.value || 
+         canViewAirExportCBM.value || 
+         canViewPendingNotifications.value || 
+         canViewPendingReleases.value || 
+         canViewCharts.value
+})
 
 // Helper to format date as YYYY-MM-DD
 function formatDate(date: Date) {
@@ -334,6 +399,11 @@ const filters = ref<any>({
 
 const dialogCustomer = ref(false)
 const showFilters = ref(false)
+
+const customerHeaders = [
+  { title: 'Customer Name', key: 'name', sortable: true },
+  { title: 'Total References', key: 'total_references', sortable: true, align: 'center' as const }
+]
 
 const report = ref<any>({
   total_import: 0,
@@ -400,37 +470,9 @@ const clearFilters = () => {
   applyFilters()
 }
 
-const showStatsChart = ref(false)
-const statsConfig = ref({
-  title: '',
-  subtitle: '',
-  icon: '',
-  type: '',
-  gradient: '',
-  chipColor: ''
-})
-
 const openStats = (type: string) => {
-  if (type === 'air-import') {
-    statsConfig.value = {
-      title: 'Air Import Statistics',
-      subtitle: 'Capture trends over time',
-      icon: 'mdi-airplane-landing',
-      type: 'air-import',
-      gradient: 'from-indigo-500 to-indigo-700',
-      chipColor: 'indigo'
-    }
-  } else {
-    statsConfig.value = {
-      title: 'Air Export Statistics',
-      subtitle: 'Capture trends over time',
-      icon: 'mdi-airplane-takeoff',
-      type: 'air-export',
-      gradient: 'from-cyan-500 to-cyan-700',
-      chipColor: 'cyan'
-    }
-  }
-  showStatsChart.value = true
+  // Charts are now inline and always visible for authorized users
+  // This function is kept for backward compatibility but does nothing
 }
 
 onMounted(() => {
