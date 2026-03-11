@@ -265,13 +265,6 @@ const catalogs = ref({
 const unifiedVesselVoyageSearch = ref('')
 
 const unifiedVesselVoyageItems = computed(() => {
-  const vessels = catalogs.value.vessels.map((vessel: any) => ({
-    id: `vessel-${vessel.id}`,
-    display_name: vessel.name,
-    type: 'vessel',
-    original_id: vessel.id,
-  }))
-
   const voyages = catalogs.value.voyage_discharges.map((voyage: any) => ({
     id: `voyage-${voyage.id}`,
     display_name: voyage.short_name,
@@ -279,7 +272,14 @@ const unifiedVesselVoyageItems = computed(() => {
     original_id: voyage.id,
   }))
 
-  return [...vessels, ...voyages]
+  const vessels = catalogs.value.vessels.map((vessel: any) => ({
+    id: `vessel-${vessel.id}`,
+    display_name: vessel.name,
+    type: 'vessel',
+    original_id: vessel.id,
+  }))
+
+  return [...voyages, ...vessels]
 })
 
 // Initial filter values
