@@ -21,6 +21,14 @@ export interface IAlertsResponse {
   unread_count: number
 }
 
+export interface IAllAlertsResponse {
+  data: IAlert[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
 export interface IAlertCategory {
   id: number
   name: string
@@ -57,6 +65,10 @@ class AlertsModule extends FetchFactory<IAlertsResponse> {
   // User alerts endpoints
   async getAlerts(limit: number = 50, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}?limit=${limit}`, fetchOptions)
+  }
+
+  async getAllAlerts(page: number = 1, perPage: number = 20, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/all?page=${page}&per_page=${perPage}`, fetchOptions)
   }
 
   async getUnreadCount(fetchOptions?: FetchOptions) {
