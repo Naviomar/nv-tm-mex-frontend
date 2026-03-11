@@ -809,7 +809,9 @@ const addConcept = () => {
   console.log('grandTotal', grandTotal)
   console.log('amountProvisioned', amountProvisioned.value)
 
-  if (grandTotal > amountProvisioned.value) {
+  // Use tolerance comparison to handle floating-point precision errors
+  const epsilon = 0.01 // 1 cent tolerance for currency
+  if (grandTotal - amountProvisioned.value > epsilon) {
     snackbar.add({ type: 'warning', text: 'Amount is greater than provisioned' })
     return
   }
