@@ -403,6 +403,15 @@
                   prepend-inner-icon="mdi-select-compare"
                 />
               </div>
+              <div v-if="isConditionLCL" class="col-span-3">
+                <AGlobalSearch
+                  :onSearch="searchSuppliers"
+                  validate-key="coloader_id"
+                  label="Co-loader"
+                  prepend-inner-icon="mdi-vector-link"
+                  :set-id="values.coloader_id || undefined"
+                />
+              </div>
               <div class="col-span-3">
                 <InputAutocomplete
                   name="embalaje_id"
@@ -815,6 +824,20 @@ const searchFfs = async (params: SearchParams) => {
   }
 }
 
+const searchSuppliers = async (params: SearchParams) => {
+  try {
+    const response = await $api.suppliers.searchSuppliers({
+      query: params,
+    })
+    return response
+  } catch (error) {
+    snackbar.add({
+      type: 'error',
+      text: 'Error fetching suppliers',
+    })
+  }
+}
+
 const searchDestinations = async (search: SearchParams, type: string) => {
   try {
     // Define the allowed keys you want to search by
@@ -1061,6 +1084,10 @@ const consigneeCreditFinalDate = computed(() => {
 
 const hasVoyageArrivalDate = computed(() => {
   return !!voyageDestination.value?.arrival_date
+})
+
+const isConditionLCL = computed(() => {
+  return values.cargo_type === 'LCL' || values.cargo_type === 'COCO'
 })
 
 const isCreditExpired = computed(() => {
