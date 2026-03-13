@@ -265,4 +265,4 @@ CMD ["node", ".output/server/index.mjs"]
 ---
 
 ## Licencia
-Licencia privada ADTV.
+Licencia privada TM.
