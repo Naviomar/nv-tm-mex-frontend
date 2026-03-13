@@ -430,6 +430,23 @@
           <div class="col-span-2">
             <SeaExportMasterBlsSmart ref="masterBlsRef" :currentMasterBls="masterBls" @update:masterBls="masterBls = $event" />
           </div>
+          <div v-if="houseBls.length > 0" class="col-span-1">
+            <v-card density="compact" class="mb-2">
+              <v-card-title>
+                <div class="flex justify-between">
+                  <div class="flex items-center">
+                    <v-icon size="x-small">mdi-multicast</v-icon>
+                    <div class="ml-2 font-bold">House BLs</div>
+                  </div>
+                </div>
+              </v-card-title>
+              <v-card-text>
+                <div v-for="(houseBl, index) in houseBls" :key="`house-${index}`">
+                  {{ houseBl.name }}
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
         </div>
       </v-card-text>
     </v-card>
@@ -528,6 +545,15 @@
                   item-title="name"
                   variant="solo-filled"
                   prepend-inner-icon="mdi-select-compare"
+                />
+              </div>
+              <div v-if="isConditionLCL" class="col-span-3">
+                <AGlobalSearch
+                  :onSearch="searchSuppliers"
+                  validate-key="coloader_id"
+                  label="Co-loader"
+                  prepend-inner-icon="mdi-vector-link"
+                  :set-id="values.coloader_id || undefined"
                 />
               </div>
               <div class="col-span-3">
@@ -650,6 +676,10 @@ const lineVoyages = computed(() => {
   return catalogs.value.voyage_destinations.filter((vd: any) => vd.voyage?.vessel?.line_id == values.line_id)
 })
 
+const isConditionLCL = computed(() => {
+  return values.cargo_type === 'LCL' || values.cargo_type === 'COCO'
+})
+
 const cargo = computed(() => {
   let total_m3 = containers.value.reduce((acc: any, container: any) => {
     return acc + parseFloat(container.volume)
@@ -737,6 +767,87 @@ const searchFfs = async (params: SearchParams) => {
       text: 'Error fetching freight forwarders',
     })
   }
+}
+
+const searchSuppliers = async (params: SearchParams) => {
+  try {
+    const response = await $api.suppliers.searchSuppliers({
+      query: params,
+    })
+    return response
+  } catch (error) {
+    snackbar.add({
+      type: 'error',
+      text: 'Error fetching suppliers',
+    })
+  }
+}
+
+const normalizeSearchResults = (results: any) => {
+  return Array.isArray(results) ? results : (results?.data ?? [])
+}
+
+const normalizeCargoType = (value: any) => {
+  if (!value) return null
+
+  const normalized = String(value).trim().toUpperCase().replace(/[\s_-]+/g, ' ')
+  const compact = normalized.replace(/\s+/g, '')
+  const aliasMap: Record<string, string> = {
+    BREAKBULK: 'BREAK BULK',
+  }
+
+  if (aliasMap[compact]) {
+    return aliasMap[compact]
+  }
+
+  const directMatch = cargoTypes.find((item) => item.name === normalized)
+  if (directMatch) {
+    return directMatch.name
+  }
+
+  const looseMatch = cargoTypes.find((item) => {
+    const itemCompact = item.name.replace(/\s+/g, '')
+    return compact.includes(itemCompact) || itemCompact.includes(compact)
+  })
+
+  return looseMatch?.name ?? null
+}
+
+const inferCargoTypeFromLegacy = (detail: any) => {
+  const candidates = [
+    detail?.condicion,
+    detail?.cargo_type,
+    detail?.condition_type,
+    ...(detail?.containers ?? []).flatMap((container: any) => [
+      container?.condition_type,
+      container?.cargo_type,
+      container?.equipo_legacy,
+      container?.container_type,
+    ]),
+  ]
+
+  for (const candidate of candidates) {
+    const normalized = normalizeCargoType(candidate)
+    if (normalized) {
+      return normalized
+    }
+  }
+
+  return null
+}
+
+const findMatchedLine = (legacyLineName: string) => {
+  const normalizedLegacyLineName = legacyLineName.toLowerCase().trim()
+
+  return catalogs.value.lines.find((line: any) => {
+    const candidates = [line.commercial_name, line.name, line.name_code]
+      .filter(Boolean)
+      .map((value: string) => value.toLowerCase().trim())
+
+    return candidates.some((candidate: string) => {
+      return candidate.includes(normalizedLegacyLineName) || normalizedLegacyLineName.includes(candidate)
+    })
+  })
 }
 
 const searchDestinations = async (search: SearchParams, type: string) => {
@@ -1037,22 +1148,27 @@ const confirmLegacyExpoImport = async () => {
   try {
     loadingStore.start()
     const formValues: Record<string, any> = {}
+    const legacyLineName = (detail.linea?.nomlinea || detail.linea?.linea || '').trim()
+    const inferredCargoType = inferCargoTypeFromLegacy(detail)
 
     // --- Line ---
-    if (detail.linea?.nomlinea || detail.linea?.linea) {
-      const legacyLineName = (detail.linea.nomlinea || detail.linea.linea || '').toLowerCase()
-      const matchedLine = catalogs.value.lines.find((l: any) => {
-        const lName = (l.commercial_name || l.name || l.name_code || '').toLowerCase()
-        return lName.includes(legacyLineName) || legacyLineName.includes(lName)
-      })
+    if (legacyLineName) {
+      const matchedLine = findMatchedLine(legacyLineName)
       if (matchedLine) {
         formValues.line_id = matchedLine.id
+      } else {
+        try {
+          const supplierResults = normalizeSearchResults(await searchSuppliers({ name: legacyLineName }))
+          if (supplierResults.length > 0) {
+            formValues.coloader_id = supplierResults[0].id
+          }
+        } catch (e) { console.warn('Could not match consolidator from legacy line', e) }
       }
     }
 
     // --- Cargo Info ---
-    if (detail.condicion) {
-      formValues.cargo_type = detail.condicion
+    if (inferredCargoType) {
+      formValues.cargo_type = inferredCargoType
     }
     if (detail.mercancia) {
       formValues.commodity = detail.mercancia
@@ -1071,8 +1187,8 @@ const confirmLegacyExpoImport = async () => {
       const shipperName = (detail.shipper_info?.cliente || detail.shipper || '').trim()
       if (shipperName) {
         try {
-          const results = await searchCustomers({ name: shipperName })
-          if (results && results.length > 0) {
+          const results = normalizeSearchResults(await searchCustomers({ name: shipperName }))
+          if (results.length > 0) {
             formValues.consignee_id = results[0].id
           }
         } catch (e) { console.warn('Could not match shipper', e) }
@@ -1084,8 +1200,8 @@ const confirmLegacyExpoImport = async () => {
       const consigneeName = (detail.cliente?.cliente || detail.consignee || '').trim()
       if (consigneeName) {
         try {
-          const results = await searchExportShippers({ name: consigneeName }) as any
-          if (results && results.length > 0) {
+          const results = normalizeSearchResults(await searchExportShippers({ name: consigneeName }))
+          if (results.length > 0) {
             formValues.shipper_id = results[0].id
           }
         } catch (e) { console.warn('Could not match consignee', e) }
@@ -1095,8 +1211,8 @@ const confirmLegacyExpoImport = async () => {
     // --- Customer Info: match freight forwarder ---
     if (detail.freight_forwarder?.ff) {
       try {
-        const results = await searchFfs({ name: detail.freight_forwarder.ff.trim() })
-        if (results && results.length > 0) {
+        const results = normalizeSearchResults(await searchFfs({ name: detail.freight_forwarder.ff.trim() }))
+        if (results.length > 0) {
           formValues.freight_forwarder_id = results[0].id
         }
       } catch (e) { console.warn('Could not match FF', e) }
@@ -1116,7 +1232,7 @@ const confirmLegacyExpoImport = async () => {
     // Export rules: Origin=domestic dest, POL=Mexico port, POD=foreign port, Destination=foreign dest
     if (detail.puerto_origen?.puerto) {
       try {
-        const results = await searchDestinations({ name: detail.puerto_origen.puerto.trim() }, 'origin') as any
+        const results = normalizeSearchResults(await searchDestinations({ name: detail.puerto_origen.puerto.trim() }, 'origin'))
         const best = matchBestDestination(results, detail.puerto_origen.pais || '')
         if (best) formValues.origin_id = best.id
       } catch (e) { console.warn('Could not match origin port', e) }
@@ -1124,7 +1240,7 @@ const confirmLegacyExpoImport = async () => {
 
     if (detail.puerto_carga?.puerto) {
       try {
-        const results = await searchPolPorts({ name: detail.puerto_carga.puerto.trim() }) as any
+        const results = normalizeSearchResults(await searchPolPorts({ name: detail.puerto_carga.puerto.trim() }))
         const best = matchBestPort(results, detail.puerto_carga.pais || '', 140)
         if (best) formValues.pol_id = best.id
       } catch (e) { console.warn('Could not match POL port', e) }
@@ -1132,7 +1248,7 @@ const confirmLegacyExpoImport = async () => {
 
     if (detail.puerto_descarga?.puerto) {
       try {
-        const results = await searchPodPorts({ name: detail.puerto_descarga.puerto.trim() }) as any
+        const results = normalizeSearchResults(await searchPodPorts({ name: detail.puerto_descarga.puerto.trim() }))
         const best = matchBestPort(results, detail.puerto_descarga.pais || '')
         if (best) formValues.pod_id = best.id
       } catch (e) { console.warn('Could not match POD port', e) }
@@ -1140,10 +1256,16 @@ const confirmLegacyExpoImport = async () => {
 
     if (detail.puerto_destino?.puerto) {
       try {
-        const results = await searchDestinations({ name: detail.puerto_destino.puerto.trim() }, 'destination') as any
+        const results = normalizeSearchResults(await searchDestinations({ name: detail.puerto_destino.puerto.trim() }, 'destination'))
         const best = matchBestDestination(results, detail.puerto_destino.pais || '')
         if (best) formValues.destination_id = best.id
       } catch (e) { console.warn('Could not match destination port', e) }
+    }
+
+    if (detail.bl_house && !detail.bl_master) {
+      formValues.bl_type = 'house'
+    } else if (detail.bl_master && !detail.bl_house) {
+      formValues.bl_type = 'master'
     }
 
     // Store legacy reference ID
@@ -1159,27 +1281,31 @@ const confirmLegacyExpoImport = async () => {
       await onConsigneeChange(formValues.consignee_id)
     }
 
-    // --- Master BLs ---
-    if (detail.bl_master || detail.bl_house) {
-      const mblItems: any[] = []
-      if (detail.bl_master) {
-        mblItems.push({
-          name: detail.bl_master,
-          bl_type: 'master',
+    // --- BLs ---
+    const legacyMasterBl = (detail.bl_master || '').trim()
+    const legacyHouseBl = (detail.bl_house || '').trim()
+    const masterBlItems: any[] = legacyMasterBl
+      ? [{
+          name: legacyMasterBl,
           attachment: null,
           comments: null,
-        })
-      }
-      if (detail.bl_house) {
-        mblItems.push({
-          name: detail.bl_house,
-          bl_type: 'house',
+        }]
+      : []
+    const houseBlItems: any[] = legacyHouseBl && legacyHouseBl !== legacyMasterBl
+      ? [{
+          name: legacyHouseBl,
+          consignee_id: null,
+          type: null,
           attachment: null,
           comments: null,
-        })
-      }
-      masterBls.value = mblItems
-    }
+        }]
+      : []
+
+    masterBls.value = masterBlItems
+    houseBls.value = houseBlItems
+
+    await nextTick()
+    masterBlsRef.value?.setItems(masterBlItems)
 
     // --- Booking containers from EM_CONTE ---
     if (detail.containers && detail.containers.length > 0) {
@@ -1199,9 +1325,9 @@ const confirmLegacyExpoImport = async () => {
         }
       }
       const groupedItems = Object.values(grouped)
-      if (groupedItems.length > 0) {
-        booking_containers.value = groupedItems
-      }
+      booking_containers.value = groupedItems
+      await nextTick()
+      bkgContainersRef.value?.setItems(groupedItems)
     }
 
     legacyPreview.value.show = false
