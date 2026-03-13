@@ -132,7 +132,7 @@ const loadingStore = useLoadingStore()
 const valueHtml = ref('<p>Mensaje</p>')
 const editorRef = ref<any>()
 const toolbarConfig = {}
-const editorConfig = { placeholder: 'ADTV' }
+const editorConfig = { placeholder: 'TM' }
 
 const emailPorts: any = {
   MXZLO: ['jorge.contreras@naviomar.com', 'beatriz.centeno@naviomar.com'],

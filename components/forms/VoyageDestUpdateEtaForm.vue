@@ -150,7 +150,7 @@ const loadingStore = useLoadingStore()
 const valueHtml = ref('<p>Mensaje</p>')
 const editorRef = ref<any>()
 const toolbarConfig = {}
-const editorConfig = { placeholder: 'ADTV' }
+const editorConfig = { placeholder: 'TM' }
 
 const handleCreated = (editor: any) => {
   editorRef.value = editor
