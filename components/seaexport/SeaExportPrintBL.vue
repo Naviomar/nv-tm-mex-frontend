@@ -490,6 +490,7 @@ const onClickPreviewHouseBl = async (type: string) => {
     const body = {
       print_bl_id: houseBlSelected.value.print_bl?.id,
       type: type,
+      house_bl: formPrint.value.house_bl,
     }
 
     const response = await $api.referenciasExport.previewPrintBl(props.id.toString(), body)
@@ -592,7 +593,7 @@ const fillFormForPrintBl = () => {
   }
 
   formPrint.value.booking_tm = referencia.value.booking_tm
-  formPrint.value.house_bl = houseBlSelected.value.name
+  formPrint.value.house_bl = houseBlSelected.value.print_bl?.bill_lading ?? houseBlSelected.value.name
 
   if (houseBlSelected.value.print_bl != null) {
     formPrint.value.bill_lading = houseBlSelected.value.print_bl.bill_lading
