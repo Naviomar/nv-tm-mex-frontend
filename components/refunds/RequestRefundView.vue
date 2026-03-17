@@ -169,6 +169,9 @@
                       <span v-if="refundPayment.payable?.custom_agent_id" class="text-xs">
                         Customs Agent: {{ refundPayment.payable?.custom_agent?.name }}
                       </span>
+                      <span v-if="refundPayment.payable?.beneficiary_id" class="text-xs">
+                        Beneficiary: {{ refundPayment.payable?.beneficiary?.name }}
+                      </span>
                     </div>
                   </td>
                   <td>
@@ -288,11 +291,14 @@ const reqRefundAmount = computed(() => {
 })
 
 const beneficiaryType = computed(() => {
-  if (reqRefund.value.beneficiary_type.includes('Consignee')) {
+  if (reqRefund.value.beneficiary_type?.includes('Consignee')) {
     return 'Customer'
   }
-  if (reqRefund.value.beneficiary_type.includes('CustomAgent')) {
+  if (reqRefund.value.beneficiary_type?.includes('CustomAgent')) {
     return 'Custom Agent'
+  }
+  if (reqRefund.value.beneficiary_type?.includes('Beneficiary')) {
+    return 'Beneficiary'
   }
   return ''
 })

@@ -8,13 +8,10 @@
           <ACustomerSearch v-model="filters.customer_id" :allow-deleted="true" />
         </div>
         <div>
-          <AGlobalSearch
-            :onSearch="searchCustomsAgents"
-            v-model="filters.custom_agent_id"
-            validate-key="custom_agent_id"
-            label="Customs Agent"
-            hide-details
-          />
+          <ACustomsAgentSearch v-model="filters.custom_agent_id" label="Customs Agent" />
+        </div>
+        <div>
+          <ABeneficiarySearch v-model="filters.beneficiary_id" label="Beneficiary" />
         </div>
         <div><v-text-field v-model="filters.date_from" type="date" density="compact" label="Date from" /></div>
         <div><v-text-field v-model="filters.date_to" type="date" density="compact" label="Date to" /></div>
@@ -153,6 +150,7 @@ const filters = ref<any>({
   date_to: '',
   customer_id: '',
   custom_agent_id: null,
+  beneficiary_id: null,
 })
 
 const refunds = ref({
@@ -176,22 +174,9 @@ const clearFilters = async () => {
     date_to: '',
     customer_id: '',
     custom_agent_id: null,
+    beneficiary_id: null,
   }
   await getRefunds()
-}
-
-const searchCustomsAgents = async (params: any) => {
-  try {
-    const response = await $api.customAgents.searchCustomsAgents({
-      query: params,
-    })
-    return response
-  } catch (error) {
-    snackbar.add({
-      type: 'error',
-      text: 'Error fetching customs agents.',
-    })
-  }
 }
 
 const showFormDelete = (refund: any) => {

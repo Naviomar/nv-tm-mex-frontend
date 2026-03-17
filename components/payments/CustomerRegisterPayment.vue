@@ -37,6 +37,7 @@
                   <v-radio-group v-model="freeFormatOwner.type" :inline="$vuetify.display.smAndUp">
                     <v-radio label="Customer" value="customer" />
                     <v-radio label="Customs Agent" value="custom_agent" />
+                    <v-radio label="Beneficiary" value="beneficiary" />
                   </v-radio-group>
                 </div>
                 <div v-if="freeFormatOwner.type === 'customer'" class="mb-4">
@@ -44,6 +45,9 @@
                 </div>
                 <div v-if="freeFormatOwner.type === 'custom_agent'" class="mb-4">
                   <ACustomsAgentSearch v-model="freeFormatOwner.id" label="Select Customs Agent" />
+                </div>
+                <div v-if="freeFormatOwner.type === 'beneficiary'" class="mb-4">
+                  <ABeneficiarySearch v-model="freeFormatOwner.id" label="Select Beneficiary" />
                 </div>
                 <v-btn 
                   v-if="freeFormatOwner.id" 
@@ -373,6 +377,30 @@ const freeFormatOwner = ref<any>({
 
 const isFreeFormat = computed(() => form.value.serviceType === 'free-format')
 
+watch(
+  () => freeFormatOwner.value.type,
+  () => {
+    freeFormatOwner.value.id = null
+    paymentForm.value.payments = []
+    clearPayForm()
+  }
+)
+
+watch(
+  () => form.value.serviceType,
+  (serviceType) => {
+    if (serviceType !== 'free-format') {
+      freeFormatOwner.value = {
+        type: 'customer',
+        id: null,
+      }
+    }
+    paymentForm.value.payments = []
+    paymentForm.value.showPaymentForm = false
+    clearPayForm()
+  }
+)
+
 const payForm = reactive<any>({
   service: null,
   containerId: null,
@@ -529,9 +557,14 @@ const submitPaymentToBankMovement = async () => {
     paymentForm.value.payments = []
     form.value = {
       bankMovement: null,
+      serviceType: 'sea-import',
       servicesResult: { services: [] },
       selectedServices: [],
       servicesDetails: [],
+    }
+    freeFormatOwner.value = {
+      type: 'customer',
+      id: null,
     }
   } catch (error) {
     console.error(error)

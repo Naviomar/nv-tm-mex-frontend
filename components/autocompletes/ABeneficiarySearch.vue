@@ -1,9 +1,9 @@
 <template>
   <div>
     <v-autocomplete
-      v-model="selectedCustomer"
+      v-model="selectedBeneficiary"
       v-model:search="searchQuery"
-      :items="customsAgents"
+      :items="beneficiaries"
       :label="`Search ${label}`"
       item-title="name"
       item-value="id"
@@ -35,7 +35,7 @@ const props = defineProps({
   label: {
     type: String,
     required: false,
-    default: 'Customs Agent',
+    default: 'Beneficiary',
   },
   readonly: {
     type: Boolean,
@@ -46,56 +46,57 @@ const props = defineProps({
 
 const emits = defineEmits(['update:modelValue'])
 
-const customsAgents = ref<any>([])
-const selectedCustomer = ref<any>(null)
+const beneficiaries = ref<any[]>([])
+const selectedBeneficiary = ref<any>(null)
 const searchQuery = ref('')
 
 watch(searchQuery, (newSearch) => {
   if (props.readonly) return
-  if (newSearch.length < 3 || hasData.value) return
+  if (!newSearch || newSearch.length < 3 || hasData.value) return
   onSearch(newSearch)
 })
 
 watch(
   () => props.modelValue,
-  (newValue, oldValue) => {
+  (newValue) => {
     if (!newValue) {
-      selectedCustomer.value = null
+      selectedBeneficiary.value = null
     }
   }
 )
 
-const hasData = computed(() => !!selectedCustomer.value)
+const hasData = computed(() => !!selectedBeneficiary.value)
 
 const clearData = () => {
-  selectedCustomer.value = null
-  customsAgents.value = []
+  selectedBeneficiary.value = null
+  beneficiaries.value = []
+  searchQuery.value = ''
   onSelect(null)
 }
 
 const onSearch = _Debounce(async (search: string) => {
   loadingStore.start()
   try {
-    const response = await $api.customAgents.searchCustomsAgents({
+    const response = await $api.beneficiaries.searchBeneficiaries({
       query: {
         ...flattenArraysToCommaSeparatedString({ name: search }),
       },
     })
-    customsAgents.value = response
-    if (response.length === 0) {
+    beneficiaries.value = Array.isArray(response) ? response : []
+    if (beneficiaries.value.length === 0) {
       snackbar.add({
         type: 'info',
-        text: 'No customs agent found',
+        text: 'No beneficiary found',
       })
     }
-    if (response.length === 1) {
-      selectedCustomer.value = response[0]?.id
-      onSelect(response[0]?.id)
+    if (beneficiaries.value.length === 1) {
+      selectedBeneficiary.value = beneficiaries.value[0]?.id
+      onSelect(beneficiaries.value[0]?.id)
     }
   } catch (error) {
     snackbar.add({
       type: 'error',
-      text: 'Error fetching customs agent',
+      text: 'Error fetching beneficiary',
     })
   } finally {
     setTimeout(() => {
@@ -104,7 +105,7 @@ const onSearch = _Debounce(async (search: string) => {
   }
 }, 500)
 
-const onSelect = (customer: any) => {
-  emits('update:modelValue', customer)
+const onSelect = (beneficiary: any) => {
+  emits('update:modelValue', beneficiary)
 }
 </script>

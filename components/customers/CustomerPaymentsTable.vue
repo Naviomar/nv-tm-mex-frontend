@@ -108,6 +108,9 @@
                     <span v-if="servicePayment.custom_agent_id" class="text-xs">
                       Customs Agent: {{ servicePayment.custom_agent?.name }}
                     </span>
+                    <span v-if="servicePayment.beneficiary_id" class="text-xs">
+                      Beneficiary: {{ servicePayment.beneficiary?.name }}
+                    </span>
                   </div>
                 </td>
                 <td>{{ servicePayment.charge?.name }}</td>
