@@ -6,6 +6,7 @@ import ShippersModule from '~/repository/modules/catalogs/shippers'
 import SeaTrafficsModule from '~/repository/modules/catalogs/seatraffics'
 import SeaRegionsModule from '~/repository/modules/catalogs/searegions'
 import CustomAgentsModule from '~/repository/modules/catalogs/customsagents'
+import BeneficiariesModule from '~/repository/modules/catalogs/beneficiaries'
 import ConsigneesModule from '~/repository/modules/catalogs/consignees'
 import VesselsModule from '~/repository/modules/catalogs/vessels'
 import VoyagesModule from '~/repository/modules/catalogs/voyages'
@@ -97,6 +98,7 @@ interface IApiInstance {
   seaTraffics: SeaTrafficsModule
   seaRegions: SeaRegionsModule
   customAgents: CustomAgentsModule
+  beneficiaries: BeneficiariesModule
   consignees: ConsigneesModule
   customerBanks: CustomerBanksModule
   consigneeMbls: ConsigneeMblsModule
@@ -190,6 +192,7 @@ export function useApiFactory() {
     seaTraffics: new SeaTrafficsModule(client),
     seaRegions: new SeaRegionsModule(client),
     customAgents: new CustomAgentsModule(client),
+    beneficiaries: new BeneficiariesModule(client),
     consignees: new ConsigneesModule(client),
     customerBanks: new CustomerBanksModule(client),
     vessels: new VesselsModule(client),

@@ -21,7 +21,7 @@
       <v-card-title class="font-bold! text-base!">💰 Free Format Refund Search</v-card-title>
       <v-card-text>
         <v-alert type="info" variant="tonal" class="mb-4">
-          Search for Free Format payments by beneficiary (customer or customs agent)
+          Search for Free Format payments by beneficiary (customer, customs agent, or beneficiary)
         </v-alert>
         <div class="mb-4">
           <v-autocomplete
@@ -29,6 +29,7 @@
             :items="[
               { value: 'customer', name: 'Customer' },
               { value: 'custom_agent', name: 'Customs agent' },
+              { value: 'beneficiary', name: 'Beneficiary' },
             ]"
             item-title="name"
             item-value="value"
@@ -41,6 +42,9 @@
         </div>
         <div v-if="form.beneficiary_type === 'custom_agent'" class="mb-4">
           <ACustomsAgentSearch v-model="form.beneficiaryId" label="Select Customs Agent" />
+        </div>
+        <div v-if="form.beneficiary_type === 'beneficiary'" class="mb-4">
+          <ABeneficiarySearch v-model="form.beneficiaryId" label="Select Beneficiary" />
         </div>
         <v-btn
           v-if="form.beneficiaryId"
@@ -132,7 +136,8 @@
         v-model="form.beneficiary_type"
         :items="[
           { value: 'customer', name: 'Customer' },
-          { value: 'customagent', name: 'Customs agent' },
+          { value: 'custom_agent', name: 'Customs agent' },
+          { value: 'beneficiary', name: 'Beneficiary' },
         ]"
         item-title="name"
         item-value="value"
@@ -162,10 +167,21 @@
 
         <CustomsAgentSelectBankAccount v-model="form.bank" :id="form.beneficiaryId" />
       </div>
+      <div v-if="isBeneficiaryType" class="mb-4">
+        <div>
+          <ABeneficiarySearch 
+            v-model="form.beneficiaryId" 
+            label="Beneficiary" 
+            :readonly="isFreeFormatSearch"
+          />
+        </div>
+
+        <BeneficiarySelectBankAccount v-model="form.bank" :id="form.beneficiaryId" />
+      </div>
 
       <div v-if="form.bank" class="mb-4 p-4">
         <v-card>
-          <v-card-title>Customer bank account selected:</v-card-title>
+          <v-card-title>Bank account selected:</v-card-title>
           <v-card-text>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="grid grid-cols-2 gap-0">
@@ -237,7 +253,8 @@ const isFreeFormatSearch = computed(() => searchType.value === 'free-format')
 const servicePayments = ref<any>([])
 
 const isCustomerType = computed(() => form.value.beneficiary_type === 'customer')
-const isCustomsAgentType = computed(() => form.value.beneficiary_type === 'customagent')
+const isCustomsAgentType = computed(() => form.value.beneficiary_type === 'custom_agent')
+const isBeneficiaryType = computed(() => form.value.beneficiary_type === 'beneficiary')
 const hasCurrency = computed(() => form.value.currency_id != null)
 
 const servicePaymentsByCurrency = computed(() => {
@@ -252,6 +269,21 @@ const clearSelectedPayments = () => {
     }
   })
 }
+
+watch(
+  () => form.value.beneficiary_type,
+  () => {
+    form.value.beneficiaryId = null
+    form.value.bank = null
+  }
+)
+
+watch(
+  () => form.value.beneficiaryId,
+  () => {
+    form.value.bank = null
+  }
+)
 
 const getInvoiceType = (invoice: any) => {
   if (!invoice) return ''

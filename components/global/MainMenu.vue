@@ -83,6 +83,7 @@
       <v-list-item title="Airports" to="/configuration/airports"></v-list-item>
       <v-list-item title="Banks" to="/configuration/banks"></v-list-item>
       <!-- <v-list-item title="Bank acount types" to="/configuration/banks-accounts-types"></v-list-item> -->
+      <v-list-item title="Beneficiaries" to="/configuration/beneficiaries"></v-list-item>
       <v-list-item title="Charges" to="/configuration/charges"></v-list-item>
 
       <v-list-item title="Consignees MBL" to="/configuration/consignees-mbl"></v-list-item>
