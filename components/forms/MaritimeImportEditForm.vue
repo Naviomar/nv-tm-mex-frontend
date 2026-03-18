@@ -1201,19 +1201,45 @@ const onSuccess = async () => {
   try {
     loadingStore.start()
     const body = {
-      ...values,
+      incident: values.incident ?? null,
+      line_id: values.line_id ?? null,
+      voyage_departure: values.voyage_departure ?? null,
+      vessel_departure_id: values.vessel_departure_id ?? null,
+      etd_date: values.etd_date ?? null,
+      eta_date: values.eta_date ?? null,
+      origin_id: values.origin_id ?? null,
+      pol_id: values.pol_id ?? null,
+      pod_id: values.pod_id ?? null,
+      destination_id: values.destination_id ?? null,
+      po_num: values.po_num ?? null,
+      service_contract_id: values.service_contract_id ?? null,
+      booking_number: values.booking_number ?? null,
+      voyage_discharge_id: values.voyage_discharge_id ?? null,
+      buy_rate_obj: {
+        buy_rate_type: buyRate.value?.buy_rate_type ?? values.buy_rate_type ?? null,
+      },
+      sell_rate_obj: {
+        sell_rate_type: sellRate.value?.sell_rate_type ?? values.sell_rate_type ?? null,
+      },
+      credit_days: values.credit_days ?? 0,
+      executive_id: values.executive_id ?? null,
+      consignee_id: values.consignee_id ?? null,
+      freight_forwarder_id: values.freight_forwarder_id ?? null,
+      shipper_id: values.shipper_id ?? null,
+      notify: values.notify ?? null,
+      cargo_type: values.cargo_type ?? null,
+      coloader_id: values.coloader_id ?? null,
+      embalaje_id: values.embalaje_id ?? null,
+      commodity: values.commodity ?? null,
+      release_agent_id: values.release_agent_id ?? null,
+      release_type: values.release_type ?? null,
+      sea_region_id: values.sea_region_id ?? null,
       transhipments: transhipments.value,
       master_bls: masterBls.value,
       house_bls: houseBls.value,
       containers: containers.value,
-      charges: charges.value,
-      buy_rate_obj: buyRate.value,
-      sell_rate_obj: sellRate.value,
     }
 
-    console.log('[DEBUG] pol_id:', values.pol_id, 'pod_id:', values.pod_id, 'body pol_id:', body.pol_id, 'body pod_id:', body.pod_id)
-    console.log('[DEBUG] Full body object:', body)
-    console.log('[DEBUG] Body keys:', Object.keys(body))
     await $api.referencias.updateSeaImport(values.id!, body)
 
     snackbar.add({ type: 'success', text: 'Sea import reference updated' })
