@@ -174,19 +174,40 @@
                 class="bg-blue-200! dark:bg-blue-900!"
                 density="compact"
               >
-                <v-card-title>Advance payment #{{ advPayment.id }}</v-card-title>
+                <v-card-title>
+                  Advance payment #{{ advPayment.id }}
+                  <v-chip 
+                    v-if="isAdvanceUnpaid(advPayment)" 
+                    color="orange" 
+                    size="x-small" 
+                    class="ml-2"
+                  >
+                    Pending Payment
+                  </v-chip>
+                </v-card-title>
                 <v-card-text>
                   <div class="flex items-center">
-                    <v-checkbox v-model="advPayment.selected" :disabled="isDiffCurrency(advPayment)" hide-details />
+                    <v-checkbox 
+                      v-model="advPayment.selected" 
+                      :disabled="isDiffCurrency(advPayment) || isAdvanceUnpaid(advPayment)" 
+                      hide-details 
+                    />
                     <div class="flex flex-col gap-2">
                       <span class="font-bold text-base"
                         >{{ getCurrencyName(advPayment.currency_id) }} {{ formatToCurrency(advPayment.amount) }}
                       </span>
                       <span>@ {{ formatDateString(advPayment.created_at) }}</span>
                       <span>By {{ advPayment.creator?.name }}</span>
-                      <span v-if="isDiffCurrency(advPayment)" class="italic text-xs"
-                        >Note: Only advance payments with same currency can be used.</span
+                      <span 
+                        v-if="getAdvanceStatusMessage(advPayment)" 
+                        class="italic text-xs"
+                        :class="{
+                          'text-orange-600': isAdvanceUnpaid(advPayment),
+                          'text-grey-600': isDiffCurrency(advPayment) && !isAdvanceUnpaid(advPayment)
+                        }"
                       >
+                        {{ getAdvanceStatusMessage(advPayment) }}
+                      </span>
                     </div>
                   </div>
                 </v-card-text>
@@ -427,9 +448,9 @@ const grandTotalSelected = computed(() => {
     .filter((supCfdi) => supCfdi.selected)
     .reduce((acc, supCfdi) => acc + getTotalAmount(supCfdi), 0)
 
-  // Calculate the total of selected advance payments
+  // Calculate the total of selected advance payments (only paid advances)
   const totalAdvances = advancePayments.value
-    .filter((advPayment: any) => advPayment.selected && !isDiffCurrency(advPayment))
+    .filter((advPayment: any) => advPayment.selected && !isDiffCurrency(advPayment) && !isAdvanceUnpaid(advPayment))
     .reduce((acc: any, advPayment: any) => acc + parseFloat(advPayment.amount_available), 0)
 
   // Return final total after subtracting advances
@@ -442,6 +463,22 @@ const clearResults = () => {
 
 const isDiffCurrency = (advPayment: any) => {
   return advPayment.currency_id !== filters.currencyId
+}
+
+// Check if advance payment is unpaid (invoice exists but is not paid)
+const isAdvanceUnpaid = (advPayment: any) => {
+  return advPayment.invoice && !advPayment.invoice.is_paid
+}
+
+// Get status message for advance payment
+const getAdvanceStatusMessage = (advPayment: any) => {
+  if (isDiffCurrency(advPayment)) {
+    return 'Note: Only advance payments with same currency can be used.'
+  }
+  if (isAdvanceUnpaid(advPayment)) {
+    return 'Pending payment - This advance cannot be used until it is paid.'
+  }
+  return ''
 }
 
 // Selecciona todas las facturas
@@ -675,7 +712,7 @@ const onClickGenerateReq = async () => {
         })),
       advancePayments:
         advancePayments.value
-          .filter((advPayment: any) => advPayment.selected && !isDiffCurrency(advPayment))
+          .filter((advPayment: any) => advPayment.selected && !isDiffCurrency(advPayment) && !isAdvanceUnpaid(advPayment))
           .map((advPayment: any) => ({
             id: advPayment.id,
           })) || [],

@@ -5,7 +5,7 @@
       <v-card-text>
         <v-radio-group v-model="searchType" :inline="$vuetify.display.smAndUp">
           <v-radio label="By Service" value="service" />
-          <v-radio label="Free Format (by beneficiary)" value="free-format" color="orange" />
+          <v-radio label="Free Format (Without Service)" value="free-format" color="orange" />
         </v-radio-group>
       </v-card-text>
     </v-card>
