@@ -206,6 +206,7 @@ const typeLabel = (type?: string) => {
 const formatDate = (date?: string) => {
   if (!date) return '—'
   return new Date(date).toLocaleDateString('es-MX', {
+    timeZone: 'America/Mexico_City',
     month: 'short', day: 'numeric',
   })
 }
@@ -213,6 +214,7 @@ const formatDate = (date?: string) => {
 const formatTime = (date?: string) => {
   if (!date) return '—'
   return new Date(date).toLocaleTimeString('es-MX', {
+    timeZone: 'America/Mexico_City',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   })
 }
