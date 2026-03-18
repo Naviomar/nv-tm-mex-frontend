@@ -1212,6 +1212,8 @@ const onSuccess = async () => {
     }
 
     console.log('[DEBUG] pol_id:', values.pol_id, 'pod_id:', values.pod_id, 'body pol_id:', body.pol_id, 'body pod_id:', body.pod_id)
+    console.log('[DEBUG] Full body object:', body)
+    console.log('[DEBUG] Body keys:', Object.keys(body))
     await $api.referencias.updateSeaImport(values.id!, body)
 
     snackbar.add({ type: 'success', text: 'Sea import reference updated' })
