@@ -538,7 +538,7 @@ const catalogs = ref<any>({
   airports: [],
 })
 
-const selectedNames = ['SeaImportNotifyRevalidation']
+const selectedNames = ['AirImportRevalidation']
 
 const customerNotifys = computed(() => {
   return mailNotifications.filter((notify) => selectedNames.includes(notify.short_name))
