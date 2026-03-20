@@ -145,7 +145,7 @@
               <div>
                 <div class="flex flex-wrap items-center gap-2">
                   <div class="text-xl font-semibold">{{ line.line_name }}</div>
-                  <v-chip size="small" color="primary" label>{{ line.periods.length }} {{ filters.active_only ? 'active ranges' : 'ranges' }}</v-chip>
+                  <v-chip size="small" color="primary" label>{{ line.periods.length }} {{ line.periods.length === 1 ? 'group' : 'groups' }}</v-chip>
                   <v-chip v-if="line.incompleteCount" size="small" color="warning" label>
                     {{ line.incompleteCount }} incomplete
                   </v-chip>
@@ -154,7 +154,7 @@
                   </v-chip>
                 </div>
                 <div class="mt-1 text-sm opacity-70">
-                  {{ filters.active_only ? 'Showing all active rates together across active ranges.' : getSelectedPeriod(line)?.label ?? 'No validity range selected' }}
+                  {{ filters.active_only ? 'Showing the current active configuration. Active rates cannot overlap.' : getSelectedPeriod(line)?.label ?? 'No validity range selected' }}
                 </div>
               </div>
 
@@ -180,28 +180,22 @@
                 >
                   Bulk Rate 2
                 </v-btn>
+                <v-btn
+                  size="small"
+                  color="primary"
+                  prepend-icon="mdi-open-in-new"
+                  :disabled="!getSelectedPeriod(line)?.rawRows[0]?.id"
+                  @click="openConfiguration(line)"
+                >
+                  Edit configuration
+                </v-btn>
               </div>
             </div>
           </div>
 
           <v-card-text class="space-y-4">
-            <div v-if="filters.active_only && line.periods.length > 1" class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
-              <div class="text-sm opacity-70">
-                All active rates are displayed together below. Use this selector only to choose which validity range bulk and duplicate actions should use.
-              </div>
-              <v-select
-                v-model="selectedPeriodKeys[line.line_id]"
-                :items="getPeriodOptions(line)"
-                item-title="label"
-                item-value="value"
-                label="Action range"
-                density="compact"
-                variant="outlined"
-              />
-            </div>
-
             <v-tabs
-              v-else-if="!filters.active_only && line.periods.length > 1"
+              v-if="!filters.active_only && line.periods.length > 1"
               v-model="selectedPeriodKeys[line.line_id]"
               color="primary"
               density="comfortable"
@@ -637,23 +631,21 @@
  
  <script setup lang="ts">
  import {
-   buildLineGroups,
-   cleanContainerDelayQuery,
-   fetchAllContainerDelayRates,
-   formatCurrencyAmount,
-   formatDateLabel,
-   getConflictRateIds,
-   getHistoryRows,
-   toDateOnly,
-   todayKey,
-   type LineGroup,
-   type MatrixCell,
-   type MatrixRow,
-   type NamedCatalog,
-   type PeriodGroup,
-   type RateRow,
-   type RateType,
- } from '~/composables/useContainerDelayRates'
+  buildLineGroups,
+  cleanContainerDelayQuery,
+  fetchAllContainerDelayRates,
+  formatDateLabel,
+  getConflictRateIds,
+  getPeriodLabel,
+  toDateOnly,
+  todayKey,
+  type LineGroup,
+  type MatrixRow,
+  type NamedCatalog,
+  type PeriodGroup,
+  type RateRow,
+  type RateType,
+} from '~/composables/useContainerDelayRates'
  
  const { $api, $notifications } = useNuxtApp()
  const snackbar = useSnackbar()
@@ -883,38 +875,19 @@
  }
 
  function getDisplayRows(line: LineGroup) {
-   if (!filters.active_only) {
-     const selectedPeriod = getSelectedPeriod(line)
-     if (!selectedPeriod) return []
+  const selectedPeriod = getSelectedPeriod(line)
+  if (!selectedPeriod) return []
 
-     return selectedPeriod.rows.map((row) => ({
-       key: `${line.line_id}-${selectedPeriod.key}-${row.container_type_id}`,
-       row,
-       period: selectedPeriod,
-       periodLabel: selectedPeriod.label,
-       startDate: row.rate1?.startDate ?? row.rate2?.startDate ?? selectedPeriod.start_date,
-       endDate: row.rate1?.endDate ?? row.rate2?.endDate ?? selectedPeriod.end_date,
-     }))
-   }
-
-   return line.periods
-     .filter((period) => period.is_active)
-     .flatMap((period) =>
-       period.rows.map((row) => ({
-         key: `${line.line_id}-${period.key}-${row.container_type_id}`,
-         row,
-         period,
-         periodLabel: period.label,
-         startDate: row.rate1?.startDate ?? row.rate2?.startDate ?? period.start_date,
-         endDate: row.rate1?.endDate ?? row.rate2?.endDate ?? period.end_date,
-       }))
-     )
-     .sort((left, right) => {
-       const containerCompare = left.row.container_name.localeCompare(right.row.container_name)
-       if (containerCompare !== 0) return containerCompare
-       return `${left.startDate ?? ''}`.localeCompare(`${right.startDate ?? ''}`)
-     })
- }
+  return selectedPeriod.rows.map((row) => ({
+    key: `${line.line_id}-${selectedPeriod.key}-${row.container_type_id}`,
+    row,
+    period: selectedPeriod,
+    periodLabel: selectedPeriod.label,
+    startDate: row.rate1?.startDate ?? row.rate2?.startDate ?? selectedPeriod.start_date,
+    endDate: row.rate1?.endDate ?? row.rate2?.endDate ?? selectedPeriod.end_date,
+  }))
+}
+ 
  
  function getPeriodChipColor(status: PeriodGroup['status']) {
    if (status === 'active') return 'success'
@@ -929,7 +902,7 @@
    return 'success'
  }
  
- function getCellColor(cell: MatrixCell | null, status: MatrixRow['status']) {
+ function getCellColor(cell: any, status: MatrixRow['status']) {
    if (!cell) return 'grey'
    if (cell.deletedAt) return 'secondary'
    if (cell.hasConflict || status === 'conflict') return 'error'
@@ -949,16 +922,34 @@
  }
  
  function duplicateConfiguration(line: LineGroup) {
-   const period = getSelectedPeriod(line)
-   router.push({
-     path: '/configuration/container-delay-rates/add',
-     query: {
-       duplicate_line_id: `${line.line_id}`,
-       duplicate_start_date: period?.start_date ?? '',
-       duplicate_end_date: period?.end_date ?? '',
-     },
-   })
- }
+  const period = getSelectedPeriod(line)
+  router.push({
+    path: '/configuration/container-delay-rates/add',
+    query: {
+      duplicate_period_key: period?.key ?? '',
+      duplicate_line_id: `${line.line_id}`,
+      reference_date: filters.active_on || todayKey(),
+      duplicate_start_date: period?.start_date ?? '',
+      duplicate_end_date: period?.end_date ?? '',
+    },
+  })
+}
+
+function openConfiguration(line: LineGroup) {
+  const period = getSelectedPeriod(line)
+  const rowId = period?.rawRows[0]?.id
+  if (!rowId) return
+
+  router.push({
+    path: `/configuration/container-delay-rates/edit-${rowId}`,
+    query: {
+      period_key: period?.key ?? '',
+      reference_date: filters.active_on || todayKey(),
+      start_date: period?.start_date ?? '',
+      end_date: period?.end_date ?? '',
+    },
+  })
+}
 
  function openRateRow(row: RateRow) {
    router.push({
