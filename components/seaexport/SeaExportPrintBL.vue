@@ -180,6 +180,7 @@
                 <th>Desciption of packages and goods</th>
                 <th>Gross weight</th>
                 <th>Measurement</th>
+                <th>Type</th>
               </tr>
             </thead>
             <tbody>
@@ -209,6 +210,16 @@
                 </td>
                 <td>
                   <v-text-field v-model="container.measurement" type="number" density="compact" label="Measurement" />
+                </td>
+                <td>
+                  <v-select
+                    v-model="container.measurement_type"
+                    :items="catalogs.measurementTypes"
+                    item-title="name"
+                    item-value="value"
+                    density="compact"
+                    label="Type"
+                  />
                 </td>
               </tr></tbody
           ></v-table>
@@ -381,6 +392,14 @@ const catalogs = ref<any>({
     { name: 'First page', value: 'first' },
     { name: 'Second page', value: 'second' },
   ],
+  measurementTypes: [
+    { name: 'CBM', value: 'CBM' },
+    { name: 'MTQ', value: 'MTQ' },
+    { name: 'CU. M', value: 'CU. M' },
+    { name: 'M³', value: 'M³' },
+    { name: 'FT³', value: 'FT³' },
+    { name: 'CU FT', value: 'CU FT' },
+  ],
 })
 
 const availableContainers = ref<any>([])
@@ -531,6 +550,10 @@ const onUpdateContainer = (containers: any) => {
     if (c.packages_goods == null || c.packages_goods === '') {
       c.packages_goods = c.notes
     }
+
+    if (c.measurement_type == null || c.measurement_type === '') {
+      c.measurement_type = 'M³'
+    }
   })
 }
 
@@ -624,6 +647,7 @@ const fillFormForPrintBl = () => {
       packages_goods: c.packages_goods,
       gross_weight: c.gross_weight,
       measurement: c.measurement,
+      measurement_type: c.measurement_type ?? 'M³',
     }))
     formPrint.value.charges = houseBlSelected.value.print_bl.print_charges?.map((c: any) => ({
       ...c.reference_charge,
