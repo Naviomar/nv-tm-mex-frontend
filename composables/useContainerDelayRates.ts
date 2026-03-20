@@ -232,6 +232,105 @@ export function getConflictRateIds(rows: RateRow[]) {
   return conflictIds
 }
 
+function isRowActiveOnDate(row: RateRow, onDate = todayKey()) {
+  const start = toDateOnly(row.start_date)
+  const end = toDateOnly(row.end_date)
+
+  if (start && start > onDate) return false
+  if (end && end < onDate) return false
+  return true
+}
+
+function getCoverageBounds(rows: RateRow[]) {
+  const startDates = rows
+    .map((row) => toDateOnly(row.start_date))
+    .filter((value): value is string => Boolean(value))
+    .sort()
+
+  const endDates = rows
+    .map((row) => toDateOnly(row.end_date))
+    .filter((value): value is string => Boolean(value))
+    .sort()
+
+  return {
+    startDate: startDates[0] ?? null,
+    endDate: rows.some((row) => !toDateOnly(row.end_date)) ? null : endDates[endDates.length - 1] ?? null,
+  }
+}
+
+function buildRowsForMatrix(
+  periodRows: RateRow[],
+  availableContainerTypes: NamedCatalog[],
+  conflictIds: Set<number>,
+  options: {
+    includeEmptyContainers?: boolean
+    containerTypeId?: number | null
+  }
+) {
+  return availableContainerTypes
+    .filter((containerType) => !options.containerTypeId || containerType.id === options.containerTypeId)
+    .map((containerType) => {
+      const containerRows = periodRows.filter((row) => row.container_type_id === containerType.id)
+      const rate1Row = pickBestRate(containerRows, 1)
+      const rate2Row = pickBestRate(containerRows, 2)
+      const hasConflict = Boolean(
+        (rate1Row?.id && conflictIds.has(rate1Row.id)) ||
+          (rate2Row?.id && conflictIds.has(rate2Row.id)) ||
+          containerRows.filter((row) => row.rate_type === 1).length > 1 ||
+          containerRows.filter((row) => row.rate_type === 2).length > 1
+      )
+
+      const rate1Cell = rate1Row ? buildMatrixCell(rate1Row, 1, conflictIds) : null
+      const rate2Cell = rate2Row ? buildMatrixCell(rate2Row, 2, conflictIds) : null
+
+      let status: MatrixRow['status'] = 'ok'
+      if (hasConflict) status = 'conflict'
+      else if (!rate1Cell || !rate2Cell) status = 'incomplete'
+      else if (rate1Cell.deletedAt || rate2Cell.deletedAt) status = 'inactive'
+
+      return {
+        container_type_id: containerType.id,
+        container_name: containerType.name,
+        rate1: rate1Cell,
+        rate2: rate2Cell,
+        status,
+        hasConflict,
+      } satisfies MatrixRow
+    })
+    .filter((row) => options.includeEmptyContainers || row.rate1 || row.rate2)
+}
+
+function buildPeriodGroup(
+  periodRows: RateRow[],
+  availableContainerTypes: NamedCatalog[],
+  conflictIds: Set<number>,
+  onDate: string,
+  options: {
+    includeEmptyContainers?: boolean
+    containerTypeId?: number | null
+  },
+  metadata?: Partial<Pick<PeriodGroup, 'key' | 'start_date' | 'end_date' | 'label' | 'status' | 'is_active'>>
+) {
+  const exemplar = periodRows[0]
+  const rowsForMatrix = buildRowsForMatrix(periodRows, availableContainerTypes, conflictIds, options)
+  const status = metadata?.status ?? getPeriodStatus(exemplar?.start_date, exemplar?.end_date, onDate)
+  const conflictsCount = rowsForMatrix.filter((row) => row.hasConflict).length
+  const incompleteCount = rowsForMatrix.filter((row) => row.status === 'incomplete').length
+
+  return {
+    key: metadata?.key ?? buildPeriodKey(exemplar?.start_date, exemplar?.end_date),
+    start_date: metadata?.start_date ?? toDateOnly(exemplar?.start_date),
+    end_date: metadata?.end_date ?? toDateOnly(exemplar?.end_date),
+    label: metadata?.label ?? getPeriodLabel(exemplar?.start_date, exemplar?.end_date),
+    status,
+    is_active: metadata?.is_active ?? status === 'active',
+    rows: rowsForMatrix,
+    rawRows: periodRows,
+    conflictsCount,
+    incompleteCount,
+  } satisfies PeriodGroup
+}
+
 export function buildLineGroups(
   rows: RateRow[],
   containerTypes: NamedCatalog[] = [],
@@ -275,6 +374,9 @@ export function buildLineGroups(
 
   const groups: LineGroup[] = [...lineMap.entries()].map(([lineId, lineRows]) => {
     const periodMap = new Map<string, RateRow[]>()
+    const availableContainerTypes = options.includeEmptyContainers
+      ? containerTypes
+      : uniqueContainerTypes(lineRows)
 
     lineRows.forEach((row) => {
       const periodKey = buildPeriodKey(row.start_date, row.end_date)
@@ -283,61 +385,40 @@ export function buildLineGroups(
       periodMap.set(periodKey, bucket)
     })
 
-    const periods: PeriodGroup[] = [...periodMap.entries()].map(([periodKey, periodRows]) => {
-      const exemplar = periodRows[0]
-      const availableContainerTypes = options.includeEmptyContainers
-        ? containerTypes
-        : uniqueContainerTypes(periodRows)
+    const exactPeriods = [...periodMap.entries()].map(([, periodRows]) =>
+      buildPeriodGroup(periodRows, availableContainerTypes, conflictIds, onDate, {
+        includeEmptyContainers: options.includeEmptyContainers,
+        containerTypeId: options.containerTypeId,
+      })
+    )
 
-      const rowsForMatrix = availableContainerTypes
-        .filter((containerType) => !options.containerTypeId || containerType.id === options.containerTypeId)
-        .map((containerType) => {
-          const containerRows = periodRows.filter((row) => row.container_type_id === containerType.id)
-          const rate1Row = pickBestRate(containerRows, 1)
-          const rate2Row = pickBestRate(containerRows, 2)
-          const hasConflict = Boolean(
-            (rate1Row?.id && conflictIds.has(rate1Row.id)) ||
-              (rate2Row?.id && conflictIds.has(rate2Row.id)) ||
-              containerRows.filter((row) => row.rate_type === 1).length > 1 ||
-              containerRows.filter((row) => row.rate_type === 2).length > 1
-          )
+    const activeRows = lineRows.filter((row) => isRowActiveOnDate(row, onDate))
+    const activeCoverage = getCoverageBounds(activeRows)
+    const mergedActivePeriod = activeRows.length
+      ? buildPeriodGroup(
+          activeRows,
+          availableContainerTypes,
+          conflictIds,
+          onDate,
+          {
+            includeEmptyContainers: options.includeEmptyContainers,
+            containerTypeId: options.containerTypeId,
+          },
+          {
+            key: `active__${buildPeriodKey(activeCoverage.startDate, activeCoverage.endDate)}`,
+            start_date: activeCoverage.startDate,
+            end_date: activeCoverage.endDate,
+            label: getPeriodLabel(activeCoverage.startDate, activeCoverage.endDate),
+            status: 'active',
+            is_active: true,
+          }
+        )
+      : null
 
-          const rate1Cell = rate1Row ? buildMatrixCell(rate1Row, 1, conflictIds) : null
-          const rate2Cell = rate2Row ? buildMatrixCell(rate2Row, 2, conflictIds) : null
-
-          let status: MatrixRow['status'] = 'ok'
-          if (hasConflict) status = 'conflict'
-          else if (!rate1Cell || !rate2Cell) status = 'incomplete'
-          else if (rate1Cell.deletedAt || rate2Cell.deletedAt) status = 'inactive'
-
-          return {
-            container_type_id: containerType.id,
-            container_name: containerType.name,
-            rate1: rate1Cell,
-            rate2: rate2Cell,
-            status,
-            hasConflict,
-          } satisfies MatrixRow
-        })
-        .filter((row) => options.includeEmptyContainers || row.rate1 || row.rate2)
-
-      const status = getPeriodStatus(exemplar?.start_date, exemplar?.end_date, onDate)
-      const conflictsCount = rowsForMatrix.filter((row) => row.hasConflict).length
-      const incompleteCount = rowsForMatrix.filter((row) => row.status === 'incomplete').length
-
-      return {
-        key: periodKey,
-        start_date: toDateOnly(exemplar?.start_date),
-        end_date: toDateOnly(exemplar?.end_date),
-        label: getPeriodLabel(exemplar?.start_date, exemplar?.end_date),
-        status,
-        is_active: status === 'active',
-        rows: rowsForMatrix,
-        rawRows: periodRows,
-        conflictsCount,
-        incompleteCount,
-      } satisfies PeriodGroup
-    })
+    const periods: PeriodGroup[] = [
+      ...(mergedActivePeriod ? [mergedActivePeriod] : []),
+      ...exactPeriods.filter((period) => !period.is_active),
+    ]
       .filter((period) => !options.activeOnly || period.is_active)
       .filter((period) => !options.conflictsOnly || period.conflictsCount > 0 || period.incompleteCount > 0)
       .sort(sortPeriods)

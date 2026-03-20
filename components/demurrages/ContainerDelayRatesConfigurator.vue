@@ -388,10 +388,13 @@ const errorState = reactive({
 })
 
 const sourceDuplicateLineId = computed(() => Number(route.query.duplicate_line_id || 0) || null)
+const sourceDuplicatePeriodKey = computed(() => `${route.query.duplicate_period_key || ''}` || null)
 const sourceDuplicateStart = computed(() => toDateOnly(`${route.query.duplicate_start_date || ''}`) || null)
 const sourceDuplicateEnd = computed(() => toDateOnly(`${route.query.duplicate_end_date || ''}`) || null)
+const selectedPeriodKey = computed(() => `${route.query.period_key || ''}` || null)
 const selectedEditStart = computed(() => toDateOnly(`${route.query.start_date || ''}`) || null)
 const selectedEditEnd = computed(() => toDateOnly(`${route.query.end_date || ''}`) || null)
+const referenceDate = computed(() => toDateOnly(`${route.query.reference_date || ''}`) || todayKey())
 
 const visibleRows = computed(() => {
   const query = containerSearch.value.trim().toLowerCase()
@@ -451,18 +454,25 @@ async function loadEditSource() {
 
   const rows = await fetchAllContainerDelayRates($api, { line_id: rate.line_id })
   lineRows.value = rows
-  const selectedPeriodKey = buildPeriodKey(
-    selectedEditStart.value ?? rate.start_date,
-    selectedEditEnd.value ?? rate.end_date
-  )
-  periodRows.value = rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === selectedPeriodKey)
+
+  const groups = buildLineGroups(rows, containerTypes.value, {
+    includeEmptyContainers: true,
+    lineId: rate.line_id,
+    hideDeleted: true,
+    onDate: referenceDate.value,
+  })
+  const lineGroup = groups[0]
+  const fallbackPeriodKey = buildPeriodKey(selectedEditStart.value ?? rate.start_date, selectedEditEnd.value ?? rate.end_date)
+  const targetPeriod = lineGroup?.periods.find((period) => period.key === (selectedPeriodKey.value || fallbackPeriodKey))
+
+  periodRows.value = targetPeriod?.rawRows ?? rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === fallbackPeriodKey)
 
   const activeGroups = buildLineGroups(rows, containerTypes.value, {
     includeEmptyContainers: true,
     lineId: rate.line_id,
     activeOnly: true,
     hideDeleted: true,
-    onDate: todayKey(),
+    onDate: referenceDate.value,
   })
   suggestedRows.value = activeGroups[0]?.periods[0]?.rawRows ?? []
 }
@@ -472,6 +482,7 @@ async function loadDuplicateSource() {
 
   form.line_id = sourceDuplicateLineId.value
   await loadLineContext(sourceDuplicateLineId.value, {
+    sourcePeriodKey: sourceDuplicatePeriodKey.value,
     sourceStartDate: sourceDuplicateStart.value,
     sourceEndDate: sourceDuplicateEnd.value,
   })
@@ -498,6 +509,7 @@ function rebuildDraft() {
 async function loadLineContext(
   lineId: number,
   options: {
+    sourcePeriodKey?: string | null
     sourceStartDate?: string | null
     sourceEndDate?: string | null
   } = {}
@@ -505,16 +517,26 @@ async function loadLineContext(
   const rows = await fetchAllContainerDelayRates($api, { line_id: lineId })
   lineRows.value = rows
 
+   const groups = buildLineGroups(rows, containerTypes.value, {
+    includeEmptyContainers: true,
+    lineId,
+    hideDeleted: true,
+    onDate: referenceDate.value,
+  })
+  const lineGroup = groups[0]
+
   if (isEdit.value && anchorRate.value) {
-    const periodKey = buildPeriodKey(anchorRate.value.start_date, anchorRate.value.end_date)
-    periodRows.value = rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
+    const periodKey = selectedPeriodKey.value || buildPeriodKey(anchorRate.value.start_date, anchorRate.value.end_date)
+    const selectedPeriod = lineGroup?.periods.find((period) => period.key === periodKey)
+    periodRows.value = selectedPeriod?.rawRows ?? rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
   } else {
     periodRows.value = []
   }
 
-  if (options.sourceStartDate || options.sourceEndDate) {
-    const periodKey = buildPeriodKey(options.sourceStartDate, options.sourceEndDate)
-    suggestedRows.value = rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
+  if (options.sourcePeriodKey || options.sourceStartDate || options.sourceEndDate) {
+    const periodKey = options.sourcePeriodKey || buildPeriodKey(options.sourceStartDate, options.sourceEndDate)
+    const sourcePeriod = lineGroup?.periods.find((period) => period.key === periodKey)
+    suggestedRows.value = sourcePeriod?.rawRows ?? rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
     return
   }
 
@@ -523,7 +545,7 @@ async function loadLineContext(
     lineId,
     activeOnly: true,
     hideDeleted: true,
-    onDate: todayKey(),
+    onDate: referenceDate.value,
   })
   suggestedRows.value = activeGroups[0]?.periods[0]?.rawRows ?? []
 }
