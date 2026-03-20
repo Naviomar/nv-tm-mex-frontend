@@ -112,6 +112,20 @@ class ChargesModule extends FetchFactory<IChargePagination> {
   async seedCharges(fetchOptions?: FetchOptions) {
     return this.call('GET', `/tests/seeds/charges`, fetchOptions)
   }
+
+  async exportExcel(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-excel`, {
+      ...fetchOptions,
+      responseType: 'blob',
+    })
+  }
+
+  async exportPdf(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-pdf`, {
+      ...fetchOptions,
+      responseType: 'blob',
+    })
+  }
 }
 
 export default ChargesModule
