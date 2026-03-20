@@ -1,5 +1,5 @@
 ---
-title: Container Delay Rates – Introducción
+title: Container DnD Rates – Introducción
 summary: Catálogo de tarifas por retraso de contenedores.
 order: 1
 status: stable
@@ -21,7 +21,7 @@ Incluye alta, edición, búsqueda y validaciones básicas.
 - Catálogos relacionados: **Containers**
 
 # Navegación
-- Menú: `Configuration → Container Delay Rates`
+- Menú: `Configuration → Container DnD Rates`
 - Ruta: `/configuration/container-delay-rates`
 
 # Flujo general

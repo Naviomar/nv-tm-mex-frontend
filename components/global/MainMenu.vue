@@ -88,7 +88,7 @@
 
       <v-list-item title="Consignees MBL" to="/configuration/consignees-mbl"></v-list-item>
       <v-list-item title="Containers" to="/configuration/containers"></v-list-item>
-      <v-list-item title="Container delay rates" to="/configuration/container-delay-rates"></v-list-item>
+      <v-list-item title="Container DnD Rates" to="/configuration/container-delay-rates"></v-list-item>
       <v-list-item title="Countries" to="/configuration/countries"></v-list-item>
       <v-list-item title="Customers" to="/configuration/customers"></v-list-item>
       <v-list-item title="Currencies" to="/configuration/currencies"></v-list-item>
