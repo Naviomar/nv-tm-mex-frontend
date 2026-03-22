@@ -177,16 +177,36 @@
             </v-card-title>
             <v-card-text>
               <!-- // Posiblemente se necesite un componente para buscar y pagar facturas -->
+              <v-alert
+                v-if="bankMovement.type === 'deposit'"
+                density="compact"
+                type="info"
+                variant="tonal"
+                class="mb-4"
+              >
+                <template v-slot:text>
+                  <div class="text-sm">
+                    <strong>Tip:</strong> 
+                    <span >
+                      You can search directly by invoice number without selecting an invoice type. 
+                      The system will search across all applicable invoice and request types.
+                    </span>
+                  </div>
+                </template>
+              </v-alert>
               <div class="mb-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                   <v-autocomplete
                     v-model="filters.typeInvoice"
                     :items="typeInvoicesByMovementType"
                     density="compact"
                     item-title="name"
                     item-value="class_name"
-                    label="Search invoice"
+                    :label="bankMovement.type === 'withdrawal' ? 'Invoice type (required)' : 'Invoice type (optional)'"
+                    :rules="bankMovement.type === 'withdrawal' ? [(v: any) => !!v || 'Invoice type is required for withdrawals'] : []"
                     @update:model-value="clearSearchInvoices"
+                    :clearable="bankMovement.type === 'deposit'"
+                    :placeholder="bankMovement.type === 'deposit' ? 'All types will be searched if not selected' : ''"
                   />
                   <div v-if="isPayBlSchedule">
                     <v-btn color="purple" @click="goToModule(bankMovement.id)">Go to payment BL</v-btn>
@@ -401,7 +421,11 @@ const isRequestBasedType = computed(() => {
 })
 
 const searchFieldLabel = computed(() => {
-  if (!filters.value.typeInvoice) return 'Add numbers to search'
+  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+    return 'Add invoice/request numbers to search (all types)'
+  }
+  
+  if (!filters.value.typeInvoice) return 'Add invoice/request numbers to search'
   
   if (isInvoiceBasedType.value) {
     return 'Add invoice numbers to search'
@@ -423,6 +447,10 @@ const searchFieldLabel = computed(() => {
 })
 
 const searchFieldHint = computed(() => {
+  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+    return 'Press ENTER to add numbers to search (all invoice/request types)'
+  }
+  
   if (!filters.value.typeInvoice) return 'Press ENTER to add numbers to search'
   
   if (isInvoiceBasedType.value) {
@@ -437,6 +465,10 @@ const searchFieldHint = computed(() => {
 })
 
 const searchButtonText = computed(() => {
+  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+    return 'Search all invoice/request types'
+  }
+  
   if (!filters.value.typeInvoice) return 'Search'
   
   if (isInvoiceBasedType.value) {
