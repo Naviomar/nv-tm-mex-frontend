@@ -364,7 +364,6 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
   async updateSeaImportReleaseInTransit(id: string, form: any, fetchOptions?: FetchOptions) {
     const body = JSON.stringify(form)
     fetchOptions = {
-      method: 'POST',
       body: body,
       ...fetchOptions,
     }
@@ -373,6 +372,13 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
 
   async getSeaImportIntermodalById(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/intermodal`, fetchOptions)
+  }
+
+  async searchSeaImportTruckInformationCatalog(query: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-import/intermodal/truck-information-catalog`, {
+      ...fetchOptions,
+      query: { query },
+    })
   }
 
   async updateSeaImportIntermodalById(id: string, form: any, fetchOptions?: FetchOptions) {
