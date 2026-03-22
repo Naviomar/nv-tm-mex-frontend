@@ -246,10 +246,33 @@
               <v-chip size="small" color="primary">
                 {{ invoiceTm.is_proforma ? 'Profoma' : 'Invoice' }} #{{ invoiceTm.invoice.invoice_number }}
               </v-chip>
-              <div v-if="invoiceTm.from_deleted_invoice != null">
-                <v-chip size="small" color="red"
-                  >Linked to deleted invoice #{{ invoiceTm.from_deleted_invoice }}</v-chip
-                >
+              <div v-if="invoiceTm.from_deleted_invoice != null" class="mt-1">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Re-invoice from 
+                  <NuxtLink 
+                    :to="invoiceTm.service_type === 'air'
+                      ? `/invoices/search/tm-air-view-${invoiceTm.from_deleted_invoice}`
+                      : `/invoices/search/tm-view-${invoiceTm.from_deleted_invoice}`" 
+                    target="_blank"
+                    class="text-orange font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceTm.parent_deleted?.invoice?.invoice_number || invoiceTm.from_deleted_invoice }}
+                  </NuxtLink>
+                </v-chip>
+              </div>
+              <div v-if="invoiceTm.replacement_invoice_id != null" class="mt-1">
+                <v-chip size="small" color="blue" variant="tonal">
+                  Replaced by 
+                  <NuxtLink 
+                    :to="invoiceTm.service_type === 'air'
+                      ? `/invoices/search/tm-air-view-${invoiceTm.replacement_invoice_id}`
+                      : `/invoices/search/tm-view-${invoiceTm.replacement_invoice_id}`" 
+                    target="_blank"
+                    class="text-blue font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceTm.replacement_invoice?.invoice?.invoice_number || invoiceTm.replacement_invoice_id }}
+                  </NuxtLink>
+                </v-chip>
               </div>
             </td>
             <td>

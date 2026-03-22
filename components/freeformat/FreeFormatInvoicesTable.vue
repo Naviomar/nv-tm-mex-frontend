@@ -126,6 +126,30 @@
                 <v-chip size="small" color="primary" class="cursor-pointer">
                   {{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }} #{{ row?.invoice?.invoice_number }}
                 </v-chip>
+                <div v-if="row.from_deleted != null" class="mt-1">
+                  <v-chip size="small" color="orange" variant="tonal">
+                    Re-invoice from 
+                    <NuxtLink 
+                      :to="`/invoices/search/free-format/view-${row.from_deleted}`" 
+                      target="_blank"
+                      class="text-orange font-weight-bold text-decoration-underline ml-1"
+                    >
+                      #{{ row.parent_deleted?.invoice?.invoice_number || row.from_deleted }}
+                    </NuxtLink>
+                  </v-chip>
+                </div>
+                <div v-if="row.replacement_invoice_id != null" class="mt-1">
+                  <v-chip size="small" color="blue" variant="tonal">
+                    Replaced by 
+                    <NuxtLink 
+                      :to="`/invoices/search/free-format/view-${row.replacement_invoice_id}`" 
+                      target="_blank"
+                      class="text-blue font-weight-bold text-decoration-underline ml-1"
+                    >
+                      #{{ row.replacement_invoice?.invoice?.invoice_number || row.replacement_invoice_id }}
+                    </NuxtLink>
+                  </v-chip>
+                </div>
               </td>
               <td>{{ getPartyableType(row.partyable_type) }}</td>
               <td class="whitespace-nowrap">{{ row.partyable?.name }}</td>

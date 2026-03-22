@@ -54,6 +54,10 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/new-invoice`, fetchOptions)
   }
 
+  async getCancelledForReInvoicing(params?: any, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/cancelled-for-reinvoicing`, { ...fetchOptions, params })
+  }
+
   async showPartyInvoicePdf(id: string, fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',

@@ -104,6 +104,10 @@ class TmAirInvoicesModule extends FetchFactory<IPortPagination> {
     return this.call('GET', `${this.RESOURCE}/${id}/find-deleted-invoices-to-link`, fetchOptions)
   }
 
+  async getCancelledForReInvoicing(params?: { air_reference_id?: string; consignee_id?: string }, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/cancelled-for-reinvoicing`, { ...fetchOptions, params })
+  }
+
   async cancel(id: string, body: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(body),

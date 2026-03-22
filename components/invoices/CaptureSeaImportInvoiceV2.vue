@@ -167,7 +167,14 @@
 
             <div v-if="hasInvoiceInitData">
               <div class="flex gap-4">
-                <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" />
+                <!-- <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" /> -->
+              <LinkDeleteInvoiceNew 
+                v-model="form.link_deleted_invoice" 
+                :inv-type="form.invoice_type"
+                service-type="sea"
+                :reference-id="referencia?.id"
+                :consignee-id="form.consignee_id"
+              />
                 <v-btn color="primary" size="small" @click="toggleConceptForm">Add available concepts</v-btn>
               </div>
 
@@ -178,8 +185,20 @@
                 density="compact"
                 class="my-2"
               >
-                A previous cancelled invoice #{{ form.link_deleted_invoice?.id }} will be linked to this invoice.
-                <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                  <div>
+                    A previous cancelled invoice 
+                    <NuxtLink 
+                      :to="getInvoiceDetailRoute(form.link_deleted_invoice)" 
+                      target="_blank"
+                      class="text-white font-weight-bold text-decoration-underline"
+                    >
+                      {{ form.link_deleted_invoice?.invoice?.invoice_number || form.link_deleted_invoice?.id }}
+                    </NuxtLink>
+                    will be linked to this invoice.
+                  </div>
+                  <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                </div>
               </v-alert>
 
               <v-alert variant="outlined" density="compact" class="my-2">
@@ -425,6 +444,13 @@ const removeSellCharge = (index: number) => {
 
 const hasInvoiceInitData = computed(() => !!form.value.invoice_type && !!form.value.currency_id)
 
+const getInvoiceDetailRoute = (invoice: any) => {
+  if (!invoice) return '#'
+  const invoiceType = invoice.invoice_type || form.value.invoice_type
+  const basePath = invoiceType === 'TM' ? '/invoices/search/tm-view' : '/invoices/search/wm-view'
+  return `${basePath}-${invoice.id}`
+}
+
 const availableCharges = computed(() => {
   if (!form.value.invoice_type) return []
   return props.referencia?.charges.filter(
@@ -518,6 +544,9 @@ const clearSelectedCharges = () => {
   form.value.sell_charges = []
   form.value = {
     ...form.value,
+    link_deleted_invoice: null,
+    selectedCharges: [],
+    selectedSellCharges: [],
     regimen_fiscal: null,
     uso_cfdi: null,
     metodo_pago: null,
