@@ -135,7 +135,38 @@
           </div>
 
           <div v-if="hasInvoiceInitData">
-            <v-btn color="primary" size="small" @click="toggleConceptForm">Add concepts</v-btn>
+            <div class="flex gap-4 mb-4 flex-wrap">
+              <LinkDeleteInvoiceNew
+                v-model="form.link_deleted_invoice"
+                :inv-type="form.invoice_type"
+                service-type="free-format"
+                :party-id="form.partyable_id"
+                :party-type="form.partyable_type"
+              />
+              <v-btn color="primary" size="small" @click="toggleConceptForm">Add concepts</v-btn>
+            </div>
+            <v-alert
+              v-if="form.link_deleted_invoice"
+              color="red-darken-2"
+              variant="tonal"
+              density="compact"
+              class="my-2"
+            >
+              <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                <div>
+                  A previous cancelled free format invoice
+                  <NuxtLink
+                    :to="getInvoiceDetailRoute(form.link_deleted_invoice)"
+                    target="_blank"
+                    class="text-white font-weight-bold text-decoration-underline"
+                  >
+                    {{ form.link_deleted_invoice?.invoice?.invoice_number || form.link_deleted_invoice?.id }}
+                  </NuxtLink>
+                  will be linked to this invoice.
+                </div>
+                <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+              </div>
+            </v-alert>
             <v-dialog v-model="showConceptForm" max-width="600" persistent>
               <v-card>
                 <v-card-title>Available charges</v-card-title>
@@ -175,7 +206,7 @@
                 <tr v-for="(charge, idx) in form.charges" :key="`invoice-charge-${idx}`">
                   <td>
                     <div class="flex flex-col items-center">
-                      <v-icon @click="removeConcept(idx)" class="cursor-pointer" color="error">mdi-delete</v-icon>
+                      <v-icon @click="removeConcept(Number(idx))" class="cursor-pointer" color="error">mdi-delete</v-icon>
                     </div>
                   </td>
                   <td>{{ charge.name }}</td>
@@ -239,6 +270,7 @@ const form = ref<any>({
   invoice_type: null,
   inv_serie: null,
   currency_id: null,
+  link_deleted_invoice: null,
   partyable_id: null,
   partyable_type: null,
   regimen_fiscal: null,
@@ -286,6 +318,11 @@ const isTm = computed(() => {
   return form.value.invoice_type === 'TM'
 })
 
+const getInvoiceDetailRoute = (invoice: any) => {
+  if (!invoice) return '#'
+  return `/invoices/search/free-format/view-${invoice.id}`
+}
+
 const getChargeTotal = (charge: any) => {
   return parseFloat(charge.amount) + (charge.is_con_iva ? charge.amount * 0.16 : 0)
 }
@@ -332,8 +369,8 @@ const addCharges = () => {
   showConceptForm.value = false
 }
 
-const removeConcept = (index: number) => {
-  form.value.charges.splice(index, 1)
+const removeConcept = (index: number | string) => {
+  form.value.charges.splice(Number(index), 1)
 }
 
 const getChargeIva = (charge: any) => {
@@ -382,6 +419,7 @@ const clearSelectedCharges = () => {
   form.value.charges = []
   form.value = {
     ...form.value,
+    link_deleted_invoice: null,
     uso_cfdi: null,
     metodo_pago: null,
     forma_pago: null,
@@ -464,6 +502,7 @@ watch(
     // clear form values
     form.value = {
       ...form.value,
+      link_deleted_invoice: null,
       razon_social: null,
       rfc: null,
       zip_code: null,
