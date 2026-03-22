@@ -135,7 +135,7 @@
           <v-list-item
             v-if="canAccess(menuPermissions.PaymentsFfAgentsPaid)"
             prepend-icon="mdi-check-circle-outline"
-            title="Paid payments"
+            title="Paid"
             :to="{ path: '/payments/agents/payments', query: { status: 'paid' } }"
             rounded="xl"
             class="mb-1"
@@ -226,39 +226,6 @@
               :active="route.path.startsWith('/invoices/search')"
             ></v-list-item>
           </template>
-
-          <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersSeaImport)"
-            prepend-icon="mdi-ferry"
-            title="Sea import references"
-            to="/invoices/search/sea-import"
-            rounded="xl"
-            class="mb-1"
-          ></v-list-item>
-          <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersSeaExport)"
-            prepend-icon="mdi-ferry"
-            title="Sea export references"
-            to="/invoices/search/sea-export"
-            rounded="xl"
-            class="mb-1"
-          ></v-list-item>
-          <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersAirImport)"
-            prepend-icon="mdi-airplane"
-            title="Air import references"
-            to="/invoices/search/air-import"
-            rounded="xl"
-            class="mb-1"
-          ></v-list-item>
-          <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersAirExport)"
-            prepend-icon="mdi-airplane"
-            title="Air export references"
-            to="/invoices/search/air-export"
-            rounded="xl"
-            class="mb-1"
-          ></v-list-item>
           <v-list-item
             v-if="canAccess(menuPermissions.InvoicesCustomersTm)"
             prepend-icon="mdi-file-document-multiple-outline"
@@ -288,6 +255,38 @@
             prepend-icon="mdi-text-box-edit-outline"
             title="Free format"
             to="/invoices/search/free-format"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.InvoicesCustomersSeaImport)"
+            prepend-icon="mdi-ferry"
+            title="Sea import references"
+            to="/invoices/search/sea-import"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.InvoicesCustomersSeaExport)"
+            prepend-icon="mdi-ferry"
+            title="Sea export references"
+            to="/invoices/search/sea-export"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.InvoicesCustomersAirImport)"
+            prepend-icon="mdi-airplane"
+            title="Air import references"
+            to="/invoices/search/air-import"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.InvoicesCustomersAirExport)"
+            prepend-icon="mdi-airplane"
+            title="Air export references"
+            to="/invoices/search/air-export"
             rounded="xl"
             class="mb-1"
           ></v-list-item>
@@ -357,7 +356,7 @@
               title="Suppliers"
               rounded="xl"
               class="mb-1"
-              :active="route.path.startsWith('/invoices/suppliers')"
+              :active="route.path.startsWith('/invoices/suppliers') || route.path.startsWith('/advance-payments')"
             ></v-list-item>
           </template>
 
@@ -370,6 +369,14 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
+            v-if="canAccess(menuPermissions.InvoicesSuppliersNewPayment)"
+            prepend-icon="mdi-plus-circle-outline"
+            title="Request a new payment"
+            to="/invoices/suppliers/cfdis/request-payment/new"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
             v-if="canAccess(menuPermissions.InvoicesSuppliersRequestPayments)"
             prepend-icon="mdi-eye-outline"
             title="View request payments"
@@ -378,10 +385,10 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesSuppliersNewPayment)"
-            prepend-icon="mdi-plus-circle-outline"
-            title="Request a new payment"
-            to="/invoices/suppliers/cfdis/request-payment/new"
+            v-if="canAccess(menuPermissions.InvoicesSuppliersAdvancePayments)"
+            prepend-icon="mdi-cash-multiple"
+            title="Advance payments"
+            to="/advance-payments"
             rounded="xl"
             class="mb-1"
           ></v-list-item>
@@ -669,8 +676,9 @@ const invoicesFreightLinesPermissions = [
 
 const invoicesSuppliersPermissions = [
   menuPermissions.InvoicesSuppliersCfdis,
-  menuPermissions.InvoicesSuppliersRequestPayments,
   menuPermissions.InvoicesSuppliersNewPayment,
+  menuPermissions.InvoicesSuppliersRequestPayments,
+  menuPermissions.InvoicesSuppliersAdvancePayments,
 ]
 
 const invoicesAdminPackPermissions = [
@@ -794,7 +802,7 @@ const getDefaultOpenedGroups = (path: string) => {
     groups.push('invoices', 'invoices-freight-lines')
   }
 
-  if (path.startsWith('/invoices/suppliers')) {
+  if (path.startsWith('/invoices/suppliers') || path.startsWith('/advance-payments')) {
     groups.push('invoices', 'invoices-suppliers')
   }
 
