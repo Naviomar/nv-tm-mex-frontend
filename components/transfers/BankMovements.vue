@@ -32,7 +32,7 @@
               hide-details
             />
           </div>
-          <div>
+          <div v-if="false">
             <v-autocomplete
               v-model="filters.type"
               :items="[
@@ -290,6 +290,12 @@ const route = useRoute()
 const router = useRouter()
 
 const emits = defineEmits(['viewBankMovement', 'makePayments'])
+const props = defineProps({
+  transactionType: {
+    type: Boolean,
+    default: false // false = deposit, true = withdrawal
+  }
+})
 
 const filters = ref<any>({
   id: null,
@@ -299,7 +305,7 @@ const filters = ref<any>({
   hasUsedBalance: null,
   bankAccount: null,
   movementType: null,
-  type: null,
+  type: null, // This will be set based on transactionType prop
   amount: '',
   from: '',
   to: '',
@@ -342,7 +348,7 @@ const clearFilters = async () => {
     hasUsedBalance: null,
     bankAccount: null,
     movementType: null,
-    type: null,
+    type: props.transactionType ? 'withdrawal' : 'deposit', // Keep transaction type based on prop
     amount: '',
     from: '',
     to: '',
@@ -516,6 +522,18 @@ const splitPaymentDetail = (movement: any) => {
 
 await getBankMovementFilters()
 
+// Watch for transaction type changes and update filter
+watch(
+  () => props.transactionType,
+  (newType) => {
+    filters.value.type = newType ? 'withdrawal' : 'deposit'
+    // Reset pagination and fetch new data
+    bankMovements.value.current_page = 1
+    getBankMovements()
+  },
+  { immediate: false } // Remove immediate to avoid race condition
+)
+
 watch(
   filters,
   (newFilters) => {
@@ -536,6 +554,9 @@ onMounted(async () => {
       filters.value[key] = !isNaN(queryFilters[key]) ? Number(queryFilters[key]) : queryFilters[key]
     }
   })
+
+  // Set transaction type from prop, overriding any query parameter
+  filters.value.type = props.transactionType ? 'withdrawal' : 'deposit'
 
   await getBankMovements()
 })
