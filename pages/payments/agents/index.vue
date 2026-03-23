@@ -23,7 +23,7 @@
                 :to="{ path: '/payments/agents/payments', query: { status: 'paid' } }"
                 class="mb-4"
               >
-                Paid Payments module
+                Paid Module
               </v-btn>
               <v-btn color="orange" to="/payments/agents/reports" class="mb-4">Report module</v-btn>
             </div>

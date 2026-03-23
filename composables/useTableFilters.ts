@@ -9,16 +9,21 @@ export function useTableFilters<T extends Record<string, any>>(
     storageKey?: string
     /** Fields that should be stored as arrays (e.g., 'referencias') */
     arrayFields?: string[]
+    /** Enable per_page functionality */
+    enablePerPage?: boolean
+    /** Default per_page value */
+    defaultPerPage?: number
   } = {}
 ) {
   const route = useRoute()
   const router = useRouter()
 
-  const { storageKey, arrayFields = [] } = options
+  const { storageKey, arrayFields = [], enablePerPage = false, defaultPerPage = 10 } = options
 
   // Create reactive filters
   const filters = ref<T>({ ...initialFilters }) as Ref<T>
   const currentPage = ref(1)
+  const perPage = ref(defaultPerPage)
 
   /**
    * Parse value from URL query param to appropriate type
@@ -75,6 +80,14 @@ export function useTableFilters<T extends Record<string, any>>(
       currentPage.value = Number(query.page) || 1
     }
 
+    // Load per_page if enabled
+    if (enablePerPage && query.limit) {
+      const perPageValue = Number(query.limit)
+      if (!isNaN(perPageValue) && perPageValue > 0) {
+        perPage.value = perPageValue
+      }
+    }
+
     // Load filters
     const newFilters = { ...initialFilters }
     for (const key of Object.keys(initialFilters)) {
@@ -96,6 +109,11 @@ export function useTableFilters<T extends Record<string, any>>(
     // Add page if not 1
     if (currentPage.value > 1) {
       query.page = String(currentPage.value)
+    }
+
+    // Add per_page if enabled and not default
+    if (enablePerPage && perPage.value !== defaultPerPage) {
+      query.limit = String(perPage.value)
     }
 
     // Add non-default filter values
@@ -122,6 +140,7 @@ export function useTableFilters<T extends Record<string, any>>(
           JSON.stringify({
             filters: filters.value,
             page: currentPage.value,
+            perPage: perPage.value,
             timestamp: Date.now(),
           })
         )
@@ -137,6 +156,7 @@ export function useTableFilters<T extends Record<string, any>>(
   const resetFilters = async () => {
     filters.value = { ...initialFilters } as T
     currentPage.value = 1
+    perPage.value = defaultPerPage
     await syncToUrl()
   }
 
@@ -156,6 +176,10 @@ export function useTableFilters<T extends Record<string, any>>(
 
     if (currentPage.value > 1) {
       query.set('page', String(currentPage.value))
+    }
+
+    if (enablePerPage && perPage.value !== defaultPerPage) {
+      query.set('limit', String(perPage.value))
     }
 
     for (const [key, value] of Object.entries(filters.value)) {
@@ -182,7 +206,10 @@ export function useTableFilters<T extends Record<string, any>>(
         return true
       }
     }
-    return currentPage.value > 1
+    return (
+      currentPage.value > 1 ||
+      (enablePerPage && perPage.value !== defaultPerPage)
+    )
   })
 
   // Load from URL on mount
@@ -193,6 +220,7 @@ export function useTableFilters<T extends Record<string, any>>(
   return {
     filters,
     currentPage,
+    perPage,
     syncToUrl,
     resetFilters,
     setPage,

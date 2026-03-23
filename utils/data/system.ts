@@ -53,6 +53,7 @@ const menuPermissions = {
   InvoicesSuppliersCfdis: 'menu-invoices-suppliers-cfdis',
   InvoicesSuppliersRequestPayments: 'menu-invoices-suppliers-request-payments',
   InvoicesSuppliersNewPayment: 'menu-invoices-suppliers-new-payment',
+  InvoicesSuppliersAdvancePayments: 'menu-invoices-suppliers-advance-payments',
   InvoicesAdminPack: 'menu-invoices-adminpack',
   InvoicesAdminPackExport: 'menu-invoices-adminpack-export',
   InvoicesAdminPackUpload: 'menu-invoices-adminpack-upload',

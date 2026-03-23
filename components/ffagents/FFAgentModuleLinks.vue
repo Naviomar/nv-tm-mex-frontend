@@ -26,7 +26,7 @@
       :to="{ path: '/payments/agents/payments', query: { status: 'paid' } }"
     >
       <v-icon v-if="isAllPaymentsTab">mdi-circle-double</v-icon>
-      Paid Payments module
+      Paid Module
     </v-btn>
     <v-btn color="purple" size="small" to="/payments/agents/reports">
       <v-icon v-if="isReportModule">mdi-circle-double</v-icon>

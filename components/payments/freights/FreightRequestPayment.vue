@@ -96,7 +96,7 @@
               <th class="text-left">SOA (PDF)</th>
               <th class="text-left">SOA (Excel)</th>
               <th class="text-left">Created by</th>
-              <th class="text-left">Payment pending</th>
+              <th class="text-left">Status</th>
               <th class="text-left">Payment sent</th>
             </tr>
           </thead>
@@ -144,8 +144,24 @@
                 </UserInfoBadge>
               </td>
               <td>
-                <div v-if="ffpayment.invoice?.is_paid == 0">Pending payment</div>
-                <div v-if="ffpayment.invoice?.is_paid == 1">Paid</div>
+                <v-chip 
+                  v-if="ffpayment.invoice?.is_paid == 0" 
+                  color="orange" 
+                  variant="tonal" 
+                  size="small"
+                  prepend-icon="mdi-clock-outline"
+                >
+                  Pending payment
+                </v-chip>
+                <v-chip 
+                  v-else-if="ffpayment.invoice?.is_paid == 1" 
+                  color="green" 
+                  variant="tonal" 
+                  size="small"
+                  prepend-icon="mdi-check-circle-outline"
+                >
+                  Paid
+                </v-chip>
                 <div v-for="(charge, index) in ffpayment.invoice?.charges" :key="`ffpay-${idx}-c-${index}`">
                   <div v-for="(payment, index2) in charge.payments" :key="`ffpay-${idx}-c-${index}-p-${index2}`">
                     <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
