@@ -22,11 +22,6 @@
         </div>
       </div>
 
-      <!-- Records info -->
-      <div class="text-center text-xs text-gray-600 mb-2">
-        Showing {{ from }} to {{ to }} from {{ total }} total records
-      </div>
-
       <!-- Right side: Direct page navigation -->
       <div class="flex items-center gap-3">
         <!-- Direct page input -->
@@ -83,6 +78,11 @@
             title="Last page"
           />
         </div>
+      </div>
+
+      <!-- Records info -->
+      <div class="text-center text-xs text-gray-600 mb-2">
+        Showing {{ from }} to {{ to }} from {{ total }} total records
       </div>
     </div>
 
