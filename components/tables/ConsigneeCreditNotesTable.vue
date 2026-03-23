@@ -36,8 +36,41 @@
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div>
-          <v-text-field v-model="filters.external_folio" type="text" label="Credit Note #" density="compact" hide-details />
+        <div class="md:col-span-2">
+          <div class="flex items-start gap-2">
+            <v-textarea
+              v-model="externalFolioInput"
+              density="compact"
+              label="Credit Note numbers"
+              placeholder="Paste credit note numbers separated by spaces, commas or lines"
+              rows="2"
+              auto-grow
+              hide-details
+              @keydown.enter.prevent.stop
+              @keyup.enter.prevent.stop="applyExternalFolioSearch"
+            />
+            <v-btn
+              icon="mdi-plus"
+              size="small"
+              color="primary"
+              variant="tonal"
+              class="mt-1"
+              :disabled="!externalFolioInput.trim()"
+              @click="applyExternalFolioSearch"
+            />
+          </div>
+          <div v-if="filters.external_folio.length > 0" class="flex flex-wrap gap-2 mt-2">
+            <v-chip
+              v-for="(folio, index) in filters.external_folio"
+              :key="`cn-folio-${index}`"
+              size="small"
+              color="primary"
+              closable
+              @click:close="removeExternalFolio(Number(index))"
+            >
+              {{ folio }}
+            </v-chip>
+          </div>
         </div>
         <div>
           <v-autocomplete
@@ -274,7 +307,7 @@ const refreshAuthReqsRestore = ref(false)
 const authorizeRestoreCN = ref<any>(null)
 
 const filters = ref({
-  external_folio: '',
+  external_folio: [] as string[],
   inv_type: '',
   partyable_type: '',
   partyable_id: '',
@@ -282,6 +315,8 @@ const filters = ref({
   dateFrom: '',
   dateTo: '',
 })
+
+const externalFolioInput = ref('')
 
 const catalogs = ref({
   consignees: [] as any,
@@ -314,6 +349,29 @@ const deletedStatus = [
 
 const clearPartyableId = () => {
   filters.value.partyable_id = ''
+}
+
+const getExternalFolioValues = (value: string | null | undefined) => {
+  if (!value) return []
+
+  return Array.from(new Set(value.split(/[\s,;|]+/g).map((item: string) => item.trim().replace(/^#+/, '')).filter(Boolean)))
+}
+
+const addExternalFolios = () => {
+  const values = getExternalFolioValues(externalFolioInput.value)
+
+  if (!values.length) return
+
+  filters.value.external_folio = Array.from(new Set([...(filters.value.external_folio || []), ...values]))
+  externalFolioInput.value = ''
+}
+
+const applyExternalFolioSearch = async () => {
+  await onClickFilters()
+}
+
+const removeExternalFolio = (index: number | string) => {
+  filters.value.external_folio.splice(Number(index), 1)
 }
 
 const searchCustomers = async (search: any) => {
@@ -406,7 +464,7 @@ const getAllPartyInvoices = (creditNote: any) => {
 }
 
 const onClickFilters = async () => {
-  // set current page to 1
+  addExternalFolios()
   creditNotes.value.current_page = 1
   await getData()
 }
@@ -417,8 +475,9 @@ const onClickPagination = async (page: number) => {
 }
 
 const clearFilters = async () => {
+  externalFolioInput.value = ''
   filters.value = {
-    external_folio: '',
+    external_folio: [],
     inv_type: '',
     partyable_type: '',
     partyable_id: '',
