@@ -37,14 +37,41 @@
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <v-text-field
-            v-model="filters.invoice_number"
-            density="compact"
-            type="text"
-            label="Invoice number"
-            @keyup.enter="getData"
-          />
+        <div class="md:col-span-2">
+          <div class="flex items-start gap-2">
+            <v-textarea
+              v-model="invoiceNumberInput"
+              density="compact"
+              label="Invoice numbers"
+              placeholder="Paste invoice numbers separated by spaces, commas or lines"
+              rows="2"
+              auto-grow
+              hide-details
+              @keydown.enter.prevent.stop
+              @keyup.enter.prevent.stop="applyInvoiceNumberSearch"
+            />
+            <v-btn
+              icon="mdi-plus"
+              size="small"
+              color="primary"
+              variant="tonal"
+              class="mt-1"
+              :disabled="!invoiceNumberInput.trim()"
+              @click="applyInvoiceNumberSearch"
+            />
+          </div>
+          <div v-if="filters.invoice_number.length > 0" class="flex flex-wrap gap-2 mt-2">
+            <v-chip
+              v-for="(folio, index) in filters.invoice_number"
+              :key="`ff-invoice-${index}`"
+              size="small"
+              color="primary"
+              closable
+              @click:close="removeInvoiceNumber(Number(index))"
+            >
+              {{ folio }}
+            </v-chip>
+          </div>
         </div>
 
         <div>
@@ -73,7 +100,6 @@
           />
         </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
       <div class="flex gap-4">
         <v-btn color="amber" size="small" @click="exportToExcel">Export to Excel</v-btn>
         <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
@@ -236,12 +262,14 @@ const router = useRouter()
 const filters = ref<any>({
   from: '',
   to: '',
-  invoice_number: '',
+  invoice_number: [] as string[],
   inv_type: '',
   partyable_type: '',
   partyable_id: '',
   deleted_status: '',
 })
+
+const invoiceNumberInput = ref('')
 
 const unifiedData = ref<any>({
   data: [] as any[],
@@ -289,6 +317,29 @@ const getPartyableType = (partyableType: string) => {
 
 const clearPartyableId = () => { filters.value.partyable_id = '' }
 
+const getInvoiceNumberValues = (value: string | null | undefined) => {
+  if (!value) return []
+
+  return Array.from(new Set(value.split(/[\s,;|]+/g).map((item: string) => item.trim().replace(/^#+/, '')).filter(Boolean)))
+}
+
+const addInvoiceNumbers = () => {
+  const values = getInvoiceNumberValues(invoiceNumberInput.value)
+
+  if (!values.length) return
+
+  filters.value.invoice_number = Array.from(new Set([...(filters.value.invoice_number || []), ...values]))
+  invoiceNumberInput.value = ''
+}
+
+const applyInvoiceNumberSearch = async () => {
+  await onClickFilters()
+}
+
+const removeInvoiceNumber = (index: number | string) => {
+  filters.value.invoice_number.splice(Number(index), 1)
+}
+
 const getInvoicePaidStatus = (row: any) => {
   if (row.deleted_at)        return 'Cancelled'
   if (!row.invoice)          return 'Pending'
@@ -327,6 +378,7 @@ const getData = async () => {
 }
 
 const onClickFilters = async () => {
+  addInvoiceNumbers()
   unifiedData.value.current_page = 1
   await getData()
 }
@@ -337,7 +389,8 @@ const onClickPagination = async (page: number) => {
 }
 
 const clearFilters = async () => {
-  filters.value = { from: '', to: '', invoice_number: '', inv_type: '', partyable_type: '', partyable_id: '', deleted_status: '' }
+  invoiceNumberInput.value = ''
+  filters.value = { from: '', to: '', invoice_number: [], inv_type: '', partyable_type: '', partyable_id: '', deleted_status: '' }
   unifiedData.value.current_page = 1
   await getData()
 }
