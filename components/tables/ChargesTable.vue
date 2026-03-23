@@ -109,7 +109,7 @@
                 </th>
                 <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="130">
                   <v-icon size="small" class="mr-1">mdi-tune</v-icon>
-                  Deletable
+                  Options
                 </th>
                 <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="160">
                   <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
@@ -168,30 +168,19 @@
                 </td>
                 <td class="py-3 px-4">
                   <div class="d-flex flex-column">
-                    <span class="font-weight-bold text-body-2 text-grey-darken-3">
+                    <span class="font-weight-bold text-body-2 text-grey-darken-3 dark:text-grey-lighten-2">
                       {{ charge.name }}
                     </span>
-                    <v-chip
-                      v-if="charge.is_in_use"
-                      color="success"
-                      variant="flat"
-                      size="x-small"
-                      density="compact"
-                      class="in-use-chip font-weight-medium w-fit ml-2"
-                    >
-                      <v-icon start size="12">mdi-check-circle</v-icon>
-                      In Use
-                    </v-chip>
                   </div>
                 </td>
                 <td class="py-3 px-4">
-                  <code v-if="charge.code" class="charge-code">
+                  <code v-if="charge.code" class="charge-code text-grey-darken-2 font-weight-medium dark:text-white">
                     {{ charge.code }}
                   </code>
-                  <span v-else class="text-grey-lighten-1 text-caption">—</span>
+                  <span v-else class="text-grey-lighten-1 text-caption dark:text-grey-darken-1">—</span>
                 </td>
                 <td class="py-3 px-4">
-                  <div class="text-body-2 text-grey-darken-2">
+                  <div class="text-body-2 text-grey-darken-2 dark:text-grey-lighten-1">
                     {{ charge.charge_entity?.name || '—' }}
                   </div>
                 </td>
@@ -224,7 +213,7 @@
                       </v-tooltip>
                     </v-chip>
                   </div>
-                  <span v-else class="text-grey-lighten-1 text-caption">—</span>
+                  <span v-else class="text-grey-lighten-1 text-caption dark:text-grey-darken-1">—</span>
                 </td>
                 <td class="py-3 px-4">
                   <div class="d-flex flex-column gap-1">
@@ -238,7 +227,7 @@
                       <v-icon start size="12">
                         {{ charge.can_be_deleted ? 'mdi-check' : 'mdi-lock' }}
                       </v-icon>
-                      {{ charge.can_be_deleted ? 'Yes' : 'No' }}
+                      {{ charge.can_be_deleted ? 'Yes' : 'No' }} Deletable
                     </v-chip>
                     <v-chip
                       v-if="charge.is_for_free_format_cfdi"
@@ -251,14 +240,25 @@
                       <v-icon start size="12">mdi-file-document</v-icon>
                       CFDI
                     </v-chip>
+                    <v-chip
+                      v-if="charge.is_in_use"
+                      color="success"
+                      variant="flat"
+                      size="x-small"
+                      density="compact"
+                      class="in-use-chip font-weight-medium px-4 w-full"
+                    >
+                      <v-icon start size="12">mdi-check-circle</v-icon>
+                      In Use
+                    </v-chip>
                   </div>
                 </td>
                 <td class="py-3 px-4">
                   <div class="d-flex flex-column">
-                    <span class="text-caption text-grey-darken-1">
+                    <span class="text-caption text-grey-darken-1 dark:text-grey-lighten-1">
                       {{ formatDateString(charge.created_at) }}
                     </span>
-                    <span v-if="charge.creator" class="text-caption text-grey">
+                    <span v-if="charge.creator" class="text-caption text-grey dark:text-grey-lighten-1">
                       by {{ charge.creator.name }}
                     </span>
                   </div>
@@ -269,7 +269,7 @@
         </div>
         <v-divider />
         <div class="pa-4 d-flex align-center justify-space-between">
-          <div class="text-caption text-grey-darken-1">
+          <div class="text-caption text-grey-darken-1 dark:text-grey-lighten-1">
             Showing {{ charges.data?.length || 0 }} of {{ charges.total || 0 }} charges
           </div>
           <v-pagination
@@ -464,8 +464,8 @@ onMounted(async () => {
 
 .charge-code {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  border: 1px solid;
+  border-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -494,6 +494,36 @@ onMounted(async () => {
 
 .v-theme--dark .table-row-deleted:hover {
   background-color: rgba(244, 67, 54, 0.3) !important;
+}
+
+/* Dark mode text colors */
+.v-theme--dark .charges-table .font-weight-bold.text-body-2 {
+  color: #e0e0e0 !important;
+}
+
+.v-theme--dark .charges-table .text-body-2 {
+  color: #bdbdbd !important;
+}
+
+.v-theme--dark .charges-table .text-caption {
+  color: #9e9e9e !important;
+}
+
+.v-theme--dark .charges-table .charge-code {
+  color: #ffffff !important;
+}
+
+.v-theme--dark .charges-table code {
+  color: #ffffff !important;
+}
+
+/* Dark mode header styles */
+.v-theme--dark .charges-table thead th {
+  color: #ffffff !important;
+}
+
+.v-theme--dark .charges-table thead th .v-icon {
+  color: #ffffff !important;
 }
 
 /* Responsive grid */
