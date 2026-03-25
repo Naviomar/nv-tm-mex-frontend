@@ -402,7 +402,16 @@
                 </td>
                 <td></td>
                 <td>
-                  <v-chip v-if="cfdi.parent_deleted" color="amber" size="small" variant="outlined"> Reissued </v-chip>
+                  <div v-if="cfdi.parent_deleted" class="mb-1">
+                    <v-chip color="orange" size="small" variant="outlined">
+                      Reissued from {{ cfdi.parent_deleted?.serie_folio }}
+                    </v-chip>
+                  </div>
+                  <div v-if="cfdi.children_deleted?.length">
+                    <v-chip color="blue" size="small" variant="outlined">
+                      Replaced by {{ cfdi.children_deleted[0]?.serie_folio }}
+                    </v-chip>
+                  </div>
                 </td>
                 <td class="whitespace-nowrap">{{ `${cfdi.serie_folio}` }}</td>
                 <td>
