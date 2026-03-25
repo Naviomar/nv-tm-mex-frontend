@@ -87,6 +87,7 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import StatisticsModule from '~/repository/modules/statistics'
 
 interface IApiInstance {
   audit: AuditModule
@@ -176,6 +177,7 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  statistics: StatisticsModule
 }
 
 export function useApiFactory() {
@@ -270,6 +272,7 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    statistics: new StatisticsModule(client),
   }
 
   return modules
