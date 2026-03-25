@@ -599,6 +599,7 @@
         <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="System Logs" prepend-icon="mdi-console" to="/system/system-logs" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAudit)" title="Audit" prepend-icon="mdi-history" to="/system/audit-log" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemWiki)" title="Wiki" prepend-icon="mdi-book-outline" to="/wiki" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="Usage Statistics" prepend-icon="mdi-chart-line" to="/system/usage-statistics" rounded="xl" class="mb-1"></v-list-item>
       </v-list-group>
     </v-list>
 
