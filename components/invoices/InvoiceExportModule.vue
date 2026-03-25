@@ -55,6 +55,7 @@
             <th class="text-left">Type</th>
             <th class="text-left">Invoice date</th>
             <th class="text-left">Invoice #</th>
+            <th class="text-left">Reinvoice chain</th>
             <th class="text-left">Total</th>
             <th class="text-left">Charge(s)</th>
             <th class="text-left">Método de pago</th>
@@ -101,6 +102,19 @@
               </UserInfoBadge>
             </td>
             <td class="whitespace-nowrap">{{ servInvoice.invoice?.invoice_number }}</td>
+            <td>
+              <div v-if="servInvoice.parent_deleted" class="mb-1">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Re-invoice from #{{ servInvoice.parent_deleted?.invoice?.invoice_number || servInvoice.parent_deleted?.id }}
+                </v-chip>
+              </div>
+              <div v-if="servInvoice.replacement_invoice" class="mb-1">
+                <v-chip size="small" color="blue" variant="tonal">
+                  Replaced by #{{ servInvoice.replacement_invoice?.invoice?.invoice_number || servInvoice.replacement_invoice?.id }}
+                </v-chip>
+              </div>
+              <span v-if="!servInvoice.parent_deleted && !servInvoice.replacement_invoice" class="text-grey">-</span>
+            </td>
             <td>{{ servInvoice.invoice?.currency?.code }} {{ formatToCurrency(servInvoice.invoice?.total || 0) }}</td>
             <td>
               <div v-for="(charge, index) in servInvoice.invoice?.charges" :key="`charge-${index}`">
