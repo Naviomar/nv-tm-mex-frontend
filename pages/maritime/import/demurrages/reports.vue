@@ -26,12 +26,23 @@
   </div>
 </template>
 <script setup lang="ts">
+import { menuPermissions } from '~/utils/data/system'
+
 definePageMeta({
   title: 'Demurrages Reports',
   layout: 'default',
 })
 
 const router = useRouter()
+const { hasPermission } = useCheckUser()
+
+// Check permissions and redirect if not authorized
+if (!hasPermission(menuPermissions.MaritimeImportDemurragesReports)) {
+  throw createError({
+    statusCode: 403,
+    statusMessage: 'Access denied: Insufficient permissions for demurrage reports'
+  })
+}
 
 const tab = ref('option-1')
 </script>
