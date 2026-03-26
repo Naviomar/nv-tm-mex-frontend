@@ -51,25 +51,41 @@
         <div class="col-span-4">
           <AGlobalSearch v-model="filters.ffId" :onSearch="searchFfs" validate-key="ffId" label="Freight Forwarder" />
         </div>
-        <div class="col-span-2">
+        <div class="col-span-4">
           <v-autocomplete
-            v-model="filters.vesselId"
+            v-model="unifiedVesselVoyageSearch"
             density="compact"
-            label="Vessel"
-            :items="catalogs.vessels"
-            item-title="name"
+            label="Vessel / Voyage"
+            :items="unifiedVesselVoyageItems"
+            item-title="display_name"
             item-value="id"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-autocomplete
-            v-model="filters.voyageDischargeId"
-            density="compact"
-            label="Voyage discharge"
-            :items="catalogs.voyage_discharges"
-            item-title="short_name"
-            item-value="id"
-          />
+            clearable
+            @update:model-value="onUnifiedSearchChange"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :color="item.raw.type === 'vessel' ? 'blue' : 'teal'">
+                    {{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}
+                  </v-icon>
+                </template>
+                <template #title>
+                  <span>{{ item.raw.display_name }}</span>
+                </template>
+                <template #subtitle>
+                  <v-chip size="x-small" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'" variant="flat">
+                    {{ item.raw.type === 'vessel' ? 'Vessel' : 'Voyage' }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <v-chip size="small" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'" variant="outlined">
+                <v-icon start>{{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}</v-icon>
+                {{ item.raw.display_name }}
+              </v-chip>
+            </template>
+          </v-autocomplete>
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" />
@@ -246,6 +262,26 @@ const catalogs = ref({
   lines: [] as any,
 })
 
+const unifiedVesselVoyageSearch = ref('')
+
+const unifiedVesselVoyageItems = computed(() => {
+  const voyages = catalogs.value.voyage_discharges.map((voyage: any) => ({
+    id: `voyage-${voyage.id}`,
+    display_name: voyage.short_name,
+    type: 'voyage',
+    original_id: voyage.id,
+  }))
+
+  const vessels = catalogs.value.vessels.map((vessel: any) => ({
+    id: `vessel-${vessel.id}`,
+    display_name: vessel.name,
+    type: 'vessel',
+    original_id: vessel.id,
+  }))
+
+  return [...voyages, ...vessels]
+})
+
 // Initial filter values
 const initialFilters = {
   year: '',
@@ -316,6 +352,26 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+const onUnifiedSearchChange = (value: string | null) => {
+  if (!value) {
+    filters.value.vesselId = ''
+    filters.value.voyageDischargeId = ''
+    return
+  }
+
+  const selectedItem = unifiedVesselVoyageItems.value.find((item) => item.id === value)
+  
+  if (selectedItem) {
+    if (selectedItem.type === 'vessel') {
+      filters.value.vesselId = selectedItem.original_id.toString()
+      filters.value.voyageDischargeId = ''
+    } else {
+      filters.value.voyageDischargeId = selectedItem.original_id.toString()
+      filters.value.vesselId = ''
+    }
+  }
+}
+
 const onClickFilters = async () => {
   // Add any pending reference before searching
   addReferencia()
@@ -354,10 +410,12 @@ const getSeaImportReferences = async () => {
     }
   } catch (e) {
     console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: 'Error loading demurrage references',
+    })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    loadingStore.stop()
   }
 }
 
@@ -397,18 +455,37 @@ const searchFfs = async (params: any) => {
 
 const clearFilters = async () => {
   await resetFiltersComposable()
+  unifiedVesselVoyageSearch.value = ''
   references.value.current_page = 1
   await getSeaImportReferences()
 }
+
+// Sync unified search when filters change (e.g., loaded from URL)
+watch(
+  [() => filters.value.vesselId, () => filters.value.voyageDischargeId, () => catalogs.value],
+  () => {
+    if (filters.value.vesselId) {
+      unifiedVesselVoyageSearch.value = `vessel-${filters.value.vesselId}`
+    } else if (filters.value.voyageDischargeId) {
+      unifiedVesselVoyageSearch.value = `voyage-${filters.value.voyageDischargeId}`
+    } else {
+      unifiedVesselVoyageSearch.value = ''
+    }
+  },
+  { deep: true }
+)
 
 const viewMaritimeReference = (item: any) => {
   router.push(`/maritime/import/demurrages/reference-${item.id}-demurrages`)
 }
 
 onMounted(async () => {
-  await getSeaImportFilters()
+  // Load filters and data in parallel for better performance
+  await Promise.all([
+    getSeaImportFilters(),
+    getSeaImportReferences()
+  ])
   // Sync current page from composable after URL is loaded
   references.value.current_page = currentPage.value
-  await getSeaImportReferences()
 })
 </script>

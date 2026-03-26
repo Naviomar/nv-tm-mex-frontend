@@ -54,7 +54,7 @@
     </v-dialog>
 
     <div v-if="!props.canRestore && !props.item?.deleted_at && isVisible">
-      <v-tooltip :text="props.item?.deleted_at ? 'Restore' : 'Delete'">
+      <v-tooltip :text="props.item?.deleted_at ? 'Restore' : 'Cancel'">
         <template v-slot:activator="{ props: tooltipProps }">
           <v-btn
             :color="props.item?.deleted_at ? 'blue-darken-4' : 'red'"
@@ -70,7 +70,7 @@
       </v-tooltip>
     </div>
     <div v-if="props.canRestore">
-      <v-tooltip :text="props.item?.deleted_at ? 'Restore' : 'Delete'">
+      <v-tooltip :text="props.item?.deleted_at ? 'Restore' : 'Cancel'">
         <template v-slot:activator="{ props: tooltipProps }">
           <v-btn
             :color="props.item?.deleted_at ? 'blue-darken-4' : 'red'"

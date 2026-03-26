@@ -1,8 +1,20 @@
 <template>
-  <div class="maritime-dashboard">
+  <div class="maritime-dashboard modern-dashboard-bg">
     <!-- Professional Filter Section -->
     <v-card class="filter-section elevation-0 mb-6">
-      <v-card-text class="pa-6">
+      <v-card-title class="pa-4 pb-4">
+        <v-btn
+          variant="text"
+          color="primary"
+          @click="showFilters = !showFilters"
+          class="text-none font-semibold"
+        >
+          <v-icon start>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+        </v-btn>
+      </v-card-title>
+      <v-expand-transition>
+        <v-card-text v-show="showFilters" class="pa-6">
         <div class="filter-header mb-5">
           <div class="flex items-center gap-3">
             <div class="filter-icon">
@@ -69,28 +81,26 @@
             To: {{ filters.to }}
           </v-chip>
         </div>
-      </v-card-text>
+        </v-card-text>
+      </v-expand-transition>
     </v-card>
 
     <!-- Primary Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-      <v-card class="metric-card elevation-2" @click="openStats('sea-import')">
+      <v-card v-if="canViewSeaImportPrimary" class="metric-card elevation-2" @click="openStats('sea-import')">
         <div class="metric-header import-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-ship-wheel</v-icon>
           </div>
           <div class="metric-badge">
             <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">IMPORT</v-chip>
-            <v-btn icon size="x-small" variant="text" color="white">
-              <v-icon size="16">mdi-chart-line</v-icon>
-            </v-btn>
           </div>
         </div>
         <v-card-text class="pa-5">
           <div class="metric-value import-color">
             {{ report.total_import }}
           </div>
-          <div class="metric-label">Sea Import References</div>
+          <div class="metric-label">Maritime Import References</div>
           <div class="metric-trend">
             <v-icon size="14" color="success">mdi-trending-up</v-icon>
             <span class="text-xs text-success font-semibold">Active</span>
@@ -98,23 +108,20 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="metric-card elevation-2" @click="openStats('sea-export')">
+      <v-card v-if="canViewSeaExportPrimary" class="metric-card elevation-2" @click="openStats('sea-export')">
         <div class="metric-header export-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-ferry</v-icon>
           </div>
           <div class="metric-badge">
             <v-chip size="x-small" color="white" variant="flat" class="font-bold px-2">EXPORT</v-chip>
-            <v-btn icon size="x-small" variant="text" color="white">
-              <v-icon size="16">mdi-chart-line</v-icon>
-            </v-btn>
           </div>
         </div>
         <v-card-text class="pa-5">
           <div class="metric-value export-color">
             {{ report.total_export }}
           </div>
-          <div class="metric-label">Sea Export References</div>
+          <div class="metric-label">Maritime Export References</div>
           <div class="metric-trend">
             <v-icon size="14" color="success">mdi-trending-up</v-icon>
             <span class="text-xs text-success font-semibold">Active</span>
@@ -122,7 +129,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="metric-card elevation-2 cursor-pointer" @click="dialogCustomer = true">
+      <v-card v-if="canViewCustomers" class="metric-card elevation-2 cursor-pointer" @click="dialogCustomer = true">
         <div class="metric-header customer-gradient">
           <div class="metric-icon-wrapper">
             <v-icon size="36" color="white">mdi-account-group</v-icon>
@@ -135,7 +142,7 @@
           <div class="metric-value customer-color">
             {{ report.unique_customers }}
           </div>
-          <div class="metric-label">Unique Customers</div>
+          <div class="metric-label">Customers in References</div>
           <div class="metric-action">
             <v-icon size="14" color="purple">mdi-eye-outline</v-icon>
             <span class="text-xs text-purple font-semibold">View List</span>
@@ -144,9 +151,29 @@
       </v-card>
     </div>
 
+    <!-- Inline Charts - Visible by default for authorized users -->
+    <div v-if="canViewCharts" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CaptureStatsInline
+        title="Maritime Import Trends"
+        subtitle="Daily capture statistics"
+        icon="mdi-ship-wheel"
+        stat-type="sea-import"
+        gradient-class="from-blue-500 to-blue-700"
+        chip-color="blue"
+      />
+      <CaptureStatsInline
+        title="Maritime Export Trends"
+        subtitle="Daily capture statistics"
+        icon="mdi-ferry"
+        stat-type="sea-export"
+        gradient-class="from-teal-500 to-teal-700"
+        chip-color="teal"
+      />
+    </div>
+
     <!-- Secondary Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <v-card class="elevation-2 rounded-lg">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-1 mt-6 mb-6">
+      <v-card v-if="canViewArrivalNotifications" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
             <v-icon color="red" size="32">mdi-bell-alert</v-icon>
@@ -155,13 +182,13 @@
           <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
             {{ report.pending_arrival_noty }}
           </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400">Arrival Notifications</div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Pending Arrival Notifications</div>
           <v-divider class="my-2"></v-divider>
           <div class="text-xs text-grey-500">Maritime Import</div>
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewRevalidations" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
             <v-icon color="orange" size="32">mdi-file-document-check</v-icon>
@@ -176,7 +203,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewDemurrages" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
             <v-icon color="deep-orange" size="32">mdi-timer-alert</v-icon>
@@ -191,24 +218,11 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewExportContainers" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
-            <v-icon color="indigo" size="32">mdi-package-variant</v-icon>
-            <v-chip size="small" color="indigo" variant="flat" class="text-white">Import</v-chip>
-          </div>
-          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
-            {{ report.total_containers_import }}
-          </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400">Import Containers</div>
-        </v-card-text>
-      </v-card>
-
-      <v-card class="elevation-2 rounded-lg">
-        <v-card-text class="pa-4">
-          <div class="flex items-center justify-between mb-3">
-            <v-icon color="cyan" size="32">mdi-package-variant-closed</v-icon>
-            <v-chip size="small" color="cyan" variant="flat" class="text-white">Export</v-chip>
+            <v-icon color="purple" size="32">mdi-package-variant</v-icon>
+            <v-chip size="small" color="purple" variant="flat" class="text-white">Export</v-chip>
           </div>
           <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
             {{ report.total_containers_export }}
@@ -217,31 +231,35 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="elevation-2 rounded-lg">
+      <v-card v-if="canViewBookingConfirmations" class="elevation-2 rounded-lg">
         <v-card-text class="pa-4">
           <div class="flex items-center justify-between mb-3">
-            <v-icon color="green" size="32">mdi-checkbox-marked-circle</v-icon>
-            <v-chip size="small" color="green" variant="flat" class="text-white">Confirmed</v-chip>
+            <v-icon color="teal" size="32">mdi-check-decagram</v-icon>
+            <v-chip size="small" color="teal" variant="flat" class="text-white">Confirmed</v-chip>
           </div>
           <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
-            {{ report.export_bookings }}
+            {{ report.booking_confirmations }}
           </div>
           <div class="text-sm text-grey-600 dark:text-grey-400">Booking Confirmations</div>
         </v-card-text>
       </v-card>
+
+      <v-card class="elevation-2 rounded-lg">
+        <v-card-text class="pa-4">
+          <div class="flex items-center justify-between mb-3">
+            <v-icon color="indigo" size="32">mdi-package-variant-closed</v-icon>
+            <v-chip size="small" color="indigo" variant="flat" class="text-white">Import</v-chip>
+          </div>
+          <div class="text-3xl font-bold text-grey-800 dark:text-grey-200 mb-1">
+            {{ report.total_containers_import }}
+          </div>
+          <div class="text-sm text-grey-600 dark:text-grey-400">Import Containers</div>
+        </v-card-text>
+      </v-card>
     </div>
 
-    <CaptureStatsChart
-      v-model="showStatsChart"
-      :title="statsConfig.title"
-      :subtitle="statsConfig.subtitle"
-      :icon="statsConfig.icon"
-      :stat-type="statsConfig.type"
-      :gradient-class="statsConfig.gradient"
-      :chip-color="statsConfig.chipColor"
-    />
 
-    <v-dialog v-model="dialogCustomer" max-width="500">
+    <v-dialog v-model="dialogCustomer" max-width="700">
       <v-card>
         <v-card-title>
           <div class="flex items-center justify-between">
@@ -253,15 +271,25 @@
 
         <v-divider />
 
-        <v-card-text>
-          <v-list v-if="report.customers?.length" density="compact">
-            <v-list-item v-for="(customer, index) in report.customers" :key="index">
-              <v-list-item-title class="font-medium">
-                {{ customer.name || 'Unnamed' }}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-          <div v-else class="text-sm text-gray-500">No customers found.</div>
+        <v-card-text class="pa-0">
+          <v-data-table
+            v-if="report.customers?.length"
+            :headers="customerHeaders"
+            :items="report.customers"
+            :items-per-page="10"
+            density="compact"
+            class="elevation-0"
+          >
+            <template #item.name="{ item }: any">
+              <span class="font-medium">{{ item.name }}</span>
+            </template>
+            <template #item.total_references="{ item }: any">
+              <v-chip size="small" color="primary" variant="tonal">
+                {{ item.total_references }}
+              </v-chip>
+            </template>
+          </v-data-table>
+          <div v-else class="text-sm text-gray-500 pa-4">No customers found.</div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -273,6 +301,62 @@ const snackbar = useSnackbar()
 const router = useRouter()
 const route = useRoute()
 const loadingStore = useLoadingStore()
+const { hasPermission, user: currentUser } = useCheckUser()
+
+// Helper function to check if user has any of the specified roles
+const checkUserHasAnyRole = (roles: string[]) => {
+  if (!currentUser.value) return false
+  return currentUser.value.roles?.some((role: any) => roles.includes(role.name)) || false
+}
+
+// Granular permission checks for each section
+const canViewSeaImportPrimary = computed(() => {
+  return hasPermission('dashboard-sea-import-primary') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewSeaExportPrimary = computed(() => {
+  return hasPermission('dashboard-sea-export-primary') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewCustomers = computed(() => {
+  return canViewSeaImportPrimary.value || canViewSeaExportPrimary.value
+})
+
+const canViewArrivalNotifications = computed(() => {
+  return hasPermission('dashboard-sea-import-notifications') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewRevalidations = computed(() => {
+  return hasPermission('dashboard-sea-import-revalidations') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewExportContainers = computed(() => {
+  return hasPermission('dashboard-sea-export-containers') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewBookingConfirmations = computed(() => {
+  return hasPermission('dashboard-sea-export-bookings') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewDemurrages = computed(() => {
+  return hasPermission('dashboard-sea-import-demurrages') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+const canViewCharts = computed(() => {
+  return hasPermission('dashboard-charts') || checkUserHasAnyRole(['Super Admin', 'Admin'])
+})
+
+// Check if user has ANY dashboard permission
+const hasAnyDashboardPermission = computed(() => {
+  return canViewSeaImportPrimary.value || 
+         canViewSeaExportPrimary.value || 
+         canViewArrivalNotifications.value || 
+         canViewRevalidations.value || 
+         canViewExportContainers.value || 
+         canViewBookingConfirmations.value || 
+         canViewDemurrages.value ||
+         canViewCharts.value
+})
 
 // Helper to format date as YYYY-MM-DD
 function formatDate(date: Date) {
@@ -298,6 +382,12 @@ const filters = ref<any>({
 })
 
 const dialogCustomer = ref(false)
+const showFilters = ref(false)
+
+const customerHeaders = [
+  { title: 'Customer Name', key: 'name', sortable: true },
+  { title: 'Total References', key: 'total_references', sortable: true, align: 'center' as const }
+]
 
 const report = ref<any>({
   total_import: 0,
@@ -367,37 +457,9 @@ const clearFilters = () => {
   applyFilters()
 }
 
-const showStatsChart = ref(false)
-const statsConfig = ref({
-  title: '',
-  subtitle: '',
-  icon: '',
-  type: '',
-  gradient: '',
-  chipColor: ''
-})
-
 const openStats = (type: string) => {
-  if (type === 'sea-import') {
-    statsConfig.value = {
-      title: 'Maritime Import Statistics',
-      subtitle: 'Capture trends over time',
-      icon: 'mdi-ship-wheel',
-      type: 'sea-import',
-      gradient: 'from-blue-500 to-blue-700',
-      chipColor: 'blue'
-    }
-  } else {
-    statsConfig.value = {
-      title: 'Maritime Export Statistics',
-      subtitle: 'Capture trends over time',
-      icon: 'mdi-ferry',
-      type: 'sea-export',
-      gradient: 'from-teal-500 to-teal-700',
-      chipColor: 'teal'
-    }
-  }
-  showStatsChart.value = true
+  // Charts are now inline and always visible for authorized users
+  // This function is kept for backward compatibility but does nothing
 }
 
 onMounted(() => {
@@ -424,7 +486,7 @@ onMounted(() => {
 /* Filter Section */
 .filter-section {
   background: rgb(var(--v-theme-surface));
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
@@ -441,7 +503,7 @@ onMounted(() => {
 
 .filter-icon {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -473,11 +535,11 @@ onMounted(() => {
 }
 
 .modern-input {
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .modern-btn {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.3px;
@@ -485,7 +547,7 @@ onMounted(() => {
 
 /* Metric Cards */
 .metric-card {
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -502,7 +564,7 @@ onMounted(() => {
 }
 
 .metric-header {
-  padding: 1.25rem;
+  padding: .3rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -535,7 +597,7 @@ onMounted(() => {
 
 .metric-icon-wrapper {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -588,7 +650,7 @@ onMounted(() => {
 /* Secondary Metrics */
 .stat-card {
   transition: all 0.3s ease;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
 }
 
 .stat-card:hover {

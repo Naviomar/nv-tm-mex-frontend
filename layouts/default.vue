@@ -40,7 +40,7 @@
           @close="drawerRight = false"
         />
         <AlertsDrawer />
-        <v-navigation-drawer v-model="drawer" rail expand-on-hover class="group">
+        <v-navigation-drawer v-model="drawer" rail expand-on-hover width="320" class="group">
           <MainMenu />
         </v-navigation-drawer>
 

@@ -13,7 +13,7 @@
       </div>
       <v-expand-transition>
       <div v-show="showFilters">
-      <div class="grid grid-cols-12 gap-2">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
         <div class="col-span-2">
           <v-autocomplete
             v-model="filters.countryCode"
@@ -181,16 +181,18 @@
     </div>
     <v-card>
       <v-card-text>
-        <v-pagination
-          v-model="references.current_page"
-          :length="references.last_page"
-          rounded="circle"
-          density="compact"
-          @update:model-value="onClickPagination"
-        ></v-pagination>
-        <div class="text-xs">
-          Showing {{ references.from }} to {{ references.to }} from {{ references.total }} total records
-        </div>
+        <EnhancedPagination
+          v-model:currentPage="references.current_page"
+          v-model:perPage="perPage"
+          :total-pages="references.last_page"
+          :from="references.from"
+          :to="references.to"
+          :total="references.total"
+          :show-year-filter="false"
+          :storage-key="'maritime-import-pagination'"
+          @page-change="onPageChange"
+          @per-page-change="onPerPageChange"
+        />
         <div class="catalog-table-wrapper">
         <v-table density="compact" fixed-header>
           <thead>
@@ -348,16 +350,18 @@
           </tbody>
         </v-table>
         </div>
-        <v-pagination
-          v-model="references.current_page"
-          :length="references.last_page"
-          rounded="circle"
-          density="compact"
-          @update:model-value="onClickPagination"
-        ></v-pagination>
-        <div class="text-xs">
-          Showing {{ references.from }} to {{ references.to }} from {{ references.total }} total records
-        </div>
+        <EnhancedPagination
+          v-model:currentPage="references.current_page"
+          v-model:perPage="perPage"
+          :total-pages="references.last_page"
+          :from="references.from"
+          :to="references.to"
+          :total="references.total"
+          :show-year-filter="false"
+          :storage-key="'maritime-import-pagination'"
+          @page-change="onPageChange"
+          @per-page-change="onPerPageChange"
+        />
       </v-card-text>
     </v-card>
   </div>
@@ -419,12 +423,15 @@ const initialFilters = {
 const {
   filters,
   currentPage,
+  perPage,
   syncToUrl,
   resetFilters: resetFiltersComposable,
   getFilteredUrl,
 } = useTableFilters(initialFilters, {
   storageKey: 'maritime-import-filters',
   arrayFields: ['referencias'],
+  enablePerPage: true,
+  defaultPerPage: 10,
 })
 
 const references = ref({
@@ -507,8 +514,20 @@ const removeReferencia = (index: number) => {
 }
 
 const onClickPagination = async (page: number) => {
+  await onPageChange(page)
+}
+
+const onPageChange = async (page: number) => {
   currentPage.value = page
   references.value.current_page = page
+  await syncToUrl()
+  await getSeaImportReferences()
+}
+
+const onPerPageChange = async (newPerPage: number) => {
+  perPage.value = newPerPage
+  currentPage.value = 1
+  references.value.current_page = 1
   await syncToUrl()
   await getSeaImportReferences()
 }
@@ -519,12 +538,14 @@ const getSeaImportReferences = async () => {
     const response = await $api.referencias.getSeaImportReferencias({
       query: {
         page: currentPage.value,
+        limit: perPage.value,
         ...flattenArraysToCommaSeparatedString(filters.value),
       },
     })
 
     references.value = response as any
     references.value.current_page = currentPage.value
+    
     if (references.value.data.length === 0) {
       snackbar.add({
         type: 'info',

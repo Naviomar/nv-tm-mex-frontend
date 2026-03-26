@@ -10,7 +10,8 @@
       hide-no-data
       density="compact"
       :hide-details="hideDetails"
-      clearable
+      :readonly="readonly"
+      :clearable="!readonly"
       prepend-inner-icon="mdi-magnify"
       @update:model-value="onSelect"
       @click:clear="clearData"
@@ -55,6 +56,11 @@ const props = defineProps({
     required: false,
     default: false,
   },
+  readonly: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
 
 const emits = defineEmits(['update:modelValue'])
@@ -64,6 +70,7 @@ const selectedCustomer = ref<any>(null)
 const searchQuery = ref('')
 
 watch(searchQuery, (newSearch) => {
+  if (props.readonly) return
   if (newSearch.length < 3 || hasData.value) return
   onSearch(newSearch)
 })

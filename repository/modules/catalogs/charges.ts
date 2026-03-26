@@ -112,6 +112,33 @@ class ChargesModule extends FetchFactory<IChargePagination> {
   async seedCharges(fetchOptions?: FetchOptions) {
     return this.call('GET', `/tests/seeds/charges`, fetchOptions)
   }
+
+  async exportExcel(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-excel`, {
+      ...fetchOptions,
+      responseType: 'blob',
+    })
+  }
+
+  async exportPdf(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/export-pdf`, {
+      ...fetchOptions,
+      responseType: 'blob',
+    })
+  }
+
+  // Authorization methods for similar names
+  async checkSimilarNamesAuth(chargeId: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `/auth-process-requests/charges/${chargeId}/similar-names/check`, fetchOptions)
+  }
+
+  async requestSimilarNamesAuth(chargeId: string, reason: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify({ reason }),
+      ...fetchOptions,
+    }
+    return this.call('POST', `/auth-process-requests/charges/${chargeId}/similar-names/request`, fetchOptions)
+  }
 }
 
 export default ChargesModule

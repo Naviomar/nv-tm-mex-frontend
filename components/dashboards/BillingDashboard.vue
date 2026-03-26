@@ -1,8 +1,20 @@
 <template>
-  <div class="billing-dashboard">
+  <div class="billing-dashboard modern-dashboard-bg">
     <!-- Professional Filter Section -->
     <v-card class="filter-section elevation-0 mb-6">
-      <v-card-text class="pa-6">
+      <v-card-title class="pa-4 pb-4">
+        <v-btn
+          variant="text"
+          color="primary"
+          @click="showFilters = !showFilters"
+          class="text-none font-semibold"
+        >
+          <v-icon start>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+        </v-btn>
+      </v-card-title>
+      <v-expand-transition>
+        <v-card-text v-show="showFilters" class="pa-6">
         <div class="filter-header mb-5">
           <div class="flex items-center gap-3">
             <div class="filter-icon">
@@ -69,7 +81,8 @@
             To: {{ filters.to }}
           </v-chip>
         </div>
-      </v-card-text>
+        </v-card-text>
+      </v-expand-transition>
     </v-card>
 
     <!-- Overview Cards -->
@@ -85,7 +98,7 @@
           <div class="text-4xl font-bold text-green-700 dark:text-green-400 mb-1">
             {{ report.total_invoices }}
           </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">All Invoices</div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">Total Invoices Issued</div>
         </v-card-text>
       </v-card>
 
@@ -100,7 +113,7 @@
           <div class="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-1">
             {{ report.total_tm_invoices }}
           </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">TM Invoices</div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">TM Invoices (Transport)</div>
         </v-card-text>
       </v-card>
 
@@ -115,7 +128,7 @@
           <div class="text-4xl font-bold text-orange-700 dark:text-orange-400 mb-1">
             {{ report.total_wm_invoices }}
           </div>
-          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">WM Invoices</div>
+          <div class="text-sm text-grey-600 dark:text-grey-400 font-medium">WM Invoices (Warehouse)</div>
         </v-card-text>
       </v-card>
 
@@ -131,7 +144,7 @@
             {{ report.unique_customers }}
           </div>
           <div class="text-sm text-grey-600 dark:text-grey-400 font-medium flex items-center gap-1">
-            Unique Customers
+            Customers with Invoices
             <v-icon size="14">mdi-eye</v-icon>
           </div>
         </v-card-text>
@@ -139,7 +152,7 @@
     </div>
 
     <!-- Currency Totals -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-1">
       <div v-for="(values, currency) in report.amounts_by_currency" :key="currency">
         <v-card class="elevation-2 rounded-lg">
           <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 pa-3 text-white">
@@ -277,7 +290,7 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialogCustomer" max-width="500">
+    <v-dialog v-model="dialogCustomer" max-width="700">
       <v-card>
         <v-card-title>
           <div class="flex items-center justify-between">
@@ -289,15 +302,25 @@
 
         <v-divider />
 
-        <v-card-text>
-          <v-list v-if="report.customers?.length" density="compact">
-            <v-list-item v-for="(customer, index) in report.customers" :key="index">
-              <v-list-item-title class="font-medium">
-                {{ customer.name || 'Unnamed' }}
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-          <div v-else class="text-sm text-gray-500">No customers found.</div>
+        <v-card-text class="pa-0">
+          <v-data-table
+            v-if="report.customers?.length"
+            :headers="customerHeaders"
+            :items="report.customers"
+            :items-per-page="10"
+            density="compact"
+            class="elevation-0"
+          >
+            <template #item.name="{ item }: any">
+              <span class="font-medium">{{ item.name }}</span>
+            </template>
+            <template #item.total_invoices="{ item }: any">
+              <v-chip size="small" color="primary" variant="tonal">
+                {{ item.total_invoices }}
+              </v-chip>
+            </template>
+          </v-data-table>
+          <div v-else class="text-sm text-gray-500 pa-4">No customers found.</div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -345,6 +368,12 @@ const filters = ref<any>({
 })
 
 const dialogCustomer = ref(false)
+const showFilters = ref(false)
+
+const customerHeaders = [
+  { title: 'Customer Name', key: 'name', sortable: true },
+  { title: 'Total Invoices', key: 'total_invoices', sortable: true, align: 'center' as const }
+]
 
 const report = ref<any>({
   total_invoices: 0,
@@ -466,7 +495,7 @@ onMounted(() => {
 /* Filter Section */
 .filter-section {
   background: rgb(var(--v-theme-surface));
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
@@ -483,7 +512,7 @@ onMounted(() => {
 
 .filter-icon {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -515,11 +544,11 @@ onMounted(() => {
 }
 
 .modern-input {
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .modern-btn {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.3px;
@@ -528,7 +557,7 @@ onMounted(() => {
 /* Cards */
 .stat-card {
   transition: all 0.3s ease;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
@@ -549,5 +578,36 @@ onMounted(() => {
 
 .theme--dark .invoice-section-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Modern Dashboard Background */
+.modern-dashboard-bg {
+  background: linear-gradient(135deg, 
+    rgba(248, 250, 252, 1) 0%, 
+    rgba(241, 245, 249, 1) 50%, 
+    rgba(248, 250, 252, 1) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  position: relative;
+}
+
+.theme--dark .modern-dashboard-bg {
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 1) 0%, 
+    rgba(30, 41, 59, 1) 50%, 
+    rgba(15, 23, 42, 1) 100%);
+}
+
+.modern-dashboard-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.03) 0%, transparent 50%);
+  pointer-events: none;
 }
 </style>

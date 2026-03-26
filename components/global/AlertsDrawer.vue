@@ -19,6 +19,14 @@
             </div>
             <div class="d-flex gap-1 align-center">
               <v-btn
+                icon="mdi-history"
+                variant="text"
+                size="small"
+                class="alerts-card__action"
+                title="Ver todas las alertas"
+                @click="showAllAlertsModal = true"
+              />
+              <v-btn
                 v-if="alertsStore.alerts.length > 0 && alertsStore.unreadCount > 0"
                 icon="mdi-check-all"
                 variant="text"
@@ -130,6 +138,11 @@
         </v-card>
       </div>
     </transition>
+
+    <AllAlertsModal 
+      v-model="showAllAlertsModal" 
+      @alert-dismissed="handleAlertDismissedInModal"
+    />
   </div>
 </template>
 
@@ -138,6 +151,13 @@ import type { IAlert } from '~/repository/modules/alerts'
 
 const alertsStore = useAlertsStore()
 const router = useRouter()
+
+const showAllAlertsModal = ref(false)
+
+const handleAlertDismissedInModal = () => {
+  // Refresh drawer alerts when an alert is dismissed from the modal
+  alertsStore.fetchAlerts()
+}
 
 const getSeverityColor = (severity: string) => {
   const colors: Record<string, string> = {

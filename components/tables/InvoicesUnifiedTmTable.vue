@@ -123,25 +123,32 @@
         </div>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-3">
-        <div class="">
-          <div class="font-bold text-base">Invoice number multiline</div>
-          <v-textarea
-            v-model="filters.multipleid"
-            density="compact"
-            label="Multiline invoice number"
-            placeholder="Enter invoice number by line"
-            rows="3"
-            hide-details
-          />
-          <v-btn @click="addFolio" size="small" color="primary">
-            <div class="flex gap-2">
-              <v-icon>mdi-plus</v-icon>
-              <div>Add to filters</div>
-            </div>
-          </v-btn>
+        <div class="lg:col-span-2">
+          <div class="flex items-start gap-2">
+            <v-textarea
+              v-model="filters.multipleid"
+              density="compact"
+              label="Invoice numbers"
+              placeholder="Paste invoice numbers separated by spaces, commas or lines"
+              rows="2"
+              auto-grow
+              hide-details
+              @keydown.enter.prevent.stop
+              @keyup.enter.prevent.stop="applyFolioSearch"
+            />
+            <v-btn
+              icon="mdi-plus"
+              size="small"
+              color="primary"
+              variant="tonal"
+              class="mt-1"
+              :disabled="!filters.multipleid?.trim()"
+              @click="applyFolioSearch"
+            />
+          </div>
         </div>
 
-        <div class="lg:col-span-4">
+        <div class="lg:col-span-3">
           <div v-if="filters.ids.length > 0" class="font-semibold mb-2">Searching invoices #</div>
           <div class="flex flex-wrap gap-2">
             <v-chip
@@ -149,10 +156,10 @@
               size="small"
               color="green"
               :key="`folio-${index}`"
-              @click="removeFolio(index)"
+              closable
+              @click:close="removeFolio(index)"
             >
               {{ folio }}
-              <v-icon>mdi-close</v-icon>
             </v-chip>
           </div>
         </div>
@@ -246,10 +253,33 @@
               <v-chip size="small" color="primary">
                 {{ invoiceTm.is_proforma ? 'Profoma' : 'Invoice' }} #{{ invoiceTm.invoice.invoice_number }}
               </v-chip>
-              <div v-if="invoiceTm.from_deleted_invoice != null">
-                <v-chip size="small" color="red"
-                  >Linked to deleted invoice #{{ invoiceTm.from_deleted_invoice }}</v-chip
-                >
+              <div v-if="invoiceTm.from_deleted_invoice != null" class="mt-1">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Re-invoice from 
+                  <NuxtLink 
+                    :to="invoiceTm.service_type === 'air'
+                      ? `/invoices/search/tm-air-view-${invoiceTm.from_deleted_invoice}`
+                      : `/invoices/search/tm-view-${invoiceTm.from_deleted_invoice}`" 
+                    target="_blank"
+                    class="text-orange font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceTm.parent_deleted?.invoice?.invoice_number || invoiceTm.from_deleted_invoice }}
+                  </NuxtLink>
+                </v-chip>
+              </div>
+              <div v-if="invoiceTm.replacement_invoice_id != null" class="mt-1">
+                <v-chip size="small" color="blue" variant="tonal">
+                  Replaced by 
+                  <NuxtLink 
+                    :to="invoiceTm.service_type === 'air'
+                      ? `/invoices/search/tm-air-view-${invoiceTm.replacement_invoice_id}`
+                      : `/invoices/search/tm-view-${invoiceTm.replacement_invoice_id}`" 
+                    target="_blank"
+                    class="text-blue font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceTm.replacement_invoice?.invoice?.invoice_number || invoiceTm.replacement_invoice_id }}
+                  </NuxtLink>
+                </v-chip>
               </div>
             </td>
             <td>
@@ -370,12 +400,24 @@ const rowClass = (invoice: any) => {
   return ''
 }
 
+const getFolioValues = (value: string | null | undefined) => {
+  if (!value) return []
+
+  return Array.from(new Set(value.split(/[\s,;|]+/g).map((item: string) => item.trim().replace(/^#+/, '')).filter(Boolean)))
+}
+
 const addFolio = () => {
-  let ids = filters.value.multipleid?.split('\n').map((bl: string) => bl.trim())
-  ids = ids?.filter((bl: string) => bl.length > 0)
-  filters.value.ids = [...filters.value.ids, ...ids || []]
+  const ids = getFolioValues(filters.value.multipleid)
+
+  if (!ids.length) return
+
+  filters.value.ids = [...filters.value.ids, ...ids]
   filters.value.ids = Array.from(new Set(filters.value.ids))
   filters.value.multipleid = ''
+}
+
+const applyFolioSearch = async () => {
+  await onClickFilters()
 }
 
 const removeFolio = (index: number) => {
@@ -402,6 +444,7 @@ const onClickPagination = async (page: number) => {
 
 const onClickFilters = async () => {
   addReferencia()
+  addFolio()
   currentPage.value = 1
   tmInvoices.value.current_page = 1
   await syncToUrl()

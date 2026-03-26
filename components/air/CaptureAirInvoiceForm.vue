@@ -167,7 +167,14 @@
 
             <div v-if="hasInvoiceInitData">
               <div class="flex gap-4 mb-4">
-                <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" />
+                <!-- <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" /> -->
+                <LinkDeleteInvoiceNew 
+                  v-model="form.link_deleted_invoice" 
+                  :inv-type="form.invoice_type"
+                  service-type="air"
+                  :air-reference-id="props.airReference.id"
+                  :consignee-id="form.customer_id"
+                />
                 <v-btn color="primary" size="small" @click="toggleConceptForm">Add available concepts</v-btn>
               </div>
 
@@ -178,8 +185,20 @@
                 density="compact"
                 class="my-2"
               >
-                A previous cancelled invoice #{{ form.link_deleted_invoice?.id }} will be linked to this invoice.
-                <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                  <div>
+                    A previous cancelled invoice 
+                    <NuxtLink 
+                      :to="getInvoiceDetailRoute(form.link_deleted_invoice)" 
+                      target="_blank"
+                      class="text-white font-weight-bold text-decoration-underline"
+                    >
+                      {{ form.link_deleted_invoice?.invoice?.invoice_number || form.link_deleted_invoice?.id }}
+                    </NuxtLink>
+                    will be linked to this invoice.
+                  </div>
+                  <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                </div>
               </v-alert>
 
               <v-dialog v-model="showConceptForm" max-width="600" persistent>
@@ -355,8 +374,19 @@ const addCharges = () => {
   showConceptForm.value = false
 }
 
-const removeConcept = (index: number) => {
-  form.value.charges.splice(index, 1)
+const removeConcept = (index: number | string) => {
+  form.value.charges.splice(Number(index), 1)
+}
+
+const getInvoiceDetailRoute = (invoice: any) => {
+  if (!invoice) return '#'
+  const invoiceType = invoice.invoice_type || form.value.invoice_type
+  // Detectar si es air por la existencia de airReference
+  const isAir = !!props.airReference
+  const basePath = isAir
+    ? (invoiceType === 'TM' ? '/invoices/search/tm-air-view' : '/invoices/search/wm-air-view')
+    : (invoiceType === 'TM' ? '/invoices/search/tm-view' : '/invoices/search/wm-view')
+  return `${basePath}-${invoice.id}`
 }
 
 const hasInvoiceInitData = computed(() => !!form.value.invoice_type && !!form.value.currency_id)
@@ -413,6 +443,7 @@ const clearSelectedCharges = () => {
   form.value.charges = []
   form.value = {
     ...form.value,
+    link_deleted_invoice: null,
     uso_cfdi: null,
     metodo_pago: null,
     forma_pago: null,

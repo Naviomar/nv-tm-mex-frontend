@@ -46,58 +46,6 @@
             </tr>
           </tbody>
         </v-table>
-        <v-alert
-          v-if="agentChanged"
-          type="warning"
-          variant="tonal"
-          class="mt-4 mb-4"
-          border="start"
-          prominent
-        >
-          <div class="font-bold mb-1">Customs agent change detected</div>
-          <p>
-            Changing the customs agent will generate an additional charge of
-            <strong>$150 USD</strong> the next time the electronic revalidation is redone.
-          </p>
-          <p class="mt-1 text-sm">
-            If this is only a data-entry correction and there is no real change of customs agent, you may request a
-            supervisor authorization to skip this charge.
-          </p>
-        </v-alert>
-
-        <!-- Users WITH skip permission: informational message -->
-        <div v-if="agentChanged && canSkipAgentChangeCharge" class="mb-4">
-          <v-alert type="info" variant="tonal" density="compact">
-            <div class="text-sm">
-              You have permission to skip the customs agent change charge.
-              When you redo the electronic revalidation, use the <strong>"Skip charge & continue"</strong> button to proceed without generating the charge.
-            </div>
-          </v-alert>
-        </div>
-
-        <!-- Users WITHOUT skip permission: authorization request -->
-        <div v-if="agentChanged && !canSkipAgentChangeCharge" class="mb-4">
-          <v-alert type="info" density="compact" class="mb-2">
-            <div class="text-sm">
-              If this is a data entry correction and the charge should not be generated,
-              you can request authorization to skip it when redoing the electronic revalidation.
-            </div>
-          </v-alert>
-          <AuthorizeProcessSmart
-            :resource="authorizeResources.RevalidationSkipAgentChangeCharge.resource"
-            :resourceId="String(props.referenceId)"
-            label="Request authorization to skip customs agent change charge"
-            :refresh="refreshAuthReqs"
-            :resourceData="props.referenceNumber ? { reference_number: props.referenceNumber } : null"
-          >
-            <template #auth>
-              <v-chip color="success" size="small">
-                <v-icon>mdi-check</v-icon>
-                Authorized - charge can be skipped on redo
-              </v-chip>
-            </template>
-          </AuthorizeProcessSmart>
-        </div>
         <div class="flex justify-center">
           <v-btn size="small" color="primary" type="submit">Update release</v-btn>
         </div>

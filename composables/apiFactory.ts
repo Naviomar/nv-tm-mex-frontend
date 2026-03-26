@@ -6,6 +6,7 @@ import ShippersModule from '~/repository/modules/catalogs/shippers'
 import SeaTrafficsModule from '~/repository/modules/catalogs/seatraffics'
 import SeaRegionsModule from '~/repository/modules/catalogs/searegions'
 import CustomAgentsModule from '~/repository/modules/catalogs/customsagents'
+import BeneficiariesModule from '~/repository/modules/catalogs/beneficiaries'
 import ConsigneesModule from '~/repository/modules/catalogs/consignees'
 import VesselsModule from '~/repository/modules/catalogs/vessels'
 import VoyagesModule from '~/repository/modules/catalogs/voyages'
@@ -86,6 +87,7 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import StatisticsModule from '~/repository/modules/statistics'
 
 interface IApiInstance {
   audit: AuditModule
@@ -97,6 +99,7 @@ interface IApiInstance {
   seaTraffics: SeaTrafficsModule
   seaRegions: SeaRegionsModule
   customAgents: CustomAgentsModule
+  beneficiaries: BeneficiariesModule
   consignees: ConsigneesModule
   customerBanks: CustomerBanksModule
   consigneeMbls: ConsigneeMblsModule
@@ -174,6 +177,7 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  statistics: StatisticsModule
 }
 
 export function useApiFactory() {
@@ -190,6 +194,7 @@ export function useApiFactory() {
     seaTraffics: new SeaTrafficsModule(client),
     seaRegions: new SeaRegionsModule(client),
     customAgents: new CustomAgentsModule(client),
+    beneficiaries: new BeneficiariesModule(client),
     consignees: new ConsigneesModule(client),
     customerBanks: new CustomerBanksModule(client),
     vessels: new VesselsModule(client),
@@ -267,6 +272,7 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    statistics: new StatisticsModule(client),
   }
 
   return modules

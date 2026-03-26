@@ -204,11 +204,16 @@ const editContainer = (container: any) => {
 }
 
 const setUpdatedContainer = (container: any) => {
-  let index = containers.value.findIndex((c) => c.id === container.id)
+  let index = containers.value.findIndex((c) => String(c.id) === String(container.id))
 
   // If the container does not have an id yet, use uuid instead
   if (index === -1 && container.uuid) {
     index = containers.value.findIndex((c) => c.uuid === container.uuid)
+  }
+
+  // If still not found, try matching by container number (for migration containers)
+  if (index === -1 && container.container_number) {
+    index = containers.value.findIndex((c) => c.container_number === container.container_number)
   }
 
   if (index !== -1) {
@@ -216,7 +221,9 @@ const setUpdatedContainer = (container: any) => {
     containers.value.splice(index, 1, container)
   } else {
     snackbar.add({ type: 'error', text: 'Container not found' })
-    console.warn(`Container with id ${container.id} or uuid ${container.uuid} not found`)
+    // console.warn(`Container with id ${container.id} or uuid ${container.uuid} not found`)
+    // console.warn('Current containers:', containers.value.map(c => ({ id: c.id, uuid: c.uuid, container_number: c.container_number })))
+    // console.warn('Updated container:', container)
   }
 
   containerToEdit.value = null

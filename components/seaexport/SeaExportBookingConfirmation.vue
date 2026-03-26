@@ -123,7 +123,7 @@ const valueHtml = ref('<p>Mensaje</p>')
 
 const editorRef = ref<any>()
 const toolbarConfig = {}
-const editorConfig = { placeholder: 'ADTV' }
+const editorConfig = { placeholder: 'TM' }
 
 const selectedNames = ['SeaExportBookingConfirmation']
 

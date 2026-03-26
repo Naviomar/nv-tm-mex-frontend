@@ -181,7 +181,14 @@
                 </div>
               </div>
 
-              <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" />
+              <!-- <LinkDeleteInvoice v-model="form.link_deleted_invoice" :invType="form.invoice_type" /> -->
+              <LinkDeleteInvoiceNew 
+                v-model="form.link_deleted_invoice" 
+                :inv-type="form.invoice_type"
+                :service-type="linkerServiceType"
+                :reference-id="linkerServiceType === 'sea' ? singleServiceId : null"
+                :air-reference-id="linkerServiceType === 'air' ? singleServiceId : null"
+              />
               <v-alert
                 v-if="form.link_deleted_invoice"
                 color="red-darken-2"
@@ -189,8 +196,20 @@
                 density="compact"
                 class="my-2"
               >
-                A previous cancelled invoice #{{ form.link_deleted_invoice?.id }} will be linked to this invoice.
-                <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                  <div>
+                    A previous cancelled invoice 
+                    <NuxtLink 
+                      :to="getInvoiceDetailRoute(form.link_deleted_invoice)" 
+                      target="_blank"
+                      class="text-white font-weight-bold text-decoration-underline"
+                    >
+                      {{ form.link_deleted_invoice?.invoice?.invoice_number || form.link_deleted_invoice?.id }}
+                    </NuxtLink>
+                    will be linked to this invoice.
+                  </div>
+                  <v-btn color="red" size="x-small" @click="form.link_deleted_invoice = null">Remove</v-btn>
+                </div>
               </v-alert>
 
               <div class="font-bold">3. Create invoice with selected charge(s)</div>
@@ -287,6 +306,12 @@ const hasServiciosFound = computed(() => !!serviciosFound.value.services.length)
 const serviceTypeSelected = computed(() => serviciosFound.value.serviceType)
 const hasInvoiceInitData = computed(() => !!form.value.invoice_type && !!form.value.currency_id)
 const isTm = computed(() => form.value.invoice_type === 'TM')
+const linkerServiceType = computed(() => {
+  return serviciosFound.value.serviceType === 'EA' || serviciosFound.value.serviceType === 'IA' ? 'air' : 'sea'
+})
+const singleServiceId = computed(() => {
+  return serviciosFound.value.services.length === 1 ? serviciosFound.value.services[0]?.id ?? null : null
+})
 
 const isSeaImport = computed(() => serviciosFound.value.serviceType === 'IM')
 
@@ -393,7 +418,19 @@ const selectedSellCharges = (service: any) => {
   return []
 }
 
+const getInvoiceDetailRoute = (invoice: any) => {
+  if (!invoice) return '#'
+  const invoiceType = invoice.invoice_type || form.value.invoice_type
+  const serviceType = serviciosFound.value?.serviceType
+  const isAir = serviceType === 'EA' || serviceType === 'IA'
+  const basePath = isAir
+    ? (invoiceType === 'TM' ? '/invoices/search/tm-air-view' : '/invoices/search/wm-air-view')
+    : (invoiceType === 'TM' ? '/invoices/search/tm-view' : '/invoices/search/wm-view')
+  return `${basePath}-${invoice.id}`
+}
+
 const clearSelectedCharges = () => {
+  form.value.link_deleted_invoice = null
   // for each service, clear selected charges
 
   // Sea import charges

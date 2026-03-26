@@ -18,10 +18,29 @@
               >
                 {{ isPaid ? 'Paid' : 'Payment pending' }}
               </v-chip>
-              <div v-if="partyInvoice.from_deleted_invoice">
-                <v-chip size="small" color="red"
-                  >Linked to deleted invoice #{{ partyInvoice.from_deleted_invoice }}</v-chip
-                >
+              <div v-if="partyInvoice.from_deleted">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Re-invoice from 
+                  <NuxtLink 
+                    :to="`/invoices/search/free-format/view-${partyInvoice.from_deleted}`" 
+                    target="_blank"
+                    class="text-orange font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ partyInvoice.parent_deleted?.invoice?.invoice_number || partyInvoice.from_deleted }}
+                  </NuxtLink>
+                </v-chip>
+              </div>
+              <div v-if="partyInvoice.replacement_invoice_id">
+                <v-chip size="small" color="blue" variant="tonal">
+                  Replaced by 
+                  <NuxtLink 
+                    :to="`/invoices/search/free-format/view-${partyInvoice.replacement_invoice_id}`" 
+                    target="_blank"
+                    class="text-blue font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ partyInvoice.replacement_invoice?.invoice?.invoice_number || partyInvoice.replacement_invoice_id }}
+                  </NuxtLink>
+                </v-chip>
               </div>
             </div>
           </div>

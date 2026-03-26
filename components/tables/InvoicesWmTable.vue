@@ -135,9 +135,29 @@
               <v-chip size="small" :color="invoiceWm.is_proforma ? 'amber' : 'primary'">
                 {{ invoiceWm.is_proforma ? 'Profoma' : 'Invoice' }}
               </v-chip>
-              <div v-if="invoiceWm.from_deleted_invoice != null">
-                <v-chip size="small" color="red">Linked to deleted invoice #{{ invoiceWm.from_deleted_invoice
-                  }}</v-chip>
+              <div v-if="invoiceWm.from_deleted_invoice != null" class="mt-1">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Re-invoice from 
+                  <NuxtLink 
+                    :to="`/invoices/search/wm-view-${invoiceWm.from_deleted_invoice}`" 
+                    target="_blank"
+                    class="text-orange font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceWm.parent_deleted?.invoice?.invoice_number || invoiceWm.from_deleted_invoice }}
+                  </NuxtLink>
+                </v-chip>
+              </div>
+              <div v-if="invoiceWm.replacement_invoice_id != null" class="mt-1">
+                <v-chip size="small" color="blue" variant="tonal">
+                  Replaced by 
+                  <NuxtLink 
+                    :to="`/invoices/search/wm-view-${invoiceWm.replacement_invoice_id}`" 
+                    target="_blank"
+                    class="text-blue font-weight-bold text-decoration-underline ml-1"
+                  >
+                    #{{ invoiceWm.replacement_invoice?.invoice?.invoice_number || invoiceWm.replacement_invoice_id }}
+                  </NuxtLink>
+                </v-chip>
               </div>
             </td>
             <td>

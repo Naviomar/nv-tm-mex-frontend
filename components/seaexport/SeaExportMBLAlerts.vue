@@ -385,7 +385,7 @@ const editorPrealertRef = ref<any>()
 const editorFinalAlertRef = ref<any>()
 
 const toolbarConfig = {}
-const editorConfig = { placeholder: 'ADTV' }
+const editorConfig = { placeholder: 'TM' }
 
 const handleDraftCreatedEditor = (editor: any) => {
   editorDraftRef.value = editor

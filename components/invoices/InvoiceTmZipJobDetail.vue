@@ -42,6 +42,13 @@
                 </span>
               </p>
               <p v-if="file.id"><strong>Invoice ID:</strong> {{ file.id }}</p>
+              <p v-if="file.reinvoice_link?.message">
+                <strong>Auto re-invoice link:</strong>
+                <span :class="file.reinvoice_link?.linked ? 'text-green-600' : 'text-amber-600'">
+                  {{ file.reinvoice_link.message }}
+                </span>
+              </p>
+              <p v-if="file.reinvoice_link?.related_uuid"><strong>Related cancelled UUID:</strong> {{ file.reinvoice_link.related_uuid }}</p>
               <p v-if="file.error" class="text-red-500"><strong>Error:</strong> {{ file.error }}</p>
             </v-list-item>
           </v-list>
@@ -135,9 +142,11 @@ const getInvoiceUrl = (invoice: any) => {
 }
 
 interface ProcessedFile {
+  uuid?: string
   linked: boolean
   model?: string
   id?: number
+  reinvoice_link?: any
   error?: string
 }
 
@@ -145,11 +154,15 @@ interface ProcessedFile {
 const processedFilesArray = computed<ProcessedFile[]>(() => {
   const files = invoiceTmUploadJob.value?.processed_data?.processed_files || {}
 
-  return Object.entries(files).map(([uuid, data]) => ({
-    ...(data as ProcessedFile), // Ensure data is treated as the correct type
-    uuid, // Extract UUID from the key
-    model: data.model?.split('\\').pop() || '', // Extract last part of model path
-  }))
+  return Object.entries(files).map(([uuid, data]) => {
+    const typedData = data as ProcessedFile
+
+    return {
+      ...typedData,
+      uuid: typedData.uuid || uuid,
+      model: typedData.model?.split('\\').pop() || '',
+    }
+  })
 })
 
 const getData = async () => {
@@ -158,7 +171,7 @@ const getData = async () => {
     const response = (await $api.invoices.getInvoiceTmUploadJob(props.id)) as any
     invoiceTmUploadJob.value = response
     // if processed_data not null convert to object
-    if (invoiceTmUploadJob.value.processed_data) {
+    if (typeof invoiceTmUploadJob.value.processed_data === 'string') {
       invoiceTmUploadJob.value.processed_data = JSON.parse(invoiceTmUploadJob.value.processed_data)
     }
   } catch (e) {

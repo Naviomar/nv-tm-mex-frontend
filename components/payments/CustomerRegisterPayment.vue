@@ -4,20 +4,63 @@
     <v-card>
       <v-card-title class="font-bold! text-base!">Register payments to customer services</v-card-title>
       <v-card-text>
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div>
             <BankMovementSearchWidget v-model="form.bankMovement" type="deposit" />
           </div>
-          <div class="col-span-3">
-            <v-card color="lime-lighten-4">
+          <div class="lg:col-span-3">
+            <v-card color="blue-lighten-4" class="mb-4">
+              <v-card-title class="font-bold! text-base!">📋 Select service type</v-card-title>
+              <v-card-text>
+                <v-radio-group v-model="form.serviceType" :inline="$vuetify.display.mdAndUp">
+                  <v-radio label="Sea Import" value="sea-import" />
+                  <v-radio label="Sea Export" value="sea-export" />
+                  <v-radio label="Air Import" value="air-import" />
+                  <v-radio label="Air Export" value="air-export" />
+                  <v-radio label="Free Format" value="free-format" color="orange" />
+                </v-radio-group>
+              </v-card-text>
+            </v-card>
+            <v-card v-if="form.serviceType !== 'free-format'" color="lime-lighten-4">
               <v-card-title class="font-bold! text-base!">🔍 Start search services</v-card-title>
               <v-card-text>
                 <SearchGlobalReferences @update="setServicios" />
               </v-card-text>
             </v-card>
+            <v-card v-else color="orange-lighten-4">
+              <v-card-title class="font-bold! text-base!">💰 Free Format Payment</v-card-title>
+              <v-card-text>
+                <v-alert type="info" variant="tonal" class="mb-4">
+                  Free Format allows registering payments (deposits, advance payments, balance in favor) without linking to a specific service/reference.
+                </v-alert>
+                <div class="mb-4">
+                  <v-radio-group v-model="freeFormatOwner.type" :inline="$vuetify.display.smAndUp">
+                    <v-radio label="Customer" value="customer" />
+                    <v-radio label="Customs Agent" value="custom_agent" />
+                    <v-radio label="Beneficiary" value="beneficiary" />
+                  </v-radio-group>
+                </div>
+                <div v-if="freeFormatOwner.type === 'customer'" class="mb-4">
+                  <ACustomerSearch v-model="freeFormatOwner.id" label="Select Customer" />
+                </div>
+                <div v-if="freeFormatOwner.type === 'custom_agent'" class="mb-4">
+                  <ACustomsAgentSearch v-model="freeFormatOwner.id" label="Select Customs Agent" />
+                </div>
+                <div v-if="freeFormatOwner.type === 'beneficiary'" class="mb-4">
+                  <ABeneficiarySearch v-model="freeFormatOwner.id" label="Select Beneficiary" />
+                </div>
+                <v-btn 
+                  v-if="freeFormatOwner.id" 
+                  color="primary" 
+                  @click="enableFreeFormatPayments"
+                >
+                  Continue with Free Format
+                </v-btn>
+              </v-card-text>
+            </v-card>
           </div>
         </div>
-        <div class="grid grid-cols-4 gap-4 py-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 py-4">
           <div>
             <BankMovementReceiptView :bankMovement="form.bankMovement" />
             <div class="py-4 text-center bg-slate-300 dark:bg-neutral-700 mx-4 text-lg">
@@ -25,8 +68,8 @@
               <div>{{ formatToCurrency(newBalance) }}</div>
             </div>
           </div>
-          <div class="col-span-3">
-            <v-card v-if="hasServicesFound" color="lime-lighten-4">
+          <div class="lg:col-span-3">
+            <v-card v-if="hasServicesFound && form.serviceType !== 'free-format'" color="lime-lighten-4">
               <v-card-title class="font-bold! text-base!">Select services to continue</v-card-title>
               <v-card-text>
                 <v-autocomplete
@@ -45,10 +88,13 @@
               </v-card-text>
             </v-card>
 
-            <v-card v-if="hasServicesDetails">
+            <v-card v-if="hasServicesDetails || isFreeFormat">
               <v-card-title>
                 <div class="flex justify-between">
-                  <div class="font-bold! text-base!">Add payments</div>
+                  <div class="font-bold! text-base!">
+                    <span v-if="isFreeFormat">Add Free Format Payments</span>
+                    <span v-else>Add payments</span>
+                  </div>
                   <div>
                     <v-btn
                       :color="paymentForm.showPaymentForm ? 'secondary' : 'green'"
@@ -62,7 +108,7 @@
               </v-card-title>
               <v-card-text>
                 <div v-if="paymentForm.showPaymentForm">
-                  <div class="grid grid-cols-5 gap-2">
+                  <div v-if="!isFreeFormat" class="grid grid-cols-1 md:grid-cols-5 gap-2">
                     <div class="">
                       <v-autocomplete
                         v-model="payForm.service"
@@ -107,15 +153,33 @@
                       <v-btn color="primary" size="small" variant="tonal" @click="addPayment">Add</v-btn>
                     </div>
                   </div>
+                  <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div class="">
+                      <v-autocomplete
+                        v-model="payForm.charge"
+                        :items="paymentCharges"
+                        item-title="name"
+                        return-object
+                        label="Concept *"
+                        density="compact"
+                      />
+                    </div>
+                    <div class="">
+                      <v-text-field v-model="payForm.amount" type="number" label="Payment amount *" density="compact" />
+                    </div>
+                    <div class="mt-2">
+                      <v-btn color="primary" size="small" variant="tonal" @click="addPaymentFreeFormat">Add</v-btn>
+                    </div>
+                  </div>
                 </div>
 
                 <v-table density="compact">
                   <thead>
                     <tr>
                       <th class="font-bold w-10"></th>
-                      <th class="font-bold">Service</th>
+                      <th v-if="!isFreeFormat" class="font-bold">Service</th>
                       <th class="font-bold">Concept</th>
-                      <th class="font-bold">Container</th>
+                      <th v-if="!isFreeFormat" class="font-bold">Container</th>
                       <th class="font-bold">Amount</th>
                     </tr>
                   </thead>
@@ -126,7 +190,7 @@
                           <v-icon>mdi-delete</v-icon>
                         </v-btn>
                       </td>
-                      <td>
+                      <td v-if="!isFreeFormat">
                         <div class="flex items-center gap-1">
                           <div>
                             <v-btn
@@ -143,7 +207,7 @@
                         </div>
                       </td>
                       <td>{{ payment.charge.name }}</td>
-                      <td>{{ payment.container?.container_number }}</td>
+                      <td v-if="!isFreeFormat">{{ payment.container?.container_number }}</td>
                       <td>{{ formatToCurrency(payment.amount) }}</td>
                     </tr>
                   </tbody>
@@ -300,10 +364,42 @@ const paymentsAmount = computed(() => {
 
 const form = ref<any>({
   bankMovement: null,
+  serviceType: 'sea-import',
   servicesResult: { services: [] },
   selectedServices: [],
   servicesDetails: [],
 })
+
+const freeFormatOwner = ref<any>({
+  type: 'customer',
+  id: null,
+})
+
+const isFreeFormat = computed(() => form.value.serviceType === 'free-format')
+
+watch(
+  () => freeFormatOwner.value.type,
+  () => {
+    freeFormatOwner.value.id = null
+    paymentForm.value.payments = []
+    clearPayForm()
+  }
+)
+
+watch(
+  () => form.value.serviceType,
+  (serviceType) => {
+    if (serviceType !== 'free-format') {
+      freeFormatOwner.value = {
+        type: 'customer',
+        id: null,
+      }
+    }
+    paymentForm.value.payments = []
+    paymentForm.value.showPaymentForm = false
+    clearPayForm()
+  }
+)
 
 const payForm = reactive<any>({
   service: null,
@@ -342,6 +438,45 @@ const clearPayForm = () => {
 
 const showServicePaymentsDialog = () => {
   servicePaymentsDialog.value = true
+}
+
+const enableFreeFormatPayments = () => {
+  form.value.servicesDetails = []
+  form.value.selectedServices = []
+  paymentForm.value.showPaymentForm = true
+}
+
+const addPaymentFreeFormat = () => {
+  if (!payForm.charge || !payForm.amount) {
+    snackbar.add({ type: 'warning', text: 'All fields are required' })
+    return
+  }
+  if (payForm.amount <= 0) {
+    snackbar.add({ type: 'warning', text: 'Amount must be greater than 0' })
+    return
+  }
+
+  const newAmount = paymentsAmount.value + parseFloat(payForm.amount)
+  if (newAmount > bankMovementAmountAvailable.value) {
+    snackbar.add({ type: 'error', text: 'Payments amount is greater than bank movement amount available' })
+    return
+  }
+
+  const payment = {
+    service: null,
+    container: null,
+    charge: {
+      id: payForm.charge.id,
+      name: payForm.charge.name,
+    },
+    amount: payForm.amount,
+    owner: {
+      type: freeFormatOwner.value.type,
+      id: freeFormatOwner.value.id,
+    },
+  }
+  paymentForm.value.payments.push(payment)
+  clearPayForm()
 }
 
 const addPayment = () => {
@@ -422,9 +557,14 @@ const submitPaymentToBankMovement = async () => {
     paymentForm.value.payments = []
     form.value = {
       bankMovement: null,
+      serviceType: 'sea-import',
       servicesResult: { services: [] },
       selectedServices: [],
       servicesDetails: [],
+    }
+    freeFormatOwner.value = {
+      type: 'customer',
+      id: null,
     }
   } catch (error) {
     console.error(error)
