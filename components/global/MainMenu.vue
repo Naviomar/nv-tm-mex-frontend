@@ -502,6 +502,59 @@
         ></v-list-item>
       </v-list-group>
 
+      <v-list-group
+        v-if="canAccess(menuPermissions.MaritimeImportDemurrages) && hasAnyPermission(maritimeImportDemurragesPermissions)"
+        value="demurrages"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            prepend-icon="mdi-timer-alert-outline"
+            :append-icon="getChevronIcon('demurrages')"
+            title="Demurrages & Detentions"
+            rounded="xl"
+            class="mb-1"
+            :active="route.path.startsWith('/maritime/import/demurrages') || route.path.startsWith('/invoices/lines/demurrage-detentions') || route.path.startsWith('/invoices/suppliers/cfdis/create')"
+          ></v-list-item>
+        </template>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.MaritimeImportDemurragesSearch)"
+          prepend-icon="mdi-magnify"
+          title="Search Import References"
+          to="/maritime/import/demurrages/search"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.MaritimeImportDemurragesPayments)"
+          prepend-icon="mdi-cash-clock"
+          title="Demurrage & Detentions Request Payments"
+          to="/invoices/lines/demurrage-detentions"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.MaritimeImportDemurragesSupplierCfdi)"
+          prepend-icon="mdi-plus"
+          title="Add New Supplier CFDI"
+          to="/invoices/suppliers/cfdis/create"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.MaritimeImportDemurragesReports)"
+          prepend-icon="mdi-chart-bell-curve"
+          title="Demurrage Reports"
+          to="/maritime/import/demurrages/reports"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+      </v-list-group>
+
       <v-list-group v-if="false" value="Relocation">
         <template v-slot:activator="{ props }">
           <v-list-item v-bind="props" prepend-icon="mdi-truck-cargo-container" title="Relocation"></v-list-item>
@@ -701,6 +754,13 @@ const invoicesPermissions = [
 ]
 
 const maritimePermissions = [menuPermissions.MaritimeImport, menuPermissions.MaritimeExport]
+
+const maritimeImportDemurragesPermissions = [
+  menuPermissions.MaritimeImportDemurragesSearch,
+  menuPermissions.MaritimeImportDemurragesPayments,
+  menuPermissions.MaritimeImportDemurragesSupplierCfdi,
+  menuPermissions.MaritimeImportDemurragesReports,
+]
 const airPermissions = [menuPermissions.AirImport, menuPermissions.AirExport]
 
 const configurationPermissions = [
@@ -817,6 +877,10 @@ const getDefaultOpenedGroups = (path: string) => {
 
   if (path.startsWith('/air')) {
     groups.push('air')
+  }
+
+  if (path.startsWith('/maritime/import/demurrages') || path.startsWith('/invoices/lines/demurrage-detentions') || path.startsWith('/invoices/suppliers/cfdis/create')) {
+    groups.push('demurrages')
   }
 
   if (path.startsWith('/configuration')) {

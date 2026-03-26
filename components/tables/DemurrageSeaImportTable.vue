@@ -410,10 +410,12 @@ const getSeaImportReferences = async () => {
     }
   } catch (e) {
     console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: 'Error loading demurrage references',
+    })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    loadingStore.stop()
   }
 }
 
@@ -478,9 +480,12 @@ const viewMaritimeReference = (item: any) => {
 }
 
 onMounted(async () => {
-  await getSeaImportFilters()
+  // Load filters and data in parallel for better performance
+  await Promise.all([
+    getSeaImportFilters(),
+    getSeaImportReferences()
+  ])
   // Sync current page from composable after URL is loaded
   references.value.current_page = currentPage.value
-  await getSeaImportReferences()
 })
 </script>
