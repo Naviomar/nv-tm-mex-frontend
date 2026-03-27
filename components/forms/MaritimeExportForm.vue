@@ -1268,8 +1268,12 @@ const confirmLegacyExpoImport = async () => {
       formValues.bl_type = 'master'
     }
 
-    // Store legacy reference ID
+    // Store legacy reference ID and separate legacy_id for backend
     legacyReferenceId.value = detail.id ? `EXPO-${detail.id}` : null
+    if (detail.id) {
+      formValues.legacy_id = detail.id
+      formValues.legacy_reference = detail.referencia || null
+    }
 
     // Apply form values
     if (Object.keys(formValues).length > 0) {

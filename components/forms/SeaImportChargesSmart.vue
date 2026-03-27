@@ -8,7 +8,7 @@
             <div class="ml-2 font-bold">Charge(s)</div>
           </div>
           <div v-if="canManipulateCharges" class="flex gap-2">
-            <v-btn
+            <!-- <v-btn // Sin uso, se penso para migrar cargos de TM1 a TM2
               v-if="referencia?.legacy_reference"
               icon
               size="x-small"
@@ -17,7 +17,7 @@
               @click="openLegacyChargesModal"
             >
               <v-icon>mdi-database-import</v-icon>
-            </v-btn>
+            </v-btn> -->
             <v-btn icon size="x-small" @click="addCharge" :color="showForm ? 'black' : 'success'">
               <v-icon v-if="showForm">mdi-close</v-icon>
               <v-icon v-if="!showForm">mdi-plus</v-icon>

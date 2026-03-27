@@ -1285,8 +1285,12 @@ const confirmLegacyImport = async () => {
       } catch (e) { console.warn('Could not match destination port', e) }
     }
 
-    // Store legacy reference ID
+    // Store legacy reference ID and separate legacy_id for backend
     legacyReferenceId.value = detail.id ? `IMPO-${detail.id}` : null
+    if (detail.id) {
+      formValues.legacy_id = detail.id
+      formValues.legacy_reference = detail.referencia || null
+    }
 
     // Apply all form values at once
     if (Object.keys(formValues).length > 0) {
