@@ -159,9 +159,16 @@
                 <div v-if="bankMovement.payments.length > 0">
                   <BankMovementPayments :bankMovement="bankMovement" />
                 </div>
-                <v-btn v-if="false" size="small" color="green-lighten-2" density="compact"
-                  >Aplicar nota crédito/débito</v-btn
+                
+                <v-btn 
+                  v-if="canRequestCancellation(bankMovement)"
+                  color="orange-darken-2" 
+                  variant="elevated" 
+                  density="compact" 
+                  @click="showCancelDialog(bankMovement)"
                 >
+                  <v-icon>mdi-delete-alert</v-icon> Request cancellation
+                </v-btn>
               </div>
             </td>
             <td>
@@ -278,6 +285,84 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    
+    <v-dialog v-model="cancelDialog.show" max-width="600">
+      <v-card>
+        <v-card-title class="bg-orange-darken-1 text-white">
+          <v-icon class="mr-2">mdi-delete-alert</v-icon>
+          Request Bank Movement Cancellation
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-alert type="warning" variant="tonal" class="mb-4">
+            This will create an authorization request to cancel the bank movement. The movement can only be cancelled if it has no payment applications.
+          </v-alert>
+          
+          <div class="mb-4">
+            <div class="text-subtitle-2 font-weight-bold mb-2">Bank Movement Details:</div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <span class="text-grey-darken-1">ID:</span> 
+                <span class="font-weight-medium">#{{ cancelDialog.bankMovement?.id }}</span>
+              </div>
+              <div>
+                <span class="text-grey-darken-1">Date:</span> 
+                <span class="font-weight-medium">{{ cancelDialog.bankMovement?.movement_date }}</span>
+              </div>
+              <div>
+                <span class="text-grey-darken-1">Amount:</span> 
+                <span class="font-weight-medium">{{ formatToCurrency(cancelDialog.bankMovement?.amount) }}</span>
+              </div>
+              <div>
+                <span class="text-grey-darken-1">Reference:</span> 
+                <span class="font-weight-medium">{{ cancelDialog.bankMovement?.reference || 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <v-textarea
+            v-model="cancelDialog.reason"
+            label="Reason for cancellation *"
+            density="compact"
+            rows="3"
+            variant="outlined"
+            :rules="[v => !!v || 'Reason is required']"
+          />
+
+          <div class="mb-2">
+            <v-file-input
+              v-model="cancelDialog.files"
+              label="Attach supporting documents (optional)"
+              density="compact"
+              variant="outlined"
+              multiple
+              prepend-icon="mdi-paperclip"
+              accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+              show-size
+              chips
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn 
+            color="grey" 
+            variant="text" 
+            @click="closeCancelDialog"
+          >
+            Cancel
+          </v-btn>
+          <v-btn 
+            color="orange-darken-2" 
+            variant="elevated"
+            @click="requestCancellation"
+            :disabled="!cancelDialog.reason"
+          >
+            <v-icon class="mr-1">mdi-send</v-icon>
+            Send Request
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -325,6 +410,13 @@ const catalogs = ref({
 const notaDialog = ref<any>({
   show: false,
   bankMovement: null,
+})
+
+const cancelDialog = ref<any>({
+  show: false,
+  bankMovement: null,
+  reason: '',
+  files: [],
 })
 
 const yesNoOptions = [
@@ -518,6 +610,81 @@ const splitPaymentDetail = (movement: any) => {
       return `<div>${detail}</div>`
     })
     .join('')
+}
+
+const canRequestCancellation = (bankMovement: any) => {
+  // Can only request cancellation if movement has no payments and available amount equals total amount
+  return bankMovement.amount === bankMovement.amount_available && bankMovement.payments.length === 0
+}
+
+const showCancelDialog = (bankMovement: any) => {
+  cancelDialog.value = {
+    show: true,
+    bankMovement,
+    reason: '',
+    files: [],
+  }
+}
+
+const closeCancelDialog = () => {
+  cancelDialog.value = {
+    show: false,
+    bankMovement: null,
+    reason: '',
+    files: [],
+  }
+}
+
+const requestCancellation = async () => {
+  try {
+    loadingStore.loading = true
+    
+    // First check if movement is deletable
+    const checkResult = await $api.bankMovements.checkDeletable(cancelDialog.value.bankMovement.id)
+    
+    if (!checkResult.can_delete) {
+      snackbar.add({
+        type: 'error',
+        text: checkResult.reason || 'Bank movement cannot be cancelled',
+      })
+      return
+    }
+    
+    // Create authorization request
+    const formData = {
+      resource: 'cancel-bank-movement',
+      resource_id: cancelDialog.value.bankMovement.id,
+      resource_data: {
+        movement_reference: cancelDialog.value.bankMovement.reference || `MOV-${cancelDialog.value.bankMovement.id}`,
+        amount: cancelDialog.value.bankMovement.amount,
+        movement_date: cancelDialog.value.bankMovement.movement_date,
+      },
+      reason: cancelDialog.value.reason,
+      files: cancelDialog.value.files,
+    }
+    
+    const response = await $api.authRequests.requestAuthorization(formData)
+    
+    if (response) {
+      snackbar.add({
+        type: 'success',
+        text: 'Cancellation request submitted successfully. Awaiting authorization.',
+      })
+      
+      closeCancelDialog()
+      await getBankMovements()
+    }
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: e?.data?.message || 'Error submitting cancellation request',
+    })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 await getBankMovementFilters()
