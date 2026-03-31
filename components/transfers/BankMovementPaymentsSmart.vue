@@ -207,7 +207,13 @@
                     @update:model-value="clearSearchInvoices"
                     :clearable="bankMovement.type === 'deposit'"
                     :placeholder="bankMovement.type === 'deposit' ? 'All types will be searched if not selected' : ''"
-                  />
+                  >
+                    <template v-slot:append-item v-if="typeInvoicesByMovementType.length === 0">
+                      <v-list-item>
+                        <v-list-item-title>No types available</v-list-item-title>
+                      </v-list-item>
+                    </template>
+                  </v-autocomplete>
                   <div v-if="isPayBlSchedule">
                     <v-btn color="purple" @click="goToModule(bankMovement.id)">Go to payment BL</v-btn>
                   </div>
@@ -400,9 +406,12 @@ const filters = ref<any>({
 })
 
 const typeInvoicesByMovementType = computed(() => {
+  console.log('bankMovement.value.type:', bankMovement.value.type)
   if (!bankMovement.value.type) return []
   if (bankMovement.value.type === 'deposit') {
-    return typeInvoices.filter((type: any) => type.deposit)
+    const depositTypes = typeInvoices.filter((type: any) => type.deposit)
+    console.log('Deposit types found:', depositTypes)
+    return depositTypes
   }
   if (bankMovement.value.type === 'withdrawal') {
     return typeInvoices.filter((type: any) => type.withdrawal)
