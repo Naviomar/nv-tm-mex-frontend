@@ -165,6 +165,14 @@ class BankMovementsModule extends FetchFactory<any> {
     };
     return this.call("POST", `${this.RESOURCE}/${id}/update-cheque-status`, fetchOptions);
   }
+
+  async checkDeletable(id: string, fetchOptions?: FetchOptions) {
+    return this.call("GET", `${this.RESOURCE}/${id}/check-deletable`, fetchOptions);
+  }
+
+  async deleteBankMovement(id: string, fetchOptions?: FetchOptions) {
+    return this.call("POST", `${this.RESOURCE}/${id}/delete`, fetchOptions);
+  }
 }
 
 export default BankMovementsModule;
