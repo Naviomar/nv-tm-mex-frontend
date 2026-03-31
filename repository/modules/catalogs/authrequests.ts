@@ -59,6 +59,18 @@ class AuthRequestsModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/${id}/cancel-customer-invoice`, fetchOptions)
   }
+
+  async getBankMovementToCancel(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/bank-movement-to-cancel`, fetchOptions)
+  }
+
+  async cancelBankMovement(id: string, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/cancel-bank-movement`, fetchOptions)
+  }
 }
 
 export default AuthRequestsModule
