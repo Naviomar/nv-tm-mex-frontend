@@ -108,6 +108,7 @@ const menuPermissions = {
   SystemMailNotifications: 'menu-system-mail-notifications',
   SystemMailNotificationGroups: 'menu-system-mail-notification-groups',
   SystemAlertTypes: 'menu-system-alert-types',
+  SystemAuthRequestTypes: 'menu-system-auth-request-types',
   SystemSupportTickets: 'menu-system-support-tickets',
   SystemLogs: 'menu-system-logs',
   SystemAudit: 'menu-system-audit',

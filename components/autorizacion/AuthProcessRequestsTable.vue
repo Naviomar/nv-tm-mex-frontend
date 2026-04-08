@@ -3,7 +3,7 @@
     <v-card-text>
       <div class="mb-4" @keyup.enter="onClickFilters">
         <div class="grid grid-cols-6 gap-4">
-          <div class="col-span-2">
+          <div v-if="isAdminRole()" class="col-span-2">
             <AUserSearch v-model="filters.user_id" label="Requested by" />
           </div>
           <div class="col-span-2">
@@ -66,7 +66,7 @@
         <thead>
           <tr>
             <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Actions</th>
+            <th class="text-left" width="50">Chat</th>
             <th class="text-left">Requested by</th>
             <th class="text-left">Process</th>
             <th class="text-left">Reason</th>
@@ -83,18 +83,14 @@
             :class="{
               'dark:hover:bg-gray-700! hover:bg-slate-300!': true,
               'bg-red-100! dark:bg-red-900!': authRequest.deleted_at,
+              'bg-green-50! dark:bg-green-950!': !authRequest.deleted_at && isPendingToGrant(authRequest),
             }"
           >
+            <td>{{ authRequest.id }}</td>
             <td>
-              {{ authRequest.id }}
-            </td>
-            <td>
-              <div v-if="isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="primary" size="x-small" @click="showFormGrant(authRequest)"> Respond </v-btn>
-              </div>
-              <div v-if="!isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="red" size="x-small" @click="showFormCancel(authRequest)"> Delete </v-btn>
-              </div>
+              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                <v-icon>mdi-message-text-outline</v-icon>
+              </v-btn>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
             <td class="whitespace-nowrap">
@@ -160,6 +156,38 @@
         </v-card>
       </v-dialog>
 
+      <!-- Ticket Chat Dialog -->
+      <v-dialog v-model="showChatDrawer" max-width="640">
+        <v-card v-if="activeChatTicket" flat style="display:flex;flex-direction:column;height:660px;overflow:hidden">
+          <div style="flex:1;min-height:0;overflow:hidden">
+            <TicketChatPanel
+              ticket-type="process-request"
+              :ticket-id="activeChatTicket.id"
+              panel-height="100%"
+              :can-manage="true"
+              @close="showChatDrawer = false"
+            />
+          </div>
+          <v-divider />
+          <v-card-actions v-if="!activeChatTicket.deleted_at" class="px-4 py-2">
+            <span class="text-caption text-medium-emphasis">
+              #{{ activeChatTicket.id }} &mdash; {{ activeChatTicket.resolved_display }}
+            </span>
+            <v-spacer />
+            <v-btn
+              v-if="isPendingToGrant(activeChatTicket)"
+              color="primary" variant="flat" size="small"
+              @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
+            >Respond</v-btn>
+            <v-btn
+              v-else
+              color="error" variant="tonal" size="small"
+              @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
+            >Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <v-dialog v-model="showCancelDialog" max-width="500" persistent>
         <v-card>
           <v-card-title>Cancel authorization request</v-card-title>
@@ -178,6 +206,7 @@
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
+const { isAdminRole } = useCheckUser()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
@@ -191,7 +220,7 @@ const processTypeItems = Object.values(processResources)
 const filters = ref<any>({
   id: null,
   search: '',
-  deleted_status: null,
+  deleted_status: 'active',
   user_id: null,
   process_name: null,
   status: null,
@@ -247,6 +276,22 @@ const onClickPagination = async (page: number) => {
 
 const isPendingToGrant = (authRequest: any) => {
   return authRequest.status == 'pending'
+}
+
+const showChatDrawer = ref(false)
+const activeChatTicket = ref<any>(null)
+
+const openChat = (req: any) => {
+  activeChatTicket.value = req
+  showChatDrawer.value = true
+}
+
+const priorityColor = (priority: string) => {
+  return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
+}
+
+const ticketStatusColor = (status: string) => {
+  return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
 
 const preGrantAuth = async () => {
@@ -361,7 +406,7 @@ const clearFilters = async () => {
   filters.value = {
     id: null,
     search: '',
-    deleted_status: null,
+    deleted_status: 'active',
     user_id: null,
     process_name: null,
     status: null,

@@ -46,7 +46,34 @@
           </v-card-title>
           
           <v-divider class="alerts-card__divider" />
-          
+
+          <!-- Category filter chips -->
+          <div v-if="categories.length > 1" class="alerts-categories pa-2 d-flex flex-wrap gap-1">
+            <v-chip
+              size="small"
+              :variant="!selectedCategory ? 'flat' : 'tonal'"
+              :color="!selectedCategory ? 'primary' : 'default'"
+              class="alerts-category-chip"
+              @click="selectedCategory = null"
+            >
+              Todas
+            </v-chip>
+            <v-chip
+              v-for="cat in categories"
+              :key="cat.code"
+              size="small"
+              :variant="selectedCategory === cat.code ? 'flat' : 'tonal'"
+              :color="selectedCategory === cat.code ? (cat.color || 'primary') : 'default'"
+              :prepend-icon="cat.icon || 'mdi-tag-outline'"
+              class="alerts-category-chip"
+              @click="selectedCategory = cat.code"
+            >
+              {{ cat.name }}
+            </v-chip>
+          </div>
+
+          <v-divider v-if="categories.length > 1" class="alerts-card__divider" />
+
           <v-card-text class="alerts-card__body pa-0">
             <div v-if="alertsStore.isLoading" class="alerts-loading">
               <v-progress-circular indeterminate color="primary" size="48" />
@@ -64,7 +91,7 @@
             <div v-else class="alerts-list">
               <transition-group name="alert-item">
                 <div
-                  v-for="alert in alertsStore.alerts"
+                  v-for="alert in filteredAlerts"
                   :key="alert.id"
                   class="alert-item"
                   :class="{ 'alert-item--unread': !alert.read_at }"
@@ -147,16 +174,31 @@
 </template>
 
 <script lang="ts" setup>
-import type { IAlert } from '~/repository/modules/alerts'
+import type { IAlert, IAlertCategorySummary } from '~/repository/modules/alerts'
 
 const alertsStore = useAlertsStore()
 const router = useRouter()
+const { $api } = useNuxtApp()
 
 const showAllAlertsModal = ref(false)
+const selectedCategory = ref<string | null>(null)
+const categories = ref<IAlertCategorySummary[]>([])
+
+const filteredAlerts = computed(() => {
+  if (!selectedCategory.value) return alertsStore.alerts
+  return alertsStore.alerts.filter((a) => a.category_code === selectedCategory.value)
+})
 
 const handleAlertDismissedInModal = () => {
-  // Refresh drawer alerts when an alert is dismissed from the modal
   alertsStore.fetchAlerts()
+}
+
+const loadCategories = async () => {
+  try {
+    categories.value = (await $api.alerts.getUserCategories()) as any
+  } catch (e) {
+    categories.value = []
+  }
 }
 
 const getSeverityColor = (severity: string) => {
@@ -231,6 +273,7 @@ watch(
   (isOpen) => {
     if (isOpen) {
       alertsStore.fetchAlerts()
+      loadCategories()
     }
   }
 )
@@ -313,6 +356,21 @@ watch(
 
 .alerts-card__divider {
   opacity: 0.6;
+}
+
+.alerts-categories {
+  background: rgb(var(--v-theme-surface));
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.alerts-category-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.72rem;
+}
+
+.alerts-category-chip:hover {
+  transform: scale(1.04);
 }
 
 .alerts-card__body {

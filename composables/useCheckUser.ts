@@ -44,6 +44,12 @@ export function useCheckUser() {
         return user.value?.roles.some((role: any) => role.name === 'Super Admin')
     }
 
+    const isAdminRole = () => {
+        return user.value?.roles.some((role: any) =>
+            ['Super Admin', 'Admin', 'IT Admin'].includes(role.name)
+        )
+    }
+
     function hasPermission(permissionName: string) {
         // console.log('hasPermission user', user.value)
         // console.log('user roles', user.value?.roles)
@@ -61,6 +67,6 @@ export function useCheckUser() {
         isCurrentUser,
         checkUserAndNotify,
         checkUserAndExecute,
-        user, fetchUser, hasPermission, isSuperAdminRole
+        user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole
     };
 }
