@@ -12,7 +12,7 @@
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
           <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div class="col-span-1">
+            <div class="col-span-2 md:col-span-1">
               <v-text-field
                 v-model="filters.invoiceDate"
                 clearable
@@ -22,7 +22,7 @@
                 hide-details
               />
             </div>
-            <div class="col-span-1">
+            <div class="col-span-2 md:col-span-1">
               <v-text-field
                 v-model="filters.startDate"
                 clearable
@@ -32,7 +32,7 @@
                 hide-details
               />
             </div>
-            <div class="col-span-1">
+            <div class="col-span-2 md:col-span-1">
               <v-text-field
                 v-model="filters.endDate"
                 clearable
@@ -45,24 +45,18 @@
             <div class="col-span-2">
               <ASupplierSearch v-model="filters.supplierId" label="Supplier" hide-details />
             </div>
-            <div class="col-span-1">
-              <v-text-field
-                v-model="filters.serie"
-                clearable
+            <div class="col-span-2 md:col-span-1">
+              <v-autocomplete
+                v-model="filters.hasSupplier"
                 density="compact"
-                label="Serie"
+                :items="[
+                  { name: 'Yes', value: true },
+                  { name: 'No', value: false },
+                ]"
+                item-title="name"
+                item-value="value"
                 hide-details
-                @keyup.enter="getSupplierCfdis"
-              />
-            </div>
-            <div class="col-span-1">
-              <v-text-field
-                v-model="filters.folio"
-                clearable
-                density="compact"
-                label="Folio"
-                hide-details
-                @keyup.enter="getSupplierCfdis"
+                label="Linked to supplier"
               />
             </div>
             <div class="col-span-2">
@@ -85,23 +79,7 @@
                 @keyup.enter="getSupplierCfdis"
               />
             </div>
-            <div class="col-span-1">
-              <v-autocomplete
-                v-model="filters.hasSupplier"
-                density="compact"
-                :items="[
-                  { name: 'Yes', value: true },
-                  { name: 'No', value: false },
-                ]"
-                item-title="name"
-                item-value="value"
-                hide-details
-                label="Linked to supplier"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-4 py-4">
-            <div class="">
+            <div class="col-span-2">
               <v-autocomplete
                 v-model="filters.serviceType"
                 density="compact"
@@ -115,6 +93,9 @@
                 label="By service type"
               />
             </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 py-4">
             <div v-if="filters.serviceType" class="">
               <v-autocomplete
                 v-model="filters.serviceYear"
@@ -133,7 +114,7 @@
               />
             </div>
           </div>
-          <div class="grid grid-cols-6 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div class="col-span-2">
               <v-autocomplete
                 v-model="filters.amountProvisioned"
@@ -166,14 +147,14 @@
                 label="Tipo de comprobante"
               />
             </div>
-            <div class="">
+            <div class="col-span-2 md:col-span-1">
               <v-autocomplete
                 v-model="filters.blockedAtEntry"
                 density="compact"
                 :items="[
                   { name: 'Blocked at entry', value: true },
                   { name: 'Not blocked at entry', value: false },
-                ]"
+                ]"  
                 item-title="name"
                 item-value="value"
                 clearable
@@ -181,7 +162,7 @@
                 label="Entry status"
               />
             </div>
-            <div class="">
+            <div class="col-span-2 md:col-span-1">
               <v-autocomplete
                 v-model="filters.currencyId"
                 density="compact"
@@ -193,28 +174,47 @@
               />
             </div>
           </div>
-          <div class="grid grid-cols-12 py-4">
-            <div class="col-span-3">
-              <v-text-field
-                v-model="filters.ifolio"
-                clearable
-                density="compact"
-                label="Add folios"
-                hint="Press enter to add each folio"
-                hide-details
-                @keyup.enter="addFolio"
-              />
+            <!-- Multi-folio search (supports A-109553 or 109553 formats) -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 py-4 items-start">
+            <div class="col-span-1 md:col-span-2">
+              <div class="flex gap-2 items-start">
+                <v-textarea
+                  v-model="filters.ifolio"
+                  density="compact"
+                  label="Invoice folios"
+                  placeholder="Paste folios separated by spaces, commas, lines or semicolons. Supports A-109553 format."
+                  rows="2"
+                  auto-grow
+                  hide-details
+                  @keydown.enter.prevent.stop
+                  @keyup.enter.prevent.stop="addFolios"
+                />
+                <v-btn
+                  size="small"
+                  color="primary"
+                  variant="tonal"
+                  icon
+                  class="mt-1"
+                  @click="addFolios"
+                >
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </div>
             </div>
-            <div class="col-span-6">
-              <div v-if="filters.folios.length > 0" class="flex gap-2 px-2">Searching by folios:</div>
-              <div class="flex gap-2 px-2">
-                <v-chip v-for="(folio, index) in filters.folios" :key="`folio-${index}`" @click="removeFolio(Number(index))">
+            <div class="col-span-1 md:col-span-2">
+              <div v-if="filters.folios.length > 0" class="text-xs text-grey mb-1">Searching by folios:</div>
+              <div class="flex flex-wrap gap-2">
+                <v-chip
+                  v-for="(folio, index) in filters.folios"
+                  :key="`folio-${index}`"
+                  size="small"
+                  closable
+                  @click:close="removeFolio(Number(index))"
+                >
                   {{ folio }}
-                  <v-icon>mdi-close</v-icon>
                 </v-chip>
               </div>
             </div>
-            <div class="col-span-3"></div>
           </div>
           <div class="grid grid-cols-1">
             <div class="flex gap-2">
@@ -305,7 +305,7 @@
                             <div class="mx-auto">
                               <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                             </div>
-                            <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
+                            <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
                               <v-btn
                                 size="x-small"
                                 color="indigo"
@@ -349,7 +349,7 @@
                             <div class="mx-auto">
                               <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                             </div>
-                            <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
+                            <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
                               <v-btn
                                 size="x-small"
                                 color="indigo"
@@ -365,20 +365,27 @@
                   </div>
                   <!-- State 3: Invoice within credit days - user can process normally -->
                   <div v-else>
-                    <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
+                    <div class="flex justify-center gap-2 mb-2">
                       <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
-                      <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
-                      <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                      <template v-if="isLinkedToReqPayment(cfdi)">
+                        <v-chip size="small" color="deep-orange" variant="flat">
+                          <v-icon size="small" start>mdi-lock</v-icon>Req payment linked
+                        </v-chip>
+                      </template>
+                      <template v-else-if="hasSupplierLinked(cfdi)">
+                        <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
+                        <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                      </template>
+                      <template v-else>
+                        <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">
+                          <v-icon>mdi-sync</v-icon>
+                        </v-btn>
+                      </template>
                     </div>
-                    <div v-if="!hasSupplierLinked(cfdi)" class="flex gap-2">
-                      <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">
-                        <v-icon>mdi-sync</v-icon>
-                      </v-btn>
-                    </div>
-                    <div class="mx-auto">
+                    <div v-if="!isLinkedToReqPayment(cfdi)" class="mx-auto">
                       <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                     </div>
-                    <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
+                    <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
                       <v-btn
                         size="x-small"
                         color="indigo"
@@ -400,7 +407,18 @@
                 <td>
                   <ButtonDownloadS3Object2 :s3Path="cfdi.pdf_attachment" />
                 </td>
-                <td></td>
+                <td>
+                  <template v-for="reqPayId in getUniqueReqPayments(cfdi)" :key="reqPayId">
+                    <v-chip
+                      size="small"
+                      color="deep-orange"
+                      variant="flat"
+                      :to="`/invoices/suppliers/cfdis/request-payment/view-${reqPayId}`"
+                    >
+                      Req #{{ reqPayId }}
+                    </v-chip>
+                  </template>
+                </td>
                 <td>
                   <div v-if="cfdi.parent_deleted" class="mb-1">
                     <v-chip color="orange" size="small" variant="outlined">
@@ -500,8 +518,6 @@ const filters = ref<any>({
   startDate: '',
   endDate: '',
   supplierId: '',
-  serie: '',
-  folio: '',
   folios: [] as string[],
   ifolio: '',
   serviceType: null,
@@ -668,15 +684,19 @@ const showConfirmDelete = async (supplierCfdi: any) => {
   }
 }
 
-const addFolio = () => {
-  // check null, trim and add to folios and then unique it
-  if (filters.value.ifolio != null && filters.value.ifolio.trim() !== '') {
-    filters.value.folios.push(filters.value.ifolio.trim())
-    filters.value.folios = filters.value.folios.filter(
-      (value: any, index: any, self: any) => self.indexOf(value) === index
-    )
-    filters.value.ifolio = ''
+const addFolios = () => {
+  if (!filters.value.ifolio || filters.value.ifolio.trim() === '') return
+  // Split by spaces, commas, semicolons, pipes or line breaks
+  const raw = filters.value.ifolio.split(/[\s,;|\n]+/).map((s: string) => s.trim()).filter(Boolean)
+  for (const token of raw) {
+    // Support A-109553 format: parse as serie + folio
+    // We store as-is because backend folios filter does whereIn('folio', ...) — the serie part
+    // needs to be handled. We push the token and also a stripped-number variant so both match.
+    if (!filters.value.folios.includes(token)) {
+      filters.value.folios.push(token)
+    }
   }
+  filters.value.ifolio = ''
 }
 
 const removeFolio = (index: number) => {
@@ -685,6 +705,17 @@ const removeFolio = (index: number) => {
 
 const isTouched = (cfdi: any) => {
   return cfdi.amount_provisioned < cfdi.amount_cfdi
+}
+
+const isLinkedToReqPayment = (cfdi: any): boolean => {
+  return (cfdi.invoices || []).some((inv: any) => inv.req_pay_invoice?.supplier_req_pay != null)
+}
+
+const getUniqueReqPayments = (cfdi: any): number[] => {
+  const ids = (cfdi.invoices || [])
+    .map((inv: any) => inv.req_pay_invoice?.supplier_req_pay?.id)
+    .filter(Boolean)
+  return [...new Set(ids)]
 }
 
 const rfcReceptorNotTM = (cfdi: any) => {
@@ -719,6 +750,8 @@ const syncSupplierCfdi = async (id: number) => {
 }
 
 const onClickFilters = async () => {
+  // Process any pending folios from the textarea before searching
+  addFolios()
   // set current page to 1
   supplierCfdis.value.current_page = 1
   await getSupplierCfdis()
@@ -749,6 +782,7 @@ const getSupplierCfdis = async () => {
   }
 }
 
+
 const clearFilters = async () => {
   filters.value = {
     invoiceDate: '',
@@ -756,8 +790,6 @@ const clearFilters = async () => {
     endDate: '',
     supplierId: '',
     tipoComprobante: '',
-    serie: '',
-    folio: '',
     folios: [] as string[],
     ifolio: '',
     serviceType: null,
@@ -768,6 +800,7 @@ const clearFilters = async () => {
     currencyId: null,
     hasSupplier: null,
     amountProvisioned: null,
+    blockedAtEntry: '',
   }
   await getSupplierCfdis()
 }

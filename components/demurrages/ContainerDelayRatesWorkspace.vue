@@ -160,7 +160,7 @@
 
               <div class="flex flex-wrap gap-2">
                 <v-btn size="small" variant="outlined" prepend-icon="mdi-content-copy" @click="duplicateConfiguration(line)">
-                  Duplicate
+                  Clone
                 </v-btn>
                 <v-btn
                   size="small"

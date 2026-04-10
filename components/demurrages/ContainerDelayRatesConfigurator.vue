@@ -362,6 +362,7 @@ const containerTypes = ref<NamedCatalog[]>([])
 const lineRows = ref<RateRow[]>([])
 const periodRows = ref<RateRow[]>([])
 const suggestedRows = ref<RateRow[]>([])
+const clonedSourceRows = ref<RateRow[]>([])
 const initialDraftRows = ref<DraftRow[]>([])
 const draftRows = ref<DraftRow[]>([])
 const loading = ref(false)
@@ -480,16 +481,24 @@ async function loadEditSource() {
 async function loadDuplicateSource() {
   if (!sourceDuplicateLineId.value) return
 
-  form.line_id = sourceDuplicateLineId.value
-  await loadLineContext(sourceDuplicateLineId.value, {
-    sourcePeriodKey: sourceDuplicatePeriodKey.value,
-    sourceStartDate: sourceDuplicateStart.value,
-    sourceEndDate: sourceDuplicateEnd.value,
+  const rows = await fetchAllContainerDelayRates($api, { line_id: sourceDuplicateLineId.value })
+  const groups = buildLineGroups(rows, containerTypes.value, {
+    includeEmptyContainers: true,
+    lineId: sourceDuplicateLineId.value,
+    hideDeleted: true,
+    onDate: referenceDate.value,
   })
+  const lineGroup = groups[0]
+  const periodKey = sourceDuplicatePeriodKey.value || buildPeriodKey(sourceDuplicateStart.value, sourceDuplicateEnd.value)
+  const sourcePeriod = lineGroup?.periods.find((period) => period.key === periodKey)
+  clonedSourceRows.value = sourcePeriod?.rawRows ?? rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
+
+  form.line_id = sourceDuplicateLineId.value
 }
 
 function rebuildDraft() {
-  const rows = buildDraftRows(containerTypes.value, periodRows.value, suggestedRows.value)
+  const effectiveSuggested = clonedSourceRows.value.length ? clonedSourceRows.value : suggestedRows.value
+  const rows = buildDraftRows(containerTypes.value, periodRows.value, effectiveSuggested)
 
   if (!isEdit.value && sourceDuplicateEnd.value) {
     const nextDate = new Date(`${sourceDuplicateEnd.value}T00:00:00`)
