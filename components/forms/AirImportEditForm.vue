@@ -7,6 +7,8 @@
           <div class="flex gap-2 items-center">
             Air Import service #<ServiceNumberLabel :service="values" />
             <UserInfoBadge :item="values" />
+            <v-chip v-if="isFromTracker" size="x-small" color="red" variant="tonal">Tracker</v-chip>
+            <v-chip v-if="values.legacy_reference" size="x-small" color="blue" variant="tonal">Migrated TM1: {{ values.legacy_reference }}</v-chip>
           </div>
         </div>
       </v-card-title>

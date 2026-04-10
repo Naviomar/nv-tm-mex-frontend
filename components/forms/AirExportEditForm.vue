@@ -7,6 +7,7 @@
           <div class="flex gap-2 items-center">
             Air Export service #{{ values.reference_number }}
             <UserInfoBadge :item="values" />
+            <v-chip v-if="values.legacy_reference" size="x-small" color="blue" variant="tonal">Migrated TM1: {{ values.legacy_reference }}</v-chip>
           </div>
         </div>
       </v-card-title>

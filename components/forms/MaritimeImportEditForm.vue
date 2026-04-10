@@ -35,8 +35,9 @@
                   Sea Import information #<ServiceNumberLabel :service="values" />
                   <UserInfoBadge :item="values" />
                   <ReferenciaSourceDetails :referencia="values" />
+                  <v-chip v-if="isFromTracker" size="x-small" color="red" variant="tonal">Tracker</v-chip>
+                  <v-chip v-if="values.legacy_reference" size="x-small" color="blue" variant="tonal">Migrated TM1: {{ values.legacy_reference }}</v-chip>
                 </div>
-                <span v-if="isFromTracker" class="text-xs text-red-500"> (Tracker)</span>
               </div>
             </div>
             <div>

@@ -207,6 +207,7 @@
                   <ServiceNumberLabel :service="item" />
                 </UserInfoBadge>
                 <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <v-chip v-if="item.legacy_reference" size="x-small" color="blue" variant="tonal" class="ml-1">Migrated TM1: {{ item.legacy_reference }}</v-chip>
               </td>
               <td>
                 <v-chip size="small" color="primary">

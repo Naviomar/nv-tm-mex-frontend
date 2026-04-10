@@ -9,6 +9,7 @@
               Sea Export information #<ServiceNumberLabel :service="values" />
               <UserInfoBadge :item="values" />
               <ReferenciaClDetails :allinfo="values" :referenciaCl="values.referencia_cl" />
+              <v-chip v-if="values.legacy_reference" size="x-small" color="blue" variant="tonal">Migrated TM1: {{ values.legacy_reference }}</v-chip>
             </div>
           </div>
 
