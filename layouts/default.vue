@@ -12,10 +12,14 @@
                 class="cursor-pointer"
                 @click="goToHome"
               />
-              
               <span class="md:flex hidden ml-2 text-lg font-semibold">{{ appName }}</span>
             </div>
           </v-app-bar-title>
+
+          <!-- Tab bar centered in header -->
+          <div class="flex-1 flex justify-center px-2 overflow-hidden">
+            <SystemTabBar />
+          </div>
 
           <SwitchDarkLightMode />
 
@@ -87,6 +91,14 @@ const drawer = ref(true)
 const drawerRight = ref(false)
 const showNewMessage = ref(false)
 const showRepositionDraggable = ref(false)
+const tabsStore = useTabsStore()
+
+const hasSubTabs = computed(() => {
+  const active = tabsStore.activeTab
+  return active ? active.subTabs.length > 0 : false
+})
+
+useSystemTab()
 
 const toggleChatDrawer = () => {
   drawerRight.value = !drawerRight.value

@@ -29,6 +29,13 @@
       </v-btn>
     </div>
 
+    <!-- CC Users -->
+    <TicketCcUsers
+      v-if="ticketType === 'authorization-request' || ticketType === 'process-request'"
+      :ticket-type="ticketType"
+      :ticket-id="ticketId"
+    />
+
     <!-- Messages list -->
     <div
       ref="messagesContainer"

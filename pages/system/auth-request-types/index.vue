@@ -4,31 +4,18 @@
       <v-card-title class="d-flex align-center justify-space-between">
         <div class="d-flex align-center gap-2">
           <v-icon icon="mdi-key-variant" size="28" color="primary" />
-          <span class="text-h5">Tipos de Solicitud de Autorización</span>
+          <span class="text-h5">Authorization Request Types</span>
         </div>
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-plus"
-          @click="openCreateDialog"
-        >
-          Nuevo Tipo
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
+          New Type
         </v-btn>
       </v-card-title>
 
       <v-card-text>
-        <v-data-table
-          :headers="headers"
-          :items="types"
-          :loading="loading"
-          :items-per-page="15"
-        >
+        <v-data-table :headers="headers" :items="types" :loading="loading" :items-per-page="15">
           <template #item.kind="{ item }">
-            <v-chip
-              size="small"
-              :color="item.kind === 'authorization' ? 'blue' : 'purple'"
-              variant="tonal"
-            >
-              {{ item.kind === 'authorization' ? 'Autorización' : 'Proceso' }}
+            <v-chip size="small" :color="item.kind === 'authorization' ? 'blue' : 'purple'" variant="tonal">
+              {{ item.kind === 'authorization' ? 'Authorization' : 'Process' }}
             </v-chip>
           </template>
 
@@ -37,31 +24,30 @@
           </template>
 
           <template #item.is_active="{ item }">
-            <v-chip
-              size="small"
-              :color="item.is_active ? 'success' : 'grey'"
-              variant="tonal"
-            >
-              {{ item.is_active ? 'Activo' : 'Inactivo' }}
+            <v-chip size="small" :color="item.is_active ? 'success' : 'grey'" variant="tonal">
+              {{ item.is_active ? 'Active' : 'Inactive' }}
             </v-chip>
+          </template>
+
+          <template #item.default_cc_users="{ item }">
+            <div class="d-flex flex-wrap gap-1 py-1">
+              <v-chip
+                v-for="u in (item.default_cc_users ?? [])"
+                :key="u.id"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+              >
+                {{ u.name }}
+              </v-chip>
+              <span v-if="!(item.default_cc_users?.length)" class="text-caption text-disabled">—</span>
+            </div>
           </template>
 
           <template #item.actions="{ item }">
             <div class="d-flex gap-1">
-              <v-btn
-                icon="mdi-pencil"
-                size="small"
-                variant="text"
-                color="primary"
-                @click="openEditDialog(item)"
-              />
-              <v-btn
-                icon="mdi-delete"
-                size="small"
-                variant="text"
-                color="error"
-                @click="confirmDelete(item)"
-              />
+              <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="openEditDialog(item)" />
+              <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="confirmDelete(item)" />
             </div>
           </template>
         </v-data-table>
@@ -69,83 +55,135 @@
     </v-card>
 
     <!-- Create/Edit Dialog -->
-    <v-dialog v-model="showDialog" max-width="600">
+    <v-dialog v-model="showDialog" max-width="680" scrollable>
       <v-card>
-        <v-card-title>
-          {{ editingType ? 'Editar Tipo' : 'Nuevo Tipo' }}
+        <v-card-title class="d-flex align-center gap-2 pt-4 px-6">
+          <v-icon :icon="editingType ? 'mdi-pencil' : 'mdi-plus-circle-outline'" color="primary" />
+          {{ editingType ? 'Edit Type' : 'New Type' }}
         </v-card-title>
-        <v-card-text>
+
+        <v-divider />
+
+        <v-card-text class="px-6 py-4" style="max-height: 70vh;">
           <v-form ref="formRef">
-            <v-select
-              v-model="form.kind"
-              label="Tipo"
-              :items="kindOptions"
-              item-title="label"
-              item-value="value"
-              required
-            />
-            <v-text-field
-              v-model="form.code"
-              label="Código"
-              required
-              :rules="codeRules"
-              hint="Ej: cancel-invoice-tm o supplier-work-past-date"
-            />
-            <v-text-field
-              v-model="form.description"
-              label="Descripción"
-              required
-            />
-            <v-text-field
-              v-model="form.redirect"
-              label="Ruta de Redirección"
-              hint="Ruta del frontend (opcional)"
-            />
-            <v-text-field
-              v-if="form.kind === 'process'"
-              v-model="form.key_label"
-              label="Etiqueta de Clave"
-              hint="Etiqueta para request_key (solo para procesos)"
-            />
-            <v-text-field
-              v-model="form.icon"
-              label="Icono (Material Design)"
-              hint="Ej: mdi-cancel"
-            />
-            <v-text-field
-              v-model="form.color"
-              label="Color"
-              hint="Nombre de color Vuetify (opcional)"
-            />
-            <v-switch
-              v-model="form.is_active"
-              label="Activo"
-              color="primary"
-            />
-            <v-text-field
-              v-model.number="form.sort_order"
-              label="Orden"
-              type="number"
-            />
+            <v-row dense>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="form.kind"
+                  label="Kind"
+                  :items="kindOptions"
+                  item-title="label"
+                  item-value="value"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="form.code"
+                  label="Code"
+                  required
+                  :rules="codeRules"
+                  hint="e.g. cancel-invoice-tm"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="form.description" label="Description" required />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field v-model="form.redirect" label="Redirect Path" hint="Frontend route (optional)" />
+              </v-col>
+              <v-col v-if="form.kind === 'process'" cols="12" md="6">
+                <v-text-field v-model="form.key_label" label="Key Label" hint="Label for request_key (processes only)" />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field v-model="form.icon" label="Icon (Material Design)" hint="e.g. mdi-cancel" />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field v-model="form.color" label="Color" hint="Vuetify color name (optional)" />
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-switch v-model="form.is_active" label="Active" color="primary" />
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-text-field v-model.number="form.sort_order" label="Sort Order" type="number" />
+              </v-col>
+            </v-row>
           </v-form>
+
+          <!-- Default CC Users (only when editing an existing type) -->
+          <template v-if="editingType">
+            <v-divider class="my-4" />
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center gap-2">
+                <v-icon size="18" color="primary">mdi-account-multiple-plus-outline</v-icon>
+                <span class="text-subtitle-2 font-weight-bold">Default CC Users</span>
+              </div>
+              <span class="text-caption text-disabled">Auto-added to every new request of this type</span>
+            </div>
+
+            <!-- Current CC users -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <v-chip
+                v-for="u in ccUsers"
+                :key="u.id"
+                size="small"
+                variant="tonal"
+                color="primary"
+                closable
+                @click:close="removeCcUser(u.id)"
+              >
+                <v-icon start size="14">mdi-account-outline</v-icon>
+                {{ u.name }}
+              </v-chip>
+              <span v-if="!ccUsers.length" class="text-caption text-disabled">No default CC users configured</span>
+            </div>
+
+            <!-- User search to add -->
+            <v-autocomplete
+              v-model="selectedCcUser"
+              label="Add user to CC"
+              :items="userSearchResults"
+              :loading="searchingUsers"
+              item-title="name"
+              item-value="id"
+              :search="userSearchQuery"
+              hide-no-data
+              density="compact"
+              prepend-inner-icon="mdi-magnify"
+              placeholder="Search by name or email…"
+              return-object
+              clearable
+              @update:search="onUserSearch"
+              @update:model-value="addCcUser"
+            >
+              <template #item="{ item, props }">
+                <v-list-item v-bind="props" :title="item.raw.name" :subtitle="item.raw.email" />
+              </template>
+            </v-autocomplete>
+          </template>
         </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn variant="text" @click="closeDialog">Cancelar</v-btn>
-          <v-btn color="primary" :loading="saving" @click="save">Guardar</v-btn>
+
+        <v-divider />
+        <v-card-actions class="justify-end px-6 pb-4">
+          <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
+          <v-btn color="primary" :loading="saving" @click="save">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Delete Confirmation -->
-    <v-dialog v-model="showDeleteDialog" max-width="400">
+    <v-dialog v-model="showDeleteDialog" max-width="420">
       <v-card>
-        <v-card-title>Confirmar Eliminación</v-card-title>
-        <v-card-text>
-          ¿Estás seguro de eliminar el tipo "{{ deletingType?.description }}"?
+        <v-card-title class="d-flex align-center gap-2 pt-4 px-6">
+          <v-icon color="error">mdi-alert-circle-outline</v-icon>
+          Confirm Delete
+        </v-card-title>
+        <v-card-text class="px-6">
+          Are you sure you want to delete the type <strong>"{{ deletingType?.description }}"</strong>?
         </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn variant="text" @click="showDeleteDialog = false">Cancelar</v-btn>
-          <v-btn color="error" :loading="deleting" @click="deleteType">Eliminar</v-btn>
+        <v-card-actions class="justify-end px-6 pb-4">
+          <v-btn variant="text" @click="showDeleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" :loading="deleting" @click="deleteType">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -153,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IAuthRequestType } from '~/repository/modules/catalogs/authRequestTypes'
+import type { IAuthRequestType, IDefaultCcUser } from '~/repository/modules/catalogs/authRequestTypes'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -173,18 +211,26 @@ const saving = ref(false)
 const deleting = ref(false)
 const formRef = ref()
 
+// Default CC users state
+const ccUsers = ref<IDefaultCcUser[]>([])
+const userSearchQuery = ref('')
+const userSearchResults = ref<IDefaultCcUser[]>([])
+const searchingUsers = ref(false)
+const selectedCcUser = ref<IDefaultCcUser | null>(null)
+
 const kindOptions = [
-  { label: 'Autorización (AuthorizationRequest)', value: 'authorization' },
-  { label: 'Proceso (ProcessRequest)', value: 'process' },
+  { label: 'Authorization (AuthorizationRequest)', value: 'authorization' },
+  { label: 'Process (ProcessRequest)', value: 'process' },
 ]
 
 const headers = [
-  { title: 'Tipo', key: 'kind' },
-  { title: 'Código', key: 'code' },
-  { title: 'Descripción', key: 'description' },
-  { title: 'Estado', key: 'is_active' },
-  { title: 'Orden', key: 'sort_order' },
-  { title: 'Acciones', key: 'actions', sortable: false },
+  { title: 'Kind', key: 'kind' },
+  { title: 'Code', key: 'code' },
+  { title: 'Description', key: 'description' },
+  { title: 'Status', key: 'is_active' },
+  { title: 'Order', key: 'sort_order' },
+  { title: 'Default CC', key: 'default_cc_users', sortable: false },
+  { title: 'Actions', key: 'actions', sortable: false },
 ]
 
 const form = ref({
@@ -199,14 +245,14 @@ const form = ref({
   sort_order: 0,
 })
 
-const codeRules = [(v: string) => !!v || 'Código requerido']
+const codeRules = [(v: string) => !!v || 'Code is required']
 
 const loadTypes = async () => {
   loading.value = true
   try {
     types.value = (await $api.authRequestTypes.getTypes()) as any
-  } catch (e) {
-    snackbar.add({ type: 'error', text: 'Error al cargar tipos' })
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error loading types' })
   } finally {
     loading.value = false
   }
@@ -214,47 +260,41 @@ const loadTypes = async () => {
 
 const openCreateDialog = () => {
   editingType.value = null
-  form.value = {
-    kind: 'authorization',
-    code: '',
-    description: '',
-    redirect: '',
-    key_label: '',
-    icon: '',
-    color: '',
-    is_active: true,
-    sort_order: 0,
-  }
+  ccUsers.value = []
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, sort_order: 0 }
   showDialog.value = true
 }
 
-const openEditDialog = (type: IAuthRequestType) => {
+const openEditDialog = async (type: IAuthRequestType) => {
   editingType.value = type
-  form.value = { ...type }
+  form.value = { ...type } as any
+  ccUsers.value = type.default_cc_users ?? []
   showDialog.value = true
 }
 
 const closeDialog = () => {
   showDialog.value = false
   editingType.value = null
+  ccUsers.value = []
+  userSearchQuery.value = ''
+  userSearchResults.value = []
 }
 
 const save = async () => {
   if (!formRef.value?.validate()) return
-
   saving.value = true
   try {
     if (editingType.value) {
       await $api.authRequestTypes.updateType(editingType.value.id, form.value)
-      snackbar.add({ type: 'success', text: 'Tipo actualizado' })
+      snackbar.add({ type: 'success', text: 'Type updated' })
     } else {
       await $api.authRequestTypes.createType(form.value)
-      snackbar.add({ type: 'success', text: 'Tipo creado' })
+      snackbar.add({ type: 'success', text: 'Type created' })
     }
     closeDialog()
     await loadTypes()
-  } catch (e) {
-    snackbar.add({ type: 'error', text: 'Error al guardar' })
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error saving type' })
   } finally {
     saving.value = false
   }
@@ -267,21 +307,62 @@ const confirmDelete = (type: IAuthRequestType) => {
 
 const deleteType = async () => {
   if (!deletingType.value) return
-
   deleting.value = true
   try {
     await $api.authRequestTypes.deleteType(deletingType.value.id)
-    snackbar.add({ type: 'success', text: 'Tipo eliminado' })
+    snackbar.add({ type: 'success', text: 'Type deleted' })
     showDeleteDialog.value = false
     await loadTypes()
-  } catch (e) {
-    snackbar.add({ type: 'error', text: 'Error al eliminar' })
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error deleting type' })
   } finally {
     deleting.value = false
   }
 }
 
-onMounted(() => {
-  loadTypes()
-})
+// ── Default CC Users ─────────────────────────────────────────────────
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+const onUserSearch = (q: string) => {
+  userSearchQuery.value = q
+  if (!q || q.length < 2) { userSearchResults.value = []; return }
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(async () => {
+    searchingUsers.value = true
+    try {
+      userSearchResults.value = await $api.requestCcUsers.searchAvailableUsers(q)
+    } finally {
+      searchingUsers.value = false
+    }
+  }, 300)
+}
+
+const addCcUser = async (user: IDefaultCcUser | null) => {
+  if (!user || !editingType.value) return
+  if (ccUsers.value.some(u => u.id === user.id)) { selectedCcUser.value = null; return }
+  try {
+    ccUsers.value = await $api.authRequestTypes.addDefaultCcUser(editingType.value.id, user.id)
+    // Refresh the table row too
+    const idx = types.value.findIndex(t => t.id === editingType.value!.id)
+    if (idx >= 0) types.value[idx].default_cc_users = [...ccUsers.value]
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error adding CC user' })
+  } finally {
+    selectedCcUser.value = null
+    userSearchQuery.value = ''
+  }
+}
+
+const removeCcUser = async (userId: number) => {
+  if (!editingType.value) return
+  try {
+    ccUsers.value = await $api.authRequestTypes.removeDefaultCcUser(editingType.value.id, userId)
+    const idx = types.value.findIndex(t => t.id === editingType.value!.id)
+    if (idx >= 0) types.value[idx].default_cc_users = [...ccUsers.value]
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error removing CC user' })
+  }
+}
+
+onMounted(() => loadTypes())
 </script>
