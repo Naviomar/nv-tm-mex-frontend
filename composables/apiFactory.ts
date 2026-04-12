@@ -90,6 +90,7 @@ import SystemLogsModule from '~/repository/modules/systemLogs'
 import StatisticsModule from '~/repository/modules/statistics'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
+import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 
 interface IApiInstance {
   audit: AuditModule
@@ -182,6 +183,7 @@ interface IApiInstance {
   systemLogs: SystemLogsModule
   statistics: StatisticsModule
   ticketMessages: TicketMessagesModule
+  requestCcUsers: RequestCcUsersModule
 }
 
 export function useApiFactory() {
@@ -279,6 +281,7 @@ export function useApiFactory() {
     statistics: new StatisticsModule(client),
     ticketMessages: new TicketMessagesModule(client),
     authRequestTypes: new AuthRequestTypesModule(client),
+    requestCcUsers: new RequestCcUsersModule(client),
   }
 
   return modules

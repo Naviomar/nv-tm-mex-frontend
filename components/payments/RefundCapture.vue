@@ -81,6 +81,7 @@
             </tr>
           </thead>
           <tbody>
+            <v-alert v-if="servicePaymentsByCurrency.length<1" color="error" variant="tonal" density="compact">You may validate currency</v-alert>
             <tr v-for="(servicePayment, i) in servicePaymentsByCurrency" :key="`serv-pay-${i}`">
               <td>
                 <v-checkbox
@@ -356,6 +357,7 @@ const searchFreeFormatPayments = async () => {
       beneficiary_id: form.value.beneficiaryId,
     }
     const response: any = await $api.refunds.searchByServices(body)
+    console.log("response:",response)
     if (response.length <= 0) {
       snackbar.add({ type: 'info', text: 'No Free Format payments found for this beneficiary' })
     }

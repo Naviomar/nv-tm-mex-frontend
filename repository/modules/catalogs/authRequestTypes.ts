@@ -1,6 +1,12 @@
 import { type FetchOptions } from 'ofetch'
 import FetchFactory from '../../factory'
 
+export interface IDefaultCcUser {
+  id: number
+  name: string
+  email: string
+}
+
 export interface IAuthRequestType {
   id: number
   kind: 'authorization' | 'process'
@@ -12,6 +18,7 @@ export interface IAuthRequestType {
   color: string | null
   is_active: boolean
   sort_order: number
+  default_cc_users?: IDefaultCcUser[]
   created_at: string
   updated_at: string
 }
@@ -44,6 +51,18 @@ class AuthRequestTypesModule extends FetchFactory<IAuthRequestType[]> {
 
   async deleteType(id: number, fetchOptions?: FetchOptions) {
     return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
+  }
+
+  async getDefaultCcUsers(id: number): Promise<IDefaultCcUser[]> {
+    return this.call('GET', `${this.RESOURCE}/${id}/default-cc-users`)
+  }
+
+  async addDefaultCcUser(id: number, userId: number): Promise<IDefaultCcUser[]> {
+    return this.call('POST', `${this.RESOURCE}/${id}/default-cc-users`, { body: { user_id: userId } })
+  }
+
+  async removeDefaultCcUser(id: number, userId: number): Promise<IDefaultCcUser[]> {
+    return this.call('DELETE', `${this.RESOURCE}/${id}/default-cc-users/${userId}`)
   }
 }
 
