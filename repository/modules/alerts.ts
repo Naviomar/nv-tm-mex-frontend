@@ -10,10 +10,20 @@ export interface IAlert {
   icon: string | null
   color: string | null
   category: string | null
+  category_code: string | null
+  alert_type_code: string | null
   action_url: string | null
   data: Record<string, any> | null
   read_at: string | null
   created_at: string
+}
+
+export interface IAlertCategorySummary {
+  id: number
+  name: string
+  code: string
+  icon: string | null
+  color: string | null
 }
 
 export interface IAlertsResponse {
@@ -67,8 +77,22 @@ class AlertsModule extends FetchFactory<IAlertsResponse> {
     return this.call('GET', `${this.RESOURCE}?limit=${limit}`, fetchOptions)
   }
 
-  async getAllAlerts(page: number = 1, perPage: number = 20, fetchOptions?: FetchOptions) {
-    return this.call('GET', `${this.RESOURCE}/all?page=${page}&per_page=${perPage}`, fetchOptions)
+  async getAllAlerts(
+    page: number = 1,
+    perPage: number = 20,
+    filters?: { category?: string; severity?: string; search?: string; read_status?: string },
+    fetchOptions?: FetchOptions,
+  ) {
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+    if (filters?.category) params.set('category', filters.category)
+    if (filters?.severity) params.set('severity', filters.severity)
+    if (filters?.search) params.set('search', filters.search)
+    if (filters?.read_status) params.set('read_status', filters.read_status)
+    return this.call('GET', `${this.RESOURCE}/all?${params.toString()}`, fetchOptions)
+  }
+
+  async getUserCategories(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/categories`, fetchOptions)
   }
 
   async getUnreadCount(fetchOptions?: FetchOptions) {

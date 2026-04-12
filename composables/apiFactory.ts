@@ -88,11 +88,15 @@ import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
 import StatisticsModule from '~/repository/modules/statistics'
+import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
+import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
+import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 
 interface IApiInstance {
   audit: AuditModule
   dashboard: DashboardModule
   reports: ReportsModule
+  authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
   shippers: ShippersModule
@@ -178,6 +182,8 @@ interface IApiInstance {
   legacy: LegacyModule
   systemLogs: SystemLogsModule
   statistics: StatisticsModule
+  ticketMessages: TicketMessagesModule
+  requestCcUsers: RequestCcUsersModule
 }
 
 export function useApiFactory() {
@@ -273,6 +279,9 @@ export function useApiFactory() {
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
     statistics: new StatisticsModule(client),
+    ticketMessages: new TicketMessagesModule(client),
+    authRequestTypes: new AuthRequestTypesModule(client),
+    requestCcUsers: new RequestCcUsersModule(client),
   }
 
   return modules

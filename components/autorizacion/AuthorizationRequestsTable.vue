@@ -67,7 +67,7 @@
         <thead>
           <tr>
             <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Actions</th>
+            <th class="text-left" width="50">Chat</th>
             <th class="text-left">Requested by</th>
             <th class="text-left">Resource</th>
             <th class="text-left">Comments</th>
@@ -89,18 +89,14 @@
             :class="{
               'dark:hover:bg-gray-700! hover:bg-slate-300!': true,
               'bg-red-100! dark:bg-red-900!': authRequest.deleted_at,
+              'bg-green-50! dark:bg-green-950!': !authRequest.deleted_at && isPendingToGrant(authRequest),
             }"
           >
+            <td>{{ authRequest.id }}</td>
             <td>
-              {{ authRequest.id }}
-            </td>
-            <td>
-              <div v-if="isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="primary" size="small" @click="showFormGrant(authRequest)"> Respond </v-btn>
-              </div>
-              <div v-if="!isPendingToGrant(authRequest) && !authRequest.deleted_at">
-                <v-btn color="red" size="small" @click="showFormCancel(authRequest)"> Delete </v-btn>
-              </div>
+              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                <v-icon>mdi-message-text-outline</v-icon>
+              </v-btn>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
             <td class="whitespace-nowrap">
@@ -162,7 +158,7 @@
         @update:model-value="onClickPagination"
       ></v-pagination>
 
-      <v-dialog v-model="showGrantDialog" max-width="500" persistent>
+      <v-dialog v-model="showGrantDialog" max-width="560" persistent>
         <v-card>
           <v-card-title>Grant authorization</v-card-title>
           <v-card-text>
@@ -190,11 +186,77 @@
               label="Until date granted"
             />
             <v-textarea v-model="form.authorized_reason" label="Comments" />
+
+            <!-- Temporary permission (opt-in, only when granting) -->
+            <template v-if="form.is_authorized == 1">
+              <v-divider class="my-3" />
+              <div class="d-flex align-center mb-2">
+                <v-switch
+                  v-model="form.temp_permission_enabled"
+                  hide-details
+                  density="compact"
+                  color="warning"
+                  class="mr-2"
+                />
+                <div>
+                  <div class="text-body-2 font-weight-medium">Temporary permission</div>
+                  <div class="text-caption text-medium-emphasis">Allow user to repeat this action on multiple entities without new requests</div>
+                </div>
+              </div>
+              <template v-if="form.temp_permission_enabled">
+                <div class="grid grid-cols-2 gap-3">
+                  <v-text-field
+                    v-model="form.temp_valid_from"
+                    type="datetime-local"
+                    label="Valid from"
+                    density="compact"
+                  />
+                  <v-text-field
+                    v-model="form.temp_valid_until"
+                    type="datetime-local"
+                    label="Valid until"
+                    density="compact"
+                  />
+                </div>
+              </template>
+            </template>
           </v-card-text>
           <v-card-actions>
             <div class="grow"></div>
             <v-btn color="error" @click="closeGrantDialog">Cancel</v-btn>
             <v-btn color="success" @click="preGrantAuth">Save response</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Ticket Chat Dialog -->
+      <v-dialog v-model="showChatDrawer" max-width="640">
+        <v-card v-if="activeChatTicket" flat style="display:flex;flex-direction:column;height:660px;overflow:hidden">
+          <div style="flex:1;min-height:0;overflow:hidden">
+            <TicketChatPanel
+              ticket-type="authorization-request"
+              :ticket-id="activeChatTicket.id"
+              panel-height="100%"
+              :can-manage="true"
+              @close="showChatDrawer = false"
+            />
+          </div>
+          <v-divider />
+          <v-card-actions v-if="!activeChatTicket.deleted_at" class="px-4 py-2">
+            <span class="text-caption text-medium-emphasis">
+              #{{ activeChatTicket.id }} &mdash; {{ getResourceName(activeChatTicket.resource) }}
+            </span>
+            <v-spacer />
+            <v-btn
+              v-if="isPendingToGrant(activeChatTicket)"
+              color="primary" variant="flat" size="small"
+              @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
+            >Respond</v-btn>
+            <v-btn
+              v-else
+              color="error" variant="tonal" size="small"
+              @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
+            >Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -230,7 +292,7 @@ const resourceTypeItems = Object.values(authorizeResources)
 const filters = ref({
   id: null,
   search: '',
-  deleted_status: null,
+  deleted_status: 'active',
   requestedBy: null,
   resource: null,
   resourceId: '',
@@ -250,7 +312,18 @@ const form = ref<any>({
   until_date: null,
   is_authorized: null,
   authorized_reason: '',
+  temp_permission_enabled: false,
+  temp_valid_from: null,
+  temp_valid_until: null,
 })
+
+const showChatDrawer = ref(false)
+const activeChatTicket = ref<any>(null)
+
+const openChat = (authRequest: any) => {
+  activeChatTicket.value = authRequest
+  showChatDrawer.value = true
+}
 
 const authRequests = ref<any>({
   data: [] as any,
@@ -280,6 +353,14 @@ const onClickPagination = async (page: number) => {
 
 const isPendingToGrant = (authRequest: any) => {
   return authRequest.is_authorized == null
+}
+
+const priorityColor = (priority: string) => {
+  return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
+}
+
+const ticketStatusColor = (status: string) => {
+  return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
 
 const getResourceName = (resource: string) => {
@@ -319,6 +400,9 @@ const grantAuthorization = async () => {
       is_authorized: form.value.is_authorized,
       until_date: form.value.until_date,
       authorized_reason: form.value.authorized_reason,
+      temp_permission_enabled: form.value.temp_permission_enabled ?? false,
+      temp_valid_from: form.value.temp_valid_from ?? null,
+      temp_valid_until: form.value.temp_valid_until ?? null,
     }
     await $api.authRequests.respondRequest(form.value.auth_request.id, body)
 
@@ -360,6 +444,9 @@ const closeGrantDialog = () => {
     until_date: null,
     is_authorized: null,
     authorized_reason: '',
+    temp_permission_enabled: false,
+    temp_valid_from: null,
+    temp_valid_until: null,
   }
 }
 
@@ -411,7 +498,7 @@ const clearFilters = async () => {
   filters.value = {
     id: null,
     search: '',
-    deleted_status: null,
+    deleted_status: 'active',
     requestedBy: null,
     resource: null,
     resourceId: '',
