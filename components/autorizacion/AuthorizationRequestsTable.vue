@@ -70,7 +70,18 @@
             <th class="text-left" width="50">Chat</th>
             <th class="text-left">Requested by</th>
             <th class="text-left">Resource</th>
-            <th class="text-left">Comments</th>
+            <th class="text-left">
+              <div class="d-flex align-center gap-1">
+                Comments
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  :icon="allExpanded ? 'mdi-arrow-collapse-vertical' : 'mdi-arrow-expand-vertical'"
+                  :title="allExpanded ? 'Collapse all' : 'Expand all'"
+                  @click="toggleAll"
+                />
+              </div>
+            </th>
             <th class="text-left">Attachment(s)</th>
             <th v-show="false" class="text-left">Resource</th>
             <th v-show="false" class="text-left">Resource ID</th>
@@ -102,7 +113,28 @@
             <td class="whitespace-nowrap">
               {{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}
             </td>
-            <td>{{ authRequest.request_reason }}</td>
+            <td style="max-width: 280px;">
+              <div v-if="authRequest.request_reason">
+                <div
+                  class="comment-text text-body-2"
+                  :class="{ 'comment-collapsed': !isExpanded(authRequest.id) }"
+                >{{ authRequest.request_reason }}</div>
+                <button
+                  v-if="authRequest.request_reason.length > 80"
+                  class="comment-toggle-btn text-caption"
+                  :class="isExpanded(authRequest.id) ? 'text-grey-darken-1' : 'text-primary'"
+                  @click.stop="toggleComment(authRequest.id)"
+                >
+                  <span v-if="!isExpanded(authRequest.id)">
+                    <v-icon size="12">mdi-chevron-down</v-icon> Show more
+                  </span>
+                  <span v-else>
+                    <v-icon size="12">mdi-chevron-up</v-icon> Show less
+                  </span>
+                </button>
+              </div>
+              <span v-else class="text-caption text-grey">—</span>
+            </td>
             <td>
               <div v-if="authRequest.files.length <= 0">
                 <v-chip size="small" color="warning">No attachments</v-chip>
@@ -231,16 +263,14 @@
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
-        <v-card v-if="activeChatTicket" flat style="display:flex;flex-direction:column;height:660px;overflow:hidden">
-          <div style="flex:1;min-height:0;overflow:hidden">
-            <TicketChatPanel
-              ticket-type="authorization-request"
-              :ticket-id="activeChatTicket.id"
-              panel-height="100%"
-              :can-manage="true"
-              @close="showChatDrawer = false"
-            />
-          </div>
+        <v-card v-if="activeChatTicket" flat style="border-radius:12px;overflow:hidden">
+          <TicketChatPanel
+            ticket-type="authorization-request"
+            :ticket-id="activeChatTicket.id"
+            :can-manage="true"
+            height="580px"
+            @close="showChatDrawer = false"
+          />
           <v-divider />
           <v-card-actions v-if="!activeChatTicket.deleted_at" class="px-4 py-2">
             <span class="text-caption text-medium-emphasis">
@@ -511,4 +541,71 @@ onMounted(async () => {
   await getAuthRequests()
   await getAuthReqCatalogs()
 })
+
+// ── Collapsible Comments ──────────────────────────────────────────────────
+
+const expandedComments = ref<Set<number>>(new Set())
+
+const isExpanded = (id: number) => expandedComments.value.has(id)
+
+const toggleComment = (id: number) => {
+  const s = new Set(expandedComments.value)
+  if (s.has(id)) {
+    s.delete(id)
+  } else {
+    s.add(id)
+  }
+  expandedComments.value = s
+}
+
+const allExpanded = computed(() => {
+  const ids = (authRequests.value.data as any[])
+    .filter((r: any) => r.request_reason?.length > 80)
+    .map((r: any) => r.id)
+  return ids.length > 0 && ids.every((id: number) => expandedComments.value.has(id))
+})
+
+const toggleAll = () => {
+  const ids = (authRequests.value.data as any[])
+    .filter((r: any) => r.request_reason?.length > 80)
+    .map((r: any) => r.id)
+  if (allExpanded.value) {
+    expandedComments.value = new Set()
+  } else {
+    expandedComments.value = new Set(ids)
+  }
+}
 </script>
+
+<style scoped>
+.comment-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.comment-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.comment-toggle-btn {
+  background: none;
+  border: none;
+  padding: 2px 0 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.comment-toggle-btn:hover {
+  opacity: 0.75;
+}
+</style>

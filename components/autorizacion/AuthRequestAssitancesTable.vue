@@ -158,16 +158,14 @@
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
-        <v-card v-if="activeChatTicket" flat style="display:flex;flex-direction:column;height:660px;overflow:hidden">
-          <div style="flex:1;min-height:0;overflow:hidden">
-            <TicketChatPanel
-              ticket-type="support-assistance"
-              :ticket-id="activeChatTicket.id"
-              panel-height="100%"
-              :can-manage="true"
-              @close="showChatDrawer = false"
-            />
-          </div>
+        <v-card v-if="activeChatTicket" flat style="border-radius:12px;overflow:hidden">
+          <TicketChatPanel
+            ticket-type="support-assistance"
+            :ticket-id="activeChatTicket.id"
+            :can-manage="true"
+            height="580px"
+            @close="showChatDrawer = false"
+          />
           <v-divider />
           <v-card-actions v-if="!activeChatTicket.deleted_at" class="px-4 py-2">
             <span class="text-caption text-medium-emphasis">
