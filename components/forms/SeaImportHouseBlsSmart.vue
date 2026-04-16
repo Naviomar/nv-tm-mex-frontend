@@ -396,6 +396,7 @@ const removeHouseBl = (houseBl: any, index: number) => {
 const editHouseBl = (houseBl: any, index: number) => {
   setValues({
     ...houseBl,
+    can_be_delivered: houseBl.can_be_delivered != null ? Number(houseBl.can_be_delivered) : null,
     attachment: null,
   })
   toggleForm()

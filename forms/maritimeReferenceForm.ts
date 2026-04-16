@@ -132,7 +132,7 @@ const schemaMasterBl = toTypedSchema(
     referencia_id: yup.string().nullable(),
     name: yup.string().required('Master BL number is required'),
     consignee_mbl_id: yup.number().nullable().required('Consignee MBL is required. Please select a consignee from the list.').typeError('Consignee MBL is required'),
-    can_be_delivered: yup.string().nullable(),
+    can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
     type: yup.string().nullable(),
     attachment: yup
@@ -171,7 +171,7 @@ const schemaHouseBl = toTypedSchema(
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
     name: yup.string().required('House BL number is required'),
-    can_be_delivered: yup.string().nullable(),
+    can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
     consignee: yup.lazy(value => {
       if (typeof value === 'number') {
