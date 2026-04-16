@@ -153,10 +153,6 @@ const schemaExportMasterBl = toTypedSchema(
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
     name: yup.string().required('Master BL number is required'),
-    consignee_mbl_id: yup.number().nullable(),
-    can_be_delivered: yup.number().nullable(),
-    comments: yup.string().nullable(),
-    type: yup.string().nullable(),
     attachment: yup
       .mixed()
       .nullable()

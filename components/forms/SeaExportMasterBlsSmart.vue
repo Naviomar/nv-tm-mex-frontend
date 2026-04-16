@@ -21,37 +21,7 @@
             <InputText name="name" density="compact" variant="solo-filled" label="Master BL # *" />
           </div>
           <div class="">
-            <InputAutocomplete
-              name="type"
-              density="compact"
-              label="Type"
-              :items="blTypes"
-              item-title="name"
-              variant="solo-filled"
-              @update:model-value="updateCanBeDelivered"
-            />
-          </div>
-          <div class="">
-            <InputSwitch
-              name="can_be_delivered"
-              density="compact"
-              label="Can be delivered?"
-              variant="solo-filled"
-              hide-details
-            />
-          </div>
-          <div class="">
             <InputFile name="attachment" density="compact" label="File" variant="solo-filled" />
-          </div>
-          <div class="col-span-2">
-            <InputTextArea
-              name="comments"
-              density="compact"
-              label="Comments"
-              variant="solo-filled"
-              :rows="2"
-              hide-details
-            />
           </div>
           <div>
             <v-btn density="compact" variant="outlined" color="red" @click="cancel"><v-icon>mdi-close</v-icon></v-btn>
@@ -63,9 +33,7 @@
           <thead>
             <tr>
               <th class="text-left" width="20"></th>
-              <th class="text-left" width="20"></th>
               <th class="text-left">Master BL #</th>
-              <th class="text-left">Type</th>
               <th class="text-left">Attachment</th>
             </tr>
           </thead>
@@ -77,26 +45,7 @@
                   <TrashButton :item="item" @click="removeMasterBl(item, index)" />
                 </div>
               </td>
-              <td>
-                <div class="flex gap-2">
-                  <v-btn
-                    v-if="item.can_be_delivered != null"
-                    size="x-small"
-                    color="amber"
-                    variant="outlined"
-                    :icon="getDeliveredIcon(item)"
-                  ></v-btn>
-                  <v-tooltip location="top">
-                    <template v-slot:activator="{ props }">
-                      <v-btn v-bind="props" size="x-small" color="blue" variant="outlined" icon="mdi-comment-outline">
-                      </v-btn>
-                    </template>
-                    {{ item.comments || 'No comments' }}
-                  </v-tooltip>
-                </div>
-              </td>
               <td>{{ item.name }}</td>
-              <td>{{ item.type }}</td>
               <td>
                 <div v-if="item.id">
                   <ButtonDownloadS3Object :s3Path="item.attachment" />
@@ -135,7 +84,6 @@ const { handleSubmit, values, setValues, resetForm } = useForm({
   validationSchema: schemaExportMasterBl,
 })
 
-const blTypes = [{ name: 'Sea waybill' }, { name: 'TLX Release' }, { name: 'Original' }]
 const showForm = ref(false)
 const masterBls = ref<any[]>([])
 
@@ -176,27 +124,12 @@ const cancel = () => {
   showForm.value = false
 }
 
-const getDeliveredIcon = (item: any) => {
-  return item.can_be_delivered === 1 ? 'mdi-check' : 'mdi-close'
-}
-
-const updateCanBeDelivered = (value: any) => {
-  const canBeDelivered = value === 'Sea waybill' || value === 'TLX Release' ? 1 : 0
-  setValues({
-    ...values,
-    can_be_delivered: canBeDelivered,
-  })
-}
-
 const clearValues = () => {
   resetForm({
     values: {
       id: null,
       referencia_id: null,
       name: '',
-      can_be_delivered: null,
-      comments: null,
-      type: null,
       attachment: null,
     },
   })
@@ -246,7 +179,6 @@ const updateReferenciaMasterBl = async () => {
 const editMasterBl = (masterBl: any, index: number) => {
   setValues({
     ...masterBl,
-    can_be_delivered: masterBl.can_be_delivered != null ? Number(masterBl.can_be_delivered) : null,
     attachment: null,
   })
   toggleForm()
