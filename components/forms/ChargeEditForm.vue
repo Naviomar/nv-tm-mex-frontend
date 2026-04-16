@@ -164,7 +164,11 @@
               <div>Invoice similar name(s)</div>
               <div class="flex items-center gap-2">
                 <!-- Authorization status indicator -->
-                <div v-if="authState.loading" class="text-xs text-gray-500">
+                <div v-if="isSuperAdmin" class="flex items-center gap-1">
+                  <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span class="text-xs text-purple-600">Super Admin</span>
+                </div>
+                <div v-else-if="authState.loading" class="text-xs text-gray-500">
                   Checking...
                 </div>
                 <div v-else-if="authState.authorized" class="flex items-center gap-1">
@@ -183,7 +187,7 @@
                 <button
                   type="button"
                   @click="toggleCfdiForm"
-                  :disabled="!authState.authorized && !authState.pending"
+                  :disabled="!isSuperAdmin && !authState.authorized && !authState.pending"
                   class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
@@ -193,7 +197,7 @@
           </v-card-title>
           <v-card-text>
             <!-- Authorization message -->
-            <div v-if="!authState.authorized && !authState.pending && !authState.loading" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div v-if="!isSuperAdmin && !authState.authorized && !authState.pending && !authState.loading" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <div class="text-sm text-yellow-800">
                 <strong>Authorization Required:</strong> You need to request authorization to add similar invoice names.
               </div>
@@ -240,6 +244,7 @@
                 <tr>
                   <th class="text-left w-24">Actions</th>
                   <th class="text-left">Name</th>
+                  <th class="text-left w-32">Registered by</th>
                 </tr>
               </thead>
               <tbody>
@@ -256,6 +261,12 @@
                     </div>
                   </td>
                   <td>{{ item.name }}</td>
+                  <td>
+                    <span v-if="item.creator" class="text-caption text-grey-darken-1">
+                      {{ item.creator.name }}
+                    </span>
+                    <span v-else class="text-caption text-grey-lighten-1">—</span>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -310,6 +321,7 @@ const route = useRoute()
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const user = useSanctumUser<any>()
 
 const props = defineProps({
   id: {
@@ -332,6 +344,11 @@ const authState = ref({
   loading: false,
 })
 
+// Check if current user is Super Admin - Super Admins bypass all authorization
+const isSuperAdmin = computed(() => {
+  return user.value?.roles?.some((role: any) => role.name === 'Super Admin') || false
+})
+
 const showAuthDialog = ref(false)
 const authReason = ref('')
 
@@ -343,6 +360,17 @@ const toggleCfdiForm = () => {
 const checkAuthorization = async () => {
   try {
     authState.value.loading = true
+    
+    // Super Admin bypass - always authorized
+    if (isSuperAdmin.value) {
+      authState.value.authorized = true
+      authState.value.pending = false
+      authState.value.authorization = null
+      authState.value.pendingRequest = null
+      authState.value.loading = false
+      return
+    }
+    
     const response = await $api.charges.checkSimilarNamesAuth(props.id)
     authState.value.authorized = response.authorized
     authState.value.pending = !!response.pending_request
@@ -415,8 +443,8 @@ const saveCfdiName = async () => {
   try {
     loadingStore.start()
     
-    // Check authorization first
-    if (!authState.value.authorized) {
+    // Check authorization first (Super Admins bypass this)
+    if (!isSuperAdmin.value && !authState.value.authorized) {
       if (authState.value.pending) {
         snackbar.add({ 
           type: 'warning', 

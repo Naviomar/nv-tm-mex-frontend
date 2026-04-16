@@ -111,6 +111,10 @@
                   <v-icon size="small" class="mr-1">mdi-tune</v-icon>
                   Options
                 </th>
+                <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="180">
+                  <v-icon size="small" class="mr-1">mdi-text-box-multiple</v-icon>
+                  Similar Names
+                </th>
                 <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="160">
                   <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
                   Created
@@ -252,6 +256,33 @@
                       In Use
                     </v-chip>
                   </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div v-if="charge.cfdi_names?.length" class="d-flex flex-column gap-1">
+                    <v-chip
+                      v-for="(cfdiName, index) in charge.cfdi_names.slice(0, 3)"
+                      :key="`cfdi-name-${index}`"
+                      color="indigo"
+                      size="x-small"
+                      variant="flat"
+                      density="compact"
+                      class="similar-name-chip"
+                    >
+                      <v-icon start size="12">mdi-text-box</v-icon>
+                      {{ cfdiName.name }}
+                    </v-chip>
+                    <v-chip
+                      v-if="charge.cfdi_names.length > 3"
+                      color="grey"
+                      size="x-small"
+                      variant="outlined"
+                      density="compact"
+                      class="more-chip"
+                    >
+                      +{{ charge.cfdi_names.length - 3 }} more
+                    </v-chip>
+                  </div>
+                  <span v-else class="text-grey-lighten-1 text-caption dark:text-grey-darken-1">—</span>
                 </td>
                 <td class="py-3 px-4">
                   <div class="d-flex flex-column">
@@ -573,6 +604,16 @@ onMounted(async () => {
 
 .in-use-chip {
   min-height: 24px !important;
+}
+
+.similar-name-chip {
+  min-height: 24px !important;
+  max-width: 160px;
+}
+
+.more-chip {
+  min-height: 20px !important;
+  font-size: 0.7rem !important;
 }
 
 /* Filters responsive grid */
