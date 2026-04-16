@@ -324,6 +324,7 @@ const editMasterBl = (masterBl: any, index: number) => {
   setValues({
     ...masterBl,
     consignee_mbl_id: Number(masterBl.consignee_mbl_id),
+    can_be_delivered: masterBl.can_be_delivered != null ? Number(masterBl.can_be_delivered) : null,
     attachment: null,
   })
   toggleForm()
