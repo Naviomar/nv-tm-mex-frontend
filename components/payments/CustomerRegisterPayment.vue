@@ -38,6 +38,7 @@
                     <v-radio label="Customer" value="customer" />
                     <v-radio label="Customs Agent" value="custom_agent" />
                     <v-radio label="Beneficiary" value="beneficiary" />
+                    <v-radio label="Refound" value="refound" />
                   </v-radio-group>
                 </div>
                 <div v-if="freeFormatOwner.type === 'customer'" class="mb-4">

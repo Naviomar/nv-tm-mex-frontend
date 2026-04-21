@@ -25,29 +25,30 @@
         </v-alert>
         <div class="mb-4">
           <v-autocomplete
-            v-model="form.beneficiary_type"
+            v-model="form.searchBeneficiaryType"
             :items="[
               { value: 'customer', name: 'Customer' },
               { value: 'custom_agent', name: 'Customs agent' },
               { value: 'beneficiary', name: 'Beneficiary' },
+              { value: 'refound', name: 'Refound' },
             ]"
             item-title="name"
             item-value="value"
-            label="Beneficiary type"
+            label="Search by beneficiary type"
             density="compact"
           />
         </div>
-        <div v-if="form.beneficiary_type === 'customer'" class="mb-4">
-          <ACustomerSearch v-model="form.beneficiaryId" label="Select Customer" />
+<div v-if="form.searchBeneficiaryType === 'customer'" class="mb-4">
+<ACustomerSearch v-model="form.searchBeneficiaryId" label="Select Customer" />
         </div>
-        <div v-if="form.beneficiary_type === 'custom_agent'" class="mb-4">
-          <ACustomsAgentSearch v-model="form.beneficiaryId" label="Select Customs Agent" />
+<div v-if="form.searchBeneficiaryType === 'custom_agent'" class="mb-4">
+<ACustomsAgentSearch v-model="form.searchBeneficiaryId" label="Select Customs Agent" />
         </div>
-        <div v-if="form.beneficiary_type === 'beneficiary'" class="mb-4">
-          <ABeneficiarySearch v-model="form.beneficiaryId" label="Select Beneficiary" />
+<div v-if="form.searchBeneficiaryType === 'beneficiary'" class="mb-4">
+<ABeneficiarySearch v-model="form.searchBeneficiaryId" label="Select Beneficiary" />
         </div>
         <v-btn
-          v-if="form.beneficiaryId"
+          v-if="form.searchBeneficiaryId || form.searchBeneficiaryType === 'refound'"
           color="primary"
           @click="searchFreeFormatPayments"
         >
@@ -130,9 +131,6 @@
       </div>
 
       <div class="font-bold text-lg my-4">Datos bancarios del beneficiario</div>
-      <v-alert v-if="isFreeFormatSearch" type="info" variant="tonal" density="compact" class="mb-4">
-        Beneficiary auto-filled from Free Format search
-      </v-alert>
       <v-autocomplete
         v-model="form.beneficiary_type"
         :items="[
@@ -143,15 +141,12 @@
         item-title="name"
         item-value="value"
         label="Beneficiary type"
-        :readonly="isFreeFormatSearch"
-        :variant="isFreeFormatSearch ? 'filled' : 'outlined'"
       />
       <div v-if="isCustomerType" class="mb-4">
         <div>
           <ACustomerSearch 
             v-model="form.beneficiaryId" 
             label="Beneficiario (customer)" 
-            :readonly="isFreeFormatSearch"
           />
         </div>
 
@@ -162,7 +157,6 @@
           <ACustomsAgentSearch 
             v-model="form.beneficiaryId" 
             label="Beneficiario (Customs Agent)" 
-            :readonly="isFreeFormatSearch"
           />
         </div>
 
@@ -173,7 +167,6 @@
           <ABeneficiarySearch 
             v-model="form.beneficiaryId" 
             label="Beneficiary" 
-            :readonly="isFreeFormatSearch"
           />
         </div>
 
@@ -221,6 +214,23 @@
         </v-card>
       </div>
 
+        <div class="grid grid-cols-1 gap-4 mb-4">
+          <div>
+            <v-card>
+              <v-card-title>Notes</v-card-title>
+              <v-card-text>
+                <v-alert type="info" variant="tonal">
+                  <!-- Textarea and Save Button -->
+                  <div >
+                    <v-textarea v-model="form.notes" :rows="3" placeholder="Enter your notes here..." />
+                  </div>
+                </v-alert>
+              </v-card-text>
+            </v-card>
+          </div>
+        </div>
+
+
       <div>
         <v-btn color="primary" @click="onClickRequestRefund">Request refund</v-btn>
       </div>
@@ -244,9 +254,12 @@ const servicesResult = ref<any>({
 
 const form = ref<any>({
   currency_id: null,
+  searchBeneficiaryType: 'customer',
+  searchBeneficiaryId: null,
   beneficiary_type: 'customer',
   beneficiaryId: null,
   bank: null,
+  notes : null,
 })
 
 const isFreeFormatSearch = computed(() => searchType.value === 'free-format')
@@ -335,6 +348,7 @@ const onClickRequestRefund = async () => {
       beneficiary_id: form.value.beneficiaryId,
       bank_account_id: form.value.bank.id,
       currency_id: form.value.currency_id,
+      notes: form.value.notes,
     }
     const response: any = await $api.refunds.requestRefund(body)
     snackbar.add({ type: 'success', text: 'Refund requested' })
@@ -353,8 +367,8 @@ const searchFreeFormatPayments = async () => {
     loadingStore.start()
     const body = {
       service_type: 'FF',
-      beneficiary_type: form.value.beneficiary_type,
-      beneficiary_id: form.value.beneficiaryId,
+      beneficiary_type: form.value.searchBeneficiaryType,
+      beneficiary_id: form.value.searchBeneficiaryId,
     }
     const response: any = await $api.refunds.searchByServices(body)
     console.log("response:",response)
@@ -374,10 +388,6 @@ const searchFreeFormatPayments = async () => {
       })
     
     servicesResult.value.services = [{ id: 'free-format' }]
-    
-    // Auto-fill beneficiary fields for Free Format
-    // The beneficiary_type and beneficiaryId are already set from the search form
-    // They will be locked via readonly attribute
   } catch (error) {
     console.error(error)
   } finally {
