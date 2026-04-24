@@ -54,12 +54,16 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="refund" @click="viewItem(refund)" />
+                  <div>
+                    <EditButton :item="refund" @click="checkUserAndExecute(refund.created_by, () => editItem(refund));" />
+                  </div>
                   <div v-if="refund.deleted_at == null">
                     <TrashButton
                       :item="refund"
                       @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
                     />
                   </div>
+                  
                 </div>
               </td>
               <td>{{ refund.id }}</td>
@@ -204,6 +208,10 @@ const hasServicePayments = (refund: any) => {
 
 const viewItem = (reqRefund: any) => {
   router.push(`/refunds/view-${reqRefund.id}`)
+}
+
+const editItem = (reqRefund: any) => {
+  router.push(`/refunds/edit-${reqRefund.id}`)
 }
 
 const onClickFilters = async () => {
