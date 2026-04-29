@@ -114,6 +114,8 @@ const menuPermissions = {
   SystemAudit: 'menu-system-audit',
   SystemWiki: 'menu-system-wiki',
   Logout: 'menu-logout',
+  Quotes: 'menu-quotes',
+  Pricing: 'menu-pricing',
 }
 
 /**

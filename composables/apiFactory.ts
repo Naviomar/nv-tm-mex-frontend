@@ -91,12 +91,16 @@ import StatisticsModule from '~/repository/modules/statistics'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
 import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
+import QuotesModule from '~/repository/modules/quotes'
+import QuoteRoutesModule from '~/repository/modules/quoteRoutes'
 
 interface IApiInstance {
   audit: AuditModule
   dashboard: DashboardModule
   reports: ReportsModule
   authRequestTypes: AuthRequestTypesModule
+  quotes: QuotesModule
+  quoteRoutes: QuoteRoutesModule
   auth: AuthModule
   users: UsersModule
   shippers: ShippersModule
@@ -193,7 +197,9 @@ export function useApiFactory() {
   const modules: IApiInstance = {
     audit: new AuditModule(client),
     dashboard: new DashboardModule(client),
-    reports: new ReportsModule(client), // Assuming reports is part of the dashboard module
+    reports: new ReportsModule(client),
+    quotes: new QuotesModule(client),
+    quoteRoutes: new QuoteRoutesModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     shippers: new ShippersModule(client),

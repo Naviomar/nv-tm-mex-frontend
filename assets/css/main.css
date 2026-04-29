@@ -211,6 +211,10 @@
   .btn-border-slide:hover::before {
     transform: translateX(-50%) scaleX(1);
   }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%) !important;
+  }
 }
 
 /* Global Enhanced Scrollbars */

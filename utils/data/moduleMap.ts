@@ -25,6 +25,8 @@ export const MODULE_MAP: Record<string, ModuleDefinition> = {
   'configuration':       { label: 'Configuration',    icon: 'mdi-cog-outline',          color: 'grey' },
   'system':              { label: 'System',           icon: 'mdi-monitor-dashboard',    color: 'blue-grey' },
   'profile':             { label: 'Profile',          icon: 'mdi-account-circle-outline', color: 'blue-grey' },
+  'quotes':              { label: 'Quotes',           icon: 'mdi-file-document-outline', color: 'blue' },
+  'pricing':             { label: 'Pricing',          icon: 'mdi-currency-usd',          color: 'teal' },
 }
 
 /**
@@ -62,6 +64,9 @@ export const PAGE_LABEL_MAP: Record<string, { label: string; icon?: string }> = 
   '/system/users':                      { label: 'Users',          icon: 'mdi-account-group-outline' },
   '/system/roles':                      { label: 'Roles',          icon: 'mdi-shield-account-outline' },
   '/system/auth-request-types':         { label: 'Request Types',  icon: 'mdi-format-list-group' },
+  '/quotes':                            { label: 'Quotation List', icon: 'mdi-format-list-bulleted' },
+  '/pricing':                           { label: 'Pricing Dashboard', icon: 'mdi-view-dashboard-outline' },
+  '/pricing/routes':                    { label: 'Route Tariffs',  icon: 'mdi-routes' },
 }
 
 export function getModuleForPath(path: string): ModuleDefinition | null {
@@ -73,11 +78,14 @@ export function getModuleForPath(path: string): ModuleDefinition | null {
 export function getPageInfoForPath(path: string): { label: string; icon?: string } {
   // Exact match first
   if (PAGE_LABEL_MAP[path]) return PAGE_LABEL_MAP[path]
+  
   // Prefix match (longest wins)
   const match = Object.keys(PAGE_LABEL_MAP)
     .filter((key) => path.startsWith(key))
     .sort((a, b) => b.length - a.length)[0]
-  if (match) return PAGE_LABEL_MAP[match]
+    
+  if (match && PAGE_LABEL_MAP[match]) return PAGE_LABEL_MAP[match]
+  
   // Fallback: prettify last segment
   const last = path.split('/').filter(Boolean).pop() ?? path
   return { label: last.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) }

@@ -28,7 +28,7 @@ import { VDateInput } from 'vuetify/labs/VDateInput'
 
 export default defineNuxtPlugin((app) => {
   const vuetify = createVuetify({
-    ssr: true,
+    ssr: import.meta.server,
     components: {
       VDateInput,
     },

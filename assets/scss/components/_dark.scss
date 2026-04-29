@@ -1,12 +1,55 @@
 @use "colors";
 
-.bg-main {
+.bg-main,
+.v-main.bg-main {
   background-color: colors.$main-background-color-light; // Default (light mode)
 }
 
 .dark .bg-main,
-.v-theme--dark .bg-main {
-  background-color: colors.$main-background-color-dark; // Dark mode
+.dark .v-main.bg-main,
+.v-theme--dark .bg-main,
+.v-theme--dark .v-main.bg-main,
+.dark .bg-background,
+.v-theme--dark .bg-background {
+  background-color: colors.$main-background-color-dark !important; // Dark mode
+}
+
+// Force background on the application level
+.dark .v-application,
+.v-theme--dark .v-application {
+  background-color: colors.$main-background-color-dark !important;
+}
+
+.theme-card {
+  background-color: colors.$card-background-color-light !important;
+  color: #1e293b !important;
+}
+
+.dark .theme-card,
+.v-theme--dark .theme-card {
+  background-color: colors.$card-background-color-dark !important;
+  color: #f1f5f9 !important;
+  border-color: #333 !important;
+}
+
+.text-main-header {
+  color: #1e293b;
+}
+
+.dark .text-main-header,
+.v-theme--dark .text-main-header {
+  color: #f1f5f9 !important;
+}
+
+.table-header-bg {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+.dark .table-header-bg,
+.v-theme--dark .table-header-bg {
+  background-color: #141414 !important;
+  color: #f1f5f9 !important;
 }
 
 // Apply background color for light and dark mode

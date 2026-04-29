@@ -561,6 +561,40 @@
         </template>
       </v-list-group>
 
+      <v-list-group
+        v-if="canAccess(menuPermissions.Quotes) || canAccess(menuPermissions.Pricing)"
+        value="pricing"
+      >
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            prepend-icon="mdi-cash-multiple"
+            title="Pricing & Commercial"
+            rounded="xl"
+            class="mb-1"
+            :active="route.path.startsWith('/quotes') || route.path.startsWith('/pricing')"
+          ></v-list-item>
+        </template>
+        
+        <v-list-item
+          v-if="canAccess(menuPermissions.Quotes)"
+          prepend-icon="mdi-file-document-edit-outline"
+          title="Quotations"
+          to="/quotes"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+        
+        <v-list-item
+          v-if="canAccess(menuPermissions.Pricing)"
+          prepend-icon="mdi-routes"
+          title="Tariffs / Routes"
+          to="/pricing"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+      </v-list-group>
+
       <v-list-item
         v-if="canAccess(menuPermissions.Tracking)"
         prepend-icon="mdi-radar"
@@ -875,6 +909,10 @@ const getDefaultOpenedGroups = (path: string) => {
 
   if (path.startsWith('/maritime')) {
     groups.push('maritime')
+  }
+
+  if (path.startsWith('/quotes') || path.startsWith('/pricing')) {
+    groups.push('pricing')
   }
 
   if (path.startsWith('/air')) {
