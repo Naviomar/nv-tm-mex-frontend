@@ -62,10 +62,10 @@
           <tbody>
             <tr v-for="(c, key) in payments.line_invoice_refs" :key="key">
               <td class="p-2">
-                <div v-if="c.invoice?.is_paid == 0 && c.invoice?.deleted_by === NULL">
+                <div v-if="c.invoice?.is_paid == 0 && c.invoice?.deleted_by < 1">
                   <v-chip color="warning" size="small">Pending</v-chip>
                 </div>
-                <div v-if="c.invoice?.is_paid == 1 && c.invoice?.deleted_by === NULL">
+                <div v-if="c.invoice?.is_paid == 1 && c.invoice?.deleted_by < 1">
                   <v-chip color="success" size="small">Paid @ {{ formatDateString(c.invoice?.updated_at) }}</v-chip>
                 </div>
                 <div v-if="c.invoice?.deleted_by > 0">
