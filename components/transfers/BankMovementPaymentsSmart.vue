@@ -112,8 +112,9 @@
                     :class="{ 'bg-red-100! dark:bg-red-900!': payment.deleted_at }"
                   >
                     <td>
+                      {{ console.log("PAYMENT", payment) }}
                       <ProcessAuthorizationWrapper
-                        v-if="!payment.deleted_at && !hasBankMovAmountAvailable"
+                        v-if="!payment.deleted_at && !hasBankMovAmountAvailable && !hasAssociatedRefund(payment)"
                         processName="bank-movement-payment-delete"
                         :requestKey="`${bankMovement.id}:${payment.id}`"
                         label="Undo payment"
@@ -123,13 +124,21 @@
                           <TrashButton :item="payment" @click="confirmDeletePayment(payment)" :can-restore="false" />
                         </template>
                       </ProcessAuthorizationWrapper>
-                      <div v-if="hasBankMovAmountAvailable">
+                      <div v-if="hasBankMovAmountAvailable && !hasAssociatedRefund(payment)">
                         <TrashButton
                           :item="payment"
                           @click="confirmDeletePayment(payment, true)"
                           :can-restore="false"
                         />
                       </div>
+                      <v-chip
+                        v-if="hasAssociatedRefund(payment)"
+                        color="orange"
+                        size="x-small"
+                        class="mt-1"
+                      >
+                        Has Refund
+                      </v-chip>
                     </td>
                     <td>
                       <InvoiceableLabelLink :paymentChargeable="payment.chargeable" />
@@ -602,6 +611,33 @@ const confirmDeletePayment = async (payment: any, skipCheckProcess = false) => {
       }, 250)
     }
   }
+}
+
+const hasAssociatedRefund = (payment: any): boolean => {
+  // Check if the payment's chargeable is a ServicePayment with an associated refund
+  const chargeable = payment.chargeable
+  if (!chargeable) return false
+
+  // Check if it's a ServicePayment (has reqRefundPayment relation)
+  if (chargeable.req_refund_payment) {
+    return true
+  }
+
+  // Alternative: check through the invoice -> ReqRefund -> refundPayments chain
+  // This handles cases where the payment is linked to an InvoiceCharge that belongs to a ReqRefund invoice
+  const invoice = chargeable.invoice
+  if (invoice?.invoiceable_type?.includes('ReqRefund')) {
+    const reqRefund = invoice.invoiceable
+    if (reqRefund?.refund_payments?.length > 0) {
+      // Check if any refund_payment points back to this service_payment
+      return reqRefund.refund_payments.some((refundPayment: any) => {
+        const payable = refundPayment.payable
+        return payable && payable.id === chargeable.id
+      })
+    }
+  }
+
+  return false
 }
 
 const checkMaxAmountToPay = (value: any, charge: any) => {
