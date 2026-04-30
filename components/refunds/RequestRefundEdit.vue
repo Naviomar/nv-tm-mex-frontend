@@ -39,7 +39,17 @@
           <v-card>
             <v-card-title>
               <div class="flex items-center gap-2">
-                
+                <div v-if="!isPaid">
+                  <v-btn
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    @click="() => checkUserAndExecute(reqRefund.created_by, showEditBankInfo)"
+                    ><v-icon class="cursor-pointer">
+                      {{ formEditBank.show ? 'mdi-close' : 'mdi-pencil-outline' }}
+                    </v-icon></v-btn
+                  >
+                </div>
                 <div>Beneficiary Bank</div>
               </div>
             </v-card-title>
@@ -90,7 +100,12 @@
                   <div class="font-bold">IBAN:</div>
                   <div class="sm:col-span-2">{{ reqRefund.iban }}</div>
                 </div>
-                
+                <div v-if="!isPaid">
+                  <div class="flex justify-start gap-2">
+                    <RefundResendNotify :req-refund="reqRefund" />
+                    <RefundAttachments :req-refund="reqRefund" @refresh="getRequestRefund" />
+                  </div>
+                </div>
               </div>
             </v-card-text>
           </v-card>
@@ -102,6 +117,15 @@
               <v-card-text>
                 <v-alert type="info" variant="tonal">
                   <div v-html="formattedNotes"></div>
+
+                  <v-btn
+                    v-if="!isPaid"
+                    size="small"
+                    color="blue"
+                    @click="() => checkUserAndExecute(reqRefund.created_by, toggleEditNotes)"
+                    >{{ isEditingNotes ? 'Cancel' : 'Edit Notes' }}</v-btn
+                  >
+
                   <!-- Textarea and Save Button -->
                   <div v-if="isEditingNotes">
                     <v-textarea v-model="reqRefund.notes" :rows="3" placeholder="Enter your notes here..." />
@@ -129,6 +153,11 @@
                   <td colspan="5" class="text-center">No concepts found</td>
                 </tr>
                 <tr v-for="(refundPayment, index) in reqRefund.refund_payments" :key="`refund-payment-${index}`">
+                  <td>
+                    <div v-if="!isPaid">
+                      <TrashButton :item="refundPayment" @click="() => checkUserAndExecute(reqRefund.created_by, showConfirmDelete)" />
+                    </div>
+                  </td>
                   <td>
                     <div v-if="refundPayment.payable?.serviceable?.reference_number">
                       {{ refundPayment.payable?.serviceable?.reference_number }}
