@@ -146,14 +146,14 @@ const chargeEntities = [
     name: 'Customs Agent',
   },
   {
-    id: 3,
-    value: 'other',
-    name: 'Other',
-  },
-  {
     id: 4,
     value: 'supplier',
     name: 'Supplier',
+  },
+  {
+    id: 3,
+    value: 'other',
+    name: 'Other',
   },
 ]
 

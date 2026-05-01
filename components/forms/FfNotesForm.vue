@@ -67,15 +67,29 @@
                   />
                 </div>
                 <div>
+                  <v-autocomplete
+                    v-model="form.party_type"
+                    density="compact"
+                    label="Party type *"
+                    :items="[
+                      { value: 'App\\Models\\Mexico\\FreightForwarder', name: 'Freight Forwarder' },
+                      { value: 'App\\Models\\Mexico\\Consignee', name: 'Consignee' },
+                    ]"
+                    item-title="name"
+                    item-value="value"
+                    variant="solo-filled"
+                    @update:model-value="onPartyTypeChange"
+                  />
+                </div>
+                <div>
                   <AGlobalSearch
-                    ref="ffSearchRef"
-                    :onSearch="searchFfs"
-                    v-model="form.agente_ff_id"
-                    validate-key="agente_ff_id"
-                    label="F.F. Agent *"
-                    :set-items="ffItems"
-                    :set-item="ffItem"
-                    :set-id="values.agente_ff_id || undefined"
+                    :key="`party-search-${form.party_type}`"
+                    ref="partySearchRef"
+                    :onSearch="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? searchFfs : searchCustomers"
+                    v-model="form.party_id"
+                    validate-key="party_id"
+                    :label="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'F.F. Agent *' : 'Consignee *'"
+                    :set-id="partyItem"
                   />
                 </div>
                 <div>
@@ -164,7 +178,7 @@
               <th>Type</th>
               <th>Credit/Debit</th>
               <th>Folio</th>
-              <th>Agente F.F.</th>
+              <th>Party</th>
               <th>Amount</th>
               <th>in USD</th>
               <th>File / PDF</th>
@@ -205,7 +219,14 @@
                 </div>
               </td>
               <td class="whitespace-nowrap">{{ creditDebit.service_folio }}</td>
-              <td class="whitespace-nowrap">{{ creditDebit.forwarder?.name }}</td>
+              <td class="whitespace-nowrap">
+                <div class="flex items-center gap-1">
+                  <v-chip size="x-small" :color="creditDebit.party_type?.includes('Consignee') ? 'purple' : 'teal'">
+                    {{ creditDebit.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                  </v-chip>
+                  {{ creditDebit.party?.name ?? creditDebit.forwarder?.name }}
+                </div>
+              </td>
               <td class="whitespace-nowrap">
                 <div class="flex gap-2 items-center">
                   <v-btn
@@ -385,8 +406,9 @@ const props = defineProps({
 
 const emits = defineEmits(['requestSellCharges', 'refresh'])
 
-const showForm = ref(true)
+const showForm = ref(false)
 const toggleForm = () => (showForm.value = !showForm.value)
+const openForm = () => { if (!showForm.value) showForm.value = true }
 const pdfServerViewer = ref<any>(null)
 const showPdfDialog = ref(false)
 const ffNoteDetails = ref<any>({
@@ -416,12 +438,25 @@ const form = ref<any>({
   type: null,
   folio: null,
   as_invoice: false,
+  party_type: 'App\\Models\\Mexico\\FreightForwarder',
+  party_id: null,
   agente_ff_id: null,
   contacto_ff: null,
   amount: 0,
   currency_id: null,
   attachment: null as any,
 })
+
+const partyItems = ref<any[]>([])
+const partyItem = ref<any>(null)
+const partySearchRef = ref<any>(null)
+
+const onPartyTypeChange = () => {
+  form.value.party_id = null
+  form.value.agente_ff_id = null
+  partyItems.value = []
+  partyItem.value = null
+}
 
 const concepts = ref<any>([])
 
@@ -513,16 +548,28 @@ const searchFfs = async (params: any) => {
   }
 }
 
+const searchCustomers = async (params: any) => {
+  try {
+    return await $api.consignees.searchConsignees({ query: params })
+  } catch {
+    snackbar.add({ type: 'error', text: 'Error fetching consignees.' })
+  }
+}
+
 const initForms = async () => {
   form.value = {
     type: null,
     folio: null,
+    party_type: 'App\\Models\\Mexico\\FreightForwarder',
+    party_id: null,
     agente_ff_id: null,
     contacto_ff: null,
     amount: 0,
     currency_id: null,
     attachment: null,
   }
+  partyItems.value = []
+  partyItem.value = null
   concepts.value = [
     {
       charge_id: null,
@@ -536,7 +583,7 @@ const validateForm = async () => {
   if (!isValid) {
     return false
   }
-  if (!form.value.type || !form.value.agente_ff_id || !form.value.currency_id) {
+  if (!form.value.type || !form.value.party_id || !form.value.currency_id) {
     snackbar.add({
       type: 'warning',
       text: 'You must fill all fields',
@@ -583,12 +630,16 @@ const cancelForm = () => {
   form.value = {
     type: null,
     folio: null,
+    party_type: 'App\\Models\\Mexico\\FreightForwarder',
+    party_id: null,
     agente_ff_id: null,
     contacto_ff: null,
     amount: 0,
     currency_id: null,
     attachment: null,
   }
+  partyItems.value = []
+  partyItem.value = null
   toggleForm()
 }
 
@@ -597,9 +648,14 @@ const upsertFfNote = async () => {
   if (!isValidForm) {
     return
   }
+  const partyType = form.value.party_type
+  const partyId = form.value.party_id
   creditDebitNotes.value.push({
     format: values.format,
     ...form.value,
+    party_type: partyType,
+    party_id: partyId,
+    agente_ff_id: partyType === 'App\\Models\\Mexico\\FreightForwarder' ? partyId : null,
     concepts: concepts.value,
   })
   setValues({ format: undefined })
@@ -608,23 +664,26 @@ const upsertFfNote = async () => {
     id: null,
     type: null,
     folio: null,
+    party_type: 'App\\Models\\Mexico\\FreightForwarder',
+    party_id: null,
     agente_ff_id: null,
     contacto_ff: null,
     amount: 0,
     currency_id: null,
     attachment: null,
   }
+  partyItems.value = []
+  partyItem.value = null
 
   await saveFfNotes()
   toggleForm()
 }
 
 const editFfNote = async (creditDebit: any) => {
-  const ffs = await searchFfs({ name: creditDebit.forwarder.name })
-  ffItems.value = ffs
+  const resolvedPartyType = creditDebit.party_type ?? 'App\\Models\\Mexico\\FreightForwarder'
+  const resolvedPartyId = creditDebit.party_id ?? creditDebit.forwarder_id
 
-  ffSearchRef.value?.setItems(ffs)
-  ffSearchRef.value?.setItem(creditDebit.forwarder_id)
+  partyItem.value = resolvedPartyId
 
   setValues({ format: creditDebit.format })
 
@@ -633,6 +692,8 @@ const editFfNote = async (creditDebit: any) => {
     type: creditDebit.type,
     folio: creditDebit.folio,
     as_invoice: creditDebit.as_invoice,
+    party_type: resolvedPartyType,
+    party_id: resolvedPartyId,
     agente_ff_id: creditDebit.forwarder_id,
     contacto_ff: creditDebit.contact_name,
     amount: creditDebit.amount,
@@ -653,7 +714,7 @@ const editFfNote = async (creditDebit: any) => {
     type: null,
   }
 
-  toggleForm()
+  openForm()
 }
 
 const confirmDelete = async (creditDebit: any) => {

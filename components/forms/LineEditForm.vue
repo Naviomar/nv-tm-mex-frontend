@@ -151,92 +151,58 @@
 
         <v-card class="mb-4">
           <v-card-title>
-            <div class="flex justify-between">
-              <div>Automatic charges in references</div>
-              <div>
-                <button
-                  type="button"
-                  @click="automaticCharges.toggleForm"
-                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
-                >
-                  +
-                </button>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <v-icon size="small">mdi-credit-card-multiple-outline</v-icon>
+                Default Credit / Debit Notes
               </div>
+              <v-btn icon size="x-small" :color="defaultNotes.showForm.value ? 'black' : 'success'" @click="defaultNotes.toggleForm">
+                <v-icon v-if="defaultNotes.showForm.value">mdi-close</v-icon>
+                <v-icon v-else>mdi-plus</v-icon>
+              </v-btn>
             </div>
           </v-card-title>
           <v-card-text>
-            <div v-if="automaticCharges.form.value.show" class="">
-              <div class="font-bold">Add new automatic charge</div>
+            <div v-if="defaultNotes.showForm.value" class="mb-4">
+              <div class="font-bold mb-2">New default note</div>
               <div class="grid grid-cols-2 gap-2">
-                <div class="col-span-1">
-                  <v-text-field
-                    v-model="automaticCharges.form.value.from_date"
-                    type="date"
-                    density="compact"
-                    variant="solo-filled"
-                  />
-                </div>
-                <div class="col-span-1">
-                  <v-text-field
-                    v-model="automaticCharges.form.value.to_date"
-                    type="date"
-                    density="compact"
-                    variant="solo-filled"
-                  />
-                </div>
-                <div class="col-span-2">
+                <div>
                   <v-autocomplete
-                    v-model="automaticCharges.form.value.impoExpo"
-                    label="Import/Export"
-                    :items="[
-                      { value: 'I', name: 'Import' },
-                      { value: 'E', name: 'Export' },
-                    ]"
+                    v-model="defaultNotes.form.value.impoExpo"
+                    label="Direction *"
+                    :items="[{ value: 'I', title: 'Import' }, { value: 'E', title: 'Export' }]"
                     item-value="value"
-                    item-title="name"
+                    item-title="title"
                     variant="solo-filled"
                     density="compact"
                   />
                 </div>
-                <div class="col-span-2">
+                <div>
                   <v-autocomplete
-                    v-model="automaticCharges.form.value.charge_type"
-                    label="Charge type"
-                    :items="[
-                      { value: 'buy', name: 'Buy' },
-                      { value: 'sell', name: 'Sell' },
-                    ]"
+                    v-model="defaultNotes.form.value.type"
+                    label="Type *"
+                    :items="[{ value: 'C', title: 'Credit' }, { value: 'D', title: 'Debit' }]"
                     item-value="value"
-                    item-title="name"
+                    item-title="title"
                     variant="solo-filled"
                     density="compact"
                   />
                 </div>
-                <div class="col-span-2">
+                <div>
                   <v-autocomplete
-                    v-model="automaticCharges.form.value.charge_id"
-                    label="Charge"
-                    :items="catalogs.charges"
-                    item-value="id"
-                    item-title="name"
+                    v-model="defaultNotes.form.value.inbound"
+                    label="Format *"
+                    :items="[{ value: 0, title: 'From TM' }, { value: 1, title: 'From Agent' }]"
+                    item-value="value"
+                    item-title="title"
                     variant="solo-filled"
                     density="compact"
                   />
                 </div>
-                <div class="col-span-2">
-                  <v-text-field
-                    v-model="automaticCharges.form.value.amount"
-                    type="number"
-                    density="compact"
-                    variant="solo-filled"
-                    name="amount"
-                    label="Amount *"
-                  />
-                </div>
-                <div class="col-span-2">
+                <div>
                   <v-autocomplete
-                    v-model="automaticCharges.form.value.currency_id"
-                    label="Currency"
+                    v-model="defaultNotes.form.value.currency_id"
+                    label="Currency *"
                     :items="currencies"
                     item-value="id"
                     item-title="name"
@@ -244,57 +210,150 @@
                     density="compact"
                   />
                 </div>
-              </div>
-              <div class="">
-                <div class="flex justify-end items-center mb-4">
-                  <button
-                    type="button"
-                    @click="automaticCharges.toggleForm"
-                    class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    @click="automaticCharges.save"
-                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                  >
-                    Save
-                  </button>
+                <div>
+                  <v-text-field
+                    v-model="defaultNotes.form.value.from_date"
+                    type="date"
+                    label="From date *"
+                    density="compact"
+                    variant="solo-filled"
+                  />
                 </div>
+                <div>
+                  <v-text-field
+                    v-model="defaultNotes.form.value.to_date"
+                    type="date"
+                    label="To date (leave empty = open ended)"
+                    density="compact"
+                    variant="solo-filled"
+                    clearable
+                  />
+                </div>
+                <div>
+                  <v-autocomplete
+                    v-model="defaultNotes.form.value.party_type"
+                    label="Party type *"
+                    :items="[
+                      { value: 'App\\Models\\Mexico\\FreightForwarder', title: 'Freight Forwarder' },
+                      { value: 'App\\Models\\Mexico\\Consignee', title: 'Consignee' },
+                    ]"
+                    item-value="value"
+                    item-title="title"
+                    variant="solo-filled"
+                    density="compact"
+                    @update:model-value="defaultNotes.onPartyTypeChange"
+                  />
+                </div>
+                <div>
+                  <AGlobalSearch
+                    :key="`party-search-${defaultNotes.form.value.party_type}`"
+                    :onSearch="defaultNotes.form.value.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? defaultNotes.searchFfs : defaultNotes.searchCustomers"
+                    v-model="defaultNotes.form.value.party_id"
+                    validate-key="party_id"
+                    :label="defaultNotes.form.value.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'Freight Forwarder *' : 'Consignee *'"
+                    :set-items="defaultNotes.partyItems.value"
+                    :set-item="defaultNotes.partyItem.value"
+                  />
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <div class="flex items-center gap-2 mb-1">
+                  <v-btn icon="mdi-plus" size="x-small" color="success" @click="defaultNotes.addConcept"></v-btn>
+                  <span class="font-bold text-sm">Concepts *</span>
+                </div>
+                <div
+                  v-for="(concept, idx) in defaultNotes.form.value.concepts"
+                  :key="`dn-concept-${idx}`"
+                  class="grid grid-cols-3 gap-2 mb-1"
+                >
+                  <div class="col-span-2">
+                    <v-autocomplete
+                      v-model="concept.charge_id"
+                      density="compact"
+                      label="Charge *"
+                      :items="catalogs.charges"
+                      item-title="name"
+                      item-value="id"
+                      variant="solo-filled"
+                    />
+                  </div>
+                  <div class="flex gap-2 items-center">
+                    <v-text-field
+                      v-model="concept.amount"
+                      density="compact"
+                      variant="solo-filled"
+                      label="Amount *"
+                      type="number"
+                      prepend-inner-icon="mdi-currency-usd"
+                    />
+                    <v-btn color="red" variant="outlined" icon="mdi-delete-outline" size="x-small" @click="defaultNotes.removeConcept(idx)" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <v-textarea
+                  v-model="defaultNotes.form.value.notes"
+                  label="Notes (will be copied to generated notes)"
+                  density="compact"
+                  variant="solo-filled"
+                  rows="2"
+                  auto-grow
+                />
+              </div>
+
+              <div class="flex justify-end gap-2 mt-3">
+                <v-btn color="grey" variant="outlined" @click="defaultNotes.toggleForm">Cancel</v-btn>
+                <v-btn color="primary" @click="defaultNotes.save">Save default note</v-btn>
               </div>
             </div>
 
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th class="text-left">Actions</th>
-                  <th class="text-left">I/E</th>
-                  <th class="text-left">Type</th>
-                  <th class="text-left">Charge</th>
-                  <th class="text-left">Amount</th>
-                  <th class="text-left">From</th>
-                  <th class="text-left">To</th>
-                  <th class="text-left">User</th>
+                  <th>Actions</th>
+                  <th>I/E</th>
+                  <th>C/D</th>
+                  <th>Format</th>
+                  <th>Party</th>
+                  <th>Currency</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Notes</th>
+                  <th>Concepts</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in line.automatic_charges" :key="`auto-charge-${index}`">
+                <tr v-for="(item, index) in defaultNotes.items.value" :key="`dn-${index}`">
                   <td>
-                    <div class="flex gap-2">
-                      <TrashButton :item="item" @click="showConfirmAutomaticCharge(item)" />
+                    <v-btn color="red" icon="mdi-delete-outline" size="x-small" variant="outlined" @click="defaultNotes.remove(item)" />
+                  </td>
+                  <td>
+                    <v-chip size="x-small" :color="item.impoExpo === 'I' ? 'blue' : 'orange'">{{ item.impoExpo === 'I' ? 'Import' : 'Export' }}</v-chip>
+                  </td>
+                  <td>
+                    <v-chip size="x-small" :color="item.type === 'C' ? 'green' : 'red'">{{ item.type === 'C' ? 'Credit' : 'Debit' }}</v-chip>
+                  </td>
+                  <td class="whitespace-nowrap text-xs">{{ item.inbound ? 'From Agent' : 'From TM' }}</td>
+                  <td class="whitespace-nowrap text-xs">
+                    <div class="flex items-center gap-1">
+                      <v-chip size="x-small" :color="item.party_type?.includes('Consignee') ? 'purple' : 'teal'">
+                        {{ item.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                      </v-chip>
+                      {{ item.party?.name }}
                     </div>
                   </td>
-                  <td>{{ item.impoExpo }}</td>
-                  <td>{{ item.charge_type }}</td>
-                  <td class="whitespace-nowrap">{{ item.charge?.name }}</td>
-                  <td class="whitespace-nowrap">{{ formatToCurrency(item.amount) }} {{ item.currency?.code }}</td>
-                  <td class="whitespace-nowrap">{{ item.from_date }}</td>
-                  <td class="whitespace-nowrap">{{ item.to_date }}</td>
-                  <td class="whitespace-nowrap">
-                    {{ item.creator?.name }}
-                    @ {{ formatDateString(item.created_at) }}
+                  <td class="text-xs">{{ item.currency?.code ?? item.currency?.name }}</td>
+                  <td class="whitespace-nowrap text-xs">{{ item.from_date }}</td>
+                  <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
+                  <td class="text-xs whitespace-nowrap">{{ item.notes ?? '—' }}</td>
+                  <td class="text-xs">
+                    <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">{{ c.charge?.name }}: {{ formatToCurrency(c.amount) }}</div>
                   </td>
+                </tr>
+                <tr v-if="defaultNotes.items.value.length === 0">
+                  <td colspan="10" class="text-center text-grey py-2 text-sm">No default notes configured</td>
                 </tr>
               </tbody>
             </v-table>
@@ -404,39 +463,6 @@ function onInvalidSubmit({ values, errors, results }: any) {
   snackbar.add({ type: 'warning', text: 'Validate form before submit' })
 }
 
-const showConfirmAutomaticCharge = async (item: any) => {
-  const result = await confirm({
-    title: 'Are you sure?',
-    confirmationText: 'Yes, I confirm',
-    content: 'Please confirm this action.',
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'primary',
-    },
-  })
-
-  if (result) {
-    try {
-      loadingStore.start()
-      const body = {
-        ...item,
-      }
-      await $api.lines.deleteAutomaticCharge(route.params.id!.toString(), body)
-      snackbar.add({ type: 'success', text: 'Automatic charge deleted' })
-      await getData()
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
-    }
-  }
-}
-
 // composable for transit files
 const useLineInternalTransitFiles = () => {
   const formTransitFiles = ref<any>({
@@ -481,73 +507,121 @@ const useLineInternalTransitFiles = () => {
 
 const { formTransitFiles, toggleTransitFiles, saveTransitFiles } = useLineInternalTransitFiles()
 
-const useAutomaticCharges = () => {
-  const form = ref<any>({
-    show: false,
+const useDefaultFfNotes = () => {
+  const showForm = ref(false)
+  const items = ref<any[]>([])
+  const partyItems = ref<any[]>([])
+  const partyItem = ref<any>(null)
+
+  const emptyForm = () => ({
+    impoExpo: null,
+    type: null,
+    inbound: 0,
+    currency_id: null,
     from_date: null,
     to_date: null,
-    impoExpo: null,
-    charge_type: null,
-    charge_id: null,
-    amount: null,
-    currency_id: null,
+    party_type: null,
+    party_id: null,
+    notes: null,
+    concepts: [{ charge_id: null, amount: null }],
   })
 
+  const form = ref<any>(emptyForm())
+
   const toggleForm = () => {
-    form.value.show = !form.value.show
+    showForm.value = !showForm.value
+    if (!showForm.value) form.value = emptyForm()
   }
 
-  const clearForm = () => {
-    form.value.impoExpo = null
-    form.value.charge_type = null
-    form.value.charge_id = null
-    form.value.amount = null
-    form.value.currency_id = null
-    form.value.from_date = null
-    form.value.to_date = null
+  const onPartyTypeChange = () => {
+    form.value.party_id = null
+    partyItems.value = []
+    partyItem.value = null
+  }
 
-    form.value.show = false
+  const searchFfs = async (params: any) => {
+    try {
+      return await $api.freightForwarders.searchFfs({ query: params })
+    } catch {
+      return []
+    }
+  }
+
+  const searchCustomers = async (params: any) => {
+    try {
+      return await $api.consignees.searchConsignees({ query: params })
+    } catch {
+      return []
+    }
+  }
+
+  const addConcept = () => {
+    form.value.concepts.push({ charge_id: null, amount: null })
+  }
+
+  const removeConcept = (idx: number) => {
+    form.value.concepts.splice(idx, 1)
+  }
+
+  const fetchItems = async () => {
+    try {
+      const res = await $api.lines.getDefaultFfNotes(route.params.id!.toString())
+      items.value = Array.isArray(res) ? res : []
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const save = async () => {
-    if (
-      !form.value.impoExpo ||
-      !form.value.charge_type ||
-      !form.value.charge_id ||
-      !form.value.amount ||
-      !form.value.currency_id ||
-      !form.value.from_date ||
-      !form.value.to_date
-    ) {
-      snackbar.add({ type: 'warning', text: 'Please fill all fields' })
+    const f = form.value
+    if (!f.impoExpo || !f.type || f.inbound === null || !f.currency_id || !f.from_date || !f.party_type || !f.party_id) {
+      snackbar.add({ type: 'warning', text: 'Please fill all required fields' })
+      return
+    }
+    if (!f.concepts.length || f.concepts.some((c: any) => !c.charge_id || !c.amount)) {
+      snackbar.add({ type: 'warning', text: 'Please add at least one concept with charge and amount' })
       return
     }
     try {
       loadingStore.start()
-      const body = {
-        line_id: id,
-        ...form.value,
-      }
-      await $api.lines.saveAutomaticCharge(route.params.id!.toString(), body)
-      snackbar.add({ type: 'success', text: 'Automatic charge added' })
-      await getData()
-      clearForm()
+      await $api.lines.saveDefaultFfNote(route.params.id!.toString(), f)
+      snackbar.add({ type: 'success', text: 'Default note saved' })
+      await fetchItems()
+      form.value = emptyForm()
+      showForm.value = false
     } catch (e) {
       console.error(e)
+      snackbar.add({ type: 'error', text: 'Error saving default note' })
     } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
+      setTimeout(() => loadingStore.stop(), 250)
     }
   }
 
-  return {
-    form,
-    toggleForm,
-    save,
+  const remove = async (item: any) => {
+    const result = await confirm({
+      title: 'Delete default note?',
+      confirmationText: 'Yes, delete',
+      content: 'This will not affect already created notes from this template.',
+      dialogProps: { persistent: true, maxWidth: 500 },
+      confirmationButtonProps: { color: 'error' },
+    })
+    if (!result) return
+    try {
+      loadingStore.start()
+      await $api.lines.deleteDefaultFfNote(route.params.id!.toString(), item.id.toString())
+      snackbar.add({ type: 'success', text: 'Default note deleted' })
+      await fetchItems()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => loadingStore.stop(), 250)
+    }
   }
+
+  return { showForm, form, items, partyItems, partyItem, toggleForm, onPartyTypeChange, searchFfs, searchCustomers, addConcept, removeConcept, save, remove, fetchItems }
 }
-const automaticCharges = useAutomaticCharges()
+
+const defaultNotes = useDefaultFfNotes()
 
 const getLineCatalogs = async () => {
   const response = await $api.lines.getCatalogs()
@@ -565,6 +639,7 @@ const getData = async () => {
       line.value = res
       setValues(res)
     })
+    await defaultNotes.fetchItems()
   } catch (e) {
     console.error(e)
   } finally {
