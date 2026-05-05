@@ -255,6 +255,16 @@
                     :set-item="defaultNotes.partyItem.value"
                   />
                 </div>
+                <div class="col-span-2">
+                  <AGlobalSearch
+                    :key="`consignee-filter-${defaultNotes.form.value.consignee_id}`"
+                    :onSearch="defaultNotes.searchCustomers"
+                    v-model="defaultNotes.form.value.consignee_id"
+                    validate-key="consignee_id_filter"
+                    label="Consignee filter (optional — leave empty to apply to all)"
+                    clearable
+                  />
+                </div>
               </div>
 
               <div class="mt-2">
@@ -317,6 +327,7 @@
                   <th>C/D</th>
                   <th>Format</th>
                   <th>Party</th>
+                  <th>Consignee filter</th>
                   <th>Currency</th>
                   <th>From</th>
                   <th>To</th>
@@ -344,6 +355,10 @@
                       {{ item.party?.name }}
                     </div>
                   </td>
+                  <td class="whitespace-nowrap text-xs">
+                    <span v-if="item.consignee">{{ item.consignee?.name }}</span>
+                    <v-chip v-else size="x-small" color="grey">All</v-chip>
+                  </td>
                   <td class="text-xs">{{ item.currency?.code ?? item.currency?.name }}</td>
                   <td class="whitespace-nowrap text-xs">{{ item.from_date }}</td>
                   <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
@@ -353,7 +368,7 @@
                   </td>
                 </tr>
                 <tr v-if="defaultNotes.items.value.length === 0">
-                  <td colspan="10" class="text-center text-grey py-2 text-sm">No default notes configured</td>
+                  <td colspan="11" class="text-center text-grey py-2 text-sm">No default notes configured</td>
                 </tr>
               </tbody>
             </v-table>
@@ -522,6 +537,7 @@ const useDefaultFfNotes = () => {
     to_date: null,
     party_type: null,
     party_id: null,
+    consignee_id: null,
     notes: null,
     concepts: [{ charge_id: null, amount: null }],
   })

@@ -5,7 +5,22 @@
         <div class="mb-4" @keyup.enter="onClickFilters">
           <div>Filters:</div>
           <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-3">
+            <div class="col-span-2">
+              <v-autocomplete
+                v-model="partyTypeFilter"
+                :items="[
+                  { value: 'ff', name: 'Freight Forwarder' },
+                  { value: 'consignee', name: 'Consignee' },
+                ]"
+                item-title="name"
+                item-value="value"
+                density="compact"
+                label="Party type"
+                clearable
+                @update:model-value="onPartyTypeFilterChange"
+              />
+            </div>
+            <div v-if="partyTypeFilter !== 'consignee'" class="col-span-3">
               <v-autocomplete
                 v-model="filters.forwarderId"
                 :items="catalogs.forwarders"
@@ -13,6 +28,16 @@
                 item-value="id"
                 density="compact"
                 label="Freight Forwarder"
+                clearable
+              />
+            </div>
+            <div v-if="partyTypeFilter === 'consignee'" class="col-span-3">
+              <AGlobalSearch
+                v-model="filters.consigneeId"
+                :onSearch="searchCustomers"
+                validate-key="consigneeId"
+                label="Consignee"
+                :hide-details="true"
               />
             </div>
             <div class="col-span-2">
@@ -75,7 +100,7 @@
               <th class="text-left" width="50">Actions</th>
               <th class="text-left" width="50">Locked</th>
               <th class="text-left">Folio</th>
-              <th class="text-left">F.F. Agent</th>
+              <th class="text-left">Party</th>
               <th class="text-left">Type</th>
               <th class="text-left">Credit / Debit</th>
               <th class="text-left">Service type</th>
@@ -115,7 +140,16 @@
                 </div>
               </td>
               <td class="whitespace-nowrap font-bold">{{ item.service_folio }}</td>
-              <td>{{ item.forwarder?.name }}</td>
+              <td class="whitespace-nowrap">
+                <v-chip
+                  size="x-small"
+                  :color="item.party_type?.includes('Consignee') ? 'purple' : 'teal'"
+                  class="mr-1"
+                >
+                  {{ item.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                </v-chip>
+                {{ item.party?.name ?? item.forwarder?.name }}
+              </td>
               <td class="whitespace-nowrap">{{ item.inbound == 1 ? 'From Agent' : 'From TM' }}</td>
               <td class="whitespace-nowrap">{{ item.type === 'C' ? 'Credit' : 'Debit' }}</td>
               <td class="whitespace-nowrap">{{ getServiceType(item) }}</td>
@@ -223,11 +257,23 @@ const catalogs = ref({
   forwarders: [] as any,
 })
 
+const partyTypeFilter = ref<string | null>(null)
+
+const onPartyTypeFilterChange = () => {
+  filters.value.forwarderId = ''
+  filters.value.consigneeId = null
+}
+
+const searchCustomers = async (params: any) => {
+  return await $api.consignees.searchConsignees({ query: params })
+}
+
 const filters = ref<any>({
   year: '',
   referenciaNumber: '',
   linkedRef: null,
   forwarderId: '',
+  consigneeId: null,
   inbound: null,
   numberFolios: null,
   folios: null,
@@ -344,11 +390,13 @@ const getSeaImportFilters = async () => {
 }
 
 const clearFilters = async () => {
+  partyTypeFilter.value = null
   filters.value = {
     year: '',
     linkedRef: null,
     referenciaNumber: '',
     forwarderId: '',
+    consigneeId: null,
     inbound: null,
     numberFolios: null,
     folios: null,

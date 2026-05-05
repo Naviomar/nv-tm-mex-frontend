@@ -7,7 +7,21 @@
         <div class="mb-4" @keyup.enter="onClickFilters">
           <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
             <div class="col-span-1">
-              <AFreightForwarderSearch v-if="false" v-model="filters.freightId" label="Freight forwarder" />
+              <v-autocomplete
+                v-model="partyTypeFilter"
+                clearable
+                :items="[
+                  { value: 'ff', name: 'Freight Forwarder' },
+                  { value: 'consignee', name: 'Consignee' },
+                ]"
+                item-title="name"
+                item-value="value"
+                density="compact"
+                label="Party type"
+                @update:model-value="onPartyTypeFilterChange"
+              />
+            </div>
+            <div v-if="partyTypeFilter !== 'consignee'" class="col-span-1">
               <v-autocomplete
                 v-model="filters.freightId"
                 clearable
@@ -18,12 +32,20 @@
                 label="Freight forwarder"
               />
             </div>
-            <div class="col-span-1">
+            <div v-if="partyTypeFilter !== 'consignee'" class="col-span-1">
               <AGlobalSearch
                 v-model="filters.freightGroupId"
                 :onSearch="searchFfGroups"
                 validate-key="freightGroupId"
                 label="Freight Forwarder Group"
+              />
+            </div>
+            <div v-if="partyTypeFilter === 'consignee'" class="col-span-2">
+              <AGlobalSearch
+                v-model="filters.consigneeId"
+                :onSearch="searchCustomers"
+                validate-key="consigneeId"
+                label="Consignee"
               />
             </div>
             <div class="col-span-1">
@@ -104,7 +126,7 @@
                 <th class="text-left">BL</th>
                 <th class="text-left">Customer</th>
 
-                <th class="text-left">F.F. Agent</th>
+                <th class="text-left">Party</th>
                 <th class="text-left">F.F. Group</th>
                 <th class="text-left">Type</th>
                 <th class="text-left">Base currency</th>
@@ -209,7 +231,16 @@
                 <td>{{ getMasterBlFromServiceable(note) }}</td>
                 <td class="whitespace-nowrap">{{ note.serviceable?.consignee?.name }}</td>
 
-                <td class="whitespace-nowrap">{{ note.forwarder?.name }}</td>
+                <td class="whitespace-nowrap">
+                  <v-chip
+                    size="x-small"
+                    :color="note.party_type?.includes('Consignee') ? 'purple' : 'teal'"
+                    class="mr-1"
+                  >
+                    {{ note.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                  </v-chip>
+                  {{ note.party?.name ?? note.forwarder?.name }}
+                </td>
                 <td class="whitespace-nowrap">{{ note.forwarder?.freight_group?.name }}</td>
 
                 <td class="whitespace-nowrap">
@@ -270,6 +301,18 @@ const snackbar = useSnackbar()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 
+const partyTypeFilter = ref<string | null>(null)
+
+const onPartyTypeFilterChange = () => {
+  filters.value.freightId = null
+  filters.value.freightGroupId = null
+  filters.value.consigneeId = null
+}
+
+const searchCustomers = async (params: any) => {
+  return await $api.consignees.searchConsignees({ query: params })
+}
+
 const filters = ref<any>({
   startDate: '',
   endDate: '',
@@ -278,6 +321,7 @@ const filters = ref<any>({
   folio: '',
   freightId: null,
   freightGroupId: null,
+  consigneeId: null,
   currencyId: null,
 })
 
@@ -708,6 +752,11 @@ const sendToPay = async () => {
   }
   try {
     loadingStore.loading = true
+    const getFfType = () => {
+      if (filters.value.consigneeId) return 'consignee'
+      if (filters.value.freightId) return 'ff_agent'
+      return 'ff_group'
+    }
     let body = {
       notes: creditNotes.value
         .filter((note: any) => note.checked)
@@ -717,8 +766,8 @@ const sendToPay = async () => {
             notes: note.notes,
           }
         }),
-      ff_type: filters.value.freightId ? 'ff_agent' : 'ff_group',
-      ff_id: filters.value.freightId || filters.value.freightGroupId,
+      ff_type: getFfType(),
+      ff_id: filters.value.consigneeId || filters.value.freightId || filters.value.freightGroupId,
     }
 
     const response = await $api.ffNotes.generatePayment(body)
@@ -741,9 +790,9 @@ const onClickFilters = async () => {
 
 const getFreightSoa = async () => {
   try {
-    // if not freightId or freightGroupId
-    if (!filters.value.freightId && !filters.value.freightGroupId) {
-      snackbar.add({ type: 'error', text: 'Please select a freight forwarder or group' })
+    // if not freightId, freightGroupId or consigneeId
+    if (!filters.value.freightId && !filters.value.freightGroupId && !filters.value.consigneeId) {
+      snackbar.add({ type: 'error', text: 'Please select a freight forwarder, group, or consignee' })
       return
     }
 
@@ -779,6 +828,7 @@ const getFreightSoa = async () => {
 }
 
 const clearFilters = async () => {
+  partyTypeFilter.value = null
   filters.value = {
     startDate: '',
     endDate: '',
@@ -787,6 +837,7 @@ const clearFilters = async () => {
     folio: '',
     freightId: null,
     freightGroupId: null,
+    consigneeId: null,
     currencyId: null,
   }
   creditNotes.value = []
