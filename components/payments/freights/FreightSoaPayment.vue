@@ -5,23 +5,12 @@
       <v-card-subtitle>Check and send notes to pay</v-card-subtitle>
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
+          <!-- FUTURE: Party type selector (FF / Consignee) hidden until Consignee SOA payment flow is fully enabled.
+               When re-enabling, restore the partyTypeFilter autocomplete, the v-if guards on FF fields, and the
+               consignee AGlobalSearch block. Also restore the consignee branch in sendToPay / getFreightSoa validation.
+          -->
           <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
             <div class="col-span-1">
-              <v-autocomplete
-                v-model="partyTypeFilter"
-                clearable
-                :items="[
-                  { value: 'ff', name: 'Freight Forwarder' },
-                  { value: 'consignee', name: 'Consignee' },
-                ]"
-                item-title="name"
-                item-value="value"
-                density="compact"
-                label="Party type"
-                @update:model-value="onPartyTypeFilterChange"
-              />
-            </div>
-            <div v-if="partyTypeFilter !== 'consignee'" class="col-span-1">
               <v-autocomplete
                 v-model="filters.freightId"
                 clearable
@@ -32,20 +21,12 @@
                 label="Freight forwarder"
               />
             </div>
-            <div v-if="partyTypeFilter !== 'consignee'" class="col-span-1">
+            <div class="col-span-1">
               <AGlobalSearch
                 v-model="filters.freightGroupId"
                 :onSearch="searchFfGroups"
                 validate-key="freightGroupId"
                 label="Freight Forwarder Group"
-              />
-            </div>
-            <div v-if="partyTypeFilter === 'consignee'" class="col-span-2">
-              <AGlobalSearch
-                v-model="filters.consigneeId"
-                :onSearch="searchCustomers"
-                validate-key="consigneeId"
-                label="Consignee"
               />
             </div>
             <div class="col-span-1">
@@ -126,7 +107,7 @@
                 <th class="text-left">BL</th>
                 <th class="text-left">Customer</th>
 
-                <th class="text-left">Party</th>
+                <th class="text-left">F.F. Agent</th>
                 <th class="text-left">F.F. Group</th>
                 <th class="text-left">Type</th>
                 <th class="text-left">Base currency</th>
@@ -232,14 +213,13 @@
                 <td class="whitespace-nowrap">{{ note.serviceable?.consignee?.name }}</td>
 
                 <td class="whitespace-nowrap">
-                  <v-chip
-                    size="x-small"
-                    :color="note.party_type?.includes('Consignee') ? 'purple' : 'teal'"
-                    class="mr-1"
-                  >
+                  {{ note.forwarder?.name }}
+                  <!-- FUTURE: When Consignee notes are enabled in SOA, restore party chip + name:
+                  <v-chip size="x-small" :color="note.party_type?.includes('Consignee') ? 'purple' : 'teal'" class="mr-1">
                     {{ note.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
                   </v-chip>
                   {{ note.party?.name ?? note.forwarder?.name }}
+                  -->
                 </td>
                 <td class="whitespace-nowrap">{{ note.forwarder?.freight_group?.name }}</td>
 

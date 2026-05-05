@@ -195,7 +195,8 @@
             >
               <td>
                 <div v-if="creditDebit.deleted_at == null && !creditDebit.note_payment" class="flex items-center gap-2">
-                  <div v-if="!creditDebit.checked_at">
+                  <!-- Consignee notes: edit restricted to Super Admin -->
+                  <div v-if="!creditDebit.checked_at && (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)">
                     <EditButton :item="creditDebit" @click="editFfNote(creditDebit)" />
                   </div>
                   <div v-if="creditDebit.checked_at">
@@ -276,7 +277,8 @@
                 <InvoiceChargePaymentsView size="x-small" :invoice="creditDebit.note_payment?.payment?.invoice" />
               </td>
               <td class="whitespace-nowrap">
-                <div v-if="!creditDebit.deleted_at && !creditDebit.checked_at">
+                <!-- Consignee notes: delete restricted to Super Admin -->
+                <div v-if="!creditDebit.deleted_at && !creditDebit.checked_at && (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)">
                   <v-btn icon color="red" @click="confirmDelete(creditDebit)" size="x-small">
                     <v-icon>mdi-delete-outline</v-icon>
                   </v-btn>
@@ -380,6 +382,12 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { user: currentUser } = useCheckUser()
+
+// Only Super Admin can edit or delete Consignee-party notes
+const canEditConsigneeNote = computed(() => {
+  return currentUser.value?.roles?.some((role: any) => role.name === 'Super Admin') ?? false
+})
 
 const props = defineProps({
   referenciaId: {
