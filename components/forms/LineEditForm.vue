@@ -166,6 +166,16 @@
             <div v-if="defaultNotes.showForm.value" class="mb-4">
               <div class="font-bold mb-2">New default note</div>
               <div class="grid grid-cols-2 gap-2">
+                <div class="col-span-2">
+                  <AGlobalSearch
+                    :onSearch="defaultNotes.searchCustomers"
+                    :set-id="defaultNotes.form.value.consignee_id || undefined"
+                    validate-key="consignee_id_filter"
+                    label="Consignee filter"
+                    clearable
+                    @update:model-value="(val) => { defaultNotes.form.value.consignee_id = val || null }"
+                  />
+                </div>
                 <div>
                   <v-autocomplete
                     v-model="defaultNotes.form.value.impoExpo"
@@ -253,16 +263,6 @@
                     :label="defaultNotes.form.value.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'Freight Forwarder *' : 'Consignee *'"
                     :set-items="defaultNotes.partyItems.value"
                     :set-item="defaultNotes.partyItem.value"
-                  />
-                </div>
-                <div class="col-span-2">
-                  <AGlobalSearch
-                    :key="`consignee-filter-${defaultNotes.form.value.consignee_id}`"
-                    :onSearch="defaultNotes.searchCustomers"
-                    v-model="defaultNotes.form.value.consignee_id"
-                    validate-key="consignee_id_filter"
-                    label="Consignee filter (optional — leave empty to apply to all)"
-                    clearable
                   />
                 </div>
               </div>
