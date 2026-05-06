@@ -7,7 +7,7 @@
       :disabled="loadingStore.loading"
       @click="previewInvoice"
       :size="size"
-      >View Credit Note PDF</v-btn
+      >VIEW PDF</v-btn
     >
     <v-dialog v-model="proformaDialog.show" fullscreen>
       <v-card>
@@ -15,9 +15,20 @@
           <v-btn icon @click="closePreview">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-          <v-toolbar-title>Customer credit note viewer</v-toolbar-title>
+          <v-toolbar-title>View Credit Note PDF</v-toolbar-title>
         </v-toolbar>
-        <v-card-text>
+        <v-card-text class="pa-0 h-full relative" style="height: calc(100vh - 64px)">
+          <v-overlay
+            :model-value="loadingStore.loading"
+            persistent
+            class="align-center justify-center"
+            contained
+          >
+            <div class="text-center">
+              <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+              <div class="mt-2 text-white font-bold">GENERATING PDF...</div>
+            </div>
+          </v-overlay>
           <object ref="pdfViewer" type="application/pdf" width="100%" height="100%"></object>
         </v-card-text>
       </v-card>
