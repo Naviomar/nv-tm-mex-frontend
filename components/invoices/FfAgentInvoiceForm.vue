@@ -108,7 +108,10 @@
             />
           </div>
           <div class="col-span-3">
-            <div class="grid grid-cols-2 gap-2 mb-2">
+            <!-- FUTURE: Party type selector hidden for new notes (defaults to FF).
+                 Only re-enable when edit mode is added and only show when editing notes with party_type !== FF.
+                 For now, new notes always use FreightForwarder as party_type.
+            <div class="grid grid-cols-2 gap-2 mb-2" v-if="isEditMode && form.party_type !== 'App\\Models\\Mexico\\FreightForwarder'">
               <v-autocomplete
                 v-model="form.party_type"
                 density="compact"
@@ -122,12 +125,16 @@
                 variant="solo-filled"
                 @update:model-value="onPartyTypeChange"
               />
+            </div>
+            -->
+            <!-- FF Agent selector always visible (Consignee option hidden for now) -->
+            <div class="mb-2">
               <AGlobalSearch
                 :key="`party-search-${form.party_type}`"
                 v-model="form.party_id"
-                :onSearch="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? searchFfs : searchCustomers"
+                :onSearch="searchFfs"
                 validate-key="party_id"
-                :label="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'Freight Forwarder Agent *' : 'Consignee *'"
+                label="Freight Forwarder Agent *"
               />
             </div>
             <div v-if="!isInbound">

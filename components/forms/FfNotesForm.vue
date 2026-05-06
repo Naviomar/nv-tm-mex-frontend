@@ -66,7 +66,8 @@
                     variant="solo-filled"
                   />
                 </div>
-                <div>
+                <!-- Party selector only visible when editing Consignee notes -->
+                <div v-if="showPartySelector">
                   <v-autocomplete
                     v-model="form.party_type"
                     density="compact"
@@ -528,7 +529,11 @@ const getTypeName = (type: string) => {
   return 'Unknown'
 }
 
-const isFromAgent = computed(() => values.format === '1')
+const isFromAgent = computed(() => form.value.format === 'inbound')
+const isFromTM = computed(() => form.value.format === 'outbound')
+const isEditing = computed(() => !!form.value.id)
+const isConsigneeParty = computed(() => form.value.party_type?.includes('Consignee'))
+const showPartySelector = computed(() => isEditing.value && isConsigneeParty.value)
 
 const getFormatName = (format: string) => {
   return format === '0' ? 'From TM' : 'From Agent'
