@@ -6,7 +6,7 @@
           <th>Type</th>
           <th>Credit/Debit</th>
           <th>Folio</th>
-          <th>Agente F.F.</th>
+          <th>Party</th>
           <th>Amount</th>
           <th>in USD</th>
           <th>File / PDF</th>
@@ -28,7 +28,14 @@
             </div>
           </td>
           <td class="whitespace-nowrap">{{ ffNote.service_folio }}</td>
-          <td class="whitespace-nowrap">{{ ffNote.forwarder?.name }}</td>
+          <td class="whitespace-nowrap">
+            <div class="flex items-center gap-1">
+              <v-chip size="x-small" :color="ffNote.party_type?.includes('Consignee') ? 'purple' : 'teal'">
+                {{ ffNote.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+              </v-chip>
+              {{ ffNote.party?.name ?? ffNote.forwarder?.name }}
+            </div>
+          </td>
           <td class="whitespace-nowrap">
             <div class="flex gap-2 items-center">
               <v-btn

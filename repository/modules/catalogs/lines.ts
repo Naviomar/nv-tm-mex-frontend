@@ -162,6 +162,22 @@ class LinesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE2}/${id}/delete-automatic-charge`, fetchOptions)
   }
 
+  async getDefaultFfNotes(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/default-ff-notes`, fetchOptions)
+  }
+
+  async saveDefaultFfNote(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/default-ff-notes`, fetchOptions)
+  }
+
+  async deleteDefaultFfNote(id: string, noteId: string, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/${id}/default-ff-notes/${noteId}`, fetchOptions)
+  }
+
   async getAddresses(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/addresses/all`, fetchOptions)
   }

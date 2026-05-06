@@ -111,7 +111,16 @@
                 </div>
                 <div v-if="!notePayment.ff_note?.serviceable">No link</div>
               </td>
-              <td>{{ notePayment.ff_note?.forwarder?.name }}</td>
+              <td class="whitespace-nowrap">
+                <v-chip
+                  size="x-small"
+                  :color="notePayment.ff_note?.party_type?.includes('Consignee') ? 'purple' : 'teal'"
+                  class="mr-1"
+                >
+                  {{ notePayment.ff_note?.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                </v-chip>
+                {{ notePayment.ff_note?.party?.name ?? notePayment.ff_note?.forwarder?.name }}
+              </td>
               <td>
                 {{ notePayment.ff_note?.type === 'D' ? 'Debit' : 'Credit' }} -
                 {{ notePayment.ff_note?.inbound === 0 ? 'From TM' : 'From Agent' }}
@@ -148,7 +157,7 @@
         <v-card-title>Split selected notes</v-card-title>
         <v-card-text>
           <div v-for="(notePayment, index) in selectedSplitFfNotes" :key="`split-${index}`">
-            {{ notePayment.ff_note?.folio }} - {{ notePayment.ff_note?.forwarder?.name }} -
+            {{ notePayment.ff_note?.folio }} - {{ notePayment.ff_note?.party?.name ?? notePayment.ff_note?.forwarder?.name }} -
             {{ formatToCurrency(notePayment.ff_note?.amount) }} {{ getCurrencyName(notePayment.ff_note?.currency_id) }}
           </div>
         </v-card-text>
