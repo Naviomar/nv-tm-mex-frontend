@@ -1,6 +1,9 @@
 <template>
   <div>
-    <v-card class="py-4">
+    <div v-if="!bankMovement.id" class="flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" />
+    </div>
+    <v-card v-else class="py-4">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
         <div class="col-span-1 md:col-span-3">
           <h1 class="text-xl font-bold mx-2">Pay invoices using</h1>
@@ -25,11 +28,11 @@
                   <span
                     :class="{
                       'text-base text-gray-800 italic': true,
-                      'text-green-700': bankMovement.type === 'deposit',
-                      'text-red-700': bankMovement.type === 'withdrawal',
+                      'text-green-700': movementType === 'deposit',
+                      'text-red-700': movementType === 'withdrawal',
                     }"
                   >
-                    {{ bankMovement.type }}
+                    {{ movementType }}
                   </span>
                 </div>
               </div>
@@ -112,8 +115,9 @@
                     :class="{ 'bg-red-100! dark:bg-red-900!': payment.deleted_at }"
                   >
                     <td>
+                      {{ console.log("PAYMENT", payment) }}
                       <ProcessAuthorizationWrapper
-                        v-if="!payment.deleted_at && !hasBankMovAmountAvailable"
+                        v-if="!payment.deleted_at && !hasBankMovAmountAvailable && !hasAssociatedRefund(payment)"
                         processName="bank-movement-payment-delete"
                         :requestKey="`${bankMovement.id}:${payment.id}`"
                         label="Undo payment"
@@ -123,13 +127,21 @@
                           <TrashButton :item="payment" @click="confirmDeletePayment(payment)" :can-restore="false" />
                         </template>
                       </ProcessAuthorizationWrapper>
-                      <div v-if="hasBankMovAmountAvailable">
+                      <div v-if="hasBankMovAmountAvailable && !hasAssociatedRefund(payment)">
                         <TrashButton
                           :item="payment"
                           @click="confirmDeletePayment(payment, true)"
                           :can-restore="false"
                         />
                       </div>
+                      <v-chip
+                        v-if="hasAssociatedRefund(payment)"
+                        color="orange"
+                        size="x-small"
+                        class="mt-1"
+                      >
+                        Has Refund
+                      </v-chip>
                     </td>
                     <td>
                       <InvoiceableLabelLink :paymentChargeable="payment.chargeable" />
@@ -178,7 +190,7 @@
             <v-card-text>
               <!-- // Posiblemente se necesite un componente para buscar y pagar facturas -->
               <v-alert
-                v-if="bankMovement.type === 'deposit'"
+                v-if="movementType === 'deposit'"
                 density="compact"
                 type="info"
                 variant="tonal"
@@ -202,13 +214,13 @@
                     density="compact"
                     item-title="name"
                     item-value="class_name"
-                    :label="bankMovement.type === 'withdrawal' ? 'Invoice type (required)' : 'Invoice type (optional)'"
-                    :rules="bankMovement.type === 'withdrawal' ? [(v: any) => !!v || 'Invoice type is required for withdrawals'] : []"
+                    :label="movementType === 'withdrawal' ? 'Invoice type (required)' : 'Invoice type (optional)'"
+                    :rules="movementType === 'withdrawal' ? [(v: any) => !!v || 'Invoice type is required for withdrawals'] : []"
                     @update:model-value="clearSearchInvoices"
-                    :clearable="bankMovement.type === 'deposit'"
-                    :placeholder="bankMovement.type === 'deposit' ? 'All types will be searched if not selected' : ''"
+                    :clearable="movementType === 'deposit'"
+                    :placeholder="movementType === 'deposit' ? 'All types will be searched if not selected' : ''"
                   >
-                    <template v-slot:append-item v-if="typeInvoicesByMovementType.length === 0">
+                    <template v-slot:no-data>
                       <v-list-item>
                         <v-list-item-title>No types available</v-list-item-title>
                       </v-list-item>
@@ -363,7 +375,6 @@ const getBankMovement = async () => {
   try {
     loadingStore.start()
     const response: any = await $api.bankMovements.getMovement(props.id)
-
     bankMovement.value = response
   } catch (error) {
     console.error(error)
@@ -374,13 +385,13 @@ const getBankMovement = async () => {
   }
 }
 
-await getBankMovement()
-
 const getInvoiceType = (payment: any) => {
   return getInvoiceableName(payment.chargeable?.invoice || {})
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await getBankMovement()
+
   const focusPayahbleId = route.query.focusPayable
   if (focusPayahbleId) {
     const el = document.getElementById(`payable-${focusPayahbleId}`)
@@ -405,15 +416,14 @@ const filters = ref<any>({
   invoices: [],
 })
 
+const movementType = computed(() => bankMovement.value?.type?.trim() ?? '')
+
 const typeInvoicesByMovementType = computed(() => {
-  console.log('bankMovement.value.type:', bankMovement.value.type)
-  if (!bankMovement.value.type) return []
-  if (bankMovement.value.type === 'deposit') {
-    const depositTypes = typeInvoices.filter((type: any) => type.deposit)
-    console.log('Deposit types found:', depositTypes)
-    return depositTypes
+  if (!bankMovement.value?.id) return []
+  if (movementType.value === 'deposit') {
+    return typeInvoices.filter((type: any) => type.deposit)
   }
-  if (bankMovement.value.type === 'withdrawal') {
+  if (movementType.value === 'withdrawal') {
     return typeInvoices.filter((type: any) => type.withdrawal)
   }
   return []
@@ -430,7 +440,7 @@ const isRequestBasedType = computed(() => {
 })
 
 const searchFieldLabel = computed(() => {
-  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+  if (!filters.value.typeInvoice && movementType.value === 'deposit') {
     return 'Add invoice/request numbers to search (all types)'
   }
   
@@ -456,7 +466,7 @@ const searchFieldLabel = computed(() => {
 })
 
 const searchFieldHint = computed(() => {
-  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+  if (!filters.value.typeInvoice && movementType.value === 'deposit') {
     return 'Press ENTER to add numbers to search (all invoice/request types)'
   }
   
@@ -474,7 +484,7 @@ const searchFieldHint = computed(() => {
 })
 
 const searchButtonText = computed(() => {
-  if (!filters.value.typeInvoice && bankMovement.value.type === 'deposit') {
+  if (!filters.value.typeInvoice && movementType.value === 'deposit') {
     return 'Search all invoice/request types'
   }
   
@@ -604,6 +614,33 @@ const confirmDeletePayment = async (payment: any, skipCheckProcess = false) => {
   }
 }
 
+const hasAssociatedRefund = (payment: any): boolean => {
+  // Check if the payment's chargeable is a ServicePayment with an associated refund
+  const chargeable = payment.chargeable
+  if (!chargeable) return false
+
+  // Check if it's a ServicePayment (has reqRefundPayment relation)
+  if (chargeable.req_refund_payment) {
+    return true
+  }
+
+  // Alternative: check through the invoice -> ReqRefund -> refundPayments chain
+  // This handles cases where the payment is linked to an InvoiceCharge that belongs to a ReqRefund invoice
+  const invoice = chargeable.invoice
+  if (invoice?.invoiceable_type?.includes('ReqRefund')) {
+    const reqRefund = invoice.invoiceable
+    if (reqRefund?.refund_payments?.length > 0) {
+      // Check if any refund_payment points back to this service_payment
+      return reqRefund.refund_payments.some((refundPayment: any) => {
+        const payable = refundPayment.payable
+        return payable && payable.id === chargeable.id
+      })
+    }
+  }
+
+  return false
+}
+
 const checkMaxAmountToPay = (value: any, charge: any) => {
   if (value > charge.pending_balance) {
     charge.amount_to_pay = charge.pending_balance
@@ -631,7 +668,8 @@ const amountToPayTotal = computed(() => {
 })
 
 const hasBankMovAmountAvailable = computed(() => {
-  if (bankMovement.value.movement_type.id == 2 && bankMovement.value.sbc_status !== 'approved') return false
+  if (!bankMovement.value?.id) return false
+  if (bankMovement.value.movement_type?.id == 2 && bankMovement.value.sbc_status !== 'approved') return false
   return bankMovement.value.amount_available > 0
 })
 

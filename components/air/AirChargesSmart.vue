@@ -1032,6 +1032,7 @@ const isValidForm = computed(() => {
     charge.charge_id &&
     charge.inv_type &&
     charge.fuera_dentro_awb &&
+    charge.sell_currency_id &&
     (charge.has_sell ? charge.sell_amount && charge.sell_ppcc : true) &&
     (charge.has_buy ? charge.buy_amount && charge.buy_ppcc : true)
 
@@ -1042,7 +1043,7 @@ const isValidBuyForm = computed(() => {
   const { charge } = formBuyCharge.value
 
   const isValid =
-    charge.charge_id && charge.inv_type && charge.fuera_dentro_awb && charge.buy_amount > 0 && charge.buy_ppcc
+    charge.charge_id && charge.inv_type && charge.fuera_dentro_awb && charge.buy_amount > 0 && charge.buy_ppcc && charge.sell_currency_id
 
   return isValid
 })
