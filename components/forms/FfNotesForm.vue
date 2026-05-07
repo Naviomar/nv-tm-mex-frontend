@@ -87,10 +87,9 @@
                     :key="`party-search-${form.party_type}`"
                     ref="partySearchRef"
                     :onSearch="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? searchFfs : searchCustomers"
-                    v-model="form.party_id"
+                    :set-id="values.party_id || undefined"
                     validate-key="party_id"
                     :label="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'F.F. Agent *' : 'Consignee *'"
-                    :set-id="partyItem"
                   />
                 </div>
                 <div>
@@ -444,6 +443,7 @@ const lockNote = ref<any>({
 })
 
 const form = ref<any>({
+  format: null,
   type: null,
   folio: null,
   as_invoice: false,
@@ -451,10 +451,10 @@ const form = ref<any>({
   party_id: null,
   agente_ff_id: null,
   contacto_ff: null,
-  amount: 0,
+  amount: null,
   currency_id: null,
-  attachment: null as any,
-})
+  attachment: null,
+}) as any
 
 const partyItems = ref<any[]>([])
 const partyItem = ref<any>(null)
@@ -472,6 +472,13 @@ const concepts = ref<any>([])
 const { handleSubmit, values, errors, meta, handleReset, validate, setValues } = useForm({
   validationSchema: schemaCreditDebitNotes,
 })
+
+// Sync vee-validate format with form.format for isFromAgent computed
+watch(() => values.format, (newFormat) => {
+  if (form.value) {
+    form.value.format = newFormat
+  }
+}, { immediate: true })
 
 const hasPendingToSave = computed(() => creditDebitNotes.value.length > 0)
 
@@ -529,8 +536,8 @@ const getTypeName = (type: string) => {
   return 'Unknown'
 }
 
-const isFromAgent = computed(() => form.value.format === 'inbound')
-const isFromTM = computed(() => form.value.format === 'outbound')
+const isFromAgent = computed(() => form.value.format === '1')
+const isFromTM = computed(() => form.value.format === '0')
 const isEditing = computed(() => !!form.value.id)
 const isConsigneeParty = computed(() => form.value.party_type?.includes('Consignee'))
 const showPartySelector = computed(() => isEditing.value && isConsigneeParty.value)
@@ -570,14 +577,17 @@ const searchCustomers = async (params: any) => {
 }
 
 const initForms = async () => {
+  // Preserve the selected format from vee-validate values
+  const selectedFormat = values.format
   form.value = {
+    format: selectedFormat,
     type: null,
     folio: null,
     party_type: 'App\\Models\\Mexico\\FreightForwarder',
     party_id: null,
     agente_ff_id: null,
     contacto_ff: null,
-    amount: 0,
+    amount: null,
     currency_id: null,
     attachment: null,
   }
@@ -596,7 +606,8 @@ const validateForm = async () => {
   if (!isValid) {
     return false
   }
-  if (!form.value.type || !form.value.party_id || !form.value.currency_id) {
+  // Use values.party_id (vee-validate) since AGlobalSearch uses useField
+  if (!form.value.type || !values.party_id || !form.value.currency_id) {
     snackbar.add({
       type: 'warning',
       text: 'You must fill all fields',
@@ -641,6 +652,7 @@ const cancelForm = () => {
   setValues({ format: undefined })
   concepts.value = []
   form.value = {
+    format: null,
     type: null,
     folio: null,
     party_type: 'App\\Models\\Mexico\\FreightForwarder',
@@ -662,7 +674,7 @@ const upsertFfNote = async () => {
     return
   }
   const partyType = form.value.party_type
-  const partyId = form.value.party_id
+  const partyId = values.party_id // Use vee-validate values since AGlobalSearch uses useField
   creditDebitNotes.value.push({
     format: values.format,
     ...form.value,
@@ -675,6 +687,7 @@ const upsertFfNote = async () => {
   concepts.value = []
   form.value = {
     id: null,
+    format: null,
     type: null,
     folio: null,
     party_type: 'App\\Models\\Mexico\\FreightForwarder',
@@ -695,8 +708,6 @@ const upsertFfNote = async () => {
 const editFfNote = async (creditDebit: any) => {
   const resolvedPartyType = creditDebit.party_type ?? 'App\\Models\\Mexico\\FreightForwarder'
   const resolvedPartyId = creditDebit.party_id ?? creditDebit.forwarder_id
-
-  partyItem.value = resolvedPartyId
 
   setValues({ format: creditDebit.format })
 
