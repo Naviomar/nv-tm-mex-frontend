@@ -724,7 +724,7 @@ const props = defineProps({
     default: false,
   },
 })
-
+console.log("props::",props)
 const formCharge = ref<any>({
   show: false,
   charge: {
