@@ -619,6 +619,7 @@ const totalTransitDays = computed(() => {
     let diff = arrivalDate.getTime() - departureDate.getTime()
     // add 1 day to include the departure day
     diff += 1000 * 60 * 60 * 24
+    console.log("DIF::",diff)
     return diff / (1000 * 60 * 60 * 24)
   }
 
