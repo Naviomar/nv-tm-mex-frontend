@@ -737,7 +737,7 @@ const onSuccess = async () => {
     loadingStore.start()
     const body = {
       ...values,
-      routes: routes.value,
+      routes: JSON.stringify(routes.value),
       charges: charges.value,
     }
     const response = await $api.airImport.updateReference(props.id, body)

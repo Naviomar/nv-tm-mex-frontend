@@ -549,7 +549,7 @@ const onSuccess = async () => {
     loadingStore.loading = true
     const body = {
       ...values,
-      routes: routes.value,
+      routes: JSON.stringify(routes.value),
       charges: charges.value,
     }
 
