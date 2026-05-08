@@ -295,7 +295,16 @@
                             <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
                               <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
-                              <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                              <ProcessAuthorizationWrapper
+                                processName="supplier-cfdi-delete"
+                                :requestKey="`${cfdi.id}`"
+                                label="Delete CFDI"
+                                :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
+                              >
+                                <template #auth>
+                                  <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                                </template>
+                              </ProcessAuthorizationWrapper>
                             </div>
                             <div v-if="!hasSupplierLinked(cfdi)" class="flex gap-2">
                               <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">
@@ -339,7 +348,16 @@
                             <div v-if="hasSupplierLinked(cfdi)" class="flex justify-center gap-2 mb-2">
                               <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
-                              <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                              <ProcessAuthorizationWrapper
+                                processName="supplier-cfdi-delete"
+                                :requestKey="`${cfdi.id}`"
+                                label="Delete CFDI"
+                                :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
+                              >
+                                <template #auth>
+                                  <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                                </template>
+                              </ProcessAuthorizationWrapper>
                             </div>
                             <div v-if="!hasSupplierLinked(cfdi)" class="flex gap-2">
                               <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">
@@ -374,7 +392,16 @@
                       </template>
                       <template v-else-if="hasSupplierLinked(cfdi)">
                         <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
-                        <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                        <ProcessAuthorizationWrapper
+                          processName="supplier-cfdi-delete"
+                          :requestKey="`${cfdi.id}`"
+                          label="Delete CFDI"
+                          :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
+                        >
+                          <template #auth>
+                            <TrashButton v-if="!isTouched(cfdi)" :item="cfdi" @click="showConfirmDelete" />
+                          </template>
+                        </ProcessAuthorizationWrapper>
                       </template>
                       <template v-else>
                         <v-btn color="green" size="small" variant="tonal" @click="syncSupplierCfdi(cfdi.id)">

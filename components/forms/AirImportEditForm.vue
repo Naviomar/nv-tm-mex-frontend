@@ -735,8 +735,9 @@ await getCatalogs()
 const onSuccess = async () => {
   try {
     loadingStore.start()
+    const { transits, ...valuesWithoutTransits } = values
     const body = {
-      ...values,
+      ...valuesWithoutTransits,
       routes: JSON.stringify(routes.value),
       charges: charges.value,
     }

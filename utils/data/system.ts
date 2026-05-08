@@ -233,6 +233,12 @@ const processResources = {
     description: 'Update Sea Export Container Detentions',
     keyLabel: null,
   },
+  /** Authorize deleting a supplier CFDI */
+  SupplierCfdiDelete: {
+    processName: 'supplier-cfdi-delete',
+    description: 'Delete Supplier CFDI',
+    keyLabel: 'CFDI',
+  },
 }
 
 const systemLayouts = {
