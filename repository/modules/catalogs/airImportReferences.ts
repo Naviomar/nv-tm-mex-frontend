@@ -79,7 +79,10 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
   }
 
   async updateReference(id: string, form: any, fetchOptions?: FetchOptions) {
+    console.log('form before objectToFormData:', form)
     const body = objectToFormData(form)
+    console.log('body after objectToFormData:', body)
+    console.log('body.get("routes"):', body.get('routes'))
     fetchOptions = {
       body: body,
       ...fetchOptions,
