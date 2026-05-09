@@ -47,6 +47,7 @@ class FetchFactory<T> {
       ...fetchOptions,
     }
 
+    console.log('FetchFactory call - method:', method, 'url:', url, 'fetchOptions.body type:', typeof fetchOptions.body, 'fetchOptions.body:', fetchOptions.body)
     return this.$fetch<T>(url, {
       method,
       ...fetchOptions,
