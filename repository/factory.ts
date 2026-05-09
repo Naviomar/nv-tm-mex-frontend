@@ -48,6 +48,13 @@ class FetchFactory<T> {
     }
 
     console.log('FetchFactory call - method:', method, 'url:', url, 'fetchOptions.body type:', typeof fetchOptions.body, 'fetchOptions.body:', fetchOptions.body)
+    // Log all FormData keys if body is FormData
+    if (fetchOptions.body instanceof FormData) {
+      console.log('FormData keys:')
+      for (const [key, value] of fetchOptions.body.entries()) {
+        console.log(`  ${key}:`, value)
+      }
+    }
     return this.$fetch<T>(url, {
       method,
       ...fetchOptions,
