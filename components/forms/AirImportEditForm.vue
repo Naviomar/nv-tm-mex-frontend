@@ -735,14 +735,12 @@ await getCatalogs()
 const onSuccess = async () => {
   try {
     loadingStore.start()
-    console.log('routes.value before stringify:', routes.value)
     const { transits, ...valuesWithoutTransits } = values
     const body = {
       ...valuesWithoutTransits,
-      routes: JSON.stringify(routes.value),
+      routes: routes.value,
       charges: charges.value,
     }
-    console.log('body before send:', body)
     const response = await $api.airImport.updateReference(props.id, body)
 
     snackbar.add({ type: 'success', text: 'Air import reference updated' })
