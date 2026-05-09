@@ -550,7 +550,7 @@ const onSuccess = async () => {
     const { transits, ...valuesWithoutTransits } = values
     const body = {
       ...valuesWithoutTransits,
-      routes: JSON.stringify(routes.value),
+      routes: routes.value,
       charges: charges.value,
     }
 
