@@ -296,9 +296,9 @@
                               <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                               <ProcessAuthorizationWrapper
-                                processName="supplier-cfdi-delete"
+                                :processName="cfdi.deleted_at ? 'supplier-cfdi-restore' : 'supplier-cfdi-delete'"
                                 :requestKey="`${cfdi.id}`"
-                                label="Delete CFDI"
+                                :label="cfdi.deleted_at ? 'Restore CFDI' : 'Delete CFDI'"
                                 :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
                               >
                                 <template #auth>
@@ -349,9 +349,9 @@
                               <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                               <ProcessAuthorizationWrapper
-                                processName="supplier-cfdi-delete"
+                                :processName="cfdi.deleted_at ? 'supplier-cfdi-restore' : 'supplier-cfdi-delete'"
                                 :requestKey="`${cfdi.id}`"
-                                label="Delete CFDI"
+                                :label="cfdi.deleted_at ? 'Restore CFDI' : 'Delete CFDI'"
                                 :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
                               >
                                 <template #auth>
@@ -393,9 +393,9 @@
                       <template v-else-if="hasSupplierLinked(cfdi)">
                         <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                         <ProcessAuthorizationWrapper
-                          processName="supplier-cfdi-delete"
+                          :processName="cfdi.deleted_at ? 'supplier-cfdi-restore' : 'supplier-cfdi-delete'"
                           :requestKey="`${cfdi.id}`"
-                          label="Delete CFDI"
+                          :label="cfdi.deleted_at ? 'Restore CFDI' : 'Delete CFDI'"
                           :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
                         >
                           <template #auth>
@@ -685,7 +685,7 @@ const showConfirmDelete = async (supplierCfdi: any) => {
   const result = await confirm({
     title: 'Are you sure?',
     confirmationText: 'Update',
-    content: 'Please confirm you want to delete or restore it.',
+    content: `Please confirm you want to ${supplierCfdi.deleted_at ? 'restore' : 'delete'} this CFDI.`,
     dialogProps: {
       persistent: true,
       maxWidth: 500,
@@ -698,8 +698,13 @@ const showConfirmDelete = async (supplierCfdi: any) => {
   if (result) {
     try {
       loadingStore.start()
-      const response = await $api.suppliers.deleteCfdi(supplierCfdi.id)
-      snackbar.add({ type: 'success', text: 'Supplier CFDI deleted' })
+      const response = supplierCfdi.deleted_at
+        ? await $api.suppliers.restoreCfdi(supplierCfdi.id)
+        : await $api.suppliers.deleteCfdi(supplierCfdi.id)
+      snackbar.add({
+        type: 'success',
+        text: `Supplier CFDI ${supplierCfdi.deleted_at ? 'restored' : 'deleted'}`
+      })
       await getSupplierCfdis()
     } catch (e) {
       console.error(e)

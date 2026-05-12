@@ -239,6 +239,12 @@ const processResources = {
     description: 'Delete Supplier CFDI',
     keyLabel: 'CFDI',
   },
+  /** Authorize restoring a supplier CFDI */
+  SupplierCfdiRestore: {
+    processName: 'supplier-cfdi-restore',
+    description: 'Restore Supplier CFDI',
+    keyLabel: 'CFDI',
+  },
 }
 
 const systemLayouts = {
