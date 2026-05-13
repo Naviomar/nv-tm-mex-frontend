@@ -66,9 +66,9 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(invoiceTm, index) in invoiceTms" :key="`inv-tm-${index}`" :class="colorInvCss(invoiceTm)">
+                <tr v-for="(invoiceTm, index) in invoiceTms" :key="`inv-tm-${index}`" :style="tmInvoiceStyles.find(s => s.id === invoiceTm.id)?.style">
                   <td>TM</td>
-                  <td>{{ invoiceTm.id }}</td>
+                  <td>{{ invoiceTm.invoice?.invoice_number || '-' }}</td>
                   <td>{{ invoiceTm.consignee?.name }}</td>
                   <td>
                     {{ invoiceTm.is_proforma == 0 ? 'Invoice' : 'Proforma' }}
@@ -93,9 +93,9 @@
                   </td>
                   <td>{{ formatDateString(invoiceTm.created_at) }}</td>
                 </tr>
-                <tr v-for="(invoiceWm, index) in invoiceWms" :key="`inv-wm-${index}`" :class="colorInvCss(invoiceWm)">
+                <tr v-for="(invoiceWm, index) in invoiceWms" :key="`inv-wm-${index}`" :style="wmInvoiceStyles.find(s => s.id === invoiceWm.id)?.style">
                   <td>WM</td>
-                  <td>{{ invoiceWm.id }}</td>
+                  <td>{{ invoiceWm.invoice?.invoice_number || '-' }}</td>
                   <td>{{ invoiceWm.consignee?.name }}</td>
                   <td>
                     {{ invoiceWm.is_proforma == 0 ? 'Invoice' : 'Proforma' }}
@@ -494,6 +494,26 @@ const invoiceWms = computed(() => {
   return invoiceInfo.value?.referencias.flatMap((ref: any) => ref.invoice_wms_all)
 })
 
+const targetInvoiceId = computed(() => {
+  return invoiceInfo.value?.invoice?.id
+})
+
+const tmInvoiceStyles = computed(() => {
+  const targetId = targetInvoiceId.value
+  return invoiceInfo.value?.referencias.flatMap((ref: any) => ref.invoice_tms_all).map((invoice: any) => ({
+    id: invoice.id,
+    style: invoice.id === targetId ? { backgroundColor: '#ffcccc' } : {}
+  }))
+})
+
+const wmInvoiceStyles = computed(() => {
+  const targetId = targetInvoiceId.value
+  return invoiceInfo.value?.referencias.flatMap((ref: any) => ref.invoice_wms_all).map((invoice: any) => ({
+    id: invoice.id,
+    style: invoice.id === targetId ? { backgroundColor: '#ffcccc' } : {}
+  }))
+})
+
 const hasPayments = computed(() => {
   // loop invoiceInfo.value.invoice_charge.amount_paid if > 0 return true
   return invoiceInfo.value?.invoice?.invoice_charges.some((charge: any) => charge.amount_paid > 0)
@@ -533,11 +553,20 @@ const getAmountPaidTotal = (invoice: any) => {
 }
 
 const colorInvCss = (invoiceService: any) => {
-  const invoiceType = getInvoiceType(invoiceService.invoice)
-  if (invoiceService.id === invoiceInfo.value?.invoice?.id && invoiceType === props.invoiceType) {
-    return 'bg-red-200 dark:bg-red-800!'
+  // invoiceInfo.value.invoice is the InvoiceTm/InvoiceWm service (id: 46)
+  // invoiceService is also an InvoiceTm/InvoiceWm service (id: 46)
+  // So we need to compare the service IDs, not the invoice IDs
+  if (invoiceService.id === invoiceInfo.value?.invoice?.id) {
+    return 'bg-red-200 dark:bg-red-800'
   }
   return ''
+}
+
+const getRowStyle = (invoiceService: any) => {
+  if (invoiceService.id === targetInvoiceId.value) {
+    return { backgroundColor: '#ffcccc' }
+  }
+  return {}
 }
 
 const newChargesTotal = computed(() => {
