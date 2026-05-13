@@ -111,7 +111,18 @@
             </td>
             <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
             <td class="whitespace-nowrap">
-              {{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}
+              <div class="flex items-center gap-2">
+                <span>{{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}</span>
+                <v-btn
+                  v-if="hasInvoiceCancellationHistory(authRequest)"
+                  size="x-small"
+                  variant="text"
+                  color="info"
+                  icon="mdi-file-compare"
+                  @click="openHistoryDialog(authRequest)"
+                  title="View cancellation history"
+                />
+              </div>
             </td>
             <td style="max-width: 280px;">
               <div v-if="authRequest.request_reason">
@@ -303,12 +314,19 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <InvoiceCancellationHistoryModal
+        v-model="showHistoryDialog"
+        :resource-data="selectedAuthRequest?.resource_data"
+        :auth-resource="selectedAuthRequest?.resource"
+      />
     </v-card-text>
   </v-card>
 </template>
 <script setup lang="ts">
 import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
+import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -366,6 +384,8 @@ const authRequests = ref<any>({
 
 const showGrantDialog = ref(false)
 const showCancelDialog = ref(false)
+const showHistoryDialog = ref(false)
+const selectedAuthRequest = ref<any>(null)
 
 const showFormGrant = (authRequest: any) => {
   form.value.auth_request = authRequest
@@ -375,6 +395,16 @@ const showFormGrant = (authRequest: any) => {
 const showFormCancel = (authRequest: any) => {
   formCancel.value.auth_request = authRequest
   showCancelDialog.value = true
+}
+
+const hasInvoiceCancellationHistory = (authRequest: any) => {
+  const invoiceTypes = ['cancel-invoice-tm', 'cancel-invoice-wm', 'cancel-invoice-tm-air', 'cancel-invoice-wm-air', 'cancel-free-fromat']
+  return invoiceTypes.includes(authRequest.resource) && authRequest.resource_data && Object.keys(authRequest.resource_data).length > 0
+}
+
+const openHistoryDialog = (authRequest: any) => {
+  selectedAuthRequest.value = authRequest
+  showHistoryDialog.value = true
 }
 
 const onClickPagination = async (page: number) => {
