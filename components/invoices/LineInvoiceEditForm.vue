@@ -158,6 +158,7 @@
                           <th class="font-bold!">Amount *</th>
                           <th class="font-bold!">Currency</th>
                           <th class="font-bold!">Type (TM / WM) *</th>
+                          <th class="font-bold!">Payment Concept</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -200,6 +201,17 @@
                               :items="['TM', 'WM']"
                               density="compact"
                               label="Type *"
+                            />
+                          </td>
+                          <td>
+                            <v-autocomplete
+                              v-model="referencia.payment_concept_id"
+                              :items="paymentConcepts"
+                              item-title="name"
+                              item-value="id"
+                              density="compact"
+                              label="Payment Concept"
+                              clearable
                             />
                           </td>
                         </tr>
@@ -250,6 +262,9 @@ const form = ref<any>({
   invoice_date: null,
   file: null,
 })
+
+const paymentConcepts = ref<any>([])
+const lineInvoicePaymentConceptNames = ['PAGO LC', 'PAGO FN', 'PAGO DM', 'PAGO DT']
 
 const isPaid = (lineInvRef: any) => {
   return lineInvRef.invoice?.is_paid === 1
@@ -329,6 +344,8 @@ const addReferenciaToInvoice = (referencia: any) => {
   const refData = JSON.parse(JSON.stringify(referencia))
   // por el momento comentan que USD es la moneda por default
   refData.currency_id = currencies.find((c) => c.id === 2)!.id
+  // Auto-suggest payment concept based on buy_owner
+  refData.payment_concept_id = suggestPaymentConcept(referencia)?.id || null
   referenciasFoundSelected.value.push(refData)
 }
 
@@ -446,6 +463,7 @@ const updateLineInvoice = async () => {
           amount_invoice: ref.amount_invoice,
           currency_id: ref.currency_id,
           type: ref.type,
+          payment_concept_id: ref.payment_concept_id,
         })) ?? [],
     }
     await $api.linePayments.updateLineInvoice(body)
@@ -466,6 +484,54 @@ const checkMaxAmount = (value: any, referencia: any) => {
     snackbar.add({ type: 'error', text: 'Amount cannot be greater than buy amount' })
     referencia.amount_invoice = getBuyTotalRate(referencia)
   }
+}
+
+const fetchPaymentConcepts = async () => {
+  try {
+    const response: any = await $api.charges.getAll()
+    paymentConcepts.value = response.filter((c: any) =>
+      lineInvoicePaymentConceptNames.includes(c.name)
+    )
+  } catch (error) {
+    console.error('Error fetching payment concepts:', error)
+  }
+}
+
+const suggestPaymentConcept = (referencia: any) => {
+  // Analyze buy_rate_breakdown and export_charges to suggest payment concept
+  const buyConcepts = referencia.buy_rate_breakdown ?? []
+  const exportCharges = referencia.export_charges ?? []
+
+  let freightCount = 0
+  let localCount = 0
+
+  // Count freight vs local in buy_rate_breakdown
+  buyConcepts.forEach((charge: any) => {
+    if (charge.type === 'F') {
+      freightCount++
+    } else if (charge.type === 'L') {
+      localCount++
+    }
+  })
+
+  // Count freight vs local in export_charges
+  exportCharges.forEach((charge: any) => {
+    if (charge.buy_owner === 'F') {
+      freightCount++
+    } else if (charge.buy_owner === 'L') {
+      localCount++
+    }
+  })
+
+  // Suggest based on predominant type
+  if (freightCount > localCount) {
+    return paymentConcepts.value.find((c: any) => c.name === 'PAGO FN')
+  } else if (localCount > freightCount) {
+    return paymentConcepts.value.find((c: any) => c.name === 'PAGO LC')
+  }
+
+  // Default to null if equal or no data
+  return null
 }
 
 const getData = async () => {
@@ -493,4 +559,9 @@ const getData = async () => {
 }
 
 await getData()
+
+// Fetch payment concepts on mount
+onMounted(() => {
+  fetchPaymentConcepts()
+})
 </script>
