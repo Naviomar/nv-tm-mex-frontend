@@ -485,6 +485,7 @@
               <CustomerEmailsWidget
                 :customer-id="values.consignee_id"
                 :notifys="customerNotifys"
+                :airport-id="values.arrival_airport_id"
                 @fetched-emails="setCustomerEmails"
               />
             </div>

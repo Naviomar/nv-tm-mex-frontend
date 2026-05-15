@@ -192,6 +192,7 @@
             <CustomerEmailsWidget
               :customer-id="referencia.consignee_id"
               :notifys="customerNotifys"
+              :pod-id="referencia.pod_id"
               @fetched-emails="setDraftBlEmails"
             />
 

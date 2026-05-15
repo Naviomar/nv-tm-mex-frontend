@@ -85,6 +85,7 @@
             <CustomerEmailsWidget
               :customer-id="reference.consignee_id"
               :notifys="customerNotifys"
+              :pod-id="reference.pod_id"
               @fetched-emails="setCustomerEmails"
             />
           </div>

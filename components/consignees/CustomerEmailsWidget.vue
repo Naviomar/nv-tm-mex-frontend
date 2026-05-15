@@ -35,6 +35,14 @@ const props = defineProps({
     required: true,
     default: () => [],
   },
+  podId: {
+    type: Number,
+    default: null,
+  },
+  airportId: {
+    type: Number,
+    default: null,
+  },
 })
 
 const ccEmails = ref<any>([])
@@ -53,6 +61,8 @@ const getCustomerEmails = async () => {
 
     const body = {
       mail_notifications: props.notifys.map((notify) => notify.short_name),
+      pod_id: props.podId,
+      airport_id: props.airportId,
     }
     const response = await $api.consignees.getEmailByMailNotifications(props.customerId.toString(), body)
     if (response.emails.length === 0) {
