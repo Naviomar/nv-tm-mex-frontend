@@ -43,7 +43,7 @@
                   <v-text-field
                     v-model="invoiceTm.razon_social"
                     density="compact"
-                    label="Razón social"
+                    label="Legal Name"
                     variant="outlined"
                     readonly
                   />
@@ -110,7 +110,7 @@
                 v-model="invoiceTm.regimen_fiscal"
                 :items="cfdiCatalogs.regimenFiscales"
                 density="compact"
-                label="Régimen fiscal"
+                label="Fiscal Regimen"
                 item-title="name"
                 item-value="name"
                 readonly
@@ -119,7 +119,7 @@
                 v-model="invoiceTm.uso_cfdi"
                 :items="cfdiCatalogs.usosCfdi"
                 density="compact"
-                label="Uso de CFDI"
+                label="CFDI use"
                 item-title="name"
                 item-value="name"
               />
@@ -127,7 +127,7 @@
                 v-model="invoiceTm.metodo_pago"
                 :items="cfdiCatalogs.metodosPago"
                 density="compact"
-                label="Método de pago"
+                label="Payment Method"
                 item-title="name"
                 item-value="name"
                 @update:model-value="invoiceTm.forma_pago = null"
@@ -136,7 +136,7 @@
                 v-model="invoiceTm.forma_pago"
                 :items="availableFormasPago"
                 density="compact"
-                label="Forma de pago"
+                label="Payment type"
                 item-title="name"
                 item-value="name"
               />

@@ -96,20 +96,23 @@
                   <div class="font-semibold">{{ invoiceTm.rfc }}</div>
                 </div>
                 <div>
-                  <div class="text-xs text-grey-darken-1 mb-1">Régimen Fiscal</div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Fiscal Regimen</div>
                   <div class="font-semibold">{{ invoiceTm.regimen_fiscal }}</div>
                 </div>
                 <div>
-                  <div class="text-xs text-grey-darken-1 mb-1">Uso CFDI</div>
-                  <div class="font-semibold">{{ invoiceTm.uso_cfdi }}</div>
+                  <div class="text-xs text-grey-darken-1 mb-1">CFDI use</div>
+                  <div class="font-semibold" v-if="invoiceTm.uso_cfdi">{{ invoiceTm.uso_cfdi }}</div>
+                  <div class="font-semibold" v-if="!invoiceTm.uso_cfdi"><v-chip color="red" size="x-small">NO CFDI FINDED</v-chip></div>
                 </div>
                 <div>
-                  <div class="text-xs text-grey-darken-1 mb-1">Método de pago</div>
-                  <div class="font-semibold">{{ invoiceTm.metodo_pago }}</div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Payment Method</div>
+                  <div class="font-semibold" v-if="invoiceTm.metodo_pago">{{ invoiceTm.metodo_pago }}</div>
+                  <div class="font-semibold" v-if="!invoiceTm.metodo_pago"><v-chip color="red" size="x-small">NO PAYMENT METHOD FINDED</v-chip></div>
                 </div>
                 <div>
-                  <div class="text-xs text-grey-darken-1 mb-1">Forma de pago</div>
-                  <div class="font-semibold">{{ invoiceTm.forma_pago }}</div>
+                  <div class="text-xs text-grey-darken-1 mb-1">Payment Type</div>
+                  <div class="font-semibold" v-if="invoiceTm.forma_pago">{{ invoiceTm.forma_pago }}</div>
+                  <div class="font-semibold" v-if="!invoiceTm.forma_pago"><v-chip color="red" size="x-small">NO METHOD OF PAYMENT FINDED</v-chip></div>
                 </div>
               </div>
             </v-card-text>

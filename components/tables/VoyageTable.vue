@@ -168,13 +168,16 @@
                     >
                   </div>
                   <div v-if="voyageDest.eta_date">
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      icon="mdi-update"
-                      color="blue-lighten-2"
-                      @click="changeVoyageDestEtaClick(voyageDest)"
-                    ></v-btn>
+                      <v-chip
+                        class="ma-2"
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        @click="changeVoyageDestEtaClick(voyageDest)"
+                      >
+                        <v-icon icon="mdi-calendar" start></v-icon>
+                        UPDATE ETA
+                      </v-chip>
                   </div>
                 </div>
               </td>

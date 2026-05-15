@@ -76,6 +76,14 @@ class AuthRequestsModule extends FetchFactory<any> {
     const qs = new URLSearchParams({ resource: params.resource, ...(params.action ? { action: params.action } : {}) })
     return this.call('GET', `${this.RESOURCE}/check-temp-permission?${qs}`, fetchOptions)
   }
+
+  async cancelAuth(id: string, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/cancel-auth`, fetchOptions)
+  }
 }
 
 export default AuthRequestsModule

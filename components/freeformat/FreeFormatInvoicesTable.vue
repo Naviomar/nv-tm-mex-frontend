@@ -122,6 +122,7 @@
           <tr>
             <th>Actions</th>
             <th>Tipo</th>
+            <th>Status</th>
             <th>Folio</th>
             <th>Party</th>
             <th>Nombre Party</th>
@@ -129,7 +130,6 @@
             <th>Inv. Type</th>
             <th>Conceptos</th>
             <th>Relacionado</th>
-            <th>Status</th>
             <th>Creado</th>
           </tr>
         </thead>
@@ -148,6 +148,11 @@
                 </div>
               </td>
               <td><v-chip size="x-small" color="blue-darken-2">Factura</v-chip></td>
+              <td>
+                <div class="text-xs">
+                  <v-chip :color="getInvoicePaidStatusColor(row)" size="small">{{ getInvoicePaidStatus(row) }}</v-chip>
+                </div>
+              </td>
               <td>
                 <v-chip size="small" color="primary" class="cursor-pointer">
                   {{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }} #{{ row?.invoice?.invoice_number }}
@@ -197,7 +202,6 @@
                   </v-chip>
                 </div>
               </td>
-              <td><div class="text-xs">{{ getInvoicePaidStatus(row) }}</div></td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="row">{{ formatDateString(row.created_at) }}</UserInfoBadge>
               </td>
@@ -344,7 +348,44 @@ const getInvoicePaidStatus = (row: any) => {
   if (row.deleted_at)        return 'Cancelled'
   if (!row.invoice)          return 'Pending'
   if (row.invoice?.is_paid)  return 'Paid @ ' + formatDateOnlyString(row.invoice.paid_at)
-  return 'Pending'
+  return checkParcialPaid(row)
+}
+
+const getInvoicePaidStatusColor = (row: any) => {
+  if (row.deleted_at) {
+    return 'red'
+  }
+  if (!row.invoice) {
+    return 'purple'
+  }
+  if (row.invoice?.is_paid) {
+    return 'green'
+  }
+  if (checkParcialPaid(row) === 'Partial paid') {
+    return 'amber'
+  }
+  if (checkParcialPaid(row) === 'Pending payment') {
+    return 'red'
+  }
+  return 'purple'
+}
+
+const checkParcialPaid = (rows: any) => {
+  console.log("rows:",rows)
+  if (rows.invoice?.charges) {
+    const totalPaid = rows.invoice.charges.reduce((acc: number, charge: any) => {
+      return acc + parseFloat(charge.amount_paid)
+    }, 0)
+
+    console.log("totalPaid:",totalPaid)
+    if (totalPaid === rows.invoice.total) {
+      return 'Paid @ ' + formatDateOnlyString(rows.invoice.paid_at)
+    }
+    if (totalPaid > 0) {
+      return 'Partial paid'
+    }
+  }
+  return 'Pending payment'
 }
 
 const searchCustomers = async (search: any) => {

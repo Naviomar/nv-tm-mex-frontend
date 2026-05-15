@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="p-2 pt-0">
-        <div class="flex justify-around gap-2 mb-2">
+        <div class="flex flex-col justify-around gap-2 mb-2">
           <button
             v-if="!hasPendigRequest && !hasGrantedRequest"
             class="align-middle select-none font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-3 rounded-lg bg-yellow-600 text-white"
@@ -18,8 +18,21 @@
           >
             <v-icon>mdi-shield-lock-outline</v-icon><span class="font-sans">Request Authorization</span>
           </button>
-          <div v-if="hasPendigRequest && !hasGrantedRequest" class="text-center text-xs text-yellow-900">
-            <v-icon>mdi-shield-lock-outline</v-icon><span class="italic">Authorization Pending</span>
+
+          <div  v-if="hasPendigRequest && !hasGrantedRequest" class=" cursor-pointer transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving">
+            <div
+             
+              class="font-bold text-center text-xs p-1 rounded-lg cursor-pointer bg-red-100 text-red-700 hover: bg-red-200"
+              @click="confirmDeleteRequestAuthorization"
+            >
+              <v-icon>mdi-shield-remove-outline</v-icon> <br><span class="italic">Cancel Authorization</span>
+              
+            </div>
+          </div>
+          <div  v-if="hasPendigRequest && !hasGrantedRequest" class=" cursor-pointer transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving">
+            <div  class="text-center text-xs text-yellow-900">
+              <v-icon>mdi-shield-lock-outline</v-icon><span class="italic">Authorization Pending</span>
+            </div>
           </div>
         </div>
         <div v-if="hasGrantedRequest" class="text-center text-xs text-green-900">
@@ -56,6 +69,25 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+     <v-dialog v-model="showConfirmDelReqDialog" max-width="400">
+      <v-card class="chip-velvet">
+        <v-card-title class="text-h6">
+          <v-icon>mdi-shield-lock-outline</v-icon> Cancel Process Auth
+        </v-card-title>
+        <v-card-text class="bg-surface-light pt-2">
+          <div class="leading-none">Are you sure you want to cancel request authorization to execute this process?</div>
+          <div class="text-sm font-semibold mt-1"></div>
+          <v-textarea label="Reason" v-model="form.reason_deleted" counter rows="3" clearable />
+        </v-card-text>
+        <v-card-actions>
+          <div class="w-full flex justify-around">
+            <v-btn color="error" @click="showConfirmDelReqDialog = false">Close</v-btn>
+            <v-btn color="success" @click="requestCancelAuthorization">Cancel</v-btn>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -63,6 +95,7 @@ import { authorizeResources } from '~/utils/data/system'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const showConfirmDelReqDialog = ref<any>(false)
 
 const props = defineProps({
   resource: {
@@ -90,7 +123,7 @@ const props = defineProps({
 const showConfirmDialog = ref(false)
 const userAuthRequests = ref<any>([])
 const requestsByResource = ref<any>([])
-const form = ref<any>({ request_reason: '', files: [] })
+const form = ref<any>({ request_reason: '', files: [] , reason_deleted: ''})
 
 const hasPendigRequest = computed(() => {
   return requestsByResource.value.length > 0
@@ -119,6 +152,45 @@ defineExpose({
 
 const confirmRequestAuthorization = () => {
   showConfirmDialog.value = true
+}
+
+///Del Request
+const confirmDeleteRequestAuthorization = () => {
+  showConfirmDelReqDialog.value = true
+}
+
+const requestCancelAuthorization = async () => {
+  try {
+    if (form.value.reason_deleted == null || form.value.reason_deleted === '') {
+      snackbar.add({ type: 'error', text: 'Please provide a reason for the cancelation authorization request' })
+      return
+    }
+    loadingStore.loading = true
+    const body: any = {
+      resource: props.resource,
+      resource_id: props.resourceId,
+      reason_deleted: form.value.reason_deleted,
+      files: form.value.files,
+    }
+
+    const reason_deleted = {reason_deleted: form.value.reason_deleted.trim()}
+    
+    if(requestsByResource.value){
+        for(var i = 0; i<requestsByResource.value.length; i++){
+          await $api.authRequests.cancelAuth(requestsByResource.value[i].id, reason_deleted)
+        }
+    }
+
+    snackbar.add({ type: 'success', text: 'Authorization request was canceled' })
+
+    showConfirmDelReqDialog.value = false
+    form.value.reason = ''
+    loadingStore.stop()
+    await getUserAuthRequests()
+  } catch (e) {
+    console.error(e)
+    loadingStore.stop()
+  } 
 }
 
 const requestAuthorization = async () => {
