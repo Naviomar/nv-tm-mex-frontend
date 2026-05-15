@@ -505,6 +505,7 @@
                 <CustomerEmailsWidget
                   :customer-id="props.reference.consignee_id"
                   :notifys="customerNotifys"
+                  :pod-id="props.reference.pod_id"
                   @fetched-emails="setCustomerEmails"
                 />
 
