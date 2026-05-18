@@ -26,11 +26,6 @@
                     <div class="font-semibold mb-1">¿Cuándo puedes editar conceptos?</div>
                     <ul class="list-disc pl-4">
                       <li>
-                        <span class="font-medium">No puedes editar</span> si
-                        <span class="font-mono">Vessel departure</span> <b>y </b>
-                        <span class="font-mono">Voyage departure</span> están vacíos o nulos.
-                      </li>
-                      <li>
                         <span class="font-medium">No puedes editar</span> si el
                         <span class="font-mono">Voyage discharge</span> se encuentra bloqueado.
                       </li>
@@ -39,9 +34,8 @@
                         referencia.
                       </li>
                       <li>
-                        <span class="font-medium">Sí puedes editar</span> si el
-                        <span class="font-mono">voyage discharge</span> no existe y los campos de salida están
-                        presentes.
+                        <span class="font-medium">Sí puedes editar</span> desde el inicio, mientras el
+                        <span class="font-mono">voyage discharge</span> no esté bloqueado.
                       </li>
                     </ul>
                   </div>
@@ -371,9 +365,8 @@ const canManipulateCharges = computed(() => {
 })
 
 const canEditCharges = computed(() => {
-  if (!props.referencia.vessel_departure_id || !props.referencia.voyage_departure) {
-    return false
-  }
+  // Charges can be edited from the start, only blocked when:
+  // - voyage_discharge exists and is locked
   if (!props.referencia.voyage_discharge) {
     return true
   }
