@@ -47,6 +47,14 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/delete`, fetchOptions)
   }
 
+  async cancelAuth(id: string, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/cancel-auth`, fetchOptions)
+  }
+
 }
 
 export default AuthProcessRequestsModule
