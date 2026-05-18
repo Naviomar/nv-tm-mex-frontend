@@ -7,6 +7,9 @@
             <div>
               <InputText density="compact" name="name" label="Name *" />
             </div>
+            <div class="text-red-600 text-sm mt-1 font-medium">
+              Please note: editing the freight forwarder name should only be done to correct typographical errors. The name is used in various reference contexts.
+            </div>
             <div>
               <InputAutocomplete
                 name="freight_group_id"

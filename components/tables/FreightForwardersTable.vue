@@ -67,7 +67,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="ff" @click="viewFf(ff)" />
-                  <EditButton :item="ff" @click="showWarningEditAction(ff)" />
+                  <EditButton :item="ff" @click="editFf(ff)" />
                   <TrashButton :item="ff" @click="showConfirmDelete" />
                 </div>
               </td>
@@ -101,21 +101,8 @@
         ></v-pagination>
       </v-card-text>
     </v-card>
-    <v-dialog v-model="showWarningEdit" max-width="500" persistent>
-      <v-card>
-        <v-card-title>Warning edit Freight</v-card-title>
-        <v-card-text>
-          Por favor, tenga en cuenta que al editar el nombre del agente de carga, se espera que esta acción sea
-          realizada únicamente para corregir errores tipográficos. El nombre del agente de carga se utiliza en otros
-          contextos de referencia
-        </v-card-text>
-        <v-card-actions>
-          <div class="grow"></div>
-          <v-btn color="error" @click="closeWarningEdit">Cancel</v-btn>
-          <v-btn color="success" @click="acceptMessageWarningEdit">Accept</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+
+    <FreightForwarderModal ref="freightForwarderModalRef" @refresh="getFreightForwarders" />
   </div>
 </template>
 <script setup lang="ts">
@@ -128,6 +115,8 @@ const confirm = $notifications.useConfirm()
 
 const loadingStore = useLoadingStore()
 const router = useRouter()
+
+const freightForwarderModalRef = ref<InstanceType<typeof FreightForwarderModal> | null>(null)
 
 // Initial filter values
 const initialFilters = {
@@ -148,9 +137,6 @@ const {
 } = useTableFilters(initialFilters, {
   storageKey: 'freight-forwarders-filters',
 })
-
-const freightSelected = ref(null)
-const showWarningEdit = ref(false)
 
 const freightForwarders = ref<any>({
   data: [],
@@ -186,16 +172,15 @@ const onClickPagination = async (page: number) => {
 }
 
 const viewFf = (ff: any) => {
-  snackbar.add({ type: 'info', text: 'View under construction' })
-  // router.push(`/configuration/freight-forwarders/view-${ff.id}`)
+  freightForwarderModalRef.value?.openView(ff.id)
 }
 
-const showWarningEditAction = (ff: any) => {
-  showWarningEdit.value = true
-  freightSelected.value = ff
+const editFf = (ff: any) => {
+  freightForwarderModalRef.value?.openEdit(ff.id)
 }
-const closeWarningEdit = () => {
-  showWarningEdit.value = false
+
+const openCreate = () => {
+  freightForwarderModalRef.value?.openCreate()
 }
 
 const showConfirmDelete = async (freightf: any) => {
@@ -256,13 +241,12 @@ const clearFilters = async () => {
   await getFreightForwarders()
 }
 
-const acceptMessageWarningEdit = () => {
-  const freight = freightSelected.value as any
-  if (freight) router.push(`/configuration/freight-forwarders/edit-${freight.id}`)
-}
-
 onMounted(() => {
   freightForwarders.value.current_page = currentPage.value
   getFreightForwarders()
+})
+
+defineExpose({
+  openCreate,
 })
 </script>
