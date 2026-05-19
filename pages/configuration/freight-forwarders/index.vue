@@ -7,15 +7,21 @@
           <v-btn color="secondary" to="/configuration/freight-forwarders/groups">
             <v-icon>mdi-account-group-outline</v-icon> Freight forwarder groups
           </v-btn>
-          <v-btn color="success" to="/configuration/freight-forwarders/add">
+          <v-btn color="success" @click="openCreateModal">
             <v-icon>mdi-plus</v-icon>Add freight forwarder
           </v-btn>
         </div>
       </div>
     </div>
     <div class="pt-4">
-      <FreightForwardersTable />
+      <FreightForwardersTable ref="freightForwardersTableRef" />
     </div>
   </v-container>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const freightForwardersTableRef = ref<InstanceType<typeof FreightForwardersTable> | null>(null)
+
+const openCreateModal = () => {
+  freightForwardersTableRef.value?.openCreate()
+}
+</script>

@@ -20,7 +20,7 @@
           v-if="similarItems.length > 0"
           class="py-4 bg-slate-200 dark:bg-neutral-700 mb-4 border-dotted border-2 rounded"
         >
-          <div class="text-sm font-bold mb-2">Freight Forwarders Groups with similar name:</div>
+          <div class="text-sm font-bold mb-2">Customer Groups with similar name:</div>
           <div class="max-h-96 overflow-y-auto">
             <div v-for="freight in similarItems" :key="freight.id" class="p-1">
               {{ freight.name }} #{{ freight.id }}

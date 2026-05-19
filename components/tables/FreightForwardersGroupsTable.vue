@@ -36,7 +36,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="ffg" @click="viewFreightForwardersGroups(ffg)" />
-                  <EditButton v-if="false" :item="ffg" />
+                  <EditButton :item="ffg" @click="editFreightForwardersGroups(ffg)" />
                   <TrashButton :item="ffg" @click="showConfirmDelete(ffg)" />
                 </div>
               </td>
@@ -66,9 +66,13 @@
         ></v-pagination>
       </v-card-text>
     </v-card>
+
+    <FreightGroupModal ref="freightGroupModalRef" @refresh="getFreightForwardersGroups" />
   </div>
 </template>
 <script setup lang="ts">
+import FreightGroupModal from '~/components/freight-forwarders/FreightGroupModal.vue'
+
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -76,6 +80,8 @@ const router = useRouter()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
+
+const freightGroupModalRef = ref<InstanceType<typeof FreightGroupModal> | null>(null)
 
 const filters = ref({
   name: '',
@@ -89,8 +95,16 @@ const freightForwardersGroups = ref({
   last_page: 1,
 })
 
-const viewFreightForwardersGroups = async (freightForwardersGroup: any) => {
-  router.push(`/configuration/freight-forwarders/groups/${freightForwardersGroup.id}`)
+const viewFreightForwardersGroups = (freightForwardersGroup: any) => {
+  freightGroupModalRef.value?.openView(freightForwardersGroup.id)
+}
+
+const editFreightForwardersGroups = (freightForwardersGroup: any) => {
+  freightGroupModalRef.value?.openEdit(freightForwardersGroup.id)
+}
+
+const openCreate = () => {
+  freightGroupModalRef.value?.openCreate()
 }
 
 const onClickPagination = async (page: number) => {
@@ -160,4 +174,8 @@ const clearFilters = async () => {
   }
   await getFreightForwardersGroups()
 }
+
+defineExpose({
+  openCreate,
+})
 </script>

@@ -3,7 +3,7 @@
     <v-card-title>
       <div class="flex justify-between">
         <div>Emails</div>
-        <div>
+        <div v-if="!props.readonly">
           <v-btn icon size="x-small" @click="toggle" :color="showForm ? 'black' : 'success'">
             <v-icon v-if="showForm">mdi-close</v-icon>
             <v-icon v-if="!showForm">mdi-plus</v-icon>
@@ -41,6 +41,7 @@
               <div class="flex gap-2">
                 <div class="flex gap-2">
                   <v-btn
+                    v-if="!props.readonly"
                     size="small"
                     variant="text"
                     icon="mdi-delete-outline"
@@ -69,6 +70,10 @@ const props = defineProps({
   freightForwarder: {
     type: Object,
     required: true,
+  },
+  readonly: {
+    type: Boolean,
+    default: false,
   },
 })
 

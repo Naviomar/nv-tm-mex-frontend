@@ -20,6 +20,7 @@
             <tr>
               <th class="text-left" width="50">Actions</th>
               <th class="text-left">Name Group</th>
+              <th class="text-left">Consignee(s)</th>
               <th class="text-left">Created at</th>
             </tr>
           </thead>
@@ -27,11 +28,23 @@
             <tr v-for="(cg, index) in consigneeGroups.data" :key="`cg-${index}`">
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="cg" @click="viewFreightForwardersGroups" />
+                  <ViewButton :item="cg" @click="viewConsigneeGroup" />
                   <TrashButton :item="cg" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ cg.name }}</td>
+              <td>
+                <div v-if="!cg.consignees || !cg.consignees.length">No consignees</div>
+                <v-chip
+                  v-for="(consignee, idx) in (cg.consignees || [])"
+                  :key="`consignee-${idx}`"
+                  color="primary"
+                  text-color="white"
+                  class="mr-2"
+                >
+                  {{ consignee.name }}
+                </v-chip>
+              </td>
               <td>
                 <UserInfoBadge :item="cg">
                   {{ formatDateString(cg.created_at) }}
@@ -72,7 +85,7 @@ const consigneeGroups = ref({
   last_page: 1,
 })
 
-const viewFreightForwardersGroups = async (consigneeGroup: any) => {
+const viewConsigneeGroup = async (consigneeGroup: any) => {
   router.push(`/configuration/customers/groups/${consigneeGroup.id}`)
 }
 
