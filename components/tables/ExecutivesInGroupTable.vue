@@ -38,8 +38,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import Id from '~/pages/configuration/freight-forwarders/groups/[id].vue'
-
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
