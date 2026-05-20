@@ -109,7 +109,7 @@
           <v-card-title>
             <div class="flex justify-start items-center">
               <v-icon size="x-small">mdi-account-outline</v-icon>
-              <div class="ml-2 font-bold">Customs Agent</div>
+              <div class="ml-2 font-bold">Customs Agent For Emails</div>
             </div>
           </v-card-title>
           <v-card-text>
@@ -118,7 +118,7 @@
               :items="availableAgents"
               item-title="short_name"
               item-value="id"
-              label="Select agent for this load"
+              label="Select agent for emails"
               density="compact"
               variant="outlined"
               clearable
