@@ -61,6 +61,15 @@ class AirExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/${id}/add-house-awb`, fetchOptions)
   }
 
+  async searchDuplicateHouseAwb(name: string, excludeAirReferenceId?: string, fetchOptions?: FetchOptions) {
+    const params = new URLSearchParams()
+    params.append('name', name)
+    if (excludeAirReferenceId) {
+      params.append('exclude_air_reference_id', excludeAirReferenceId)
+    }
+    return this.call('GET', `${this.RESOURCE}/search-duplicate-house-awb?${params.toString()}`, fetchOptions)
+  }
+
   async getAirExportFilters(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/filters`, fetchOptions)
   }

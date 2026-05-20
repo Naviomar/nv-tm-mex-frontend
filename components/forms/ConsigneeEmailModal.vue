@@ -181,6 +181,10 @@ const props = defineProps({
     type: String,
     default: null
   },
+  entrustLetterId: {
+    type: String,
+    default: null
+  },
   lockedPort: {
     type: Object,
     default: null
@@ -353,6 +357,9 @@ const onSuccess = async (values: any) => {
   }
   if (props.warrantyLetterId) {
     body.warranty_letter_id = props.warrantyLetterId
+  }
+  if (props.entrustLetterId) {
+    body.entrust_letter_id = props.entrustLetterId
   }
   await $api.consignees.upsertEmail(props.customerId, body)
   snackbar.add({ type: 'success', text: 'Email saved successfully' })

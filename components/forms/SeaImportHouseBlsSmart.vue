@@ -161,6 +161,15 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <DuplicateReferenceModal
+      v-model:show="duplicateModal.show"
+      :house-name="duplicateModal.houseName"
+      :duplicates="duplicateModal.references"
+      service-type="sea-import"
+      @confirm="onConfirmDuplicate"
+      @cancel="onCancelDuplicate"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -193,6 +202,12 @@ const houseBlDetails = ref<any>({
   show: false,
   masterBl: null,
 })
+const duplicateModal = ref<any>({
+  show: false,
+  houseName: '',
+  references: [],
+})
+const pendingSave = ref<any>(null)
 
 const toggleForm = () => {
   showForm.value = !showForm.value
@@ -387,7 +402,53 @@ function onInvalidSubmit({ values, errors, results }: any) {
   })
 }
 
-const save = handleSubmit(onSuccess, onInvalidSubmit)
+const save = handleSubmit(async (values) => {
+  // Check for duplicates if it's a new House BL (no id) and name exists
+  if (!values.id && values.name) {
+    try {
+      loadingStore.start()
+      const duplicates = await $api.referencias.searchDuplicateHouseBl(
+        values.name,
+        props.referenciaId?.toString() || undefined
+      )
+
+      const duplicatesArray = Array.isArray(duplicates) ? duplicates : (duplicates?.data ?? [])
+
+      if (duplicatesArray && duplicatesArray.length > 0) {
+        // Show modal with duplicates
+        duplicateModal.value = {
+          show: true,
+          houseName: values.name,
+          references: duplicatesArray,
+        }
+        pendingSave.value = values
+        loadingStore.stop()
+        return
+      }
+    } catch (error) {
+      console.error('Error checking for duplicates:', error)
+      // If error checking duplicates, proceed with save
+    } finally {
+      loadingStore.stop()
+    }
+  }
+
+  // Proceed with normal save
+  await onSuccess(values)
+}, onInvalidSubmit)
+
+const onConfirmDuplicate = async () => {
+  duplicateModal.value.show = false
+  if (pendingSave.value) {
+    await onSuccess(pendingSave.value)
+    pendingSave.value = null
+  }
+}
+
+const onCancelDuplicate = () => {
+  duplicateModal.value.show = false
+  pendingSave.value = null
+}
 
 const removeHouseBl = (houseBl: any, index: number) => {
   houseBls.value.splice(index, 1)

@@ -174,7 +174,7 @@ const getInvoiceableName = (invoice: any) => {
     return 'Air WM invoice'
   }
   if (invoiceableType.includes('FfPayment')) {
-    return 'F.F. Payment invoice'
+    return 'F.F. Payment Request'
   }
   if (invoiceableType.includes('LineInvoiceRef')) {
     return 'Freight invoice'

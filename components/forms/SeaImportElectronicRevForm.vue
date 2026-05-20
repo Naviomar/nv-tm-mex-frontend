@@ -86,6 +86,7 @@
               :customer-id="reference.consignee_id"
               :notifys="customerNotifys"
               :pod-id="reference.pod_id"
+              :custom-agent-id="reference.custom_agent_id"
               @fetched-emails="setCustomerEmails"
             />
           </div>
