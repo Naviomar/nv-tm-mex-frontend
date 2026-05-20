@@ -336,13 +336,13 @@
                     <v-chip :color="creditDaysColor">{{ consigneeCreditFinalDate }}</v-chip>
                   </div>
                   <div class="mt-4">
-                    <div class="font-bold mb-2">Customs Agent</div>
+                    <div class="font-bold mb-2">Customs Agent For Emails</div>
                     <v-select
                       v-model="selectedAgentId"
                       :items="availableAgents"
                       item-title="short_name"
                       item-value="id"
-                      label="Select agent for this load"
+                      label="Select agent for emails"
                       density="compact"
                       variant="outlined"
                       clearable
