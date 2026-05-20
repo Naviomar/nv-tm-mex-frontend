@@ -60,6 +60,18 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/ejecutivos`)
   }
 
+  async getReferencesByClient(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-client`, {
+      body: params
+    })
+  }
+
+  async getReferencesByLine(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-line`, {
+      body: params
+    })
+  }
+
 }
 
 export default ReportsModule
