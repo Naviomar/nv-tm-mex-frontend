@@ -154,7 +154,6 @@ const confirmRequestAuthorization = () => {
 }
 
 const onRequestCancelAuthorizationClick = async () => {
-  console.log("reason:",form.value)
   try {
     if (!form.value.reason_deleted.trim()) {
       snackbar.add({ type: 'error', text: 'Please provide a reason for the cancelation authorization request' })
@@ -217,7 +216,6 @@ const onRequestAuthorizationClick = async () => {
 
 // Fetch Authorization Data
 const fetchUserRequests = async () => {
-console.log("entre await:",props)
   try {
     loadingStore.loading = true
 
@@ -226,7 +224,7 @@ console.log("entre await:",props)
       process_name: props.processName,
       request_key: props.requestKey,
     })
-    console.log("response:",response)
+    
     userRequests.value = response
     requestForProcess.value = responseByResource
   } catch (e) {
