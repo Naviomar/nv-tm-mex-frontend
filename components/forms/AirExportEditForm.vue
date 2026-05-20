@@ -351,6 +351,15 @@
         <v-btn color="primary" @click="onSaveSeaExportClick">Save changes</v-btn>
       </div>
     </DraggableDiv>
+
+    <DuplicateReferenceModal
+      v-model:show="duplicateModal.show"
+      :house-name="duplicateModal.houseName"
+      :duplicates="duplicateModal.references"
+      service-type="air-export"
+      @confirm="onConfirmDuplicate"
+      @cancel="onCancelDuplicate"
+    />
   </div>
 </template>
 
@@ -387,6 +396,13 @@ const catalogs = ref<any>({
 const initCreditDebitNotes = ref<any>([])
 const consigneeInfo = ref<any>(null)
 const airReference = ref<any>(null)
+
+const duplicateModal = ref<any>({
+  show: false,
+  houseName: '',
+  references: [],
+})
+const pendingAdd = ref<any>(null)
 
 const routes = ref<any>([])
 const charges = ref<any>([])
@@ -613,6 +629,37 @@ const onSaveSeaExportClick = handleSubmit(onSuccess, onInvalidSubmit)
 const addNewHouseAwb = async () => {
   try {
     loadingStore.start()
+
+    // Get the next House AWB name to check for duplicates
+    // The backend auto-generates it based on master AWB
+    const currentHouseAwbs = airReference.value?.house_awbs || []
+    const countHouseAwbs = currentHouseAwbs.length
+    const letter = countHouseAwbs > 0 ? '-' + String.fromCharCode(65 + countHouseAwbs - 1) : ''
+    const nextHouseAwbName = airReference.value?.house_awb + letter
+
+    if (nextHouseAwbName) {
+      // Check for duplicates
+      const duplicates = await $api.airExport.searchDuplicateHouseAwb(
+        nextHouseAwbName,
+        props.id
+      )
+
+      const duplicatesArray = Array.isArray(duplicates) ? duplicates : (duplicates?.data ?? [])
+
+      if (duplicatesArray && duplicatesArray.length > 0) {
+        // Show modal with duplicates
+        duplicateModal.value = {
+          show: true,
+          houseName: nextHouseAwbName,
+          references: duplicatesArray,
+        }
+        pendingAdd.value = { nextHouseAwbName }
+        loadingStore.stop()
+        return
+      }
+    }
+
+    // Proceed with adding the House AWB
     await $api.airExport.addNewHouseAwb(props.id)
     snackbar.add({ type: 'success', text: 'House AWB added' })
     await getData()
@@ -632,6 +679,37 @@ const addNewHouseAwb = async () => {
       loadingStore.stop()
     }, 250)
   }
+}
+
+const onConfirmDuplicate = async () => {
+  duplicateModal.value.show = false
+  if (pendingAdd.value) {
+    try {
+      loadingStore.start()
+      await $api.airExport.addNewHouseAwb(props.id)
+      snackbar.add({ type: 'success', text: 'House AWB added' })
+      await getData()
+      triggerRefresh()
+
+      // Refresh all tabs data after adding house AWB
+      if (refreshAllTabs) {
+        console.log('📋 House AWB added, refreshing all tabs...')
+        await refreshAllTabs()
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    pendingAdd.value = null
+  }
+}
+
+const onCancelDuplicate = () => {
+  duplicateModal.value.show = false
+  pendingAdd.value = null
 }
 
 const getData = async () => {

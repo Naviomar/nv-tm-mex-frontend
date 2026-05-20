@@ -173,6 +173,15 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/update-house-bl`, fetchOptions)
   }
 
+  async searchDuplicateHouseBl(name: string, excludeReferenciaId?: string, fetchOptions?: FetchOptions) {
+    const params = new URLSearchParams()
+    params.append('name', name)
+    if (excludeReferenciaId) {
+      params.append('exclude_referencia_id', excludeReferenciaId)
+    }
+    return this.call('GET', `${this.RESOURCE}/sea-import/search-duplicate-house-bl?${params.toString()}`, fetchOptions)
+  }
+
   async saveReleaseInstruction(id: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {
