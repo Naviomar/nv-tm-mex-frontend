@@ -105,6 +105,32 @@
           <InputText name="credit_days" type="number" density="compact" variant="solo-filled" label="Credit days *" />
         </div>
 
+        <v-card density="compact" color="blue-grey-lighten-5" class="mb-2">
+          <v-card-title>
+            <div class="flex justify-start items-center">
+              <v-icon size="x-small">mdi-account-outline</v-icon>
+              <div class="ml-2 font-bold">Customs Agent</div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+            <v-select
+              v-model="selectedAgentId"
+              :items="availableAgents"
+              item-title="short_name"
+              item-value="id"
+              label="Select agent for this load"
+              density="compact"
+              variant="outlined"
+              clearable
+              @update:model-value="onAgentChange"
+            >
+              <template v-slot:prepend-inner>
+                <v-icon>mdi-account-tie</v-icon>
+              </template>
+            </v-select>
+          </v-card-text>
+        </v-card>
+
         <v-card v-if="isFromTracker" density="compact" class="dark:bg-neutral-700! my-4">
           <v-card-title> Tracker information </v-card-title>
           <v-card-text>
@@ -486,6 +512,7 @@
                 :customer-id="values.consignee_id"
                 :notifys="customerNotifys"
                 :airport-id="values.arrival_airport_id"
+                :custom-agent-id="values.custom_agent_id"
                 @fetched-emails="setCustomerEmails"
               />
             </div>
@@ -550,6 +577,53 @@ const consigneeInfo = ref<any>(null)
 const routes = ref<any>([])
 const charges = ref<any>([])
 const incident = ref<any>(null)
+const selectedAgentId = ref<number | null>(null)
+
+const availableAgents = computed(() => {
+  if (!consigneeInfo.value) return []
+  
+  const allAgents: any[] = []
+  const arrivalAirportId = routes.value[routes.value.length - 1]?.arrival_airport_id
+  
+  // Get agents from warranty letters for the current arrival airport
+  if (consigneeInfo.value.warranty_letters_current) {
+    consigneeInfo.value.warranty_letters_current.forEach((wl: any) => {
+      if (wl.custom_agent && wl.airport_id === arrivalAirportId) {
+        allAgents.push(wl.custom_agent)
+      }
+    })
+  }
+  
+  // Get agents from entrust letters for the current arrival airport
+  if (consigneeInfo.value.entrust_letters_current) {
+    consigneeInfo.value.entrust_letters_current.forEach((el: any) => {
+      if (el.custom_agent && el.airport_id === arrivalAirportId) {
+        allAgents.push(el.custom_agent)
+      }
+    })
+  }
+  
+  // Remove duplicates by id
+  const uniqueAgents = allAgents.filter((agent, index, self) =>
+    index === self.findIndex((a) => a.id === agent.id)
+  )
+  
+  return uniqueAgents
+})
+
+const onAgentChange = async (agentId: number | null) => {
+  try {
+    loadingStore.start()
+    await $api.airImportReferences.updateCustomsAgent(props.id, { custom_agent_id: agentId })
+    snackbar.add({ type: 'success', text: 'Customs agent updated' })
+    getData()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error updating customs agent' })
+  } finally {
+    loadingStore.stop()
+  }
+}
 
 const formRevalidation = ref<any>({
   show: false,
@@ -841,6 +915,7 @@ const getData = async () => {
       ...response,
     })
     incident.value = response.incident
+    selectedAgentId.value = response.custom_agent?.id || null
 
     routes.value = response.transits
     initCreditDebitNotes.value = response.ff_notes
