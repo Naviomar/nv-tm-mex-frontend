@@ -3,7 +3,7 @@
     <v-card-title>
       <div class="flex justify-between">
         <div>Bank accounts</div>
-        <div>
+        <div v-if="!props.readonly">
           <v-btn icon size="x-small" @click="toggle" :color="showForm ? 'black' : 'success'">
             <v-icon v-if="showForm">mdi-close</v-icon>
             <v-icon v-if="!showForm">mdi-plus</v-icon>
@@ -113,8 +113,8 @@
           <tr v-for="(item, index) in bankAccounts" :key="`bank-${index}`">
             <td>
               <div class="flex items-center gap-2">
-                <EditButton :item="item" @click="editItem(item)" />
-                <TrashButton :item="item" @click="showConfirmDelete" />
+                <EditButton v-if="!props.readonly" :item="item" @click="editItem(item)" />
+                <TrashButton v-if="!props.readonly" :item="item" @click="showConfirmDelete" />
               </div>
             </td>
             <td>
@@ -148,6 +148,10 @@ const props = defineProps({
   id: {
     type: [String, Number],
     required: false,
+  },
+  readonly: {
+    type: Boolean,
+    default: false,
   },
 })
 

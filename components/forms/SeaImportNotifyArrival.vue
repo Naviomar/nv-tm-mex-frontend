@@ -7,7 +7,7 @@
             <v-icon size="x-small">mdi-bell-outline</v-icon>
             <div class="ml-2 font-bold">Arrival notification(s)</div>
           </div>
-          <div v-if="hasVoyageDischarge && hasPpCcSellBuy">
+          <div v-if="hasVoyageDischarge && hasVesselDeparture && hasPpCcSellBuy">
             <v-btn
               icon="mdi-email-plus-outline"
               size="x-small"
@@ -18,6 +18,10 @@
         </div>
       </v-card-title>
       <v-card-text>
+        <div v-if="!hasVesselDeparture" class="mb-2 font-bold">
+          <div class="">No departure vessel yet</div>
+          <div class="">Complete the departure vessel to unlock the arrival notification.</div>
+        </div>
         <div v-if="!hasVoyageDischarge" class="mb-2 font-bold">
           <div class="">No arrival voyage yet</div>
           <div class="">Complete the arrival voyage to unlock the arrival notification.</div>
@@ -79,6 +83,11 @@ const hasSellCharges = computed(() => {
 const hasVoyageDischarge = computed(() => {
   if (props.referencia == null) return false
   return props.referencia.voyage_discharge != null
+})
+
+const hasVesselDeparture = computed(() => {
+  if (props.referencia == null) return false
+  return props.referencia.vessel_departure_id != null
 })
 
 const hasPpCcSellBuy = computed(() => {
