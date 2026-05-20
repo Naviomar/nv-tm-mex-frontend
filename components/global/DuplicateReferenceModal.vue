@@ -135,16 +135,16 @@ const openReference = (id: number) => {
   let url = ''
   switch (props.serviceType) {
     case 'sea-import':
-      url = `/maritime/import/view-${id}`
+      url = `/maritime/import/view-details-${id}`
       break
     case 'sea-export':
-      url = `/maritime/export/view-${id}`
+      url = `/maritime/export/view-details-${id}`
       break
     case 'air-import':
-      url = `/air/import/view-${id}`
+      url = `/air/import/view-details-${id}`
       break
     case 'air-export':
-      url = `/air/export/view-${id}`
+      url = `/air/export/view-details-${id}`
       break
     default:
       return
