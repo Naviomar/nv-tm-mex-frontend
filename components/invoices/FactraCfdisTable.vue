@@ -201,6 +201,18 @@
                 </v-btn>
               </div>
             </div>
+            <div class="">
+              <v-autocomplete
+                density="compact"
+                label="Status"
+                v-model="filters.deleted_status"
+                :items="deletedStatus"
+                item-title="name"
+                item-value="value"
+                
+                hide-details
+              />
+            </div>
             <div class="col-span-1 md:col-span-2">
               <div v-if="filters.folios.length > 0" class="text-xs text-grey mb-1">Searching by folios:</div>
               <div class="flex flex-wrap gap-2">
@@ -216,6 +228,7 @@
               </div>
             </div>
           </div>
+          
           <div class="grid grid-cols-1">
             <div class="flex gap-2">
               <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
@@ -532,6 +545,7 @@
 import { currencies } from '@/utils/data/systemData'
 import { permissions } from '@/utils/data/system'
 import { useCheckUser } from '@/composables/useCheckUser'
+import { deletedStatus } from '@/utils/data/systemData'
 
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -557,6 +571,7 @@ const filters = ref<any>({
   hasSupplier: null,
   amountProvisioned: null,
   blockedAtEntry: '',
+  deleted_status: '',
 })
 
 const initialYear = 2022
@@ -833,6 +848,7 @@ const clearFilters = async () => {
     hasSupplier: null,
     amountProvisioned: null,
     blockedAtEntry: '',
+    deleted_status: '',
   }
   await getSupplierCfdis()
 }
