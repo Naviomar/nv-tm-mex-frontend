@@ -506,6 +506,7 @@
                   :customer-id="props.reference.consignee_id"
                   :notifys="customerNotifys"
                   :pod-id="props.reference.pod_id"
+                  :custom-agent-id="props.reference.custom_agent_id"
                   @fetched-emails="setCustomerEmails"
                 />
 

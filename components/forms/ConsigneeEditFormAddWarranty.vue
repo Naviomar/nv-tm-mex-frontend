@@ -77,31 +77,6 @@
                     class="cursor-pointer"
                     @click="editWarrantyLetter(item)"
                   ></v-btn>
-                  <v-badge
-                    v-if="getEmailCount(item.id) > 0"
-                    :content="getEmailCount(item.id)"
-                    color="primary"
-                    offset-x="4"
-                    offset-y="4"
-                  >
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      icon="mdi-email-outline"
-                      color="blue"
-                      class="cursor-pointer"
-                      @click="openEmailsModal(item)"
-                    ></v-btn>
-                  </v-badge>
-                  <v-btn
-                    v-else
-                    size="small"
-                    variant="text"
-                    icon="mdi-email-outline"
-                    color="blue"
-                    class="cursor-pointer"
-                    @click="openEmailsModal(item)"
-                  ></v-btn>
                   <v-btn
                     size="small"
                     variant="text"

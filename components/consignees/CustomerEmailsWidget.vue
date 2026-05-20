@@ -43,6 +43,10 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  customAgentId: {
+    type: Number,
+    default: null,
+  },
 })
 
 const ccEmails = ref<any>([])
@@ -63,6 +67,7 @@ const getCustomerEmails = async () => {
       mail_notifications: props.notifys.map((notify) => notify.short_name),
       pod_id: props.podId,
       airport_id: props.airportId,
+      custom_agent_id: props.customAgentId,
     }
     const response = await $api.consignees.getEmailByMailNotifications(props.customerId.toString(), body)
     if (response.emails.length === 0) {

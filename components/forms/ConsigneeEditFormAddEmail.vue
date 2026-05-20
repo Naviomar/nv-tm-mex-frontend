@@ -47,9 +47,9 @@
             </td>
             <td>
               <div>{{ item.email }}</div>
-              <div v-if="item.warranty_letters && item.warranty_letters.length > 0" class="text-sm text-gray-600">
-                <span v-for="(wl, wlIndex) in item.warranty_letters" :key="`wl-${wlIndex}`">
-                  {{ wl.custom_agent?.short_name || wl.custom_agent?.name || '-' }}<span v-if="Number(wlIndex) < item.warranty_letters.length - 1">, </span>
+              <div v-if="hasCustomAgents(item)" class="text-sm text-gray-600">
+                <span v-for="(agent, agentIndex) in getCustomAgents(item)" :key="`agent-${agentIndex}`">
+                  {{ agent }}<span v-if="agentIndex < getCustomAgents(item).length - 1">, </span>
                 </span>
               </div>
               <div v-else class="text-sm text-gray-600">-</div>
@@ -176,5 +176,18 @@ const showConfirmDelete = async (id: any) => {
       }, 250)
     }
   }
+}
+
+const hasCustomAgents = (item: any) => {
+  const warrantyAgents = (item.warranty_letters || []).map((wl: any) => wl.custom_agent?.short_name || wl.custom_agent?.name).filter(Boolean)
+  const entrustAgents = (item.entrust_letters || []).map((el: any) => el.custom_agent?.short_name || el.custom_agent?.name).filter(Boolean)
+  return warrantyAgents.length > 0 || entrustAgents.length > 0
+}
+
+const getCustomAgents = (item: any) => {
+  const warrantyAgents = (item.warranty_letters || []).map((wl: any) => wl.custom_agent?.short_name || wl.custom_agent?.name).filter(Boolean)
+  const entrustAgents = (item.entrust_letters || []).map((el: any) => el.custom_agent?.short_name || el.custom_agent?.name).filter(Boolean)
+  const allAgents = [...warrantyAgents, ...entrustAgents]
+  return [...new Set(allAgents)] // Remove duplicates
 }
 </script>
