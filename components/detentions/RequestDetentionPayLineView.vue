@@ -696,7 +696,7 @@ const onSaveBankInfoClick = async (values: any) => {
   }
 }
 
-const showSendNotyPay = () => {
+const showSendNotyPay = async () => {
   sendForm.showDialog = true
 
   // Precargar emails de contactos de importación (detentions son siempre import)
@@ -711,6 +711,17 @@ const showSendNotyPay = () => {
   generalEmails.forEach((lineEmail: any) => {
     if (lineEmail.email && !emails.includes(lineEmail.email)) emails.push(lineEmail.email)
   })
+
+  // Fetch CC emails from system notification catalog
+  try {
+    const ccEmailsResponse = await $api.maritimeDetentions.getNotificationCcEmails()
+    const ccEmails = ccEmailsResponse.cc_emails || []
+    ccEmails.forEach((email: string) => {
+      if (email && !emails.includes(email)) emails.push(email)
+    })
+  } catch (error) {
+    console.error('Error fetching notification CC emails:', error)
+  }
 
   sendForm.emails = emails.join(',')
 }
