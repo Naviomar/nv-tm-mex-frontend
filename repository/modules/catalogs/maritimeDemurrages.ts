@@ -122,6 +122,10 @@ class MaritimeDemurragesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/unlink-supplier-cfdi`, fetchOptions)
   }
 
+  async getNotificationCcEmails(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/notification-cc-emails`, fetchOptions)
+  }
+
 }
 
 export default MaritimeDemurragesModule
