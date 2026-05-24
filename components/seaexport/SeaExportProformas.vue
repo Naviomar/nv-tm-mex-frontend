@@ -151,11 +151,11 @@ const canEditCharges = computed(() => {
 })
 
 const isChargeLinkedToInvoice = (charge: any) => {
-  return charge.invoice_charge != null
+  return charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)
 }
 
 const linkedChargeIcon = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

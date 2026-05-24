@@ -157,7 +157,7 @@ const getInvoiceWmTotal = (invoice: any) => {
 }
 
 const linkedChargeToInvoice = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

@@ -73,7 +73,7 @@
                           v-model="sell_charge.selected"
                           density="compact"
                           color="primary"
-                          :disabled="sell_charge.invoice_charge != null"
+                          :disabled="sell_charge.invoice_charge != null || (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0)"
                           hide-details
                         />
                       </td>
