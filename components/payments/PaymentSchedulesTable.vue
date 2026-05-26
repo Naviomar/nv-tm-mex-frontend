@@ -72,7 +72,7 @@
                     class="mb-1"
                   >
                     <v-icon size="x-small">mdi-clock-outline</v-icon>
-                    {{ formatDateString(log.sent_at) }}
+                    {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
                   </v-chip>
                   <v-chip
                     v-if="schedule.email_logs.length > 2"
