@@ -16,7 +16,7 @@
           <tbody>
             <tr v-for="(refSchedule, index) in payments.ref_schedules" :key="`pay-data-${index}`">
               <td>
-                
+
                 <div v-if="paidLineSchedule(refSchedule).line_paid == 0">
                   <v-chip color="warning" size="small">Pending</v-chip>
                 </div>
@@ -24,6 +24,9 @@
                   <v-chip color="success" size="small"
                     >Paid @ {{ formatDateString(refSchedule.schedule.sent_at) }}</v-chip
                   >
+                </div>
+                <div v-for="(lineInvoiceRef, idx) in refSchedule.line_invoice_refs" :key="`inv-pay-${idx}`">
+                  <InvoiceChargePaymentsView v-if="lineInvoiceRef.invoice" size="x-small" :invoice="lineInvoiceRef.invoice" />
                 </div>
 
               </td>
@@ -71,6 +74,7 @@
                 <div v-if="c.invoice?.deleted_by > 0">
                   <v-chip color="red" size="small">Canceled @ {{ formatDateString(c.invoice?.deleted_at) }}</v-chip>
                 </div>
+                <InvoiceChargePaymentsView v-if="c.invoice" size="x-small" :invoice="c.invoice" />
               </td>
               <td class="p-2">{{ c.line_invoice?.folio }}-{{ c.line_invoice?.serie }}</td>
               <td class="p-2 whitespace-nowrap">
