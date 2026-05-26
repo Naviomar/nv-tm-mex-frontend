@@ -50,7 +50,6 @@
               <th class="text-left">Linked Ref(s)</th>
               <th class="text-left">Staus</th>
               <th class="text-left">Date added</th>
-              <th class="text-left">Sent at</th>
             </tr>
           </thead>
           <tbody>
@@ -66,17 +65,18 @@
                   <v-chip
                     v-for="(log, index) in schedule.email_logs.slice(0, 2)"
                     :key="`email-log-${index}`"
-                    size="x-small"
+                    size="small"
                     color="info"
                     variant="tonal"
                     class="mb-1"
+                    style="max-width: 200px"
                   >
-                    <v-icon size="x-small">mdi-clock-outline</v-icon>
+                    <v-icon size="small">mdi-clock-outline</v-icon>
                     {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
                   </v-chip>
                   <v-chip
                     v-if="schedule.email_logs.length > 2"
-                    size="x-small"
+                    size="small"
                     color="grey"
                     variant="tonal"
                   >
@@ -133,7 +133,6 @@
                   {{ formatDateString(schedule.created_at) }}
                 </UserInfoBadge>
               </td>
-              <td class="whitespace-nowrap">{{ schedule.sent_at ? formatDateString(schedule.sent_at) : 'Pending' }}</td>
             </tr>
           </tbody>
         </v-table>
