@@ -61,15 +61,14 @@
                 <v-btn color="primary" size="small" @click="showNotyForm(schedule)">
                   <v-icon>mdi-email</v-icon> Send notification
                 </v-btn>
-                <div v-if="schedule.email_logs && schedule.email_logs.length > 0" class="mt-1">
+                <div v-if="schedule.email_logs && schedule.email_logs.length > 0" class="mt-1 flex flex-col gap-1">
                   <v-chip
                     v-for="(log, index) in schedule.email_logs.slice(0, 2)"
                     :key="`email-log-${index}`"
                     size="small"
                     color="info"
                     variant="tonal"
-                    class="mb-1"
-                    style="max-width: 200px"
+                    style="white-space: normal"
                   >
                     <v-icon size="small">mdi-clock-outline</v-icon>
                     {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
