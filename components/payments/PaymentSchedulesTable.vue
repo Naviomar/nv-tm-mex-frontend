@@ -38,7 +38,7 @@
           @update:model-value="onClickPagination"
         ></v-pagination>
 
-        <v-table density="compact">
+        <v-table density="compact" style="height: auto">
           <thead>
             <tr>
               <th class="text-left" width="50">Email</th>
