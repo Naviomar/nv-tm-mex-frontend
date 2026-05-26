@@ -12,7 +12,7 @@
               v-model="form.inputBls"
               density="compact"
               label="Multiline BLs"
-              placeholder="Enter BL by line"
+              placeholder="Enter BLs separated by commas, semicolons, pipes, spaces, or newlines"
               rows="5"
               hide-details
             />
@@ -191,7 +191,10 @@ const areDifferentLines = computed(() => {
 })
 
 const addBls = () => {
-  let bls = form.value.inputBls.split('\n').map((bl: string) => bl.trim())
+  // Split by newlines, commas, semicolons, pipes, or spaces
+  let bls = form.value.inputBls
+    .split(/[\n,;| ]+/)
+    .map((bl: string) => bl.trim())
   // remove empty
   bls = bls.filter((bl: string) => bl.length > 0)
   form.value.bls = [...form.value.bls, ...bls]
