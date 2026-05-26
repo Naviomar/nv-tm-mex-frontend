@@ -55,7 +55,7 @@
               placeholder="Select your file"
             />
             <div class="">
-              <v-btn @click="importScheduleFile" color="primary" size="small">Start import</v-btn>
+              <v-btn @click="previewScheduleFile" color="primary" size="small">Preview & Validate</v-btn>
             </div>
           </div>
           <div>
@@ -116,6 +116,87 @@
         </v-table>
       </v-card-text>
     </v-card>
+
+    <!-- Preview Modal -->
+    <v-dialog v-model="showPreviewModal" max-width="1400px" persistent>
+      <v-card>
+        <v-card-title class="bg-orange-darken-1 text-white">
+          <span class="text-h6">Validate Payment Schedule</span>
+          <v-spacer />
+          <v-chip color="white" variant="tonal">
+            {{ previewData.length }} BLs to process
+          </v-chip>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+            Please review the payment schedule data below. You cannot edit the values here. If everything is correct,
+            click "Confirm & Process" to proceed. Otherwise, fix the Excel file and try again.
+          </v-alert>
+
+          <v-table density="compact" class="border">
+            <thead>
+              <tr class="bg-grey-lighten-4">
+                <th class="text-left">Status</th>
+                <th class="text-left">BL</th>
+                <th class="text-left">Reference #</th>
+                <th class="text-right">WM Pay</th>
+                <th class="text-right">TM Pay</th>
+                <th class="text-left">Add Locales</th>
+                <th class="text-right">Compra $ Flete</th>
+                <th class="text-right">Compra $ Locales</th>
+                <th class="text-right">Amount Scheduled</th>
+                <th class="text-right">Pending</th>
+                <th class="text-right">Scheduled Total</th>
+                <th class="text-left">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(data, index) in previewData"
+                :key="`preview-${index}`"
+                :class="data.error ? 'bg-red-lighten-5' : ''"
+              >
+                <td>
+                  <v-chip v-if="data.error" color="error" size="small">
+                    <v-icon small>mdi-alert-circle-outline</v-icon> Error
+                  </v-chip>
+                  <v-chip v-else color="success" size="small">
+                    <v-icon small>mdi-check-circle-outline</v-icon> Valid
+                  </v-chip>
+                </td>
+                <td class="font-weight-medium">{{ data.bl }}</td>
+                <td class="whitespace-nowrap">{{ data.reference_number ?? '-' }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.wm_pay) }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.tm_pay) }}</td>
+                <td>
+                  <v-chip :color="data.add_locales === 'si' ? 'success' : 'grey'" size="small" variant="tonal">
+                    {{ data.add_locales === 'si' ? 'Yes' : 'No' }}
+                  </v-chip>
+                </td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.compra_flete) }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.compra_locales) }}</td>
+                <td class="text-right whitespace-nowrap font-weight-bold">{{ formatToCurrency(data.amount) }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.pending_amount) }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.scheduled_total) }}</td>
+                <td class="text-caption text-grey-darken-1">{{ data.message }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn color="grey" variant="text" @click="showPreviewModal = false">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            @click="confirmSchedule"
+            :disabled="previewData.some((d) => d.error)"
+            prepend-icon="mdi-check-circle"
+          >
+            Confirm & Process
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -142,11 +223,20 @@ const form = reactive<any>({
 })
 
 const imported = ref<any>([])
+const showPreviewModal = ref(false)
+const previewData = ref<any[]>([])
 
 const lineBanks = computed(() => {
   // solo banks que tenga el currency_id = 2
   return form.line ? form.line.banks.filter((bank: any) => bank.currency_id === 2) : []
 })
+
+const formatToCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value)
+}
 
 const searchLines = async (search: any) => {
   try {
@@ -162,7 +252,7 @@ const searchLines = async (search: any) => {
   }
 }
 
-const importScheduleFile = async () => {
+const previewScheduleFile = async () => {
   try {
     if (!form.file || !form.line || !form.line_bank_id) {
       snackbar.add({ type: 'warning', text: 'Please fill all required fields' })
@@ -174,13 +264,38 @@ const importScheduleFile = async () => {
       line_id: form.line.id,
       impoExpo: props.impoExpo,
     }
+    const response = await $api.linePayments.previewScheduleFile(body)
+
+    previewData.value = response as any[]
+    showPreviewModal.value = true
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error previewing schedule file' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.loading = false
+    }, 250)
+  }
+}
+
+const confirmSchedule = async () => {
+  try {
+    loadingStore.loading = true
+    const body = {
+      ...form,
+      line_id: form.line.id,
+      impoExpo: props.impoExpo,
+    }
     const response = await $api.linePayments.saveScheduleFile(body)
 
     imported.value = response as any
+    showPreviewModal.value = false
+    previewData.value = []
 
     snackbar.add({ type: 'success', text: 'File imported successfully' })
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error processing schedule file' })
   } finally {
     setTimeout(() => {
       loadingStore.loading = false

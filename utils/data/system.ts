@@ -32,6 +32,8 @@ const menuPermissions = {
   PaymentsFfAgentsReports: 'menu-payments-ff-agents-reports',
   PaymentsFreightLines: 'menu-payments-freight-lines',
   PaymentsFreightLinesSchedules: 'menu-payments-freight-lines-schedules',
+  PaymentsFreightLinesReportBls: 'menu-payments-freight-lines-report-bls',
+  PaymentsFreightLinesSeaServices: 'menu-payments-freight-lines-sea-services',
   PaymentsSuppliers: 'menu-payments-suppliers',
   PaymentsRefunds: 'menu-payments-refunds',
   Invoices: 'menu-invoices',

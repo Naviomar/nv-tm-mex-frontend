@@ -49,6 +49,15 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/export-bls-for-release-payment`, fetchOptions)
   }
 
+  async previewScheduleFile(data: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(data)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/schedules/preview`, fetchOptions)
+  }
+
   async saveScheduleFile(data: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(data)
     fetchOptions = {

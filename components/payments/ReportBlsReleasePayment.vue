@@ -404,6 +404,11 @@ const getProfitByContainer = (referencia: any) => {
 
 const searchBlsForReport = async () => {
   try {
+    // If there's text in inputBls, automatically add it to bls array
+    if (form.value.inputBls && form.value.inputBls.trim().length > 0) {
+      addBls()
+    }
+
     // if empty show warning
     if (form.value.bls.length === 0) {
       snackbar.add({ type: 'warning', text: 'Please add BLs to search for report' })
