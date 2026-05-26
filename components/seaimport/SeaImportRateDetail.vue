@@ -334,15 +334,15 @@ const getInvoiceWmTotal = (invoice: any) => {
 }
 
 const linkedChargeToInvoice = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
     return 'mdi-link'
   }
   return 'mdi-link-off'
 }
 
 const hasTmUnlinkedCharges = computed(() => {
-  const chargesTmUnlinked = chargesTm.value.filter((charge: any) => charge.invoice_charge == null).length > 0
-  const sellChargesTmUnlinked = sellChargesTm.value.filter((charge: any) => charge.invoice_charge == null).length > 0
+  const chargesTmUnlinked = chargesTm.value.filter((charge: any) => charge.invoice_charge == null && (!charge.invoice_charges || charge.invoice_charges.length === 0)).length > 0
+  const sellChargesTmUnlinked = sellChargesTm.value.filter((charge: any) => charge.invoice_charge == null && (!charge.invoice_charges || charge.invoice_charges.length === 0)).length > 0
   return chargesTmUnlinked || sellChargesTmUnlinked
 })
 
