@@ -54,7 +54,7 @@
           </thead>
           <tbody>
             <tr v-for="(schedule, index) in schedules.data" :key="`pay-schedule-${index}`">
-              <td>
+              <td style="vertical-align: top">
                 <div v-if="schedule.sent_at == null">
                   <v-checkbox v-if="false" v-model="schedule.send_email" density="compact" hide-details />
                 </div>
