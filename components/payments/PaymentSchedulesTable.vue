@@ -68,7 +68,7 @@
                     size="small"
                     color="info"
                     variant="tonal"
-                    style="white-space: normal"
+                    style="white-space: normal; height: auto"
                   >
                     <v-icon size="small">mdi-clock-outline</v-icon>
                     {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
@@ -78,6 +78,7 @@
                     size="small"
                     color="grey"
                     variant="tonal"
+                    style="height: auto"
                   >
                     +{{ schedule.email_logs.length - 2 }} more
                   </v-chip>
