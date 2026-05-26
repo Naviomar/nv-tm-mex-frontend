@@ -72,6 +72,13 @@ class ReportsModule extends FetchFactory<any> {
     })
   }
 
+  async getExecutivesReport(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/executives-report`, fetchOptions)
+  }
 }
 
 export default ReportsModule
