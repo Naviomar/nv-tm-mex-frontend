@@ -166,8 +166,8 @@
                 </td>
                 <td class="font-weight-medium">{{ data.bl }}</td>
                 <td class="whitespace-nowrap">{{ data.reference_number ?? '-' }}</td>
-                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.wm_pay) }}</td>
-                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.tm_pay) }}</td>
+                <td class="text-right whitespace-nowrap" :class="data.wm_pay > 0 ? 'bg-blue-lighten-4 font-weight-bold' : ''">{{ formatToCurrency(data.wm_pay) }}</td>
+                <td class="text-right whitespace-nowrap" :class="data.tm_pay > 0 ? 'bg-blue-lighten-4 font-weight-bold' : ''">{{ formatToCurrency(data.tm_pay) }}</td>
                 <td>
                   <v-chip :color="data.add_locales === 'si' ? 'success' : 'grey'" size="small" variant="tonal">
                     {{ data.add_locales === 'si' ? 'Yes' : 'No' }}
@@ -175,10 +175,10 @@
                 </td>
                 <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.compra_flete) }}</td>
                 <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.compra_locales) }}</td>
-                <td class="text-right whitespace-nowrap font-weight-bold">{{ formatToCurrency(data.amount) }}</td>
+                <td class="text-right whitespace-nowrap font-weight-bold bg-green-lighten-4">{{ formatToCurrency(data.amount) }}</td>
                 <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.pending_amount) }}</td>
-                <td class="text-right whitespace-nowrap">{{ formatToCurrency(data.scheduled_total) }}</td>
-                <td class="text-caption text-grey-darken-1">{{ data.message }}</td>
+                <td class="text-right whitespace-nowrap bg-yellow-lighten-4 font-weight-bold">{{ formatToCurrency(data.scheduled_total) }}</td>
+                <td class="text-caption" :class="data.error ? 'text-error font-weight-bold bg-red-lighten-4' : 'text-grey-darken-1'">{{ data.message }}</td>
               </tr>
             </tbody>
           </v-table>
