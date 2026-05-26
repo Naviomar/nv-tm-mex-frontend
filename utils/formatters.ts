@@ -231,6 +231,9 @@ const getInvoiceableLink = (invoice: any) => {
   if (invoiceableName === 'Refund') {
     return `/refunds/view-${invoice.invoiceable_id}`
   }
+  if (invoiceableName === 'Refund') {
+    return `/refunds/edit-${invoice.invoiceable_id}`
+  }
   if (invoiceableName === 'Party invoice') {
     return `/invoices/search/free-format/view-${invoice.invoiceable_id}`
   }
