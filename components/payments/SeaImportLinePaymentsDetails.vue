@@ -11,6 +11,7 @@
               <th class="text-left">User</th>
               <th class="text-left">Sent</th>
               <th class="text-left">Created</th>
+              <th class="text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -42,6 +43,17 @@
                 </div>
               </td>
               <td class="whitespace-nowrap">{{ formatDateString(refSchedule.created_at) }}</td>
+              <td>
+                <v-btn
+                  v-if="paidLineSchedule(refSchedule).line_paid == 1"
+                  color="info"
+                  size="x-small"
+                  variant="tonal"
+                  @click="viewPaymentDetail(refSchedule)"
+                >
+                  <v-icon>mdi-eye-outline</v-icon>
+                </v-btn>
+              </td>
             </tr>
           </tbody>
         </v-table>
@@ -106,6 +118,9 @@
         </v-table>
       </div>
     </div>
+
+    <!-- Payment Detail Modal -->
+    <LinePaymentDetailModal v-model="showPaymentModal" :payment-data="selectedPayment" />
   </div>
 </template>
 <script setup lang="ts">
@@ -124,6 +139,14 @@ const payments = ref<any>({
   ref_schedules: [],
   line_invoice_refs: [],
 })
+
+const showPaymentModal = ref(false)
+const selectedPayment = ref<any>(null)
+
+const viewPaymentDetail = (refSchedule: any) => {
+  selectedPayment.value = refSchedule
+  showPaymentModal.value = true
+}
 
 const viewLineCreditNote = (note: any) => {
   // router.push(`/invoices/lines/credit-notes/view-${note.id}`)
