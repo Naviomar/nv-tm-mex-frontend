@@ -38,7 +38,7 @@
           @update:model-value="onClickPagination"
         ></v-pagination>
 
-        <v-table density="compact">
+        <v-table density="compact" style="height: auto">
           <thead>
             <tr>
               <th class="text-left" width="50">Email</th>
@@ -50,18 +50,39 @@
               <th class="text-left">Linked Ref(s)</th>
               <th class="text-left">Staus</th>
               <th class="text-left">Date added</th>
-              <th class="text-left">Sent at</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(schedule, index) in schedules.data" :key="`pay-schedule-${index}`">
-              <td>
+              <td style="vertical-align: top">
                 <div v-if="schedule.sent_at == null">
                   <v-checkbox v-if="false" v-model="schedule.send_email" density="compact" hide-details />
                 </div>
                 <v-btn color="primary" size="small" @click="showNotyForm(schedule)">
                   <v-icon>mdi-email</v-icon> Send notification
                 </v-btn>
+                <div v-if="schedule.email_logs && schedule.email_logs.length > 0" class="mt-1 flex flex-col gap-1">
+                  <v-chip
+                    v-for="(log, index) in schedule.email_logs.slice(0, 2)"
+                    :key="`email-log-${index}`"
+                    size="small"
+                    color="info"
+                    variant="tonal"
+                    style="white-space: normal; height: auto"
+                  >
+                    <v-icon size="small">mdi-clock-outline</v-icon>
+                    {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
+                  </v-chip>
+                  <v-chip
+                    v-if="schedule.email_logs.length > 2"
+                    size="small"
+                    color="grey"
+                    variant="tonal"
+                    style="height: auto"
+                  >
+                    +{{ schedule.email_logs.length - 2 }} more
+                  </v-chip>
+                </div>
               </td>
               <td>
                 <v-btn color="grey-lighten-2" size="small" @click="downloadExcel(schedule.id)">
@@ -112,7 +133,6 @@
                   {{ formatDateString(schedule.created_at) }}
                 </UserInfoBadge>
               </td>
-              <td class="whitespace-nowrap">{{ schedule.sent_at ? formatDateString(schedule.sent_at) : 'Pending' }}</td>
             </tr>
           </tbody>
         </v-table>

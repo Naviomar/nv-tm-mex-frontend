@@ -546,6 +546,8 @@ const areValidAmountsToPay = () => {
 
 const hasLineInvoices = computed(() => linePaySchedulesInfo.value.lineInvoices?.length > 0)
 
+const isSingleSchedule = computed(() => linePaySchedulesInfo.value.linePaymentSchedules?.length === 1)
+
 const addInvoiceToSearch = () => {
   if (filters.value.invoiceNumber) {
     // split by comma and remove empty spaces
@@ -667,6 +669,41 @@ const searchLinePaySchedules = async () => {
     })
 
     linePaySchedulesInfo.value = response
+
+    // Auto-select single schedule if only one exists
+    if (response.linePaymentSchedules?.length === 1) {
+      const singleScheduleId = response.linePaymentSchedules[0].id
+      response.lineInvoices.forEach((lineInvoice: any) => {
+        lineInvoice.refs.forEach((lineRef: any) => {
+          lineRef.invoice.charges.forEach((charge: any) => {
+            if (!charge.line_pay_schedule_id) {
+              charge.line_pay_schedule_id = singleScheduleId
+            }
+          })
+        })
+      })
+    }
+
+    // Auto-fill amounts if balance covers all charges
+    const totalPendingBalance = response.lineInvoices.reduce((total: number, lineInvoice: any) => {
+      return total + lineInvoice.refs.reduce((total2: number, lineRef: any) => {
+        return total2 + lineRef.invoice.charges.reduce((total3: number, charge: any) => {
+          return total3 + parseFloat(charge.pending_balance || 0)
+        }, 0)
+      }, 0)
+    }, 0)
+
+    if (totalPendingBalance > 0 && bankMovement.value.amount_available >= totalPendingBalance) {
+      response.lineInvoices.forEach((lineInvoice: any) => {
+        lineInvoice.refs.forEach((lineRef: any) => {
+          lineRef.invoice.charges.forEach((charge: any) => {
+            if (charge.line_pay_schedule_id) {
+              charge.amount_to_pay = charge.pending_balance
+            }
+          })
+        })
+      })
+    }
   } catch (error) {
     console.error(error)
   } finally {

@@ -269,7 +269,11 @@ const getReferencias = async () => {
   try {
     loadingStore.start()
     const response = await $api.voyages.getDestiantionReferenciasById(route.params.id!.toString())
-    referencias.value = response
+    if (isImport.value) {
+      referencias.value = response.map((ref: any) => ({ ...ref, selected: true }))
+    } else {
+      referencias.value = response
+    }
   } catch (e) {
     console.error(e)
   } finally {
