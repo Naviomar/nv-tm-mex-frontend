@@ -200,7 +200,7 @@
             <td>
               <div class="flex flex-col items-center gap-2">
                 <ViewButton :item="invoiceWm" @click="viewInvoice(invoiceWm)" />
-                <PreviewTmInvoice :service="invoiceWm.service_type || 'sea'" :invoice="invoiceWm" size="small" />
+                <PreviewWmInvoice :service="invoiceWm.service_type || 'sea'" :invoice="invoiceWm" size="small" />
               </div>
             </td>
             <td>
