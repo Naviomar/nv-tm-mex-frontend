@@ -564,10 +564,11 @@ const chartConfig = computed(() => {
       borderWidth: 2,
       yAxisID: 'y',
       order: 2,
-      stack: `${yearData.year}-teus`
+      barPercentage: 0.6,
+      categoryPercentage: 0.8
     })
     
-    // TEUs Bar Chart (without ETA) - stacked on top
+    // TEUs Bar Chart (without ETA) - grouped beside
     if (includeWithoutEta.value) {
       datasets.push({
         type: 'bar',
@@ -578,7 +579,8 @@ const chartConfig = computed(() => {
         borderWidth: 2,
         yAxisID: 'y',
         order: 2,
-        stack: `${yearData.year}-teus`
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
       })
     }
     
@@ -740,7 +742,6 @@ const chartConfig = computed(() => {
       },
       scales: {
         x: {
-          stacked: includeWithoutEta.value,
           grid: {
             display: false
           },
@@ -755,7 +756,6 @@ const chartConfig = computed(() => {
           type: 'linear',
           display: true,
           position: 'left',
-          stacked: includeWithoutEta.value,
           title: {
             display: true,
             text: 'TEUs',
