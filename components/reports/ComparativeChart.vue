@@ -564,19 +564,11 @@ const chartConfig = computed(() => {
       borderWidth: 2,
       yAxisID: 'y',
       order: 2,
-      stack: `${yearData.year}-teus`,
-      datalabels: {
-        anchor: 'center' as const,
-        align: 'center' as const,
-        color: '#ffffff',
-        font: {
-          weight: 'bold' as const,
-          size: 11
-        }
-      }
+      barPercentage: 0.6,
+      categoryPercentage: 0.8
     })
     
-    // TEUs Bar Chart (without ETA) - stacked on top
+    // TEUs Bar Chart (without ETA) - grouped beside
     if (includeWithoutEta.value) {
       datasets.push({
         type: 'bar',
@@ -587,17 +579,8 @@ const chartConfig = computed(() => {
         borderWidth: 2,
         yAxisID: 'y',
         order: 2,
-        stack: `${yearData.year}-teus`,
-        datalabels: {
-          anchor: 'end' as const,
-          align: 'top' as const,
-          color: '#1976d2',
-          font: {
-            weight: 'bold' as const,
-            size: 10
-          },
-          offset: 2
-        }
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
       })
     }
     
@@ -744,20 +727,21 @@ const chartConfig = computed(() => {
         datalabels: {
           display: (context: any) => {
             // Only show labels on bars (TEUs), not on lines (Profit)
-            // Hide labels for zero values
-            if (context.dataset.type !== 'bar') return false
-            return context.parsed.y > 0
+            return context.dataset.type === 'bar'
           },
+          anchor: 'end' as const,
+          align: 'top' as const,
           formatter: (value: any) => formatNumber(value),
+          color: '#1976d2',
           font: {
             weight: 'bold' as const,
             size: 10
-          }
+          },
+          offset: 4
         }
       },
       scales: {
         x: {
-          stacked: includeWithoutEta.value,
           grid: {
             display: false
           },
@@ -772,7 +756,6 @@ const chartConfig = computed(() => {
           type: 'linear',
           display: true,
           position: 'left',
-          stacked: includeWithoutEta.value,
           title: {
             display: true,
             text: 'TEUs',
