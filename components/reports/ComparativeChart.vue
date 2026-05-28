@@ -87,6 +87,16 @@
               :disabled="loading"
             />
           </v-col>
+          <v-col cols="12" md="2">
+            <v-checkbox
+              v-model="includeWithoutEta"
+              label="Sin ETA"
+              color="warning"
+              density="comfortable"
+              hide-details
+              :disabled="loading"
+            />
+          </v-col>
           <v-col cols="12" md="3" class="d-flex align-center gap-2">
             <v-btn
               color="primary"
@@ -238,6 +248,7 @@ const chartData = ref<any>(null)
 const loading = ref(false)
 const refreshing = ref(false)
 const includeProfit = ref(true)
+const includeWithoutEta = ref(false)
 const selectedEjecutivo = ref<number | null>(null)
 const ejecutivos = ref<any[]>([])
 const pieData = ref<any>(null)
@@ -306,7 +317,8 @@ const loadChartData = async (forceRefresh = false) => {
   try {
     const params: any = {
       years: selectedYears.value,
-      includeProfit: includeProfit.value
+      includeProfit: includeProfit.value,
+      includeWithoutEta: includeWithoutEta.value
     }
     
     if (forceRefresh) {
@@ -512,6 +524,18 @@ const linePieConfig = computed(() => {
   }
 })
 
+// Helper function to create darker shade of color
+const getDarkerColor = (rgba: string): string => {
+  // Parse rgba string and increase opacity/darken
+  const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/)
+  if (match) {
+    const [, r, g, b, a] = match
+    // Increase opacity to 1.0 for darker appearance
+    return `rgba(${r}, ${g}, ${b}, 1.0)`
+  }
+  return rgba
+}
+
 const chartConfig = computed(() => {
   if (!chartData.value || !Array.isArray(chartData.value)) return null
 
@@ -522,13 +546,15 @@ const chartConfig = computed(() => {
     
     const teusData = yearData.months.map((m: any) => m.teus ?? 0)
     const profitData = yearData.months.map((m: any) => m.profit ?? 0)
+    const teusWithoutEtaData = yearData.months.map((m: any) => m.teus_without_eta ?? 0)
     const colorIndex = index % yearColors.length
-    const color = yearColors[colorIndex] ?? yearColors[0]
-    const profitColor = color.border // Use same color as bar for consistency
+    const defaultColor = { bg: 'rgba(59, 130, 246, 0.8)', border: 'rgb(59, 130, 246)' }
+    const color = yearColors[colorIndex] ?? yearColors[0] ?? defaultColor
+    const profitColor = color?.border ?? defaultColor.border // Use same color as bar for consistency
     
     if (!color) return
     
-    // TEUs Bar Chart
+    // TEUs Bar Chart (with ETA)
     datasets.push({
       type: 'bar',
       label: `${yearData.year} - TEUs`,
@@ -537,8 +563,26 @@ const chartConfig = computed(() => {
       borderColor: color.border,
       borderWidth: 2,
       yAxisID: 'y',
-      order: 2
+      order: 2,
+      barPercentage: 0.6,
+      categoryPercentage: 0.8
     })
+    
+    // TEUs Bar Chart (without ETA) - grouped beside
+    if (includeWithoutEta.value) {
+      datasets.push({
+        type: 'bar',
+        label: `${yearData.year} - TEUs (Sin ETA)`,
+        data: teusWithoutEtaData,
+        backgroundColor: getDarkerColor(color.bg),
+        borderColor: color.border,
+        borderWidth: 2,
+        yAxisID: 'y',
+        order: 2,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
+      })
+    }
     
     // Profit Line Chart
     datasets.push({
@@ -574,7 +618,9 @@ const chartConfig = computed(() => {
       plugins: {
         title: {
           display: true,
-          text: 'TEUs per Month - IMPO MARITIME (With ETA)',
+          text: includeWithoutEta.value 
+            ? 'TEUs per Month - IMPO MARITIME (With ETA + Sin ETA)' 
+            : 'TEUs per Month - IMPO MARITIME (With ETA)',
           font: {
             size: 16,
             weight: 'bold'
@@ -608,7 +654,7 @@ const chartConfig = computed(() => {
                   const withoutEta = yearData?.without_eta?.teus ?? 0
                   
                   let label = `${yearLabel}: ${formatNumber(totalTeus)}`
-                  if (withoutEta > 0) {
+                  if (withoutEta > 0 && includeWithoutEta.value) {
                     label += ` | sin ETA: ${formatNumber(withoutEta)}`
                   }
                   
@@ -677,9 +723,7 @@ const chartConfig = computed(() => {
               return ''
             }
           }
-        }
-      },
-      plugins: {
+        },
         datalabels: {
           display: (context: any) => {
             // Only show labels on bars (TEUs), not on lines (Profit)
