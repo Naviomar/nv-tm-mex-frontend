@@ -38,7 +38,10 @@
           />
         </div>
 
-        <div>Total containers: {{ containers.length }}</div>
+        <div class="grid grid-cols-4 gap-2">
+          <div>Total containers: {{ containers.length }}</div>
+          <div>Total Teus: {{ checkParcialPaid(containers) }}</div>
+        </div>
         <div v-if="pendingSaveChanges">
           <v-alert type="warning" density="compact">
             <div class="">Save service form to reflect changes.</div>
@@ -55,6 +58,7 @@
               <th class="text-left">Kgs</th>
               <th class="text-left"># Paquetes</th>
               <th class="text-left">notes</th>
+              <th class="text-left">Teus</th>
               <th class="text-left"></th>
             </tr>
           </thead>
@@ -87,6 +91,7 @@
               <td>{{ item.weight }}</td>
               <td>{{ item.num_packages }}</td>
               <td>{{ item.notes }}</td>
+              <td>{{ item.container_type.teus }}</td>
               <td>
                 <UserInfoBadge :item="item" />
               </td>
@@ -285,6 +290,20 @@ const removeContainer = (container: any, index: number) => {
 const setItems = (items: any[]) => {
   containers.value = [...items]
 }
+const checkParcialPaid = (containers: any) => {
+  var tot_teus = 0;
+  var teus = 0;
+    for(var i = 0; i < containers.length; i++){
+      //console.log("for:::",containers[i].container_number,'-',containers[i].container_type)
+      if(containers[i].container_type){
+          teus = containers[i].container_type.teus
+          tot_teus += teus
+      }
+    }
+    
+    return tot_teus;
+}
+
 
 defineExpose({ setItems })
 </script>
