@@ -5,9 +5,12 @@
       <v-card-subtitle>Check and send notes to pay</v-card-subtitle>
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
+          <!-- FUTURE: Party type selector (FF / Consignee) hidden until Consignee SOA payment flow is fully enabled.
+               When re-enabling, restore the partyTypeFilter autocomplete, the v-if guards on FF fields, and the
+               consignee AGlobalSearch block. Also restore the consignee branch in sendToPay / getFreightSoa validation.
+          -->
           <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
             <div class="col-span-1">
-              <AFreightForwarderSearch v-if="false" v-model="filters.freightId" label="Freight forwarder" />
               <v-autocomplete
                 v-model="filters.freightId"
                 clearable
@@ -209,7 +212,15 @@
                 <td>{{ getMasterBlFromServiceable(note) }}</td>
                 <td class="whitespace-nowrap">{{ note.serviceable?.consignee?.name }}</td>
 
-                <td class="whitespace-nowrap">{{ note.forwarder?.name }}</td>
+                <td class="whitespace-nowrap">
+                  {{ note.forwarder?.name }}
+                  <!-- FUTURE: When Consignee notes are enabled in SOA, restore party chip + name:
+                  <v-chip size="x-small" :color="note.party_type?.includes('Consignee') ? 'purple' : 'teal'" class="mr-1">
+                    {{ note.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                  </v-chip>
+                  {{ note.party?.name ?? note.forwarder?.name }}
+                  -->
+                </td>
                 <td class="whitespace-nowrap">{{ note.forwarder?.freight_group?.name }}</td>
 
                 <td class="whitespace-nowrap">
@@ -270,6 +281,18 @@ const snackbar = useSnackbar()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 
+const partyTypeFilter = ref<string | null>(null)
+
+const onPartyTypeFilterChange = () => {
+  filters.value.freightId = null
+  filters.value.freightGroupId = null
+  filters.value.consigneeId = null
+}
+
+const searchCustomers = async (params: any) => {
+  return await $api.consignees.searchConsignees({ query: params })
+}
+
 const filters = ref<any>({
   startDate: '',
   endDate: '',
@@ -278,6 +301,7 @@ const filters = ref<any>({
   folio: '',
   freightId: null,
   freightGroupId: null,
+  consigneeId: null,
   currencyId: null,
 })
 
@@ -708,6 +732,11 @@ const sendToPay = async () => {
   }
   try {
     loadingStore.loading = true
+    const getFfType = () => {
+      if (filters.value.consigneeId) return 'consignee'
+      if (filters.value.freightId) return 'ff_agent'
+      return 'ff_group'
+    }
     let body = {
       notes: creditNotes.value
         .filter((note: any) => note.checked)
@@ -717,8 +746,8 @@ const sendToPay = async () => {
             notes: note.notes,
           }
         }),
-      ff_type: filters.value.freightId ? 'ff_agent' : 'ff_group',
-      ff_id: filters.value.freightId || filters.value.freightGroupId,
+      ff_type: getFfType(),
+      ff_id: filters.value.consigneeId || filters.value.freightId || filters.value.freightGroupId,
     }
 
     const response = await $api.ffNotes.generatePayment(body)
@@ -741,9 +770,9 @@ const onClickFilters = async () => {
 
 const getFreightSoa = async () => {
   try {
-    // if not freightId or freightGroupId
-    if (!filters.value.freightId && !filters.value.freightGroupId) {
-      snackbar.add({ type: 'error', text: 'Please select a freight forwarder or group' })
+    // if not freightId, freightGroupId or consigneeId
+    if (!filters.value.freightId && !filters.value.freightGroupId && !filters.value.consigneeId) {
+      snackbar.add({ type: 'error', text: 'Please select a freight forwarder, group, or consignee' })
       return
     }
 
@@ -779,6 +808,7 @@ const getFreightSoa = async () => {
 }
 
 const clearFilters = async () => {
+  partyTypeFilter.value = null
   filters.value = {
     startDate: '',
     endDate: '',
@@ -787,6 +817,7 @@ const clearFilters = async () => {
     folio: '',
     freightId: null,
     freightGroupId: null,
+    consigneeId: null,
     currencyId: null,
   }
   creditNotes.value = []

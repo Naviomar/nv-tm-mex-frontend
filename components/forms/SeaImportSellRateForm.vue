@@ -248,9 +248,8 @@ const canManipulateCharges = computed(() => {
 })
 
 const canEditCharges = computed(() => {
-  if (!props.referencia.vessel_departure_id || !props.referencia.voyage_departure) {
-    return false
-  }
+  // Charges can be edited from the start, only blocked when:
+  // - voyage_discharge exists and is locked
   if (!props.referencia.voyage_discharge) {
     return true
   }
@@ -269,7 +268,7 @@ const hasAnyInvoice = computed(() => {
 })
 
 const linkedChargeToInvoice = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

@@ -4,25 +4,27 @@
       color="slate"
       size="small"
       variant="outlined"
-      @click="$router.push('/configuration/freight-forwarders')"
+      to="/configuration/freight-forwarders"
       class="mb-4"
       >Back</v-btn
     >
 
     <div class="flex justify-between gap-3">
       <h1 class="text-xl font-bold">Freight Forwarder groups</h1>
-      <v-btn to="/configuration/freight-forwarders/groups/add" color="success"
+      <v-btn color="success" @click="openCreateModal"
         ><v-icon>mdi-plus</v-icon> Add new group
       </v-btn>
     </div>
     <div class="pt-4">
-      <FreightForwardersGroupsTable />
+      <FreightForwardersGroupsTable ref="freightForwardersGroupsTableRef" />
     </div>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+const freightForwardersGroupsTableRef = ref<InstanceType<typeof FreightForwardersGroupsTable> | null>(null)
 
-const router = useRouter()
+const openCreateModal = () => {
+  freightForwardersGroupsTableRef.value?.openCreate()
+}
 </script>

@@ -105,6 +105,18 @@ class ConsigneesModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/${id}/upsert-email`, fetchOptions)
   }
+  async getWarrantyLetterEmails(consigneeId: string, warrantyLetterId: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/${consigneeId}/warranty-letters/${warrantyLetterId}/emails`, fetchOptions)
+  }
+  async getEntrustLetterEmails(consigneeId: string, entrustLetterId: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/${consigneeId}/entrust-letters/${entrustLetterId}/emails`, fetchOptions)
+  }
   async deleteEmail(id: string, fetchOptions?: FetchOptions) {
     fetchOptions = {
       ...fetchOptions,

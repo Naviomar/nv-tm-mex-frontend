@@ -192,6 +192,8 @@
             <CustomerEmailsWidget
               :customer-id="referencia.consignee_id"
               :notifys="customerNotifys"
+              :pod-id="referencia.pod_id"
+              :custom-agent-id="referencia.custom_agent_id"
               @fetched-emails="setDraftBlEmails"
             />
 

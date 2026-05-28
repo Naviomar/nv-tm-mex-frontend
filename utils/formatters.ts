@@ -174,7 +174,7 @@ const getInvoiceableName = (invoice: any) => {
     return 'Air WM invoice'
   }
   if (invoiceableType.includes('FfPayment')) {
-    return 'F.F. Payment invoice'
+    return 'F.F. Payment Request'
   }
   if (invoiceableType.includes('LineInvoiceRef')) {
     return 'Freight invoice'
@@ -230,6 +230,9 @@ const getInvoiceableLink = (invoice: any) => {
   }
   if (invoiceableName === 'Refund') {
     return `/refunds/view-${invoice.invoiceable_id}`
+  }
+  if (invoiceableName === 'Refund') {
+    return `/refunds/edit-${invoice.invoiceable_id}`
   }
   if (invoiceableName === 'Party invoice') {
     return `/invoices/search/free-format/view-${invoice.invoiceable_id}`

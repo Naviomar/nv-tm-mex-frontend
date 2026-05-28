@@ -121,7 +121,17 @@
               <td>
                 <div class="flex gap-2">
                   <EditButton :item="voyageDest" @click="editVoyageDestination(voyageDest)" />
-                  <TrashButton :item="voyageDest" @click="showConfirmDelete" />
+                  <ProcessAuthorizationWrapper
+                    :processName="voyageDest.deleted_at ? 'voyage-restore' : 'voyage-delete'"
+                    :requestKey="`${voyageDest.id}`"
+                    :label="voyageDest.deleted_at ? 'Restore Voyage' : 'Delete Voyage'"
+                    :displayName="voyageDest.serie_folio || `${voyageDest.name}`"
+                  >
+                    <template #auth>
+                      <TrashButton :item="voyageDest" @click="showConfirmDelete" />
+                    </template>
+                  </ProcessAuthorizationWrapper>
+                  
                 </div>
               </td>
               <td>
@@ -168,13 +178,16 @@
                     >
                   </div>
                   <div v-if="voyageDest.eta_date">
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      icon="mdi-update"
-                      color="blue-lighten-2"
-                      @click="changeVoyageDestEtaClick(voyageDest)"
-                    ></v-btn>
+                      <v-chip
+                        class="ma-2"
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        @click="changeVoyageDestEtaClick(voyageDest)"
+                      >
+                        <v-icon icon="mdi-calendar" start></v-icon>
+                        UPDATE ETA
+                      </v-chip>
                   </div>
                 </div>
               </td>

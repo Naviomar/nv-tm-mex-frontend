@@ -87,6 +87,16 @@
               :disabled="loading"
             />
           </v-col>
+          <v-col cols="12" md="2">
+            <v-checkbox
+              v-model="includeWithoutEta"
+              label="Sin ETA"
+              color="warning"
+              density="comfortable"
+              hide-details
+              :disabled="loading"
+            />
+          </v-col>
           <v-col cols="12" md="3" class="d-flex align-center gap-2">
             <v-btn
               color="primary"
@@ -171,6 +181,38 @@
           </v-col>
         </v-row>
 
+        <v-row v-if="pieData && !loadingPie" class="mt-8">
+          <v-col cols="12">
+            <v-card class="pie-card-professional" elevation="0">
+              <v-card-title class="pie-card-title">
+                <v-icon start color="primary">mdi-account-group</v-icon>
+                References by Client
+              </v-card-title>
+              <v-card-text class="pa-8">
+                <div class="pie-wrapper" style="position: relative; height: 1400px;">
+                  <Pie v-if="clientPieConfig" :data="clientPieConfig.data" :options="clientPieConfig.options" />
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="pieData && !loadingPie" class="mt-8">
+          <v-col cols="12">
+            <v-card class="pie-card-professional" elevation="0">
+              <v-card-title class="pie-card-title">
+                <v-icon start color="primary">mdi-ship</v-icon>
+                References by Shipping Line
+              </v-card-title>
+              <v-card-text class="pa-8">
+                <div class="pie-wrapper" style="position: relative; height: 900px;">
+                  <Pie v-if="linePieConfig" :data="linePieConfig.data" :options="linePieConfig.options" />
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
         <v-row v-if="loading" class="my-12">
           <v-col cols="12" class="text-center">
             <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
@@ -192,11 +234,11 @@
 </template>
 
 <script setup lang="ts">
-import { Bar } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController } from 'chart.js'
+import { Bar, Pie } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController, PieController, ArcElement } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController, ChartDataLabels)
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, LineController, PieController, ArcElement, ChartDataLabels)
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -206,8 +248,11 @@ const chartData = ref<any>(null)
 const loading = ref(false)
 const refreshing = ref(false)
 const includeProfit = ref(true)
+const includeWithoutEta = ref(false)
 const selectedEjecutivo = ref<number | null>(null)
 const ejecutivos = ref<any[]>([])
+const pieData = ref<any>(null)
+const loadingPie = ref(false)
 
 const cachedYears = computed(() => {
   if (!chartData.value) return 0
@@ -231,14 +276,6 @@ const yearColors = [
   { bg: 'rgba(34, 197, 94, 0.8)', border: 'rgb(34, 197, 94)' }, // Green
   { bg: 'rgba(249, 115, 22, 0.8)', border: 'rgb(249, 115, 22)' }, // Orange
   { bg: 'rgba(236, 72, 153, 0.8)', border: 'rgb(236, 72, 153)' }, // Pink
-]
-
-const profitLineColors = [
-  'rgba(220, 38, 38, 1)', // Red
-  'rgba(124, 58, 237, 1)', // Violet
-  'rgba(5, 150, 105, 1)', // Emerald
-  'rgba(202, 138, 4, 1)', // Yellow
-  'rgba(190, 24, 93, 1)', // Rose
 ]
 
 const getYearColor = (year: number): string => {
@@ -280,7 +317,8 @@ const loadChartData = async (forceRefresh = false) => {
   try {
     const params: any = {
       years: selectedYears.value,
-      includeProfit: includeProfit.value
+      includeProfit: includeProfit.value,
+      includeWithoutEta: includeWithoutEta.value
     }
     
     if (forceRefresh) {
@@ -291,8 +329,11 @@ const loadChartData = async (forceRefresh = false) => {
       params.ejecutivo_id = selectedEjecutivo.value
     }
     
-    const { data } = await $api.reports.getYearlyComparative(params)
-    chartData.value = data
+    const response = await $api.reports.getYearlyComparative(params)
+    chartData.value = Array.isArray(response?.data) ? response.data : []
+    
+    // Load pie chart data
+    await loadPieChartData()
     
     if (forceRefresh) {
       snackbar.add({
@@ -306,9 +347,49 @@ const loadChartData = async (forceRefresh = false) => {
       type: 'error',
       text: 'Failed to load chart data'
     })
+    chartData.value = []
   } finally {
     loading.value = false
     refreshing.value = false
+  }
+}
+
+const loadPieChartData = async () => {
+  if (selectedYears.value.length === 0) return
+  
+  loadingPie.value = true
+  
+  try {
+    const params: any = {
+      years: selectedYears.value
+    }
+    
+    if (selectedEjecutivo.value) {
+      params.ejecutivo_id = selectedEjecutivo.value
+    }
+    
+    const [clientData, lineData] = await Promise.all([
+      $api.reports.getReferencesByClient(params),
+      $api.reports.getReferencesByLine(params)
+    ])
+    
+    // Handle response safely
+    pieData.value = {
+      byClient: Array.isArray(clientData?.data) ? clientData.data : [],
+      byLine: Array.isArray(lineData?.data) ? lineData.data : []
+    }
+  } catch (error) {
+    console.error('Error loading pie chart data:', error)
+    snackbar.add({
+      type: 'error',
+      text: 'Failed to load pie chart data'
+    })
+    pieData.value = {
+      byClient: [],
+      byLine: []
+    }
+  } finally {
+    loadingPie.value = false
   }
 }
 
@@ -329,19 +410,151 @@ onMounted(() => {
   loadEjecutivos()
 })
 
+const clientPieConfig = computed(() => {
+  if (!pieData.value || !Array.isArray(pieData.value.byClient)) return null
+
+  const labels = pieData.value.byClient.map((item: any) => item.client_name)
+  const data = pieData.value.byClient.map((item: any) => item.total_teus)
+  
+  const pieColors = [
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(168, 85, 247, 0.8)',
+    'rgba(34, 197, 94, 0.8)',
+    'rgba(249, 115, 22, 0.8)',
+    'rgba(236, 72, 153, 0.8)',
+    'rgba(14, 165, 233, 0.8)',
+    'rgba(234, 179, 8, 0.8)',
+    'rgba(99, 102, 241, 0.8)',
+  ]
+  
+  return {
+    data: {
+      labels,
+      datasets: [{
+        type: 'pie' as const,
+        data,
+        backgroundColor: pieColors.slice(0, data.length),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom' as const,
+          labels: {
+            font: { size: 11 },
+            boxWidth: 12,
+            padding: 8
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const label = context.label || ''
+              const value = context.parsed
+              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+              const percentage = ((value / total) * 100).toFixed(1)
+              return `${label}: ${formatNumber(value)} TEUs (${percentage}%)`
+            }
+          }
+        }
+      }
+    }
+  }
+})
+
+const linePieConfig = computed(() => {
+  if (!pieData.value || !Array.isArray(pieData.value.byLine)) return null
+
+  const labels = pieData.value.byLine.map((item: any) => item.line_name)
+  const data = pieData.value.byLine.map((item: any) => item.total_teus)
+  
+  const pieColors = [
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(168, 85, 247, 0.8)',
+    'rgba(34, 197, 94, 0.8)',
+    'rgba(249, 115, 22, 0.8)',
+    'rgba(236, 72, 153, 0.8)',
+    'rgba(14, 165, 233, 0.8)',
+    'rgba(234, 179, 8, 0.8)',
+    'rgba(99, 102, 241, 0.8)',
+  ]
+  
+  return {
+    data: {
+      labels,
+      datasets: [{
+        type: 'pie' as const,
+        data,
+        backgroundColor: pieColors.slice(0, data.length),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom' as const,
+          labels: {
+            font: { size: 11 },
+            boxWidth: 12,
+            padding: 8
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const label = context.label || ''
+              const value = context.parsed
+              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+              const percentage = ((value / total) * 100).toFixed(1)
+              return `${label}: ${formatNumber(value)} TEUs (${percentage}%)`
+            }
+          }
+        }
+      }
+    }
+  }
+})
+
+// Helper function to create darker shade of color
+const getDarkerColor = (rgba: string): string => {
+  // Parse rgba string and increase opacity/darken
+  const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/)
+  if (match) {
+    const [, r, g, b, a] = match
+    // Increase opacity to 1.0 for darker appearance
+    return `rgba(${r}, ${g}, ${b}, 1.0)`
+  }
+  return rgba
+}
+
 const chartConfig = computed(() => {
   if (!chartData.value || !Array.isArray(chartData.value)) return null
 
   const datasets: any[] = []
 
   chartData.value.forEach((yearData: any, index: number) => {
-    const teusData = yearData?.months?.map((m: any) => m.teus) || []
-    const profitData = yearData?.months?.map((m: any) => m.profit) || []
-    const colorIndex = index % yearColors.length
-    const color = yearColors[colorIndex] ?? yearColors[0]
-    const profitColor = profitLineColors[colorIndex] ?? profitLineColors[0]
+    if (!yearData || !Array.isArray(yearData.months)) return
     
-    // TEUs Bar Chart
+    const teusData = yearData.months.map((m: any) => m.teus ?? 0)
+    const profitData = yearData.months.map((m: any) => m.profit ?? 0)
+    const teusWithoutEtaData = yearData.months.map((m: any) => m.teus_without_eta ?? 0)
+    const colorIndex = index % yearColors.length
+    const defaultColor = { bg: 'rgba(59, 130, 246, 0.8)', border: 'rgb(59, 130, 246)' }
+    const color = yearColors[colorIndex] ?? yearColors[0] ?? defaultColor
+    const profitColor = color?.border ?? defaultColor.border // Use same color as bar for consistency
+    
+    if (!color) return
+    
+    // TEUs Bar Chart (with ETA)
     datasets.push({
       type: 'bar',
       label: `${yearData.year} - TEUs`,
@@ -350,8 +563,26 @@ const chartConfig = computed(() => {
       borderColor: color.border,
       borderWidth: 2,
       yAxisID: 'y',
-      order: 2
+      order: 2,
+      barPercentage: 0.6,
+      categoryPercentage: 0.8
     })
+    
+    // TEUs Bar Chart (without ETA) - grouped beside
+    if (includeWithoutEta.value) {
+      datasets.push({
+        type: 'bar',
+        label: `${yearData.year} - TEUs (Sin ETA)`,
+        data: teusWithoutEtaData,
+        backgroundColor: getDarkerColor(color.bg),
+        borderColor: color.border,
+        borderWidth: 2,
+        yAxisID: 'y',
+        order: 2,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
+      })
+    }
     
     // Profit Line Chart
     datasets.push({
@@ -387,7 +618,9 @@ const chartConfig = computed(() => {
       plugins: {
         title: {
           display: true,
-          text: 'TEUs per Month - IMPO MARITIME (With ETA)',
+          text: includeWithoutEta.value 
+            ? 'TEUs per Month - IMPO MARITIME (With ETA + Sin ETA)' 
+            : 'TEUs per Month - IMPO MARITIME (With ETA)',
           font: {
             size: 16,
             weight: 'bold'
@@ -421,7 +654,7 @@ const chartConfig = computed(() => {
                   const withoutEta = yearData?.without_eta?.teus ?? 0
                   
                   let label = `${yearLabel}: ${formatNumber(totalTeus)}`
-                  if (withoutEta > 0) {
+                  if (withoutEta > 0 && includeWithoutEta.value) {
                     label += ` | sin ETA: ${formatNumber(withoutEta)}`
                   }
                   
@@ -470,11 +703,27 @@ const chartConfig = computed(() => {
                 }
               })
               return `\nTotal TEUs: ${formatNumber(totalTeus)}\nTotal Profit: ${formatCurrency(totalProfit)}`
+            },
+            // Sort tooltip items by year to show: 2025 Profit, 2025 Teus, 2026 Profit, 2026 Teus
+            beforeBody: (tooltipItems: any) => {
+              // Sort by year, then by Profit before TEUs
+              tooltipItems.sort((a: any, b: any) => {
+                const yearA = parseInt(a.dataset.label.split(' - ')[0])
+                const yearB = parseInt(b.dataset.label.split(' - ')[0])
+                if (yearA !== yearB) {
+                  return yearA - yearB
+                }
+                // Same year: show Profit first, then TEUs
+                const aIsProfit = a.dataset.label.includes('Profit')
+                const bIsProfit = b.dataset.label.includes('Profit')
+                if (aIsProfit && !bIsProfit) return -1
+                if (!aIsProfit && bIsProfit) return 1
+                return 0
+              })
+              return ''
             }
           }
-        }
-      },
-      plugins: {
+        },
         datalabels: {
           display: (context: any) => {
             // Only show labels on bars (TEUs), not on lines (Profit)
@@ -837,5 +1086,53 @@ const chartConfig = computed(() => {
 
 .theme--dark .stat-meta {
   color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+/* Pie Chart Cards */
+.pie-card-professional {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(var(--v-theme-surface));
+}
+
+.theme--dark .pie-card-professional {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pie-card-professional:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.theme--dark .pie-card-professional:hover {
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pie-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.theme--dark .pie-card-title {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.pie-wrapper {
+  background: rgb(var(--v-theme-surface));
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.theme--dark .pie-wrapper {
+  background: rgba(var(--v-theme-surface), 0.5);
 }
 </style>

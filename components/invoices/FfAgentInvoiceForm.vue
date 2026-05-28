@@ -108,12 +108,35 @@
             />
           </div>
           <div class="col-span-3">
-            <AGlobalSearch
-              v-model="form.forwarder_id"
-              :onSearch="searchFfs"
-              validate-key="forwarder_id"
-              label="Freight Forwarder Agent *"
-            />
+            <!-- FUTURE: Party type selector hidden for new notes (defaults to FF).
+                 Only re-enable when edit mode is added and only show when editing notes with party_type !== FF.
+                 For now, new notes always use FreightForwarder as party_type.
+            <div class="grid grid-cols-2 gap-2 mb-2" v-if="isEditMode && form.party_type !== 'App\\Models\\Mexico\\FreightForwarder'">
+              <v-autocomplete
+                v-model="form.party_type"
+                density="compact"
+                label="Party type *"
+                :items="[
+                  { value: 'App\\Models\\Mexico\\FreightForwarder', name: 'Freight Forwarder' },
+                  { value: 'App\\Models\\Mexico\\Consignee', name: 'Consignee' },
+                ]"
+                item-title="name"
+                item-value="value"
+                variant="solo-filled"
+                @update:model-value="onPartyTypeChange"
+              />
+            </div>
+            -->
+            <!-- FF Agent selector always visible (Consignee option hidden for now) -->
+            <div class="mb-2">
+              <AGlobalSearch
+                :key="`party-search-${form.party_type}`"
+                v-model="form.party_id"
+                :onSearch="searchFfs"
+                validate-key="party_id"
+                label="Freight Forwarder Agent *"
+              />
+            </div>
             <div v-if="!isInbound">
               <v-text-field v-model="form.contacto_ff" density="compact" label="Contacto F.F." />
             </div>
@@ -221,6 +244,8 @@ const catalogs = ref<any>({
 })
 
 const form = ref<any>({
+  party_type: 'App\\Models\\Mexico\\FreightForwarder',
+  party_id: null,
   forwarder_id: null,
   link_ref: false,
   folio: null,
@@ -233,6 +258,15 @@ const form = ref<any>({
   amount: null,
   file: null,
 })
+
+const onPartyTypeChange = () => {
+  form.value.party_id = null
+  form.value.forwarder_id = null
+}
+
+const searchCustomers = async (params: any) => {
+  return await $api.consignees.searchConsignees({ query: params })
+}
 
 const isInbound = computed(() => form.value.format === 'inbound')
 const isOutbound = computed(() => form.value.format === 'outbound')
@@ -315,13 +349,14 @@ const searchReferences = async (type: string) => {
 
 const saveFfNote = async () => {
   try {
-    if (!form.value.forwarder_id) {
+    if (!form.value.party_id) {
       snackbar.add({
         type: 'error',
-        text: 'Freight Forwarder Agent is required',
+        text: 'Party is required',
       })
       return
     }
+    form.value.forwarder_id = form.value.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? form.value.party_id : null
     if (!form.value.format) {
       snackbar.add({
         type: 'error',

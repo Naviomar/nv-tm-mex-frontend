@@ -109,6 +109,13 @@ class SuppliersModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/cfdis/${id}/delete`, fetchOptions)
   }
 
+  async restoreCfdi(id: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/cfdis/${id}/restore`, fetchOptions)
+  }
+
   async getFactraCfdis(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/cfdis`, fetchOptions)
   }

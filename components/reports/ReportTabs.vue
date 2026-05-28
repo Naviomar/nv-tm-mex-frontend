@@ -69,6 +69,11 @@
           <v-tabs-window-item v-if="viewMode === 'reports'" value="freight-line-tab">
             <ChargesPendingInvoiceReport />
           </v-tabs-window-item>
+
+          <v-tabs-window-item v-if="viewMode === 'reports'" value="executive-tab">
+            <ExecutiveReport />
+          </v-tabs-window-item>
+
         </v-tabs-window>
       </v-card-text>
     </v-card>
@@ -126,6 +131,12 @@ const reportsItems = [
     value: 'freight-line-tab',
     icon: 'mdi-receipt-clock-outline',
     color: 'amber'
+  },
+  {
+    title: 'Executive Reports',
+    value: 'executive-tab',
+    icon: 'mdi-account-star',
+    color: 'purple'
   }
 ]
 

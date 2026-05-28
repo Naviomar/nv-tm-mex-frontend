@@ -335,6 +335,24 @@
                     <v-chip>{{ consigneeInfo.export_credit_days }}</v-chip>
                     <v-chip :color="creditDaysColor">{{ consigneeCreditFinalDate }}</v-chip>
                   </div>
+                  <div class="mt-4">
+                    <div class="font-bold mb-2">Customs Agent For Emails</div>
+                    <v-select
+                      v-model="selectedAgentId"
+                      :items="availableAgents"
+                      item-title="short_name"
+                      item-value="id"
+                      label="Select agent for emails"
+                      density="compact"
+                      variant="outlined"
+                      clearable
+                      @update:model-value="onAgentChange"
+                    >
+                      <template v-slot:prepend-inner>
+                        <v-icon>mdi-account-tie</v-icon>
+                      </template>
+                    </v-select>
+                  </div>
                 </div>
               </v-card-text>
             </v-card>
@@ -670,6 +688,52 @@ const creditDebitNotes = ref<any>([])
 
 const consigneeInfo = ref<any>(null)
 const referencia = ref<any>({})
+const selectedAgentId = ref<number | null>(null)
+
+const availableAgents = computed(() => {
+  if (!consigneeInfo.value) return []
+  
+  const allAgents: any[] = []
+  
+  // Get agents from warranty letters for the current POD
+  if (consigneeInfo.value.warranty_letters_current) {
+    consigneeInfo.value.warranty_letters_current.forEach((wl: any) => {
+      if (wl.custom_agent && wl.port_id === values.pod_id) {
+        allAgents.push(wl.custom_agent)
+      }
+    })
+  }
+  
+  // Get agents from entrust letters for the current POD
+  if (consigneeInfo.value.entrust_letters_current) {
+    consigneeInfo.value.entrust_letters_current.forEach((el: any) => {
+      if (el.custom_agent && el.port_id === values.pod_id) {
+        allAgents.push(el.custom_agent)
+      }
+    })
+  }
+  
+  // Remove duplicates by id
+  const uniqueAgents = allAgents.filter((agent, index, self) =>
+    index === self.findIndex((a) => a.id === agent.id)
+  )
+  
+  return uniqueAgents
+})
+
+const onAgentChange = async (agentId: number | null) => {
+  try {
+    loadingStore.start()
+    await $api.referenciasExport.updateCustomsAgent(props.id, { custom_agent_id: agentId })
+    snackbar.add({ type: 'success', text: 'Customs agent updated' })
+    getData()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error updating customs agent' })
+  } finally {
+    loadingStore.stop()
+  }
+}
 
 const transhipments = ref([] as any)
 const masterBls = ref([] as any)
@@ -1020,6 +1084,7 @@ const getData = async () => {
     houseBls.value = response.house_bls
     containers.value = response.containers
     booking_containers.value = response.bkg_containers
+    selectedAgentId.value = response.custom_agent?.id || null
 
     intermodalMode.value.intermodal = response.transportation_mode_id
     intermodalMode.value.internal_transit = response.internal_transit === 1

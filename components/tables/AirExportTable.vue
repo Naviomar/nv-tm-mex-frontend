@@ -162,7 +162,7 @@
               <td>
                 <div class="flex">
                   <v-btn
-                    v-if="!item.deleted_at"
+                    v-if="!item.deleted_at && hasPermission('air-export-references-edit')"
                     variant="text"
                     icon="mdi-pencil-outline"
                     color="blue-lighten-2"
@@ -170,6 +170,7 @@
                     @click="viewReference(item)"
                   ></v-btn>
                   <v-btn
+                    v-if="hasPermission('air-export-references-view')"
                     variant="text"
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
@@ -240,6 +241,7 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
 
 const catalogs = ref<any>({
   consignees: [],

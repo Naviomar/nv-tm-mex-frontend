@@ -146,14 +146,14 @@ const chargeEntities = [
     name: 'Customs Agent',
   },
   {
-    id: 3,
-    value: 'other',
-    name: 'Other',
-  },
-  {
     id: 4,
     value: 'supplier',
     name: 'Supplier',
+  },
+  {
+    id: 3,
+    value: 'other',
+    name: 'Other',
   },
 ]
 
@@ -714,7 +714,7 @@ const typeInvoices = [
   { deposit: true, withdrawal: false, slug: 'free-format', tm: true, wm: true, name: 'Free format Invoice', class_name: 'PartyInvoice' },
 
   // F.F. Agents SOA
-  { deposit: true, withdrawal: true, slug: 'ff', tm: true, wm: true, name: 'Agent F.F. invoice', class_name: 'FfPayment' },
+  { deposit: true, withdrawal: true, slug: 'ff', tm: true, wm: true, name: 'Agent F.F. request payment', class_name: 'FfPayment' },
 
   // Freight Lines
   { deposit: false, withdrawal: true, slug: 'line', tm: true, wm: true, name: 'BL Payment Schedule', class_name: 'LinePaymentSchedule' },

@@ -31,6 +31,8 @@
               <CustomerEmailsWidget
                 :customer-id="referencia.consignee_id"
                 :notifys="customerNotifys"
+                :pod-id="referencia.pod_id"
+                :custom-agent-id="referencia.custom_agent_id"
                 @fetched-emails="setCustomerEmails"
               />
             </div>
@@ -95,7 +97,7 @@
               <div class="col-span-1"></div>
               <div class="col-span-2">
                 <v-alert density="compact" type="warning" border="top" variant="tonal" elevation="2" colored>
-                  <span>Reference has intenral transit, some additional files from line will be attached.</span>
+                  <span>Reference has internal transit, some additional files from line will be attached.</span>
                 </v-alert>
               </div>
             </div>

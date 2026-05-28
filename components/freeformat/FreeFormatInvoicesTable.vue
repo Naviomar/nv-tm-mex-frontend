@@ -2,7 +2,7 @@
   <div>
     <div @keyup.enter="onClickFilters">
       <div class="font-bold mb-2">Filters</div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div><v-text-field v-model="filters.from" density="compact" type="date" label="Date from" /></div>
         <div><v-text-field v-model="filters.to" density="compact" type="date" label="Date to" /></div>
         <div>
@@ -34,7 +34,22 @@
               label="Supplier *"
             />
           </div>
+          <div>
+            <v-autocomplete
+              v-model="filters.is_proforma"
+              :items="[
+                { id: 1, value: 'Proforma' },
+                { id: 0, value: 'Invoice' },
+              ]"
+              item-title="value"
+              item-value="id"
+              density="compact"
+              label="Invoice status"
+              clearable
+            />
+          </div>
         </div>
+        
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="md:col-span-2">
@@ -122,6 +137,7 @@
           <tr>
             <th>Actions</th>
             <th>Tipo</th>
+            <th>Status</th>
             <th>Folio</th>
             <th>Party</th>
             <th>Nombre Party</th>
@@ -129,7 +145,6 @@
             <th>Inv. Type</th>
             <th>Conceptos</th>
             <th>Relacionado</th>
-            <th>Status</th>
             <th>Creado</th>
           </tr>
         </thead>
@@ -147,7 +162,12 @@
                   <PreviewPartyInvoice :invoice="row" size="small" />
                 </div>
               </td>
-              <td><v-chip size="x-small" color="blue-darken-2">Factura</v-chip></td>
+              <td><v-chip size="x-small" color="blue-darken-2">{{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }}</v-chip></td>
+              <td>
+                <div class="text-xs">
+                  <v-chip :color="getInvoicePaidStatusColor(row)" size="small">{{ getInvoicePaidStatus(row) }}</v-chip>
+                </div>
+              </td>
               <td>
                 <v-chip size="small" color="primary" class="cursor-pointer">
                   {{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }} #{{ row?.invoice?.invoice_number }}
@@ -197,7 +217,6 @@
                   </v-chip>
                 </div>
               </td>
-              <td><div class="text-xs">{{ getInvoicePaidStatus(row) }}</div></td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="row">{{ formatDateString(row.created_at) }}</UserInfoBadge>
               </td>
@@ -263,6 +282,7 @@ const filters = ref<any>({
   from: '',
   to: '',
   invoice_number: [] as string[],
+  is_proforma: null as number | null,
   inv_type: '',
   partyable_type: '',
   partyable_id: '',
@@ -344,7 +364,44 @@ const getInvoicePaidStatus = (row: any) => {
   if (row.deleted_at)        return 'Cancelled'
   if (!row.invoice)          return 'Pending'
   if (row.invoice?.is_paid)  return 'Paid @ ' + formatDateOnlyString(row.invoice.paid_at)
-  return 'Pending'
+  return checkParcialPaid(row)
+}
+
+const getInvoicePaidStatusColor = (row: any) => {
+  if (row.deleted_at) {
+    return 'red'
+  }
+  if (!row.invoice) {
+    return 'purple'
+  }
+  if (row.invoice?.is_paid) {
+    return 'green'
+  }
+  if (checkParcialPaid(row) === 'Partial paid') {
+    return 'amber'
+  }
+  if (checkParcialPaid(row) === 'Pending payment') {
+    return 'red'
+  }
+  return 'purple'
+}
+
+const checkParcialPaid = (rows: any) => {
+  //console.log("rows:",rows)
+  if (rows.invoice?.charges) {
+    const totalPaid = rows.invoice.charges.reduce((acc: number, charge: any) => {
+      return acc + parseFloat(charge.amount_paid)
+    }, 0)
+
+    //console.log("totalPaid:",totalPaid)
+    if (totalPaid === rows.invoice.total) {
+      return 'Paid @ ' + formatDateOnlyString(rows.invoice.paid_at)
+    }
+    if (totalPaid > 0) {
+      return 'Partial paid'
+    }
+  }
+  return 'Pending payment'
 }
 
 const searchCustomers = async (search: any) => {
@@ -364,6 +421,7 @@ const getData = async () => {
     const resp = (await $api.freeFormatInvoices.getUnifiedPaged({
       query: { page: unifiedData.value.current_page, perPage: unifiedData.value.perPage, ...q },
     })) as any
+    
     unifiedData.value = resp
     unifiedData.value.current_page = resp.current_page ?? 1
     if (!resp.data?.length) {
@@ -390,7 +448,7 @@ const onClickPagination = async (page: number) => {
 
 const clearFilters = async () => {
   invoiceNumberInput.value = ''
-  filters.value = { from: '', to: '', invoice_number: [], inv_type: '', partyable_type: '', partyable_id: '', deleted_status: '' }
+  filters.value = { from: '', to: '', invoice_number: [], inv_type: '', partyable_type: '', partyable_id: '', deleted_status: '', is_proforma: null }
   unifiedData.value.current_page = 1
   await getData()
 }

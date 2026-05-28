@@ -152,7 +152,7 @@
         </v-list-group>
 
         <v-list-group
-          v-if="canAccess(menuPermissions.PaymentsFreightLines) && canAccess(menuPermissions.PaymentsFreightLinesSchedules)"
+          v-if="canAccess(menuPermissions.PaymentsFreightLines)"
           value="payments-freight-lines"
           subgroup
         >
@@ -171,12 +171,27 @@
           <v-list-item
             v-if="canAccess(menuPermissions.PaymentsFreightLinesSchedules)"
             prepend-icon="mdi-calendar-clock-outline"
-            title="Schedule payments"
+            title="Payment Release History"
             to="/payments/lines/schedules"
             rounded="xl"
             class="mb-1"
           ></v-list-item>
-          <v-list-item v-if="false" title="Payments" to="/payments/lines"></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.PaymentsFreightLinesReportBls)"
+            prepend-icon="mdi-file-chart-outline"
+            title="BL Payment Release Report"
+            to="/payments/lines/schedules/report-bls"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
+          <v-list-item
+            v-if="canAccess(menuPermissions.PaymentsFreightLinesSeaServices)"
+            prepend-icon="mdi-calendar-plus"
+            title="Schedule BLs Payment"
+            to="/payments/lines/schedules/sea-services"
+            rounded="xl"
+            class="mb-1"
+          ></v-list-item>
         </v-list-group>
 
         <v-list-item

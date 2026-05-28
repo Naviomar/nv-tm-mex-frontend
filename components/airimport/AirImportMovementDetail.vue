@@ -181,6 +181,13 @@
         <!-- CBMs -->
         <AirReferenceDetailCBMs :airReference="airReference" />
 
+        <v-card color="" class="mb-4">
+          <v-card-title><div class="font-bold">Credit / Debit note(s)</div></v-card-title>
+          <v-card-text>
+            <FfNotesViewDetails v-if="canAccess(menuPermissions.PaymentsFfAgentsSoa)" :ffNotes="airReference.ff_notes" />
+          </v-card-text>
+        </v-card>
+
         <v-card density="compact" class="mb-4">
           <v-card-text>
             <!-- Tabla de cargos -->
@@ -254,6 +261,16 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { menuPermissions } from '~/utils/data/system'
+
+const { hasPermission, user } = useCheckUser()
+
+const canAccess = (permission: string) => {
+  const hasMenuPermissionsSeeded = user.value?.permissions?.some((p: any) => p.name.startsWith('menu-')) ||
+    user.value?.roles?.some((r: any) => r.permissions?.some((p: any) => p.name.startsWith('menu-')))
+  if (!hasMenuPermissionsSeeded) return true
+  return hasPermission(permission)
+}
 
 const props = defineProps({
   airReference: {
@@ -304,7 +321,7 @@ const hasCharges = computed(() => {
 })
 
 const linkedChargeToInvoice = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

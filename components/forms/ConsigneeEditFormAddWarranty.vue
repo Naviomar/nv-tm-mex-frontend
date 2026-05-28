@@ -68,7 +68,7 @@
           <tbody>
             <tr v-for="(item, index) in guarantee" :key="`carta-encomienda-${index}`">
               <td>
-                <div class="flex">
+                <div class="flex gap-2">
                   <v-btn
                     size="small"
                     variant="text"
@@ -153,10 +153,22 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <WarrantyLetterEmailsModal
+      v-if="showEmailsModalMounted"
+      :show="showEmailsModal"
+      :warranty-letter-id="selectedWarrantyLetterId"
+      :catalogs="catalogs"
+      :customer-id="id"
+      :locked-port="selectedWarrantyLetterPort"
+      @update:show="onEmailsModalUpdate"
+      @refresh="emit('refresh')"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { schema } from '~~/forms/warrantyLetterForm'
+import WarrantyLetterEmailsModal from './WarrantyLetterEmailsModal.vue'
+
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -173,6 +185,58 @@ const showForm = ref(false)
 const formWarrantyLetter = ref<any>({
   show: false,
 })
+
+const showEmailsModal = ref(false)
+const showEmailsModalMounted = ref(false)
+const selectedWarrantyLetterId = ref('')
+const selectedWarrantyLetterPort = ref<any>(null)
+const emailCounts = ref<Record<string, number>>({})
+
+const getEmailCount = (warrantyLetterId: string | number) => {
+  return emailCounts.value[warrantyLetterId.toString()] || 0
+}
+
+const loadEmailCounts = async () => {
+  if (!props.guarantee || props.guarantee.length === 0) return
+
+  for (const item of props.guarantee) {
+    try {
+      const emails = await $api.consignees.getWarrantyLetterEmails(props.id, item.id)
+      emailCounts.value[item.id.toString()] = emails.length
+    } catch (e) {
+      console.error(`Error loading emails for warranty letter ${item.id}:`, e)
+      emailCounts.value[item.id.toString()] = 0
+    }
+  }
+}
+
+const openEmailsModal = (item: any) => {
+  selectedWarrantyLetterId.value = item.id.toString()
+  selectedWarrantyLetterPort.value = item.port
+  showEmailsModalMounted.value = true
+  nextTick(() => {
+    showEmailsModal.value = true
+  })
+}
+
+const onEmailsModalUpdate = (val: boolean) => {
+  showEmailsModal.value = val
+  if (!val) {
+    setTimeout(() => {
+      showEmailsModalMounted.value = false
+      // Reload email counts after modal closes to reflect any changes
+      loadEmailCounts()
+    }, 400)
+  }
+}
+
+onMounted(() => {
+  loadEmailCounts()
+})
+
+watch(() => props.guarantee, () => {
+  loadEmailCounts()
+}, { deep: true })
 
 const closeDialogWarranty = () => {
   formWarrantyLetter.value.show = false

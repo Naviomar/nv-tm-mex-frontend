@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-6">
+      <div class="col-span-5">
         <div>
           <InputText density="compact" name="name" label="Name *" />
         </div>
@@ -13,61 +13,6 @@
           <v-btn class="mr-4" color="secondary" to="/system/departments"> Cancel </v-btn>
           <v-btn color="primary" @click="saveCharge"> Save </v-btn>
         </div>
-      </div>
-      <div class="col-span-6">
-        <div class="font-bold">Users</div>
-        <div class="flex gap-2">
-          <v-autocomplete
-            v-model="form.user"
-            density="compact"
-            :items="availableUsers"
-            item-title="email"
-            item-value="id"
-            label="Select user"
-          />
-          <v-autocomplete
-            v-model="form.department_type"
-            density="compact"
-            :items="departmentTypes"
-            item-title="label"
-            item-value="value"
-            label="Type"
-            class="w-32"
-          />
-          <v-btn color="primary" size="small" @click="linkUser">Add</v-btn>
-        </div>
-        <v-table density="compact">
-          <thead>
-            <tr>
-              <th class="text-left">Actions</th>
-              <th class="text-left">Name</th>
-              <th class="text-left">Email</th>
-              <th class="text-left">Type</th>
-              <th class="text-left">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(user, index) in linkedUsers" :key="`user-${index}`">
-              <td>
-                <div class="flex gap-2">
-                  <TrashButton :item="user" @click="unlinkUser(user)" />
-                </div>
-              </td>
-              <td>{{ user.name }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.pivot?.department_type }}</td>
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="user">
-                  {{ formatDateString(user.created_at) }}
-                </UserInfoBadge>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-alert density="compact" type="warning" variant="outlined">
-          Removing a user from this department will be detached from all notifications.
-        </v-alert>
-
         <div class="py-4">
           <v-btn size="small" color="brown" @click="showRoles = !showRoles">Importar permisos de un rol</v-btn>
           <div v-if="showRoles">
@@ -135,7 +80,7 @@
             <tr v-for="(permission, index) in linkedPermissions" :key="`perm-${index}`">
               <td>
                 <div class="flex gap-2">
-                  <TrashButton :item="permission" @click="unlinkPermission(permission)" />
+                  <diV v-if="whoRolDelete() === 'true'"><TrashButton :item="permission" @click="unlinkPermission(permission)" /></diV>
                 </div>
               </td>
               <td>{{ permission.name }}</td>
@@ -148,6 +93,88 @@
           </tbody>
         </v-table>
       </div>
+      <div class="col-span-7">
+        <div class="font-bold">Users</div>
+        <div class="flex gap-5">
+          <v-card class="mt-4">
+           <v-card-text class="pa-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+           
+            <div>
+              <v-autocomplete
+              name="givePerm"
+              v-model="form.give_perm"
+              :items="permRol"
+              item-title="name"
+              item-value="givePerm"
+              label="Select permission"
+              density="compact"
+              multiple
+            />
+            </div>
+            <div> 
+              <v-autocomplete
+              name="userPerm"
+              v-model="form.user"
+              density="compact"
+              :items="availableUsers"
+              item-title="email"
+              item-value="id"
+              label="Select user"
+            />
+            </div>
+            <div>
+            <v-autocomplete
+              name="department_type"
+              v-model="form.department_type"
+              density="compact"
+              :items="departmentTypes"
+              item-title="label"
+              item-value="value"
+              label="Type"
+              class="w-32"
+            />
+            </div>
+          </div>
+          </v-card-text>
+           </v-card>   
+          
+          <v-btn color="primary" size="small" @click="linkUser">Add</v-btn>
+        </div>
+        <v-table density="compact">
+          <thead>
+            <tr>
+              <th class="text-left">Actions</th>
+              <th class="text-left">Name</th>
+              <th class="text-left">Email</th>
+              <th class="text-left">Type</th>
+              <th class="text-left">Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(user, index) in linkedUsers" :key="`user-${index}`">
+              <td>
+                <div class="flex gap-2">
+                  <TrashButton :item="user" @click="unlinkUser(user)" />
+                </div>
+              </td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.pivot?.department_type }}</td>
+              <td class="whitespace-nowrap">
+                <UserInfoBadge :item="user">
+                  {{ formatDateString(user.created_at) }}
+                </UserInfoBadge>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+        <v-alert density="compact" type="warning" variant="outlined">
+          Removing a user from this department will be detached from all notifications.
+        </v-alert>
+
+        
+      </div>
     </div>
   </div>
 </template>
@@ -158,6 +185,7 @@ const router = useRouter()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { user } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -165,6 +193,39 @@ const props = defineProps({
     required: false,
   },
 })
+
+const catalogs = reactive({
+  roles: [],
+  permissions: [],
+})
+
+const permRol = computed(() => {
+  const allRols = user.value?.roles
+  var permisos = [];
+  ///todos los roles
+  for(var r = 0; r < allRols?.length; r++){
+    const perRolls = allRols[r].permissions
+    for(var ar = 0; ar < perRolls?.length; ar++){
+      permisos.push(perRolls[ar])
+    }
+  }
+  return permisos
+})
+
+const getCatalogs = async () => {
+  try {
+    loadingStore.start()
+    const [roles, permissions] = await Promise.all([$api.users.getRoles(), $api.users.getPermissions()])
+    catalogs.roles = roles
+    catalogs.permissions = permissions
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
 
 const linkedUsers = ref<any>([])
 const users = ref<any>([])
@@ -175,10 +236,24 @@ const showRoles = ref(false)
 const selectedRole = ref<number | null>(null)
 const rolePermissionSearch = ref('')
 
+function whoRolDelete() {
+  var canDelete = 'false';
+  var allRolDel = user.value?.roles
+  var idRolDel = 0
+  for(var i=0; i<allRolDel.length; i++){
+    idRolDel = allRolDel[i].id
+    if(idRolDel === 1){
+      canDelete = 'true';
+    }
+  }
+  return canDelete;
+}
+
 const form = reactive({
   user: null,
   department_type: null,
   permission: null,
+  give_perm: null
 })
 const availablePermissions = computed(() => {
   return permissions.value.filter((perm: any) => {
@@ -300,16 +375,23 @@ const linkUser = async () => {
     snackbar.add({ type: 'warning', text: 'Please select a type' })
     return
   }
+  if (!form.give_perm) {
+    snackbar.add({ type: 'warning', text: 'Please select at least one permisson' })
+    return
+  }
   const body = {
     user_id: form.user,
     department_type: form.department_type,
+    give_perm: form.give_perm,
   }
   const response = await $api.departments.linkUser(props.id!, body)
   // find user by id
   const user = users.value.find((u: any) => u.id === form.user)
-  linkedUsers.value.push({ ...user, pivot: { department_type: form.department_type } })
+  linkedUsers.value.push({ ...user, pivot: { department_type: form.department_type , give_perm: form.give_perm} })
   form.user = null
   form.department_type = null
+  form.give_perm = null
+
   snackbar.add({ type: 'success', text: 'User l|inked' })
 }
 
@@ -322,6 +404,11 @@ const unlinkUser = async (user: any) => {
   linkedUsers.value = linkedUsers.value.filter((u: any) => u.id !== user.id)
   snackbar.add({ type: 'success', text: 'User unlinked' })
 }
+
+onMounted(async () => {
+  await getCatalogs()
+
+})
 
 users.value = await $api.users.getAllUsers()
 permissions.value = await $api.users.getPermissions()

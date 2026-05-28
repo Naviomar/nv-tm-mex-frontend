@@ -111,16 +111,28 @@
             </td>
             <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
             <td class="whitespace-nowrap">
-              {{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}
+              <div class="flex items-center gap-2">
+                <span>{{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}</span>
+                <v-btn
+                  v-if="hasInvoiceCancellationHistory(authRequest)"
+                  size="x-small"
+                  variant="text"
+                  color="info"
+                  icon="mdi-file-compare"
+                  @click="openHistoryDialog(authRequest)"
+                  title="View cancellation history"
+                />
+              </div>
             </td>
             <td style="max-width: 280px;">
               <div v-if="authRequest.request_reason">
                 <div
+                  :ref="(el) => setCommentRef(authRequest.id, el as HTMLElement)"
                   class="comment-text text-body-2"
                   :class="{ 'comment-collapsed': !isExpanded(authRequest.id) }"
                 >{{ authRequest.request_reason }}</div>
                 <button
-                  v-if="authRequest.request_reason.length > 80"
+                  v-if="isCommentTruncated(authRequest.id)"
                   class="comment-toggle-btn text-caption"
                   :class="isExpanded(authRequest.id) ? 'text-grey-darken-1' : 'text-primary'"
                   @click.stop="toggleComment(authRequest.id)"
@@ -302,12 +314,19 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <InvoiceCancellationHistoryModal
+        v-model="showHistoryDialog"
+        :resource-data="selectedAuthRequest?.resource_data"
+        :auth-resource="selectedAuthRequest?.resource"
+      />
     </v-card-text>
   </v-card>
 </template>
 <script setup lang="ts">
 import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
+import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -365,6 +384,8 @@ const authRequests = ref<any>({
 
 const showGrantDialog = ref(false)
 const showCancelDialog = ref(false)
+const showHistoryDialog = ref(false)
+const selectedAuthRequest = ref<any>(null)
 
 const showFormGrant = (authRequest: any) => {
   form.value.auth_request = authRequest
@@ -374,6 +395,16 @@ const showFormGrant = (authRequest: any) => {
 const showFormCancel = (authRequest: any) => {
   formCancel.value.auth_request = authRequest
   showCancelDialog.value = true
+}
+
+const hasInvoiceCancellationHistory = (authRequest: any) => {
+  const invoiceTypes = ['cancel-invoice-tm', 'cancel-invoice-wm', 'cancel-invoice-tm-air', 'cancel-invoice-wm-air', 'cancel-free-fromat']
+  return invoiceTypes.includes(authRequest.resource) && authRequest.resource_data && Object.keys(authRequest.resource_data).length > 0
+}
+
+const openHistoryDialog = (authRequest: any) => {
+  selectedAuthRequest.value = authRequest
+  showHistoryDialog.value = true
 }
 
 const onClickPagination = async (page: number) => {
@@ -540,13 +571,56 @@ const clearFilters = async () => {
 onMounted(async () => {
   await getAuthRequests()
   await getAuthReqCatalogs()
+  nextTick(() => {
+    measureTruncation()
+  })
 })
 
 // ── Collapsible Comments ──────────────────────────────────────────────────
 
 const expandedComments = ref<Set<number>>(new Set())
+const commentRefs = ref<Map<number, HTMLElement>>(new Map())
+const truncatableComments = ref<Set<number>>(new Set())
 
 const isExpanded = (id: number) => expandedComments.value.has(id)
+
+const setCommentRef = (id: number, el: HTMLElement | null) => {
+  if (el) {
+    commentRefs.value.set(id, el)
+  } else {
+    commentRefs.value.delete(id)
+    truncatableComments.value.delete(id)
+  }
+}
+
+const measureTruncation = () => {
+  commentRefs.value.forEach((el, id) => {
+    const isTruncated = el.scrollHeight > el.clientHeight
+    if (isTruncated) {
+      truncatableComments.value.add(id)
+    } else {
+      truncatableComments.value.delete(id)
+    }
+  })
+}
+
+watch(() => authRequests.value.data, () => {
+  nextTick(() => {
+    measureTruncation()
+  })
+}, { deep: true })
+
+const isCommentTruncated = (id: number) => {
+  // Use cached DOM measurement if available, otherwise fall back to character count
+  if (truncatableComments.value.has(id)) {
+    return true
+  }
+  // Fallback: estimate based on character count
+  const authRequest = (authRequests.value.data as any[]).find((r: any) => r.id === id)
+  if (!authRequest?.request_reason) return false
+  // Estimate: 2 lines ~80-100 chars, but use lower threshold to be safe
+  return authRequest.request_reason.length > 60
+}
 
 const toggleComment = (id: number) => {
   const s = new Set(expandedComments.value)
@@ -560,14 +634,14 @@ const toggleComment = (id: number) => {
 
 const allExpanded = computed(() => {
   const ids = (authRequests.value.data as any[])
-    .filter((r: any) => r.request_reason?.length > 80)
+    .filter((r: any) => isCommentTruncated(r.id))
     .map((r: any) => r.id)
   return ids.length > 0 && ids.every((id: number) => expandedComments.value.has(id))
 })
 
 const toggleAll = () => {
   const ids = (authRequests.value.data as any[])
-    .filter((r: any) => r.request_reason?.length > 80)
+    .filter((r: any) => isCommentTruncated(r.id))
     .map((r: any) => r.id)
   if (allExpanded.value) {
     expandedComments.value = new Set()

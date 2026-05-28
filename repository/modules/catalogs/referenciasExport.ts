@@ -88,6 +88,15 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-export/${id}/update`, fetchOptions)
   }
 
+  async updateCustomsAgent(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      headers: { 'Content-Type': 'application/json' },
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/update-customs-agent`, fetchOptions)
+  }
+
   async uploadMasterBlFile(id: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {

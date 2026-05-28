@@ -68,7 +68,7 @@
           <tbody>
             <tr v-for="(item, index) in letters" :key="`carta-encomienda-${index}`">
               <td>
-                <div class="flex">
+                <div class="flex gap-2">
                   <v-btn
                     size="small"
                     variant="text"
@@ -76,6 +76,31 @@
                     color="green"
                     class="cursor-pointer"
                     @click="editEntrustLetter(item)"
+                  ></v-btn>
+                  <v-badge
+                    v-if="getEmailCount(item.id) > 0"
+                    :content="getEmailCount(item.id)"
+                    color="primary"
+                    offset-x="4"
+                    offset-y="4"
+                  >
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      icon="mdi-email-outline"
+                      color="blue"
+                      class="cursor-pointer"
+                      @click="openEmailsModal(item)"
+                    ></v-btn>
+                  </v-badge>
+                  <v-btn
+                    v-else
+                    size="small"
+                    variant="text"
+                    icon="mdi-email-outline"
+                    color="blue"
+                    class="cursor-pointer"
+                    @click="openEmailsModal(item)"
                   ></v-btn>
                   <v-btn
                     size="small"
@@ -147,10 +172,22 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <EntrustLetterEmailsModal
+      v-if="showEmailsModalMounted"
+      :show="showEmailsModal"
+      :entrust-letter-id="selectedEntrustLetterId"
+      :catalogs="catalogs"
+      :customer-id="id"
+      :locked-port="selectedEntrustLetterPort"
+      @update:show="onEmailsModalUpdate"
+      @refresh="emit('refresh')"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { schema } from '~~/forms/entrustLetterForm'
+import EntrustLetterEmailsModal from './EntrustLetterEmailsModal.vue'
+
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
@@ -167,6 +204,57 @@ const showForm = ref(false)
 const formEditEntrust = ref<any>({
   show: false,
 })
+
+const showEmailsModal = ref(false)
+const showEmailsModalMounted = ref(false)
+const selectedEntrustLetterId = ref('')
+const selectedEntrustLetterPort = ref<any>(null)
+const emailCounts = ref<Record<string, number>>({})
+
+const getEmailCount = (entrustLetterId: string | number) => {
+  return emailCounts.value[entrustLetterId.toString()] || 0
+}
+
+const loadEmailCounts = async () => {
+  if (!props.letters || props.letters.length === 0) return
+
+  for (const item of props.letters) {
+    try {
+      const emails = await $api.consignees.getEntrustLetterEmails(props.id, item.id)
+      emailCounts.value[item.id.toString()] = emails.length
+    } catch (e) {
+      console.error(`Error loading emails for entrust letter ${item.id}:`, e)
+      emailCounts.value[item.id.toString()] = 0
+    }
+  }
+}
+
+const openEmailsModal = (item: any) => {
+  selectedEntrustLetterId.value = item.id.toString()
+  selectedEntrustLetterPort.value = item.port
+  showEmailsModalMounted.value = true
+  nextTick(() => {
+    showEmailsModal.value = true
+  })
+}
+
+const onEmailsModalUpdate = (val: boolean) => {
+  showEmailsModal.value = val
+  if (!val) {
+    setTimeout(() => {
+      showEmailsModalMounted.value = false
+      loadEmailCounts()
+    }, 400)
+  }
+}
+
+onMounted(() => {
+  loadEmailCounts()
+})
+
+watch(() => props.letters, () => {
+  loadEmailCounts()
+}, { deep: true })
 
 const toggle = () => {
   showForm.value = !showForm.value
