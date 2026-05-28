@@ -54,34 +54,58 @@
           </thead>
           <tbody>
             <tr v-for="(schedule, index) in schedules.data" :key="`pay-schedule-${index}`">
-              <td style="vertical-align: top">
+              <td style="vertical-align: middle">
                 <div v-if="schedule.sent_at == null">
                   <v-checkbox v-if="false" v-model="schedule.send_email" density="compact" hide-details />
                 </div>
                 <v-btn color="primary" size="small" @click="showNotyForm(schedule)">
                   <v-icon>mdi-email</v-icon> Send notification
                 </v-btn>
-                <div v-if="schedule.email_logs && schedule.email_logs.length > 0" class="mt-1 flex flex-col gap-1">
+                <div v-if="schedule.email_logs && schedule.email_logs.length > 0" class="mt-2 flex flex-col gap-2">
                   <v-chip
                     v-for="(log, index) in schedule.email_logs.slice(0, 2)"
                     :key="`email-log-${index}`"
                     size="small"
                     color="info"
                     variant="tonal"
-                    style="white-space: normal; height: auto"
+                    style="white-space: normal; height: auto; padding: 8px 12px"
                   >
-                    <v-icon size="small">mdi-clock-outline</v-icon>
-                    {{ formatDateString(log.sent_at) }} by {{ log.sent_by?.name }}
+                    <div class="flex items-center gap-2">
+                      <v-icon size="small">mdi-clock-outline</v-icon>
+                      <div class="flex flex-col">
+                        <span>{{ formatDateString(log.sent_at) }}</span>
+                        <span v-if="log.sent_by?.name" class="text-xs text-grey-darken-1">by {{ log.sent_by?.name }}</span>
+                      </div>
+                    </div>
                   </v-chip>
                   <v-chip
                     v-if="schedule.email_logs.length > 2"
                     size="small"
                     color="grey"
                     variant="tonal"
-                    style="height: auto"
+                    style="height: auto; padding: 8px 12px"
                   >
                     +{{ schedule.email_logs.length - 2 }} more
                   </v-chip>
+                </div>
+                <div v-else-if="schedule.sent_at" class="mt-2">
+                  <v-chip
+                    size="small"
+                    color="info"
+                    variant="tonal"
+                    style="white-space: normal; height: auto; padding: 8px 12px"
+                  >
+                    <div class="flex items-center gap-2">
+                      <v-icon size="small">mdi-clock-outline</v-icon>
+                      <div class="flex flex-col">
+                        <span>{{ formatDateString(schedule.sent_at) }}</span>
+                        <span v-if="schedule.sent_by?.name" class="text-xs text-grey-darken-1">by {{ schedule.sent_by?.name }}</span>
+                      </div>
+                    </div>
+                  </v-chip>
+                </div>
+                <div v-else class="mt-2">
+                  <v-chip size="small" color="orange" variant="tonal" style="padding: 8px 12px"> No notification </v-chip>
                 </div>
               </td>
               <td>
