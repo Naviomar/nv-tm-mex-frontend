@@ -258,7 +258,7 @@ const fillBodyWithData = () => {
 onMounted(() => {
   voyageDestUpdateEtaFormRef.value?.setValues({
     ...voyageDestUpdateEtaFormRef.value?.values,
-    subject: `${voyageDestination.value.voyage?.vessel?.line?.name} ${voyageDestination.value.pod?.name} - ${voyageDestination.value.print_bl_name} - ${voyageDestination.value.eta_date} - REF.: CARTA GARANTIA / CREDITO`,
+    subject: `LISTADO DE BUQUE / ${voyageDestination.value.voyage?.vessel?.name} - ${voyageDestination.value.voyage?.name} ETA ${voyageDestination.value.eta_date} / ${voyageDestination.value.pod?.name} / ${voyageDestination.value.voyage?.vessel?.line?.name}`.toUpperCase(),
     emails_port: emailPorts[voyageDestination.value.pod?.code].join(', '),
   })
 })
