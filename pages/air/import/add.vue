@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <h1 class="text-xl font-bold">New air import</h1>
+    <h1 class="text-xl font-bold capitalize">New air import reference</h1>
     <v-btn to="/air/import" color="slate" size="small" variant="outlined" class="mb-2"> <v-icon>mdi-arrow-left</v-icon> Back </v-btn>
     <v-card>
       <v-card-text>
