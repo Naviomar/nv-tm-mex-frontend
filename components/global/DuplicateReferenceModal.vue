@@ -10,7 +10,7 @@
 
       <v-card-text class="pa-4">
         <v-alert type="warning" density="compact" class="mb-4" border="start">
-          <div class="font-bold mb-1">{{ houseLabel }} "{{ houseName }}" already exists in the following references:</div>
+          <div class="font-bold mb-1">{{ duplicateAlertTitle }}</div>
           <div class="text-sm">Review the information below. You can click on any reference to open it in a new tab.</div>
         </v-alert>
 
@@ -35,7 +35,7 @@
 
                   <div class="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span class="text-grey-darken-2 font-medium">{{ serviceType === 'air-export' ? 'Airline' : 'Line' }}:</span>
+                      <span class="text-grey-darken-2 font-medium">{{ carrierLabel }}:</span>
                       <span class="font-bold ml-1">{{ ref.line?.name || ref.airline?.name || '—' }}</span>
                     </div>
                     <div>
@@ -47,8 +47,12 @@
                       <span class="font-bold ml-1">{{ ref.freight_forwarder?.name || '—' }}</span>
                     </div>
                     <div>
-                      <span class="text-grey-darken-2 font-medium">{{ serviceType === 'air-export' ? 'Master AWB' : 'Master BL' }}:</span>
+                      <span class="text-grey-darken-2 font-medium">{{ masterFieldLabel }}:</span>
                       <span class="font-bold ml-1">{{ getMasterName(ref) || '—' }}</span>
+                    </div>
+                    <div v-if="serviceType === 'air-import' && ref.house_awb">
+                      <span class="text-grey-darken-2 font-medium">House AWB:</span>
+                      <span class="font-bold ml-1">{{ ref.house_awb }}</span>
                     </div>
                     <div v-if="ref.eta_date">
                       <span class="text-grey-darken-2 font-medium">ETA:</span>
@@ -81,7 +85,7 @@
           variant="elevated"
           @click="onConfirm"
         >
-          Confirm and Add {{ houseLabel }}
+          {{ confirmButtonLabel }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -116,12 +120,38 @@ const localShow = computed({
 })
 
 const houseLabel = computed(() => {
-  return props.serviceType === 'air-export' ? 'House AWB' : 'House BL'
+  if (props.serviceType === 'air-export') return 'House AWB'
+  if (props.serviceType === 'air-import') return 'MAWB + HAWB pair'
+  return 'House BL'
+})
+
+const duplicateAlertTitle = computed(() => {
+  if (props.serviceType === 'air-import') {
+    return `The combination "${props.houseName}" is already registered in the following references:`
+  }
+  return `${houseLabel.value} "${props.houseName}" already exists in the following references:`
+})
+
+const carrierLabel = computed(() => {
+  return props.serviceType === 'air-export' || props.serviceType === 'air-import' ? 'Airline' : 'Line'
+})
+
+const masterFieldLabel = computed(() => {
+  return props.serviceType === 'air-export' || props.serviceType === 'air-import' ? 'Master AWB' : 'Master BL'
+})
+
+const confirmButtonLabel = computed(() => {
+  if (props.serviceType === 'air-import') return 'Confirm and Save Reference'
+  if (props.serviceType === 'air-export') return 'Confirm and Add House AWB'
+  return `Confirm and Add ${houseLabel.value}`
 })
 
 const getMasterName = (ref: any) => {
   if (props.serviceType === 'air-export') {
     return ref.master_awb?.name
+  }
+  if (props.serviceType === 'air-import') {
+    return typeof ref.master_awb === 'string' ? ref.master_awb : ref.master_awb?.name
   }
   return ref.master_bls?.length > 0 ? ref.master_bls[0].name : null
 }

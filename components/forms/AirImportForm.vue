@@ -23,10 +23,21 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div>
-            <InputText name="master_awb" density="compact" label="Master AWB *" />
+            <InputText
+              name="master_awb"
+              density="compact"
+              label="Master AWB *"
+              :color="awbDuplicateFieldColor"
+            />
           </div>
           <div>
-            <InputText name="house_awb" density="compact" label="House AWB *" />
+            <InputText
+              name="house_awb"
+              density="compact"
+              label="House AWB *"
+              :color="awbDuplicateFieldColor"
+              :hint="awbDuplicateFieldHint"
+            />
           </div>
 
           <div>
@@ -368,6 +379,15 @@
         <v-btn color="primary" @click="onSaveAirImportClick"> Save </v-btn>
       </div>
     </div>
+
+    <DuplicateReferenceModal
+      v-model:show="duplicateModal.show"
+      :house-name="duplicateModal.pairLabel"
+      :duplicates="duplicateModal.references"
+      service-type="air-import"
+      @confirm="onConfirmDuplicateSave"
+      @cancel="onCancelDuplicateSave"
+    />
   </div>
 </template>
 
@@ -511,6 +531,23 @@ const { handleSubmit, values, errors, meta, setValues } = useForm({
   validationSchema: schema,
 })
 
+const {
+  duplicateWarning,
+  hasDuplicate,
+  duplicateModalReferences,
+  duplicatePairLabel,
+} = useAirImportMawbHawbDuplicateCheck(() => values.master_awb, () => values.house_awb)
+
+const awbDuplicateFieldColor = computed(() => (hasDuplicate.value ? 'warning' : undefined))
+const awbDuplicateFieldHint = computed(() => duplicateWarning.value ?? undefined)
+
+const duplicateModal = ref({
+  show: false,
+  pairLabel: '',
+  references: [] as any[],
+})
+const proceedDespiteDuplicate = ref(false)
+
 interface SearchParams {
   name?: string
   id?: number
@@ -572,6 +609,18 @@ const getCatalogs = async () => {
 await getCatalogs()
 
 const onSuccess = async () => {
+  if (hasDuplicate.value && !proceedDespiteDuplicate.value) {
+    duplicateModal.value = {
+      show: true,
+      pairLabel: duplicatePairLabel.value,
+      references: duplicateModalReferences.value,
+    }
+    return
+  }
+
+  const confirmDuplicate = proceedDespiteDuplicate.value
+  proceedDespiteDuplicate.value = false
+
   try {
     loadingStore.loading = true
     const body = {
@@ -580,6 +629,7 @@ const onSuccess = async () => {
       routes: routes.value,
       charges: charges.value,
       credit_debit_notes: creditDebitNotes.value,
+      confirm_duplicate: confirmDuplicate ? 1 : 0,
     }
     console.log('body')
     console.log(body)
@@ -643,4 +693,15 @@ const removeCbm = (index: number) => {
 }
 
 const onSaveAirImportClick = handleSubmit(onSuccess, onInvalidSubmit)
+
+const onConfirmDuplicateSave = () => {
+  duplicateModal.value.show = false
+  proceedDespiteDuplicate.value = true
+  onSaveAirImportClick()
+}
+
+const onCancelDuplicateSave = () => {
+  duplicateModal.value.show = false
+  proceedDespiteDuplicate.value = false
+}
 </script>
