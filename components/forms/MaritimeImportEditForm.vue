@@ -274,7 +274,7 @@
                     <div class="font-bold">{{ customerCurrentExecutive }}</div>
                   </div>
                   <div v-if="canUpdateExecutive" class="flex flex-col">
-                    <v-btn color="primary" size="x-small" @click="updateServiceExecutive">Update executive</v-btn>
+                    <v-btn color="primary" size="x-small" @click="updateServiceExecutive" :disabled="!hasPermission('sea-import-update-executive')">Update executive</v-btn>
                   </div>
                 </div>
                 <div class="col-span-2">
@@ -693,6 +693,7 @@ const snackbar = useSnackbar()
 const exchangeRatesStore = useExchangeRatesStore()
 const router = useRouter()
 const route = useRoute()
+const { hasPermission } = useCheckUser()
 
 const showImportInfo = ref(true)
 const showCustomerInfo = ref(true)
