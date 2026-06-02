@@ -1129,9 +1129,20 @@ const searchPodPorts = async (search: SearchParams) => {
 }
 
 const getSeaImportCatalogs = async () => {
-  const response = await $api.referencias.getSeaImportFormCatalogs()
+  const consigneeMblIds = masterBls.value
+    .map((mbl: any) => mbl.consignee_mbl_id)
+    .filter((id: any) => id != null)
+  
+  const response = await $api.referencias.getSeaImportFormCatalogs({
+    query: { consignee_mbl_ids: consigneeMblIds }
+  })
   catalogs.value = response as any
 }
+
+// Reload catalogs when masterBls change to include deleted consignee_mbls
+watch(masterBls, () => {
+  getSeaImportCatalogs()
+}, { deep: true })
 
 const updateRefRebate = async () => {
   try {
