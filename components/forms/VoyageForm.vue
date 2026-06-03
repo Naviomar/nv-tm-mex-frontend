@@ -105,7 +105,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>{{ item.pod?.name }}</td>
+                  <td>{{ item.pod?.country?.name }} - {{ item.pod?.name }}</td>
                   <td>{{ item.eta_date }}</td>
                   <td>{{ item.arrival_date }}</td>
                 </tr>
