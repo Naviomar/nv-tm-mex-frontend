@@ -23,7 +23,7 @@
         </div>
         <div class="flex justify-center items-center">
           <v-btn class="mr-4" color="secondary" to="/configuration/ports"> Cancel </v-btn>
-          <v-btn color="primary" @click="savePort"> Save </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="savePort"> Save </v-btn>
         </div>
       </div>
     </div>
@@ -34,6 +34,7 @@ import { schema } from '~~/forms/portForm'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
+const loadingStore = useLoadingStore()
 
 const props = defineProps({
   id: {
@@ -66,17 +67,22 @@ const getCountries = async () => {
 }
 
 const onSuccess = async (values: any) => {
-  if (props.id) {
-    await $api.ports.update(props.id, values)
-    snackbar.add({ type: 'success', text: 'Port updated' })
-    router.push('/configuration/ports')
-    return
-  }
-
-  if (!props.id) {
+  try {
+    loadingStore.loading = true
+    if (props.id) {
+      await $api.ports.update(props.id, values)
+      snackbar.add({ type: 'success', text: 'Port updated' })
+      router.push('/configuration/ports')
+      return
+    }
     await $api.ports.create(values)
     snackbar.add({ type: 'success', text: 'Port created' })
     router.push('/configuration/ports')
+  } catch (e: any) {
+    const msg = e?.data?.message || e?.message || 'Error saving port'
+    snackbar.add({ type: 'error', text: msg })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
   }
 }
 

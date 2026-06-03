@@ -36,7 +36,7 @@
 
       <div class="flex justify-center items-center">
         <v-btn class="mr-4" color="secondary" @click="router.back"> Cancel </v-btn>
-        <v-btn color="primary" @click="onVoyageClickUpdate"> Update </v-btn>
+        <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="onVoyageClickUpdate"> Update </v-btn>
       </div>
     </div>
   </div>
@@ -48,6 +48,7 @@ const router = useRouter()
 const route = useRoute()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+const loadingStore = useLoadingStore()
 
 const props = defineProps({
   id: {
@@ -66,10 +67,17 @@ const catalogs = ref({
 })
 
 const onSuccess = async (values: any) => {
-  console.log('click submit', values)
-  const response = await $api.voyages.update(props.id, values)
-  snackbar.add({ type: 'success', text: 'Voyage updated' })
-  router.push('/configuration/voyages')
+  try {
+    loadingStore.loading = true
+    await $api.voyages.update(props.id, values)
+    snackbar.add({ type: 'success', text: 'Voyage updated' })
+    router.push('/configuration/voyages')
+  } catch (e: any) {
+    const msg = e?.data?.message || e?.message || 'Error updating voyage'
+    snackbar.add({ type: 'error', text: msg })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
 }
 
 function onInvalidSubmit({ values, errors, results }: any) {
