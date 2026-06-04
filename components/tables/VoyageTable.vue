@@ -162,7 +162,7 @@
               <td>
                 <v-chip>{{ voyageDest.voyage?.impoExpo }}</v-chip>
               </td>
-              <td>{{ voyageDest.pod?.name }}</td>
+              <td>{{ voyageDest.pod?.name }} - {{ voyageDest.pod?.country?.name }}</td>
               <td>
                 <div class="flex flex-col justify-center items-center">
                   <div v-if="!voyageDest.eta_date">
