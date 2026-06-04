@@ -392,6 +392,7 @@
 </template>
 
 <script setup lang="ts">
+import { useAirImportMawbHawbDuplicateCheck } from '~/composables/useAirImportMawbHawbDuplicateCheck'
 import { schema } from '~/forms/airImportForm'
 
 const router = useRouter()
