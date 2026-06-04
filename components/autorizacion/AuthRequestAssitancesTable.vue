@@ -173,12 +173,12 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket)"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('support_request.manage')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
             <v-btn
-              v-else
+              v-if="canDelete(activeChatTicket)"
               color="error" variant="tonal" size="small"
               @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
             >Delete</v-btn>
@@ -201,14 +201,10 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
-const { isAdminRole } = useCheckUser()
+const { $api } = useNuxtApp()
+const { isAdminRole, hasPermission } = useCheckUser()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
-const router = useRouter()
-const reqAssistStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -218,10 +214,6 @@ const filters = ref<any>({
   search: '',
   deleted_status: 'active',
   created_by: null,
-})
-
-const catalogs = ref<any>({
-  users: [],
 })
 
 const estatuses = ref<any>([
@@ -320,6 +312,11 @@ const assistSaveReq = async () => {
       loadingStore.stop()
     }, 250)
   }
+}
+
+const canDelete = (reqAssist: any) => {
+  if (!reqAssist) return false
+  return hasPermission('support_request.manage')
 }
 
 const cancelReqAssistance = async () => {
