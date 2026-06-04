@@ -181,7 +181,7 @@ const goToReqAdvPayment = (reqAdvPayment: any) => {
 const getSeaImportSupplierInvoices = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.suppliers.getSeaImportInvoices(props.referenceId.toString())
+    const response = await $api.suppliers.getSeaServiceSupplierInvoices(props.referenceId.toString())
     invoiceCfdis.value = response
   } catch (e) {
     console.error(e)

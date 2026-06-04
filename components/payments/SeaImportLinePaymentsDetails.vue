@@ -164,7 +164,7 @@ const paidLineSchedule = (refSchedule: any) => {
 const getReferenciaLinePayments = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.referencias.getLinePaymentsDetail(props.referencia.id)
+    const response = await $api.referencias.getSeaServiceLinePaymentsDetail(props.referencia.id)
     payments.value = response
   } catch (e) {
     console.error(e)

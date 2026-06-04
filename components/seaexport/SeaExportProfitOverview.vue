@@ -678,7 +678,7 @@ const syncRef = async () => {
 const getSeaExportProfit = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.referencias.getSeaExportProfit(props.referenciaId.toString())
+    const response = await $api.referenciasExport.getSeaExportProfit(props.referenciaId.toString())
     profitSeaExportRef.value = response
   } catch (error) {
     console.error(error)

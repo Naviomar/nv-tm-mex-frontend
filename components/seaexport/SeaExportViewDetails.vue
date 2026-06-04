@@ -529,7 +529,7 @@ const getCurrenciesTotal = (invoice: any) => {
 const getData = async () => {
   try {
     loadingStore.loading = true
-    const response = (await $api.referencias.getSeaExportFullDetailById(props.id)) as any
+    const response = (await $api.referenciasExport.getSeaExportFullDetailById(props.id)) as any
 
     referencia.value = response
   } catch (e) {

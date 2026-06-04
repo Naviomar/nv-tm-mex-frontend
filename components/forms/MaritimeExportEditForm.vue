@@ -1055,7 +1055,7 @@ const updateRefRebate = async () => {
       id: values.id,
       rebate: formRebate.value.amount,
     }
-    await $api.referencias.updateSeaImportRebate(values.id, body)
+    await $api.referenciasExport.updateRebate(values.id, body)
     snackbar.add({ type: 'success', text: 'Rebate updated successfully' })
     await getData()
 
