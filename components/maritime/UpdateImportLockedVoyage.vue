@@ -51,6 +51,7 @@
               label="Arrival voyage"
               prepend-inner-icon="mdi-ray-end-arrow"
               :return-object="true"
+              :show-locked-indicator="true"
             />
           </div>
 
