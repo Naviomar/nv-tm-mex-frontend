@@ -173,12 +173,12 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket)"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('process-requests-respond')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
             <v-btn
-              v-else
+              v-if="canDelete(activeChatTicket)"
               color="error" variant="tonal" size="small"
               @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
             >Delete</v-btn>
@@ -204,7 +204,7 @@
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
-const { isAdminRole } = useCheckUser()
+const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
@@ -327,12 +327,32 @@ const grantAuthorization = async () => {
   }
 }
 
+const canDelete = (authRequest: any) => {
+  if (!authRequest) return false
+  if (!isPendingToGrant(authRequest) && hasPermission('process-requests-delete')) {
+    return true
+  }
+  if (isPendingToGrant(authRequest) && authRequest.user_id === currentUser.value?.id) {
+    return true
+  }
+  return false
+}
+
 const cancelAuthorization = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.authProcessRequests.cancelRequest(formCancel.value.auth_request.id, {
-      cancel_reason: formCancel.value.cancel_reason,
-    })
+    const useCancelAuth = !hasPermission('process-requests-delete') &&
+                          formCancel.value.auth_request?.user_id === currentUser.value?.id
+
+    if (useCancelAuth) {
+      await $api.authProcessRequests.cancelAuth(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    } else {
+      await $api.authProcessRequests.cancelRequest(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    }
 
     snackbar.add({ type: 'success', text: 'Authorization request canceled' })
     closeCancelDialog()
