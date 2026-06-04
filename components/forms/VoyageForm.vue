@@ -34,7 +34,7 @@
 
         <div class="flex justify-center items-center">
           <v-btn class="mr-4" color="secondary" @click="router.back"> Cancel </v-btn>
-          <v-btn color="primary" @click="onVoyageClickSave"> Save </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="onVoyageClickSave"> Save </v-btn>
         </div>
       </div>
       <div class="col-span-2 md:col-span-1">
@@ -105,7 +105,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>{{ item.pod?.name }}</td>
+                  <td>{{ item.pod?.country?.name }} - {{ item.pod?.name }}</td>
                   <td>{{ item.eta_date }}</td>
                   <td>{{ item.arrival_date }}</td>
                 </tr>
@@ -254,8 +254,15 @@ const onSuccess = async () => {
     const response = await $api.voyages.create(body)
     snackbar.add({ type: 'success', text: 'Voyage created' })
     router.push('/configuration/voyages')
-  } catch (e) {
-    console.error(e)
+  } catch (e: any) {
+    const errors = e?.data?.errors
+    if (errors) {
+      const firstError = Object.values(errors).flat()[0] as string
+      snackbar.add({ type: 'error', text: firstError })
+    } else {
+      const msg = e?.data?.message || e?.message || 'Error creating voyage'
+      snackbar.add({ type: 'error', text: msg })
+    }
   } finally {
     setTimeout(() => {
       loadingStore.stop()

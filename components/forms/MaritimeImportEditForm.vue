@@ -110,6 +110,7 @@
                 :bg-color="vesselDepartureSailedColor"
                 :readonly="referencia.voyage_discharge?.locked_at != null"
                 :set-id="values.voyage_discharge_id || undefined"
+                :show-locked-indicator="true"
               />
               <div class="flex items-center gap-2">
                 <span>

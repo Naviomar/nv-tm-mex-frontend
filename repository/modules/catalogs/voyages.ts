@@ -29,6 +29,7 @@ type IVoyage = {
   arrival_date: string
   eta_date: string
   created_at: string
+  locked_at?: string | null
 }
 
 class VoyagesModule extends FetchFactory<any> {

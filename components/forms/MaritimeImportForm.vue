@@ -311,6 +311,7 @@
                 label="Arrival voyage"
                 prepend-inner-icon="mdi-ray-end-arrow"
                 :set-id="seaImportAddFormRef?.values.voyage_discharge_id || undefined"
+                :show-locked-indicator="true"
               />
             </div>
             <div class="col-span-2">
