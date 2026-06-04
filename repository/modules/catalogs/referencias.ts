@@ -265,6 +265,10 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/line-payments`, fetchOptions)
   }
 
+  async getSeaServiceLinePaymentsDetail(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-service/${id}/line-payments`, fetchOptions)
+  }
+
   async getAgentFreightNotes(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/agent-freight-notes`, fetchOptions)
   }
@@ -480,6 +484,10 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
 
   async getSeaImportRefunds(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/refunds`, fetchOptions)
+  }
+
+  async getSeaServiceRefunds(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-service/${id}/refunds`, fetchOptions)
   }
 
   async updateSeaImportDemurrageDays(id: string, form: any, fetchOptions?: FetchOptions) {
