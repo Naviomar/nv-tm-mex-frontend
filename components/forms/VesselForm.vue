@@ -30,8 +30,8 @@
         </div>
         <div class="flex justify-center items-center gap-4">
           <v-btn color="secondary" to="/configuration/vessels"> Cancel </v-btn>
-          <v-btn color="primary" @click="saveVessel"> Save </v-btn>
-          <v-btn color="primary" @click="saveVesselAndAddVoyage"> Save & add voyage </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="saveVessel"> Save </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="saveVesselAndAddVoyage"> Save & add voyage </v-btn>
         </div>
       </div>
     </div>
