@@ -162,7 +162,7 @@
           <TicketChatPanel
             ticket-type="support-assistance"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -272,10 +272,10 @@ const openChat = (item: any) => {
   showChatDrawer.value = true
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
@@ -322,7 +322,7 @@ const canDelete = (reqAssist: any) => {
 const cancelReqAssistance = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
+    await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
       cancel_reason: formCancel.value.cancel_reason,
     })
 
