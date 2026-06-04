@@ -184,6 +184,12 @@ const authorizeResources = {
     description: 'Skip Agent Change Charge on Sea Import Revalidation',
     redirect: null,
   },
+  /** Update locked arrival voyage on sea import reference */
+  SeaImportUpdateLockedVoyage: {
+    resource: 'sea-import-update-locked-voyage',
+    description: 'Update Locked Sea Import Arrival Voyage',
+    redirect: null,
+  },
 }
 
 /**
