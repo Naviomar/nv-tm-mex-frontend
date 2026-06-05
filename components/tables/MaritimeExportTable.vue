@@ -190,6 +190,7 @@
               <th class="text-left">Vessel - Voyage</th>
               <th class="text-left">POL</th>
               <th class="text-left">POD</th>
+              <th class="text-left">Booking Number</th>
               <th class="text-left">Booking TM</th>
               <th class="text-left">Created</th>
               <th class="text-left" width="50"></th>
