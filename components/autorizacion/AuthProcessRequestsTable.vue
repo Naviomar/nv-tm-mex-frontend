@@ -162,7 +162,7 @@
           <TicketChatPanel
             ticket-type="process-request"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -203,12 +203,9 @@
 <script setup lang="ts">
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
+const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
-const router = useRouter()
-const authRequestStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -284,10 +281,10 @@ const openChat = (req: any) => {
   showChatDrawer.value = true
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }

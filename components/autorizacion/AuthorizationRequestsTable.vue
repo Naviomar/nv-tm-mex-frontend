@@ -297,7 +297,7 @@
           <TicketChatPanel
             ticket-type="authorization-request"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -346,7 +346,7 @@ import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
 const { $api } = useNuxtApp()
-const { hasPermission, user: currentUser } = useCheckUser()
+const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
 const router = useRouter()
 const authRequestStore = useAuthRequestStore()
@@ -434,10 +434,10 @@ const isPendingToGrant = (authRequest: any) => {
   return authRequest.is_authorized == null
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
