@@ -300,6 +300,10 @@ class UsersModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/update-user-permissions/${userId}/department-coordinator`, fetchOptions)
   }
+
+  async deleteUserPermission(userId: string, permission: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/delete-user-permission/${userId}/permission/${permission}`, fetchOptions)
+  }
 }
 
 export default UsersModule
