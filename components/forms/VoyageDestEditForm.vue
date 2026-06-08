@@ -112,7 +112,7 @@
                       </v-tooltip>
                     </div>
                   </td>
-                  <td>{{ item.pod?.name }}</td>
+                  <td>{{ item.pod?.name }} - {{ item.pod?.country?.name }}</td>
                   <td>{{ formatDateOnlyString(item.eta_date) }}</td>
                   <td>{{ item.arrival_date }}</td>
                 </tr>
@@ -218,14 +218,19 @@ const hasInitDemurrages = computed(() => {
 
 const podPorts = computed(() => {
   if (!data.value.voyage?.impoExpo) return []
+
+  const importCountries = ['SV', 'AR', 'CR', 'PE', 'DO', 'NI', 'US', 'GT', 'HN', 'PA', 'MX']
+
   // if import only mexico ports
   if (data.value.voyage?.impoExpo === 'I') {
-    return catalogs.value.ports.filter((port: any) => port.country?.code === 'MX')
+    return catalogs.value.ports.filter((port: any) => importCountries.includes(port.country?.code))
   }
   // if export exclude mexico ports
   if (data.value.voyage?.impoExpo === 'E') {
     return catalogs.value.ports.filter((port: any) => port.country?.code === 'MX')
   }
+
+  return []
 })
 
 const onSuccess = async (values: any) => {

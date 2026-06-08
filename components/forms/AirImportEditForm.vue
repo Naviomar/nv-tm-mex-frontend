@@ -636,7 +636,7 @@ const availableAgents = computed(() => {
 const onAgentChange = async (agentId: number | null) => {
   try {
     loadingStore.start()
-    await $api.airImportReferences.updateCustomsAgent(props.id, { custom_agent_id: agentId })
+    await $api.airImport.updateCustomsAgent(props.id, { custom_agent_id: agentId })
     snackbar.add({ type: 'success', text: 'Customs agent updated' })
     getData()
   } catch (e) {
