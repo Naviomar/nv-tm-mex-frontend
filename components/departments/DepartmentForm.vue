@@ -80,7 +80,7 @@
             <tr v-for="(permission, index) in linkedPermissions" :key="`perm-${index}`">
               <td>
                 <div class="flex gap-2">
-                  <diV v-if="whoRolDelete() === 'true'"><TrashButton :item="permission" @click="unlinkPermission(permission)" /></diV>
+                  <div v-if="whoRolDelete() === 'true'"><TrashButton :item="permission" @click="unlinkPermission(permission)" /></div>
                 </div>
               </td>
               <td>{{ permission.name }}</td>
@@ -95,49 +95,53 @@
       </div>
       <div class="col-span-7">
         <div class="font-bold">Users</div>
-        <div class="flex gap-5">
-          <v-card class="mt-4">
-           <v-card-text class="pa-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-           
-            <div>
-              <v-autocomplete
-              name="givePerm"
-              v-model="form.give_perm"
-              :items="permRol"
-              item-title="name"
-              item-value="givePerm"
-              label="Select permission"
-              density="compact"
-              multiple
-            />
-            </div>
-            <div> 
-              <v-autocomplete
-              name="userPerm"
-              v-model="form.user"
-              density="compact"
-              :items="availableUsers"
-              item-title="email"
-              item-value="id"
-              label="Select user"
-            />
-            </div>
-            <div>
-            <v-autocomplete
-              name="department_type"
-              v-model="form.department_type"
-              density="compact"
-              :items="departmentTypes"
-              item-title="label"
-              item-value="value"
-              label="Type"
-              class="w-32"
-            />
-            </div>
-          </div>
-          </v-card-text>
-           </v-card>   
+        <div class="flex gap-4">
+            <v-row>
+              <v-col cols="12" md="3">
+                  <div>
+                      <v-autocomplete
+                          name="givePerm"
+                          v-model="form.give_perm"
+                          :items="linkedPermissions"
+                          item-title="name"
+                          item-value="name"
+                          label="Select permission"
+                          density="compact"
+                          multiple
+                        />
+                    </div>
+                  </v-col>
+
+                  <v-col cols="12" md="3">
+                    <div> 
+                        <v-autocomplete
+                        name="userPerm"
+                        v-model="form.user"
+                        density="compact"
+                        :items="availableUsers"
+                        item-title="email"
+                        item-value="id"
+                        label="Select user"
+                      />
+                  </div>
+                </v-col>
+
+                <v-col cols="12" md="3">
+                    <div>
+                      <v-autocomplete
+                        name="department_type"
+                        v-model="form.department_type"
+                        density="compact"
+                        :items="departmentTypes"
+                        item-title="label"
+                        item-value="value"
+                        label="Type"
+                        class="w-32"
+                      />
+                    </div>
+                </v-col>
+
+              </v-row>
           
           <v-btn color="primary" size="small" @click="linkUser">Add</v-btn>
         </div>
@@ -148,6 +152,7 @@
               <th class="text-left">Name</th>
               <th class="text-left">Email</th>
               <th class="text-left">Type</th>
+              <th class="text-left">Permissions</th>
               <th class="text-left">Created At</th>
             </tr>
           </thead>
@@ -161,6 +166,7 @@
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
               <td>{{ user.pivot?.department_type }}</td>
+              <td><span v-bind="props" class="mdi mdi-account-details" size="large" @click="openEditPermissionsModal(user)"></span></td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="user">
                   {{ formatDateString(user.created_at) }}
@@ -172,11 +178,74 @@
         <v-alert density="compact" type="warning" variant="outlined">
           Removing a user from this department will be detached from all notifications.
         </v-alert>
-
-        
       </div>
     </div>
   </div>
+
+  <!-- Modal: Edit Role Permissions -->
+    <v-dialog v-model="editPermissionsModal.show" max-width="700" persistent scrollable>
+      <v-card>
+        <v-toolbar color="primary" density="compact">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-key-variant</v-icon>
+            Edit Permissions: 
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="editPermissionsModal.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pa-0" style="max-height: 60vh">
+          <v-text-field
+            
+            prepend-inner-icon="mdi-magnify"
+            placeholder="Search permissions..."
+            density="compact"
+            hide-details
+            clearable
+            class="ma-4"
+            variant="outlined"
+          />
+          <v-list density="compact" class="py-0">
+            <v-list-item
+              class="border-b"
+            >
+              <v-list-item-title></v-list-item-title>
+              <v-list-item
+                 v-for="(data, index) in permissions_usr.permissions"
+                :key="data"
+                class="border-b"
+              >
+                {{ data.name }}
+            
+                <template #append>
+                <TrashButton size="small" :item="permissions_usr" density="compact" variant="text"  @click="unlinkPermissionUsr(permissions_usr.id,data)" :can-restore="false" />
+
+                
+                </template>
+              </v-list-item>
+              
+            </v-list-item>
+            <v-list-item >
+              <v-list-item-title class="text-center text-grey py-4">
+                No permissions match your search
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <div class="text-caption text-grey">
+            permission(s) selected
+          </div>
+          <v-spacer />
+          <v-btn color="red" @click="editPermissionsModal.show = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" @click="" >
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 </template>
 <script setup lang="ts">
 import { schema } from '~/forms/departmentForm'
@@ -334,6 +403,42 @@ const unlinkPermission = async (permission: any) => {
   snackbar.add({ type: 'success', text: 'Permission unlinked' })
 }
 
+const editPermissionsModal = ref({
+  show: false,
+})
+
+const permissions_usr = ref<any>([])
+function openEditPermissionsModal(user: any) {
+  editPermissionsModal.value.show = true
+  const perm_usr = $api.users.getUserById(user.id)
+    .then((myPromise) => {
+      return myPromise
+  });
+
+  const permUsr = async () => {
+    return permissions_usr.value = await perm_usr;  
+  };
+  permUsr()
+}
+
+function unlinkPermissionUsr(user: any, data: any){
+  try{
+      const name_permission = data.name
+      const deletePermi = $api.users.deleteUserPermission(user,name_permission)
+      const last_perm_usr = deletePermi
+        .then((myPromisePerm) => {
+          if(myPromisePerm.length<1){
+            const user_obj = {id : user}
+              unlinkUser(user_obj)
+          }
+      });
+      editPermissionsModal.value.show = false
+      return snackbar.add({ type: 'success', text: 'Permission deleted success' })
+  }catch (e) {
+    console.error(e)
+  }
+}
+
 const availableUsers = computed(() => {
   // users that are not linked
   return users.value.filter((user: any) => {
@@ -392,7 +497,7 @@ const linkUser = async () => {
   form.department_type = null
   form.give_perm = null
 
-  snackbar.add({ type: 'success', text: 'User l|inked' })
+  snackbar.add({ type: 'success', text: 'User linked' })
 }
 
 const unlinkUser = async (user: any) => {
