@@ -34,7 +34,10 @@
             </div>
             <div class="flex flex-col justify-center items-center gap-2">
               <v-btn density="compact" variant="outlined" color="red" @click="closeChargeAddForm">Cancel</v-btn>
-              <v-btn density="compact" variant="outlined" color="green" @click="addCharge">Add charge</v-btn>
+              <v-btn density="compact" variant="outlined" color="green" @click="addCharge" :disabled="isDuplicateCharge">Add charge</v-btn>
+              <v-alert v-if="isDuplicateCharge" density="compact" type="warning" variant="tonal" class="mt-1">
+                This charge already exists in this invoice.
+              </v-alert>
             </div>
           </div>
         </div>
@@ -247,8 +250,18 @@ const getAvailableCharges = async () => {
   }
 }
 
+const isDuplicateCharge = computed(() => {
+  if (!chargeForm.value.chargeable) return false
+  const newChargeId = chargeForm.value.chargeable.charge_id
+  return invoice.value.invoice_charges.some((c: any) => c.charge_id == newChargeId)
+})
+
 const addCharge = async () => {
   if (!validateChargeForm.value) return
+  if (isDuplicateCharge.value) {
+    snackbar.add({ type: 'error', text: 'This charge already exists in this invoice. Duplicate charges are not allowed.' })
+    return
+  }
   try {
     loadingStore.start()
     const body = {
