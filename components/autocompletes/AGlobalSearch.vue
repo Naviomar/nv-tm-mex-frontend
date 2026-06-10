@@ -25,7 +25,7 @@
         <v-list-item
           v-bind="props"
           :title="`${item.title} ${item.raw.deleted_at ? '(Eliminado)' : ''} ${item.raw.locked_at && showLockedIndicator ? '(LOCKED)' : ''}`"
-          :disabled="item.raw.deleted_at != null"
+          :disabled="item.raw.deleted_at != null || (item.raw.locked_at != null && showLockedIndicator)"
         >
           <template v-if="item.raw.locked_at && showLockedIndicator" v-slot:prepend>
             <v-icon color="orange-600" size="small" class="mr-0">mdi-lock</v-icon>
