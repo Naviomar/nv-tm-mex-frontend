@@ -279,6 +279,10 @@ const getPaymentChargeableName = (payment: any) => {
     return text
   }
 
+  if (payment.chargeable_type.includes('Payable')) {
+    return payment.chargeable?.payable_option?.name || 'Bank Commission'
+  }
+
   return 'Unknown'
 }
 

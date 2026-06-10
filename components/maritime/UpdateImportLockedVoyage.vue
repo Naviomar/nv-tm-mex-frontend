@@ -154,7 +154,7 @@ const saveChanges = async () => {
 
     loadingStore.start()
     const body = {
-      voyage_discharge_id: newVoyage.value,
+      voyage_discharge_id: typeof newVoyage.value === 'object' && newVoyage.value !== null ? newVoyage.value.id : newVoyage.value,
     }
     await $api.referencias.updateLockedArrivalVoyage(props.referencia!.id, body)
     snackbar.add({

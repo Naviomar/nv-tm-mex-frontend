@@ -144,20 +144,24 @@
                       </v-chip>
                     </td>
                     <td>
-                      <InvoiceableLabelLink :paymentChargeable="payment.chargeable" />
+                      <v-chip v-if="payment.chargeable_type?.includes('Payable')" size="small" color="orange-darken-2">
+                        Bank Commission
+                      </v-chip>
+                      <InvoiceableLabelLink v-else :paymentChargeable="payment.chargeable" />
                     </td>
                     <td>
-                      {{ payment.chargeable?.serviceable?.reference_number }}
+                      {{ payment.chargeable_type?.includes('Payable') ? '—' : payment.chargeable?.serviceable?.reference_number }}
                     </td>
                     <td>{{ getPaymentChargeableName(payment) }}</td>
                     <td>
-                      {{ formatToCurrency(payment.chargeable?.amount + payment.chargeable?.amount_iva || 0) }}
+                      {{ payment.chargeable_type?.includes('Payable') ? '—' : formatToCurrency(payment.chargeable?.amount + payment.chargeable?.amount_iva || 0) }}
                     </td>
                     <td>{{ formatToCurrency(payment.amount) }}</td>
-                    <td>{{ formatToCurrency(payment.chargeable?.pending_balance) }}</td>
+                    <td>{{ payment.chargeable_type?.includes('Payable') ? '—' : formatToCurrency(payment.chargeable?.pending_balance) }}</td>
                     <td>
                       <div v-if="!payment.deleted_at">
                         <v-chip
+                          v-if="!payment.chargeable_type?.includes('Payable')"
                           :color="payment.chargeable?.pending_balance > 0 ? 'red' : 'green'"
                           text-color="white"
                           small
@@ -165,6 +169,7 @@
                         >
                           {{ payment.chargeable?.pending_balance > 0 ? 'Pending' : 'Paid' }}
                         </v-chip>
+                        <v-chip v-else color="orange-darken-2" size="small">Commission</v-chip>
                       </div>
                     </td>
                     <td class="whitespace-nowrap">
@@ -345,6 +350,30 @@
                 >
               </div>
 
+            </v-card-text>
+          </v-card>
+
+          <v-card v-if="hasBankMovAmountAvailable" color="orange-lighten-5" class="mb-4">
+            <v-card-title>
+              <div class="flex items-center gap-2">
+                <v-icon size="x-small">mdi-percent-outline</v-icon>
+                <div>Apply remaining balance to commission</div>
+              </div>
+            </v-card-title>
+            <v-card-text>
+              <div class="flex items-center gap-4">
+                <div>
+                  <span class="text-sm text-gray-600">Available balance: </span>
+                  <span class="font-bold">{{ formatToCurrency(bankMovement.amount_available) }}</span>
+                </div>
+                <v-btn
+                  color="orange-darken-2"
+                  :loading="loadingStore.loading"
+                  @click="confirmApplyCommission"
+                >
+                  Apply {{ formatToCurrency(bankMovement.amount_available) }} to commission
+                </v-btn>
+              </div>
             </v-card-text>
           </v-card>
         </div>
@@ -727,6 +756,36 @@ const searchInvoices = async () => {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
+  }
+}
+
+const confirmApplyCommission = async () => {
+  const result = await confirm({
+    title: 'Apply remaining balance to commission?',
+    confirmationText: 'Apply',
+    content: `The remaining balance of ${formatToCurrency(bankMovement.value.amount_available)} will be applied as a bank commission.`,
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'orange-darken-2',
+    },
+  })
+
+  if (result) {
+    try {
+      loadingStore.start()
+      await $api.bankMovements.applyRemainingToCommission(bankMovement.value.id)
+      snackbar.add({ type: 'success', text: 'Remaining balance applied to commission' })
+      await getBankMovement()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
   }
 }
 

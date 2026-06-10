@@ -387,6 +387,21 @@ const linkedChargeToInvoice = (charge: any) => {
 const onSuccess = async (values: any) => {
   try {
     loadingStore.start()
+
+    // Validate no duplicate charge (same charge_id and tm_wm combination)
+    const isDuplicate = charges.value.some((charge: any) => {
+      const sameCharge = charge.charge_id == values.charge_id
+      const sameTmWm = charge.tm_wm === values.tm_wm
+      const isEditingSelf = values.id != null && charge.id == values.id
+      return sameCharge && sameTmWm && !isEditingSelf
+    })
+
+    if (isDuplicate) {
+      snackbar.add({ type: 'error', text: 'This charge already exists for the same TM/WM type' })
+      loadingStore.stop()
+      return
+    }
+
     const body = {
       ...values,
     }
