@@ -40,7 +40,7 @@
 
     <!-- CC Users -->
     <TicketCcUsers
-      v-if="ticketType === 'authorization-request' || ticketType === 'process-request'"
+      v-if="ticketType === 'authorization-request' || ticketType === 'process-request' || ticketType === 'support-assistance'"
       :ticket-type="ticketType"
       :ticket-id="ticketId"
     />

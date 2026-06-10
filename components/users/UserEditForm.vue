@@ -132,7 +132,7 @@ const onSuccess = async (values: any) => {
   try {
     loadingStore.start()
     const response = await $api.users.updateUser(props.id, values)
-    console.log(response)
+    console.log("user:",response)
 
     snackbar.add({ type: 'success', text: 'User updated successfully' })
 
