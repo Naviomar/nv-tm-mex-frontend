@@ -657,6 +657,7 @@
           ></v-list-item>
         </template>
 
+        <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" to="/system/admin-department" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemUsers)" title="Users" prepend-icon="mdi-account-group" to="/system/users" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemRolesPermissions)" title="Roles and permissions" prepend-icon="mdi-shield-account-outline" to="/system/role-permissions" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemBankAccounts)" title="Bank accounts" prepend-icon="mdi-bank-outline" to="/system/bank-accounts" rounded="xl" class="mb-1"></v-list-item>
@@ -812,6 +813,7 @@ const configurationPermissions = [
 ]
 
 const systemPermissions = [
+  menuPermissions.SystemAdminDept,
   menuPermissions.SystemUsers,
   menuPermissions.SystemRolesPermissions,
   menuPermissions.SystemBankAccounts,
