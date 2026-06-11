@@ -9,12 +9,14 @@
 <script setup lang="ts">
 const { $api } = useNuxtApp()
 const { user } = useCheckUser()
+const snackbar = useSnackbar()
 
 definePageMeta({
   title: `Admin department users`,
   layout: 'default',
 })
-
+console.log("--->",user.value.roles[0])
+if(user.value.roles[0]){
   const rol = user.value.roles[0].id;
   let id_department = 0;
   
@@ -47,5 +49,9 @@ definePageMeta({
     default:
       break;
   }
+}else{
+  snackbar.add({ type: 'error', text: 'Usted no tiene permisos para realizar esta acción.' })
+}
+  
 
 </script>
