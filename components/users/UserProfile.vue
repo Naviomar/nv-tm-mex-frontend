@@ -53,7 +53,7 @@
           <v-tab value="2">Auth Requests</v-tab>
           <v-tab value="6">Req. Assist</v-tab>
           <v-tab value="3">Roles / Permissions</v-tab>
-          <v-tab value="4">Direct permissions</v-tab>
+          <!--v-tab value="4">Direct permissions</v-tab-->
           <v-tab value="5">Security</v-tab>
         </v-tabs>
       </div>
@@ -156,7 +156,7 @@
               </dl>
             </div>
           </v-window-item>
-          <v-window-item value="4">
+          <!--v-window-item value="4">
             <div class="border-t border-gray-200">
               <dl class="sm:divide-y sm:divide-gray-200">
                 <div class="py-1 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -177,7 +177,7 @@
                 </div>
               </dl>
             </div>
-          </v-window-item>
+          </v-window-item-->
           <v-window-item value="5">
             <UserUpdatePassword />
           </v-window-item>
