@@ -41,6 +41,11 @@
             {{ role.name }}
           </v-chip>
         </p>
+        <p class="">
+            <v-chip v-for="(department, index) in user?.departments" :key="`department-${index}`" color="primary" class="mr-2">
+            {{ department.name }}
+          </v-chip>
+        </p>
       </div>
       <div class="py-4 mt-2 flex items-center justify-around">
         <v-tabs v-model="tab" density="compact">
@@ -71,8 +76,8 @@
                     {{ user?.email_verified_at ? 'Yes' : 'No' }}
                   </dd>
                 </div>
-                <div class="py-3">
-                  <NuxtLink to="/system/departments/manage-user-permissions">
+                <div class="py-3" v-if="user?.roles.length > 0">
+                  <NuxtLink to="/system/admin-department">
                     <v-btn color="primary" size="small">Manage user permissions</v-btn>
                   </NuxtLink>
                 </div>
@@ -83,11 +88,13 @@
                       {{ department.name }} - {{ department.pivot?.department_type }}
                     </dd>
                   </div>
-                  <div class="py-1 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  
+                </div>
+                <!--div class="py-1 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"   v-for="(rol, index) in user?.roles">
                     <dt class="text-sm font-medium">Permissions</dt>
                     <dd class="text-sm sm:mt-0 sm:col-span-2">
                       <v-chip
-                        v-for="(permission, index2) in department.permissions"
+                        v-for="(permission, index2) in rol.permissions"
                         :key="`department-${index}-permission-${index2}`"
                         variant="tonal"
                         class="mr-2 mb-2"
@@ -95,8 +102,7 @@
                         {{ permission.name }}
                       </v-chip>
                     </dd>
-                  </div>
-                </div>
+                </div-->
               </dl>
             </div>
           </v-window-item>
@@ -109,6 +115,21 @@
           <v-window-item value="3">
             <div class="border-t border-gray-200">
               <dl class="sm:divide-y sm:divide-gray-200">
+                <div class="py-1 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium">Permissions</dt>
+                    <dd class="text-sm sm:mt-0 sm:col-span-2">
+                      <v-chip
+                        v-for="(permission, index2) in user?.permissions"
+                        :key="`role-${index}-permission-${index2}`"
+                        color="primary"
+                        class="mr-2 mb-2"
+                      >
+                        {{ permission.name }}
+                      </v-chip>
+                    </dd>
+                  </div>
+
+                
                 <div v-for="(role, index) in user?.roles" :key="`role-${index}`">
                   <div class="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium">Role</dt>
@@ -119,7 +140,7 @@
                     </dd>
                   </div>
                   <div class="py-1 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium">Permissions</dt>
+                    <dt class="text-sm font-medium">Permission's Role</dt>
                     <dd class="text-sm sm:mt-0 sm:col-span-2">
                       <v-chip
                         v-for="(permission, index2) in role.permissions"
@@ -266,7 +287,7 @@ const avatarDialog = ref(false)
 const getUserAvatar = computed(() => {
   return user.value?.avatar_url ? user.value.avatar_url : '/img/avatar/user-account.png'
 })
-
+console.log("USER:::",user)
 const onFileChange = async () => {
   try {
     loadingStore.start()
