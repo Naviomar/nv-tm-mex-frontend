@@ -72,6 +72,10 @@ class AuthRequestsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/cancel-bank-movement`, fetchOptions)
   }
 
+  async getActiveResourceIds(resource: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/active-resource-ids?resource=${resource}`, fetchOptions)
+  }
+
   async checkTempPermission(params: { resource: string; action?: string }, fetchOptions?: FetchOptions) {
     const qs = new URLSearchParams({ resource: params.resource, ...(params.action ? { action: params.action } : {}) })
     return this.call('GET', `${this.RESOURCE}/check-temp-permission?${qs}`, fetchOptions)

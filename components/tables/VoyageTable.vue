@@ -131,7 +131,13 @@
                       <TrashButton :item="voyageDest" @click="showConfirmDelete" />
                     </template>
                   </ProcessAuthorizationWrapper>
-                  
+                  <VoyageTransferReferencesDialog
+                    v-if="voyageDest.total_references > 0"
+                    :voyageDest="voyageDest"
+                    :has-approved-auth="approvedTransferIds.has(Number(voyageDest.id))"
+                    :has-pending-auth="pendingTransferIds.has(Number(voyageDest.id))"
+                    @refresh="getVoyages(); loadActiveTransferRequests()"
+                  />
                 </div>
               </td>
               <td>
@@ -254,6 +260,19 @@ const catalogs = ref<any>({
   vessels: [],
   ports: [],
 })
+
+const pendingTransferIds = ref<Set<number>>(new Set())
+const approvedTransferIds = ref<Set<number>>(new Set())
+
+const loadActiveTransferRequests = async () => {
+  try {
+    const result = (await $api.authRequests.getActiveResourceIds('voyage-transfer-references')) as any
+    pendingTransferIds.value = new Set((result.pending ?? []).map(Number))
+    approvedTransferIds.value = new Set((result.approved ?? []).map(Number))
+  } catch (e) {
+    // non-critical
+  }
+}
 
 const voyageDestinations = ref({
   data: [] as any,
@@ -406,5 +425,5 @@ const clearFilters = async () => {
 }
 
 await getVoyageCatalogs()
-await getVoyages()
+await Promise.all([getVoyages(), loadActiveTransferRequests()])
 </script>

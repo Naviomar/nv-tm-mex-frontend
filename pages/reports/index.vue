@@ -17,8 +17,6 @@
             mandatory
             rounded="lg"
             color="primary"
-            variant="outlined"
-            divided
             density="comfortable"
           >
             <v-btn value="charts" size="large">
@@ -28,6 +26,10 @@
             <v-btn value="reports" size="large">
               <v-icon start>mdi-table</v-icon>
               Reports
+            </v-btn>
+            <v-btn value="import-reports" size="large">
+              <v-icon start>mdi-ferry</v-icon>
+              Import Reports
             </v-btn>
           </v-btn-toggle>
         </div>
@@ -39,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-const viewMode = ref<'charts' | 'reports'>('reports')
+const viewMode = ref<'charts' | 'reports' | 'import-reports'>('reports')
 
 definePageMeta({
   title: 'Reports & Analytics',
