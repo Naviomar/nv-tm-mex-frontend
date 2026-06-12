@@ -173,6 +173,10 @@ class BankMovementsModule extends FetchFactory<any> {
   async deleteBankMovement(id: string, fetchOptions?: FetchOptions) {
     return this.call("POST", `${this.RESOURCE}/${id}/delete`, fetchOptions);
   }
+
+  async applyRemainingToCommission(id: string, fetchOptions?: FetchOptions) {
+    return this.call("POST", `${this.RESOURCE}/${id}/apply-commission`, fetchOptions);
+  }
 }
 
 export default BankMovementsModule;

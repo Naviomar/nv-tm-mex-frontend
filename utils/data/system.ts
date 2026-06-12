@@ -191,6 +191,12 @@ const authorizeResources = {
     description: 'Update Locked Sea Import Arrival Voyage',
     redirect: null,
   },
+  /** Transfer BLs (references) from one voyage destination to another */
+  VoyageTransferReferences: {
+    resource: 'voyage-transfer-references',
+    description: 'Transfer BLs between Voyage Destinations',
+    redirect: null,
+  },
 }
 
 /**

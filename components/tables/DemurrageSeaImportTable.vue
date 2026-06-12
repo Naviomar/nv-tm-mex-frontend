@@ -60,6 +60,7 @@
             item-title="display_name"
             item-value="id"
             clearable
+            hide-details
             @update:model-value="onUnifiedSearchChange"
           >
             <template #item="{ props, item }">
@@ -80,10 +81,10 @@
               </v-list-item>
             </template>
             <template #selection="{ item }">
-              <v-chip size="small" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'" variant="outlined">
-                <v-icon start>{{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}</v-icon>
-                {{ item.raw.display_name }}
-              </v-chip>
+              <span class="d-flex align-center gap-1 text-truncate">
+                <v-icon size="14" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'">{{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}</v-icon>
+                <span class="text-truncate text-body-2">{{ item.raw.display_name }}</span>
+              </span>
             </template>
           </v-autocomplete>
         </div>

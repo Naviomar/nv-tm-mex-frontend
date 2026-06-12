@@ -159,27 +159,41 @@
               </div>
 
               <div class="flex flex-wrap gap-2">
-                <v-btn size="small" variant="outlined" prepend-icon="mdi-content-copy" @click="duplicateConfiguration(line)">
-                  Clone
-                </v-btn>
-                <v-btn
-                  size="small"
-                  variant="outlined"
-                  prepend-icon="mdi-pencil-box-multiple-outline"
-                  :disabled="!getSelectedPeriod(line)?.rows.length"
-                  @click="openBulkDialog(line, 1)"
-                >
-                  Bulk Rate 1
-                </v-btn>
-                <v-btn
-                  size="small"
-                  variant="outlined"
-                  prepend-icon="mdi-pencil-box-multiple-outline"
-                  :disabled="!getSelectedPeriod(line)?.rows.length"
-                  @click="openBulkDialog(line, 2)"
-                >
-                  Bulk Rate 2
-                </v-btn>
+                <v-tooltip text="Duplica la configuración actual de esta línea para usarla como base en otra línea" location="bottom">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-btn size="small" variant="outlined" prepend-icon="mdi-content-copy" v-bind="tooltipProps" @click="duplicateConfiguration(line)">
+                      Clone
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Actualiza el Rate 1 de todos los contenedores visibles en el periodo seleccionado" location="bottom">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-btn
+                      size="small"
+                      variant="outlined"
+                      prepend-icon="mdi-pencil-box-multiple-outline"
+                      :disabled="!getSelectedPeriod(line)?.rows.length"
+                      v-bind="tooltipProps"
+                      @click="openBulkDialog(line, 1)"
+                    >
+                      Bulk Rate 1
+                    </v-btn>
+                  </template>
+                </v-tooltip>
+                <v-tooltip text="Actualiza el Rate 2 de todos los contenedores visibles en el periodo seleccionado" location="bottom">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-btn
+                      size="small"
+                      variant="outlined"
+                      prepend-icon="mdi-pencil-box-multiple-outline"
+                      :disabled="!getSelectedPeriod(line)?.rows.length"
+                      v-bind="tooltipProps"
+                      @click="openBulkDialog(line, 2)"
+                    >
+                      Bulk Rate 2
+                    </v-btn>
+                  </template>
+                </v-tooltip>
                 <v-btn
                   size="small"
                   color="primary"
