@@ -123,6 +123,21 @@
                   title="View cancellation history"
                 />
               </div>
+              <!-- Voyage transfer details -->
+              <div v-if="authRequest.resource === 'voyage-transfer-references' && authRequest.resource_data" class="mt-2">
+                <div class="flex items-center gap-1 flex-wrap">
+                  <v-chip size="x-small" color="red-darken-1" variant="flat">
+                    {{ authRequest.resource_data.source_voyage_name || 'Unknown' }}
+                  </v-chip>
+                  <v-icon size="16" color="grey">mdi-arrow-right</v-icon>
+                  <v-chip size="x-small" color="green-darken-1" variant="flat">
+                    {{ authRequest.resource_data.target_voyage_name || 'Unknown' }}
+                  </v-chip>
+                </div>
+                <div class="text-xs text-grey-darken-1 mt-1">
+                  {{ authRequest.resource_data.total_selected }} reference(s) selected
+                </div>
+              </div>
               <!-- Voyage change details -->
               <div v-if="authRequest.resource === 'sea-import-update-locked-voyage' && authRequest.resource_data" class="mt-2">
                 <div class="flex items-center gap-1 flex-wrap">
