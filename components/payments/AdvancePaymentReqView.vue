@@ -66,7 +66,10 @@
                         <td>{{ payment.id }}</td>
                         <td>{{ formatToCurrency(payment.amount) }}</td>
                         <td>
-                          <v-chip color="blue" text-color="white" size="small" @click="viewPayment(payment)"
+                          <v-chip v-if="payment.paymentable_type?.includes('Payable')" color="orange-darken-2" text-color="white" size="small">
+                            <v-icon>mdi-percent-outline</v-icon>{{ paymentableName(payment) }}
+                          </v-chip>
+                          <v-chip v-else color="blue" text-color="white" size="small" @click="viewPayment(payment)"
                             ><v-icon>mdi-eye-outline</v-icon>{{ paymentableName(payment) }} #{{
                               payment.paymentable_id
                             }}</v-chip

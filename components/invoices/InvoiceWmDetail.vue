@@ -245,7 +245,11 @@
                   </td>
                   <td>
                     <div v-for="(payment, index) in charge.payments" :key="`bank-movement-${index}`">
-                      <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
+                      <v-chip v-if="payment.paymentable_type?.includes('Payable')" color="orange-darken-2" text-color="white" small>
+                        <v-icon>mdi-percent-outline</v-icon>{{ paymentableName(payment) }}
+                        {{ formatToCurrency(payment.amount) }}
+                      </v-chip>
+                      <v-chip v-else color="blue" text-color="white" small @click="viewPayment(payment)"
                         ><v-icon>mdi-eye-outline</v-icon>Payment #{{ payment.id }}
                         {{ formatToCurrency(payment.amount) }}</v-chip
                       >
@@ -328,6 +332,7 @@
 </template>
 <script setup lang="ts">
 import { authorizeResources } from '~/utils/data/system'
+import { paymentableName } from '~/utils/data/morphNames'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
