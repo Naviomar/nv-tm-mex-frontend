@@ -499,6 +499,7 @@ const grantAuthorization = async () => {
 
 const canDelete = (authRequest: any) => {
   if (!authRequest) return false
+  if (!isAdminRole()) return false
   if (!isPendingToGrant(authRequest) && hasPermission('authorization-requests-delete')) {
     return true
   }
