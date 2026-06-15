@@ -267,7 +267,8 @@ function buildRowsForMatrix(
     containerTypeId?: number | null
   }
 ) {
-  return availableContainerTypes
+  return [...availableContainerTypes]
+    .sort((left, right) => left.name.localeCompare(right.name))
     .filter((containerType) => !options.containerTypeId || containerType.id === options.containerTypeId)
     .map((containerType) => {
       const containerRows = periodRows.filter((row) => row.container_type_id === containerType.id)

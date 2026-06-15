@@ -314,7 +314,11 @@
                 </td>
                 <td>
                   <div v-for="(payment, index) in charge.payments" :key="`payment-${index}`">
-                    <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
+                    <v-chip v-if="payment.paymentable_type?.includes('Payable')" color="orange-darken-2" text-color="white" small>
+                      <v-icon>mdi-percent-outline</v-icon>{{ paymentableName(payment) }}
+                      {{ formatToCurrency(payment.amount) }}
+                    </v-chip>
+                    <v-chip v-else color="blue" text-color="white" small @click="viewPayment(payment)"
                       ><v-icon>mdi-eye-outline</v-icon>{{ paymentableName(payment) }} #{{ payment.id }}
                       {{ formatToCurrency(payment.amount) }}</v-chip
                     >

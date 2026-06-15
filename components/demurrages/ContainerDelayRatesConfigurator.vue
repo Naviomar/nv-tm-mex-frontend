@@ -47,7 +47,7 @@
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <v-autocomplete
               v-model="form.line_id"
-              :items="lines"
+              :items="availableLines"
               item-title="name"
               item-value="id"
               label="Line"
@@ -336,6 +336,7 @@ import {
   cloneDraftRows,
   fetchAllContainerDelayRates,
   getPeriodLabel,
+  rangesOverlap,
   toDateOnly,
   todayKey,
   type DraftRow,
@@ -344,9 +345,10 @@ import {
   type RateType,
 } from '~/composables/useContainerDelayRates'
 
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
+const confirm = $notifications.useConfirm()
 const route = useRoute()
 const loadingStore = useLoadingStore()
 
@@ -407,8 +409,15 @@ const visibleRows = computed(() => {
   })
 })
 
-const canSuggestFromExisting = computed(() => suggestedRows.value.length > 0)
+const canSuggestFromExisting = computed(() => suggestedRows.value.length > 0 || clonedSourceRows.value.length > 0)
 const canCopyRate1ToRate2 = computed(() => draftRows.value.some((row) => row.rate1.amount !== null && row.rate1.amount !== undefined))
+
+const availableLines = computed(() => {
+  if (sourceDuplicateLineId.value) {
+    return lines.value.filter((line) => line.id !== sourceDuplicateLineId.value)
+  }
+  return lines.value
+})
 
 const suggestionSummary = computed(() => {
   if (!canSuggestFromExisting.value) return ''
@@ -492,24 +501,11 @@ async function loadDuplicateSource() {
   const periodKey = sourceDuplicatePeriodKey.value || buildPeriodKey(sourceDuplicateStart.value, sourceDuplicateEnd.value)
   const sourcePeriod = lineGroup?.periods.find((period) => period.key === periodKey)
   clonedSourceRows.value = sourcePeriod?.rawRows ?? rows.filter((row) => buildPeriodKey(row.start_date, row.end_date) === periodKey)
-
-  form.line_id = sourceDuplicateLineId.value
 }
 
 function rebuildDraft() {
   const effectiveSuggested = clonedSourceRows.value.length ? clonedSourceRows.value : suggestedRows.value
   const rows = buildDraftRows(containerTypes.value, periodRows.value, effectiveSuggested)
-
-  if (!isEdit.value && sourceDuplicateEnd.value) {
-    const nextDate = new Date(`${sourceDuplicateEnd.value}T00:00:00`)
-    nextDate.setDate(nextDate.getDate() + 1)
-    const nextStartDate = nextDate.toISOString().slice(0, 10)
-
-    rows.forEach((row) => {
-      row.startDate = nextStartDate
-      row.endDate = null
-    })
-  }
 
   draftRows.value = cloneDraftRows(rows)
   initialDraftRows.value = cloneDraftRows(rows)
@@ -642,6 +638,29 @@ async function submitConfiguration() {
   if (invalidDateRow) {
     snackbar.add({ type: 'error', text: `Review dates for ${invalidDateRow.container_name}.` })
     return
+  }
+
+  const newCells = draftRows.value.filter((row) => hasAnyAmount(row) && !row.rate1.rowId && !row.rate2.rowId)
+  if (newCells.length && lineRows.value.length) {
+    const overlapping = newCells.filter((draft) => {
+      return lineRows.value.some((existing) =>
+        !existing.deleted_at &&
+        existing.container_type_id === draft.container_type_id &&
+        rangesOverlap(draft.startDate, draft.endDate, existing.start_date, existing.end_date)
+      )
+    })
+
+    if (overlapping.length) {
+      const names = overlapping.slice(0, 5).map((r) => r.container_name).join(', ')
+      const confirmed = await confirm({
+        title: 'Possible duplicate rates',
+        content: `${overlapping.length} container(s) already have rates with overlapping dates for this line (${names}${overlapping.length > 5 ? '...' : ''}). Creating new rates may cause conflicts. Continue?`,
+        confirmationText: 'Continue',
+        dialogProps: { persistent: true, maxWidth: 520 },
+        confirmationButtonProps: { color: 'warning' },
+      })
+      if (!confirmed) return
+    }
   }
 
   try {

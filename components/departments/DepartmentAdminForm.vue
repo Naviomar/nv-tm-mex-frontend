@@ -8,66 +8,9 @@
         <div>
           <InputText density="compact" name="description" label="Description *" />
         </div>
-
-        <div class="flex justify-center items-center">
-          <v-btn class="mr-4" color="secondary" to="/system/departments"> Cancel </v-btn>
-          <v-btn color="primary" @click="saveCharge"> Save </v-btn>
-        </div>
-        <div class="py-4">
-          <v-btn size="small" color="brown" @click="showRoles = !showRoles">Importar permisos de un rol</v-btn>
-          <div v-if="showRoles">
-            <v-autocomplete
-              v-model="selectedRole"
-              :items="roles"
-              item-title="name"
-              item-value="id"
-              label="Select role"
-              density="compact"
-            />
-            <!-- Show permisions from selected rol -->
-            <div v-if="selectedRole">
-              <div class="mt-2 font-bold">
-                {{ roles.find((r: any) => r.id === selectedRole)?.permissions.length }} Permissions in role "{{
-                  roles.find((r: any) => r.id === selectedRole)?.name
-                }}"
-              </div>
-              <v-text-field
-                v-model="rolePermissionSearch"
-                density="compact"
-                label="Buscar permiso dentro del rol"
-                prepend-inner-icon="mdi-magnify"
-                class="mb-2"
-                hide-details
-              />
-              <v-table density="compact" class="max-h-48 overflow-y-auto">
-                <thead>
-                  <tr>
-                    <th class="text-left">Permission Name</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(permission, index) in filteredRolePermissions" :key="`role-perm-${index}`">
-                    <td>{{ permission.name }}</td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </div>
-            <v-btn size="small" color="primary" @click="importRolePermissions">Import all permissions from role</v-btn>
-          </div>
-        </div>
+      
 
         <div class="mt-8 font-bold">Permissions</div>
-        <div class="flex gap-2">
-          <v-autocomplete
-            v-model="form.permission"
-            density="compact"
-            :items="availablePermissions"
-            item-title="name"
-            item-value="id"
-            label="Select permission"
-          />
-          <v-btn color="primary" size="small" @click="linkPermission">Add</v-btn>
-        </div>
         <v-table density="compact">
           <thead>
             <tr>
@@ -196,15 +139,13 @@
           </v-btn>
         </v-toolbar>
         <v-card-text class="pa-0" style="max-height: 60vh">
-          <v-text-field
-            
-            prepend-inner-icon="mdi-magnify"
-            placeholder="Search permissions..."
+          <div
             density="compact"
-            hide-details
-            clearable
             class="ma-4"
-            variant="outlined"
+          />
+          <div
+            density="compact"
+            class="ma-4"
           />
           <v-list density="compact" class="py-0">
             <v-list-item
@@ -217,11 +158,8 @@
                 class="border-b"
               >
                 {{ data.name }}
-            
                 <template #append>
                 <TrashButton size="small" :item="permissions_usr" density="compact" variant="text"  @click="unlinkPermissionUsr(permissions_usr.id,data)" :can-restore="false" />
-
-                
                 </template>
               </v-list-item>
               

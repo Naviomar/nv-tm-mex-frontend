@@ -104,6 +104,7 @@ const menuPermissions = {
   ConfigurationVoyages: 'menu-configuration-voyages',
   ConfigurationWarehouses: 'menu-configuration-warehouses',
   System: 'menu-system',
+  SystemAdminDept: 'menu-system-admin-department',
   SystemUsers: 'menu-system-users',
   SystemRolesPermissions: 'menu-system-roles-permissions',
   SystemBankAccounts: 'menu-system-bank-accounts',
@@ -188,6 +189,12 @@ const authorizeResources = {
   SeaImportUpdateLockedVoyage: {
     resource: 'sea-import-update-locked-voyage',
     description: 'Update Locked Sea Import Arrival Voyage',
+    redirect: null,
+  },
+  /** Transfer BLs (references) from one voyage destination to another */
+  VoyageTransferReferences: {
+    resource: 'voyage-transfer-references',
+    description: 'Transfer BLs between Voyage Destinations',
     redirect: null,
   },
 }

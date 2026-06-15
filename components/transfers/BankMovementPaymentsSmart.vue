@@ -115,7 +115,6 @@
                     :class="{ 'bg-red-100! dark:bg-red-900!': payment.deleted_at }"
                   >
                     <td>
-                      {{ console.log("PAYMENT", payment) }}
                       <ProcessAuthorizationWrapper
                         v-if="!payment.deleted_at && !hasBankMovAmountAvailable && !hasAssociatedRefund(payment)"
                         processName="bank-movement-payment-delete"
@@ -144,20 +143,64 @@
                       </v-chip>
                     </td>
                     <td>
-                      <InvoiceableLabelLink :paymentChargeable="payment.chargeable" />
+                      <template v-if="payment.chargeable_type?.includes('Payable')">
+                        <v-chip size="small" color="orange-darken-2">
+                          {{ getPaymentChargeableName(payment) }}
+                        </v-chip>
+                        <InvoiceableLabelLink v-if="getLinkedInvoiceCharge(payment)" :paymentChargeable="getLinkedInvoiceCharge(payment)" />
+                      </template>
+                      <InvoiceableLabelLink v-else :paymentChargeable="payment.chargeable" />
                     </td>
                     <td>
-                      {{ payment.chargeable?.serviceable?.reference_number }}
+                      <template v-if="payment.chargeable_type?.includes('Payable')">
+                        {{ getLinkedInvoiceCharge(payment)?.serviceable?.reference_number || '—' }}
+                      </template>
+                      <template v-else>
+                        {{ payment.chargeable?.serviceable?.reference_number }}
+                      </template>
                     </td>
-                    <td>{{ getPaymentChargeableName(payment) }}</td>
                     <td>
-                      {{ formatToCurrency(payment.chargeable?.amount + payment.chargeable?.amount_iva || 0) }}
+                      <template v-if="payment.chargeable_type?.includes('Payable')">
+                        {{ getLinkedInvoiceCharge(payment)?.charge?.name || getPaymentChargeableName(payment) }}
+                      </template>
+                      <template v-else>
+                        {{ getPaymentChargeableName(payment) }}
+                      </template>
+                    </td>
+                    <td>
+                      <template v-if="payment.chargeable_type?.includes('Payable') && getLinkedInvoiceCharge(payment)">
+                        {{ formatToCurrency(parseFloat(getLinkedInvoiceCharge(payment).amount) + parseFloat(getLinkedInvoiceCharge(payment).amount_iva) || 0) }}
+                      </template>
+                      <template v-else-if="!payment.chargeable_type?.includes('Payable')">
+                        {{ formatToCurrency(payment.chargeable?.amount + payment.chargeable?.amount_iva || 0) }}
+                      </template>
+                      <template v-else>—</template>
                     </td>
                     <td>{{ formatToCurrency(payment.amount) }}</td>
-                    <td>{{ formatToCurrency(payment.chargeable?.pending_balance) }}</td>
+                    <td>
+                      <template v-if="payment.chargeable_type?.includes('Payable') && getLinkedInvoiceCharge(payment)">
+                        {{ formatToCurrency(getLinkedInvoiceCharge(payment).pending_balance) }}
+                      </template>
+                      <template v-else-if="!payment.chargeable_type?.includes('Payable')">
+                        {{ formatToCurrency(payment.chargeable?.pending_balance) }}
+                      </template>
+                      <template v-else>—</template>
+                    </td>
                     <td>
                       <div v-if="!payment.deleted_at">
+                        <template v-if="payment.chargeable_type?.includes('Payable') && getLinkedInvoiceCharge(payment)">
+                          <v-chip
+                            :color="getLinkedInvoiceCharge(payment).pending_balance > 0 ? 'red' : 'green'"
+                            text-color="white"
+                            small
+                            class="capitalize"
+                          >
+                            {{ getLinkedInvoiceCharge(payment).pending_balance > 0 ? 'Pending' : 'Paid' }}
+                          </v-chip>
+                          <v-chip color="orange-darken-2" size="x-small" class="ml-1">{{ getPaymentChargeableName(payment) }}</v-chip>
+                        </template>
                         <v-chip
+                          v-else-if="!payment.chargeable_type?.includes('Payable')"
                           :color="payment.chargeable?.pending_balance > 0 ? 'red' : 'green'"
                           text-color="white"
                           small
@@ -165,6 +208,7 @@
                         >
                           {{ payment.chargeable?.pending_balance > 0 ? 'Pending' : 'Paid' }}
                         </v-chip>
+                        <v-chip v-else color="orange-darken-2" size="small">{{ getPaymentChargeableName(payment) }}</v-chip>
                       </div>
                     </td>
                     <td class="whitespace-nowrap">
@@ -175,6 +219,94 @@
                   </tr>
                 </tbody>
               </v-table>
+            </v-card-text>
+          </v-card>
+
+          <v-card v-if="showCommissionSection" color="orange-lighten-5" class="mb-4">
+            <v-card-title>
+              <div class="flex items-center gap-2">
+                <v-icon size="x-small">mdi-percent-outline</v-icon>
+                <div>{{ movementType === 'deposit' ? 'Apply commission / retention to invoice' : 'Apply remaining balance to commission' }}</div>
+              </div>
+            </v-card-title>
+            <v-card-text>
+              <template v-if="movementType === 'withdrawal'">
+                <div class="flex items-center gap-4">
+                  <div>
+                    <span class="text-sm text-gray-600">Available balance: </span>
+                    <span class="font-bold">{{ formatToCurrency(bankMovement.amount_available) }}</span>
+                  </div>
+                  <v-btn
+                    color="orange-darken-2"
+                    :loading="loadingStore.loading"
+                    @click="confirmApplyCommission"
+                  >
+                    Apply {{ formatToCurrency(bankMovement.amount_available) }} to commission
+                  </v-btn>
+                </div>
+              </template>
+              <template v-if="movementType === 'deposit'">
+                <v-alert density="compact" type="info" variant="tonal" class="mb-4">
+                  <template v-slot:text>
+                    <div class="text-sm">
+                      Apply commission ($0.01 - $100) and/or retention (1% - 10%) to invoices with pending balance in range.
+                    </div>
+                  </template>
+                </v-alert>
+                <div v-for="payment in eligibleChargesForCommission" :key="`comm-${payment.id}`" class="mb-4 border rounded pa-3">
+                  <div class="flex items-center gap-4 mb-2">
+                    <InvoiceableLabelLink :paymentChargeable="payment.chargeable" />
+                    <span class="text-sm text-gray-600">{{ payment.chargeable?.charge?.name }}</span>
+                    <v-chip size="small" color="red">Pending: {{ formatToCurrency(payment.chargeable?.pending_balance) }}</v-chip>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <v-text-field
+                      v-model.number="commissionForm[payment.id].commission_amount"
+                      type="number"
+                      density="compact"
+                      label="Commission amount (USD)"
+                      :rules="[
+                        (v: any) => !v || (v >= 0.01 && v <= 100) || 'Must be $0.01 - $100',
+                        (v: any) => !v || v <= payment.chargeable?.pending_balance || 'Exceeds pending balance'
+                      ]"
+                      min="0.01"
+                      :max="Math.min(100, payment.chargeable?.pending_balance || 100)"
+                      step="0.01"
+                    />
+                    <v-text-field
+                      v-model.number="commissionForm[payment.id].retention_percentage"
+                      type="number"
+                      density="compact"
+                      label="Retention % (1-10)"
+                      :rules="[
+                        (v: any) => !v || (v >= 1 && v <= 10) || 'Must be 1% - 10%',
+                        () => getCommissionTotal(payment) <= payment.chargeable?.pending_balance || 'Commission + Retention exceeds pending balance'
+                      ]"
+                      min="1"
+                      max="10"
+                      step="1"
+                    />
+                    <div class="flex flex-col gap-1">
+                      <div v-if="commissionForm[payment.id].retention_percentage" class="text-sm">
+                        Retention: {{ formatToCurrency(getChargeTotal(payment) * (commissionForm[payment.id].retention_percentage / 100)) }}
+                        <span class="text-gray-500">({{ commissionForm[payment.id].retention_percentage }}% of {{ formatToCurrency(getChargeTotal(payment)) }})</span>
+                      </div>
+                      <div class="text-sm font-bold" :class="getCommissionTotal(payment) > payment.chargeable?.pending_balance ? 'text-red-600' : 'text-green-700'">
+                        Total: {{ formatToCurrency(getCommissionTotal(payment)) }} / {{ formatToCurrency(payment.chargeable?.pending_balance) }}
+                      </div>
+                      <v-btn
+                        color="orange-darken-2"
+                        size="small"
+                        :loading="loadingStore.loading"
+                        :disabled="!isCommissionFormValid(payment)"
+                        @click="confirmApplyCommissionRetention(payment)"
+                      >
+                        Apply
+                      </v-btn>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </v-card-text>
           </v-card>
 
@@ -347,6 +479,7 @@
 
             </v-card-text>
           </v-card>
+
         </div>
       </div>
     </v-card>
@@ -387,6 +520,14 @@ const getBankMovement = async () => {
 
 const getInvoiceType = (payment: any) => {
   return getInvoiceableName(payment.chargeable?.invoice || {})
+}
+
+const getLinkedInvoiceCharge = (payment: any) => {
+  if (!payment.chargeable_type?.includes('Payable')) return null
+  const payable = payment.chargeable
+  if (!payable?.payments?.length) return null
+  const linkedPayment = payable.payments.find((p: any) => p.chargeable_type?.includes('InvoiceCharge'))
+  return linkedPayment?.chargeable || null
 }
 
 onMounted(async () => {
@@ -673,6 +814,103 @@ const hasBankMovAmountAvailable = computed(() => {
   return bankMovement.value.amount_available > 0
 })
 
+const eligibleChargesForCommission = computed(() => {
+  if (!bankMovement.value?.all_payments) return []
+  return bankMovement.value.all_payments.filter((p: any) => {
+    if (p.deleted_at) return false
+    if (p.chargeable_type?.includes('Payable')) return false
+    const pending = p.chargeable?.pending_balance
+    return pending > 0 && pending <= 100
+  })
+})
+
+const showCommissionSection = computed(() => {
+  if (movementType.value === 'withdrawal') {
+    return bankMovement.value.amount_available >= 0.01 && bankMovement.value.amount_available <= 100
+  }
+  if (movementType.value === 'deposit') {
+    return eligibleChargesForCommission.value.length > 0
+  }
+  return false
+})
+
+const commissionFormData = reactive<Record<number, { commission_amount: number | null; retention_percentage: number | null }>>({})
+
+const commissionForm = computed(() => {
+  eligibleChargesForCommission.value.forEach((p: any) => {
+    if (!commissionFormData[p.id]) {
+      commissionFormData[p.id] = { commission_amount: p.chargeable?.pending_balance ?? null, retention_percentage: null }
+    }
+  })
+  return commissionFormData
+})
+
+const getChargeTotal = (payment: any) => {
+  const amount = parseFloat(payment.chargeable?.amount || 0)
+  const amountIva = parseFloat(payment.chargeable?.amount_iva || 0)
+  return amount + amountIva
+}
+
+const getCommissionTotal = (payment: any) => {
+  const form = commissionFormData[payment.id]
+  if (!form) return 0
+  const commission = form.commission_amount || 0
+  const chargeTotal = getChargeTotal(payment)
+  const retention = form.retention_percentage ? Math.round(chargeTotal * (form.retention_percentage / 100) * 100) / 100 : 0
+  return commission + retention
+}
+
+const isCommissionFormValid = (payment: any) => {
+  const form = commissionFormData[payment.id]
+  if (!form) return false
+  if (!form.commission_amount && !form.retention_percentage) return false
+  const pending = payment.chargeable?.pending_balance || 0
+  if (form.commission_amount && (form.commission_amount < 0.01 || form.commission_amount > 100)) return false
+  if (form.commission_amount && form.commission_amount > pending) return false
+  if (form.retention_percentage && (form.retention_percentage < 1 || form.retention_percentage > 10)) return false
+  if (getCommissionTotal(payment) > pending) return false
+  return true
+}
+
+const confirmApplyCommissionRetention = async (payment: any) => {
+  const form = commissionForm.value[payment.id]
+  if (!isCommissionFormValid(payment)) return
+
+  let desc = ''
+  if (form.commission_amount) desc += `Commission: ${formatToCurrency(form.commission_amount)}`
+  if (form.retention_percentage) {
+    const chargeTotal = getChargeTotal(payment)
+    const retAmount = Math.round(chargeTotal * (form.retention_percentage / 100) * 100) / 100
+    if (desc) desc += ', '
+    desc += `Retention: ${form.retention_percentage}% of ${formatToCurrency(chargeTotal)} = ${formatToCurrency(retAmount)}`
+  }
+
+  const result = await confirm({
+    title: 'Apply commission/retention to invoice?',
+    confirmationText: 'Apply',
+    content: desc,
+    dialogProps: { persistent: true, maxWidth: 500 },
+    confirmationButtonProps: { color: 'orange-darken-2' },
+  })
+
+  if (result) {
+    try {
+      loadingStore.start()
+      await $api.bankMovements.applyCommissionRetention(bankMovement.value.id, {
+        invoice_charge_id: payment.chargeable_id,
+        commission_amount: form.commission_amount || null,
+        retention_percentage: form.retention_percentage || null,
+      })
+      snackbar.add({ type: 'success', text: 'Commission/retention applied successfully' })
+      await getBankMovement()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTimeout(() => { loadingStore.stop() }, 250)
+    }
+  }
+}
+
 const payInvoices = async () => {
   try {
     loadingStore.start()
@@ -727,6 +965,36 @@ const searchInvoices = async () => {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
+  }
+}
+
+const confirmApplyCommission = async () => {
+  const result = await confirm({
+    title: 'Apply remaining balance to commission?',
+    confirmationText: 'Apply',
+    content: `The remaining balance of ${formatToCurrency(bankMovement.value.amount_available)} will be applied as a bank commission.`,
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'orange-darken-2',
+    },
+  })
+
+  if (result) {
+    try {
+      loadingStore.start()
+      await $api.bankMovements.applyRemainingToCommission(bankMovement.value.id)
+      snackbar.add({ type: 'success', text: 'Remaining balance applied to commission' })
+      await getBankMovement()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
   }
 }
 

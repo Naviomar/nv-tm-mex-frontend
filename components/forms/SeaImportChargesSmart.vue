@@ -131,7 +131,12 @@
           </div>
           <div>
             <v-btn density="compact" variant="outlined" color="red" @click="cancel"><v-icon>mdi-close</v-icon></v-btn>
-            <v-btn density="compact" variant="outlined" color="green" @click="save"><v-icon>mdi-plus</v-icon></v-btn>
+            <v-btn density="compact" variant="outlined" color="green" @click="save" :disabled="isDuplicateCharge"><v-icon>mdi-plus</v-icon></v-btn>
+          </div>
+          <div v-if="isDuplicateCharge" class="col-span-8">
+            <v-alert density="compact" type="warning" variant="tonal">
+              This charge already exists for {{ values.tm_wm }}. Duplicate charges are not allowed.
+            </v-alert>
           </div>
         </div>
 
@@ -326,6 +331,16 @@ const chargeFilterHint = computed(() => {
 })
 
 // Cuando cambia el tipo de factura, limpiar el charge seleccionado
+const isDuplicateCharge = computed(() => {
+  if (!values.charge_id || !values.tm_wm) return false
+  return charges.value.some((charge: any) => {
+    const sameCharge = charge.charge_id == values.charge_id
+    const sameTmWm = charge.tm_wm?.toLowerCase() === values.tm_wm?.toLowerCase()
+    const isEditingSelf = values.id != null && charge.id == values.id
+    return sameCharge && sameTmWm && !isEditingSelf
+  })
+})
+
 const onInvoiceTypeChange = (value: any) => {
   // Si cambia el tipo y hay un charge seleccionado, verificar si sigue siendo válido
   if (values.charge_id) {
@@ -387,6 +402,13 @@ const linkedChargeToInvoice = (charge: any) => {
 const onSuccess = async (values: any) => {
   try {
     loadingStore.start()
+
+    if (isDuplicateCharge.value) {
+      snackbar.add({ type: 'error', text: 'This charge already exists for the same TM/WM type' })
+      loadingStore.stop()
+      return
+    }
+
     const body = {
       ...values,
     }

@@ -50,6 +50,15 @@
           </v-tabs-window-item>
           
           <!-- Reports Content -->
+          <v-tabs-window-item v-if="viewMode === 'reports'" value="import-repo-tab">
+            <ImportRepoReport />
+          </v-tabs-window-item>
+
+          <!-- Import Reports Content -->
+          <v-tabs-window-item v-if="viewMode === 'import-reports'" value="import-repo-tab">
+            <ImportRepoReport />
+          </v-tabs-window-item>
+
           <v-tabs-window-item v-if="viewMode === 'reports'" value="sea-tab">
             <CobranzaReport />
           </v-tabs-window-item>
@@ -82,13 +91,13 @@
 
 <script setup lang="ts">
 interface Props {
-  viewMode: 'charts' | 'reports'
+  viewMode: 'charts' | 'reports' | 'import-reports'
 }
 
 const props = defineProps<Props>()
 
 // Initialize tab based on initial viewMode
-const tab = ref<any>(props.viewMode === 'charts' ? 'charts-tab' : 'sea-tab')
+const tab = ref<any>(props.viewMode === 'charts' ? 'charts-tab' : 'import-reports-tab')
 
 // Charts items - para cuando viewMode === 'charts'
 const chartsItems = [
@@ -140,8 +149,20 @@ const reportsItems = [
   }
 ]
 
+// Import Reports items - para cuando viewMode === 'import-reports'
+const importReportsItems = [
+  {
+    title: 'Import Repo General',
+    value: 'import-repo-tab',
+    icon: 'mdi-ferry',
+    color: 'indigo'
+  }
+]
+
 const currentMenuItems = computed(() => {
-  return props.viewMode === 'charts' ? chartsItems : reportsItems
+  if (props.viewMode === 'charts') return chartsItems
+  if (props.viewMode === 'import-reports') return importReportsItems
+  return reportsItems
 })
 
 // Auto-switch to first tab when view mode changes
@@ -151,6 +172,8 @@ watch(() => props.viewMode, (newMode, oldMode) => {
     nextTick(() => {
       if (newMode === 'charts') {
         tab.value = 'charts-tab'
+      } else if (newMode === 'import-reports') {
+        tab.value = 'import-repo-tab'
       } else {
         tab.value = 'sea-tab'
       }
