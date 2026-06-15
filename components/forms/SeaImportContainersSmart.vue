@@ -66,13 +66,32 @@
             <tr v-for="(item, index) in containers" :key="`mbl-${index}`">
               <td>
                 <div class="flex gap-2">
+                  <ProcessAuthorizationWrapper
+                        v-if="!item.deleted_at && isLocked"
+                        processName="container-edit"
+                        :requestKey="`${item.id}:${item.id}`"
+                        label="Edit"
+                        :displayName="`Container. #${item.container_number}`"
+                  >
+                    <template #auth>
+                      <v-btn
+                        size="small"
+                        variant="text"
+                        icon="mdi-pencil-outline"
+                        color="blue-lighten-2"
+                        density="compact"
+                        @click="editContainer(item)"
+                      ></v-btn>
+                    </template>
+                  </ProcessAuthorizationWrapper>
                   <v-btn
-                    size="small"
-                    variant="text"
-                    icon="mdi-pencil-outline"
-                    color="blue-lighten-2"
-                    density="compact"
-                    @click="editContainer(item)"
+                      v-if="!item.deleted_at && !isLocked"
+                      size="small"
+                      variant="text"
+                      icon="mdi-pencil-outline"
+                      color="blue-lighten-2"
+                      density="compact"
+                      @click="editContainer(item)"
                   ></v-btn>
                    <ProcessAuthorizationWrapper
                         v-if="!item.deleted_at && isLocked"

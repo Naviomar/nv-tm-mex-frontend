@@ -167,6 +167,7 @@ const menuPermissions = {
   ConfigurationVoyages: 'menu-configuration-voyages',
   ConfigurationWarehouses: 'menu-configuration-warehouses',
   System: 'menu-system',
+  SystemAdminDept: 'menu-system-admin-department',
   SystemUsers: 'menu-system-users',
   SystemRolesPermissions: 'menu-system-roles-permissions',
   SystemBankAccounts: 'menu-system-bank-accounts',
