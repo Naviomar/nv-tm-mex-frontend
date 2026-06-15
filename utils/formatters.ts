@@ -280,7 +280,8 @@ const getPaymentChargeableName = (payment: any) => {
   }
 
   if (payment.chargeable_type.includes('Payable')) {
-    return payment.chargeable?.payable_option?.name || 'Bank Commission'
+    const optName = payment.chargeable?.payable_option?.name || 'bank-commission'
+    return optName.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
   }
 
   return 'Unknown'

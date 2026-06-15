@@ -177,6 +177,14 @@ class BankMovementsModule extends FetchFactory<any> {
   async applyRemainingToCommission(id: string, fetchOptions?: FetchOptions) {
     return this.call("POST", `${this.RESOURCE}/${id}/apply-commission`, fetchOptions);
   }
+
+  async applyCommissionRetention(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    };
+    return this.call("POST", `${this.RESOURCE}/${id}/apply-commission-retention`, fetchOptions);
+  }
 }
 
 export default BankMovementsModule;
