@@ -21,7 +21,7 @@
           size="small"
           variant="tonal"
           color="primary"
-          closable
+          :closable="isUserAdmin"
           @click:close="removeCcUser(user.id)"
         >
           <v-avatar start size="20" color="primary">
@@ -34,6 +34,7 @@
 
       <!-- Search and add -->
       <v-autocomplete
+        v-if="isUserAdmin"
         v-model="selectedUserId"
         :items="searchResults"
         :loading="searching"
@@ -65,13 +66,17 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import type { ICcUser } from '~/repository/modules/catalogs/requestCcUsers'
+import { useCheckUser } from '~/composables/useCheckUser'
 
 const props = defineProps<{
   ticketType: string
   ticketId: number
 }>()
 
+const { isAdminRole } = useCheckUser()
+const isUserAdmin = computed(() => isAdminRole())
 const { $api } = useNuxtApp()
 
 const expanded = ref(false)
@@ -100,8 +105,8 @@ const onSearch = (query: string) => {
     try {
       const results = await $api.requestCcUsers.searchAvailableUsers(query)
       // Filter out users already in CC
-      const existingIds = ccUsers.value.map((u) => u.id)
-      searchResults.value = results.filter((u: ICcUser) => !existingIds.includes(u.id))
+      const existingIds = new Set(ccUsers.value.map((user) => user.id))
+      searchResults.value = results.filter((user: ICcUser) => !existingIds.has(user.id))
     } catch {
       searchResults.value = []
     } finally {
