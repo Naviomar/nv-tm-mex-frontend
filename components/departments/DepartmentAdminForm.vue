@@ -1,195 +1,266 @@
 <template>
   <div>
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-5">
-        <div>
-          <InputText density="compact" name="name" label="Name *" />
-        </div>
-        <div>
-          <InputText density="compact" name="description" label="Description *" />
-        </div>
-      
+    <v-tabs v-model="activeTab" color="primary" class="mb-4" bg-color="transparent">
+      <v-tab value="users">
+        <v-icon start>mdi-account-group</v-icon>
+        Members
+        <v-chip size="x-small" color="primary" variant="tonal" class="ml-2">{{ linkedUsers.length }}</v-chip>
+      </v-tab>
+      <v-tab value="roles">
+        <v-icon start>mdi-shield-account</v-icon>
+        Roles & Permissions
+      </v-tab>
+    </v-tabs>
 
-        <div class="mt-8 font-bold">Permissions</div>
-        <v-table density="compact">
-          <thead>
-            <tr>
-              <th class="w-12 text-left">Actions</th>
-              <th class="text-left">Permission Name</th>
-              <th class="text-left">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(permission, index) in linkedPermissions" :key="`perm-${index}`">
-              <td>
-                <div class="flex gap-2">
-                  <div v-if="whoRolDelete() === 'true'"><TrashButton :item="permission" @click="unlinkPermission(permission)" /></div>
-                </div>
-              </td>
-              <td>{{ permission.name }}</td>
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="permission">
-                  {{ formatDateString(permission.created_at) }}
-                </UserInfoBadge>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </div>
-      <div class="col-span-7">
-        <div class="font-bold">Users</div>
-        <div class="flex gap-4">
-            <v-row>
+    <v-window v-model="activeTab">
+      <!-- ====== USERS TAB ====== -->
+      <v-window-item value="users">
+        <!-- Add user row -->
+        <v-card variant="outlined" class="mb-4">
+          <v-card-text class="pa-4">
+            <div class="text-caption font-weight-bold text-grey-darken-2 mb-3 text-uppercase tracking-wide">
+              <v-icon size="14" class="mr-1" color="primary">mdi-account-plus</v-icon>
+              Add member
+            </div>
+            <v-row dense align="center">
+              <v-col cols="12" md="5">
+                <v-autocomplete
+                  v-model="form.user"
+                  density="compact"
+                  :items="availableUsers"
+                  item-title="email"
+                  item-value="id"
+                  label="Search user by email or name"
+                  variant="outlined"
+                  hide-details
+                  clearable
+                >
+                  <template #item="{ props: aProps, item }">
+                    <v-list-item v-bind="aProps">
+                      <template #prepend>
+                        <v-avatar size="28" color="primary">
+                          <span class="text-white text-caption">{{ getInitials(item.raw.name) }}</span>
+                        </v-avatar>
+                      </template>
+                      <v-list-item-subtitle>{{ item.raw.name }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
+              </v-col>
               <v-col cols="12" md="3">
-                  <div>
-                      <v-autocomplete
-                          name="givePerm"
-                          v-model="form.give_perm"
-                          :items="linkedPermissions"
-                          item-title="name"
-                          item-value="name"
-                          label="Select permission"
-                          density="compact"
-                          multiple
-                        />
+                <v-select
+                  v-model="form.department_type"
+                  density="compact"
+                  :items="departmentTypes"
+                  item-title="label"
+                  item-value="value"
+                  label="Type"
+                  variant="outlined"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-btn
+                  color="primary"
+                  variant="flat"
+                  :disabled="!form.user || !form.department_type"
+                  @click="linkUser"
+                  prepend-icon="mdi-account-plus"
+                >
+                  Add to Department
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+
+        <!-- Members table -->
+        <v-card variant="outlined">
+          <v-card-text class="pa-0">
+            <v-table density="comfortable" hover>
+              <thead>
+                <tr class="bg-grey-lighten-4">
+                  <th style="width: 56px"></th>
+                  <th>Member</th>
+                  <th style="width: 155px">Type</th>
+                  <th>Roles</th>
+                  <th style="width: 110px">Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(member, index) in linkedUsers" :key="`user-${index}`">
+                  <td>
+                    <v-btn
+                      size="x-small"
+                      variant="tonal"
+                      color="error"
+                      icon="mdi-account-minus"
+                      @click="unlinkUser(member)"
+                    />
+                  </td>
+                  <td>
+                    <div class="d-flex align-center gap-2 py-1">
+                      <v-avatar
+                        size="32"
+                        :color="member.pivot?.department_type === 'coordinator' ? 'amber-darken-2' : 'primary'"
+                      >
+                        <span class="text-white text-caption font-weight-bold">{{ getInitials(member.name) }}</span>
+                      </v-avatar>
+                      <div>
+                        <div class="font-weight-medium text-sm">{{ member.name }}</div>
+                        <div class="text-caption text-grey-darken-1">{{ member.email }}</div>
+                      </div>
                     </div>
-                  </v-col>
-
-                  <v-col cols="12" md="3">
-                    <div> 
-                        <v-autocomplete
-                        name="userPerm"
-                        v-model="form.user"
-                        density="compact"
-                        :items="availableUsers"
-                        item-title="email"
-                        item-value="id"
-                        label="Select user"
-                      />
-                  </div>
-                </v-col>
-
-                <v-col cols="12" md="3">
-                    <div>
-                      <v-autocomplete
-                        name="department_type"
-                        v-model="form.department_type"
-                        density="compact"
-                        :items="departmentTypes"
-                        item-title="label"
-                        item-value="value"
-                        label="Type"
-                        class="w-32"
-                      />
+                  </td>
+                  <td>
+                    <v-select
+                      :model-value="member.pivot?.department_type ?? 'member'"
+                      :items="departmentTypes"
+                      item-title="label"
+                      item-value="value"
+                      density="compact"
+                      variant="outlined"
+                      hide-details
+                      style="min-width: 140px"
+                      :loading="updatingType === member.id"
+                      @update:model-value="(val) => changeUserType(member, val)"
+                    />
+                  </td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-1">
+                      <v-chip
+                        v-for="role in member.roles"
+                        :key="role.id"
+                        size="x-small"
+                        :color="role.name?.includes('Admin') ? 'amber-darken-2' : 'secondary'"
+                        variant="tonal"
+                      >
+                        {{ role.name }}
+                      </v-chip>
+                      <span v-if="!member.roles?.length" class="text-caption text-grey-darken-1">—</span>
                     </div>
-                </v-col>
+                  </td>
+                  <td>
+                    <v-btn
+                      size="x-small"
+                      variant="tonal"
+                      :color="totalPermCount(member) ? 'primary' : 'grey'"
+                      prepend-icon="mdi-key-variant"
+                      @click="openEditPermissionsModal(member)"
+                    >
+                      {{ totalPermCount(member) }}
+                    </v-btn>
+                  </td>
+                </tr>
+                <tr v-if="linkedUsers.length === 0">
+                  <td colspan="5" class="text-center py-10 text-grey">
+                    <v-icon size="48" color="grey-lighten-2">mdi-account-group-outline</v-icon>
+                    <div class="mt-2 text-caption">No members yet. Add one above.</div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
 
-              </v-row>
-          
-          <v-btn color="primary" size="small" @click="linkUser">Add</v-btn>
-        </div>
-        <v-table density="compact">
-          <thead>
-            <tr>
-              <th class="text-left">Actions</th>
-              <th class="text-left">Name</th>
-              <th class="text-left">Email</th>
-              <th class="text-left">Type</th>
-              <th class="text-left">Permissions</th>
-              <th class="text-left">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(user, index) in linkedUsers" :key="`user-${index}`">
-              <td>
-                <div class="flex gap-2">
-                  <TrashButton :item="user" @click="unlinkUser(user)" />
-                </div>
-              </td>
-              <td>{{ user.name }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.pivot?.department_type }}</td>
-              <td><span v-bind="props" class="mdi mdi-account-details" size="large" @click="openEditPermissionsModal(user)"></span></td>
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="user">
-                  {{ formatDateString(user.created_at) }}
-                </UserInfoBadge>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-alert density="compact" type="warning" variant="outlined">
-          Removing a user from this department will be detached from all notifications.
-        </v-alert>
-      </div>
-    </div>
+      <!-- ====== ROLES TAB ====== -->
+      <v-window-item value="roles">
+        <DepartmentRolesPanel
+          v-if="props.id"
+          :department-id="props.id"
+          :linked-users="linkedUsers"
+          @roles-changed="reloadDepartment"
+        />
+      </v-window-item>
+    </v-window>
   </div>
 
-  <!-- Modal: Edit Role Permissions -->
-    <v-dialog v-model="editPermissionsModal.show" max-width="700" persistent scrollable>
-      <v-card>
-        <v-toolbar color="primary" density="compact">
-          <v-toolbar-title>
-            <v-icon class="mr-2">mdi-key-variant</v-icon>
-            Edit Permissions: 
-          </v-toolbar-title>
-          <v-spacer />
-          <v-btn icon @click="editPermissionsModal.show = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <v-card-text class="pa-0" style="max-height: 60vh">
-          <div
-            density="compact"
-            class="ma-4"
-          />
-          <div
-            density="compact"
-            class="ma-4"
-          />
-          <v-list density="compact" class="py-0">
-            <v-list-item
-              class="border-b"
-            >
-              <v-list-item-title></v-list-item-title>
-              <v-list-item
-                 v-for="(data, index) in permissions_usr.permissions"
-                :key="data"
-                class="border-b"
-              >
-                {{ data.name }}
-                <template #append>
-                <TrashButton size="small" :item="permissions_usr" density="compact" variant="text"  @click="unlinkPermissionUsr(permissions_usr.id,data)" :can-restore="false" />
-                </template>
-              </v-list-item>
-              
-            </v-list-item>
-            <v-list-item >
-              <v-list-item-title class="text-center text-grey py-4">
-                No permissions match your search
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-card-text>
-        <v-divider />
-        <v-card-actions class="pa-4">
-          <div class="text-caption text-grey">
-            permission(s) selected
+  <!-- Modal: Edit User Permissions -->
+  <v-dialog v-model="editPermissionsModal.show" max-width="1200" persistent scrollable>
+    <v-card>
+      <v-toolbar color="primary" density="compact">
+        <v-toolbar-title>
+          <v-icon class="mr-2">mdi-key-variant</v-icon>
+          Permissions: {{ editPermissionsModal.user?.name }}
+        </v-toolbar-title>
+        <v-spacer />
+        <div v-if="editPermissionsModal.saving" class="d-flex align-center mr-3 text-white text-caption">
+          <v-progress-circular indeterminate size="14" width="2" color="white" class="mr-1" />
+          Saving...
+        </div>
+        <div v-else-if="editPermissionsModal.saved" class="d-flex align-center mr-3 text-white text-caption">
+          <v-icon size="14" class="mr-1">mdi-check</v-icon>
+          Saved
+        </div>
+        <!-- Legend: role vs direct -->
+        <div class="d-flex align-center gap-3 mr-3 text-white text-caption">
+          <span class="d-flex align-center gap-1">
+            <v-icon size="12" color="white">mdi-shield-account</v-icon>
+            Via role
+          </span>
+          <span class="d-flex align-center gap-1">
+            <v-icon size="12" color="white">mdi-account-key</v-icon>
+            Direct ({{ editPermissionsModal.selectedIds.length }})
+          </span>
+        </div>
+        <v-btn icon @click="editPermissionsModal.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
+        <div v-if="editPermissionsModal.loading" class="text-center py-6">
+          <v-progress-circular indeterminate color="primary" />
+        </div>
+        <div v-else-if="scopePermissions.length > 0">
+          <!-- Role permissions (read-only, shown as context) -->
+          <div v-if="editPermissionsModal.rolePermissionIds.length > 0" class="mb-4">
+            <div class="d-flex align-center gap-2 mb-2">
+              <v-icon size="16" color="secondary">mdi-shield-account</v-icon>
+              <span class="text-caption font-weight-bold text-secondary text-uppercase tracking-wide">
+                Permissions via role (read-only)
+              </span>
+              <v-chip size="x-small" color="secondary" variant="tonal">
+                {{ editPermissionsModal.rolePermissionIds.length }}
+              </v-chip>
+            </div>
+            <PermissionsGrid
+              :permissions="scopePermissions.filter(p => editPermissionsModal.rolePermissionIds.includes(p.id))"
+              :model-value="editPermissionsModal.rolePermissionIds"
+              :readonly="true"
+            />
           </div>
-          <v-spacer />
-          <v-btn color="red" @click="editPermissionsModal.show = false">Cancel</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-</template>
-<script setup lang="ts">
-import { schema } from '~/forms/departmentForm'
 
-const router = useRouter()
-const { $api } = useNuxtApp()
+          <!-- Direct permissions (editable) -->
+          <div>
+            <div class="d-flex align-center gap-2 mb-2" :class="editPermissionsModal.rolePermissionIds.length > 0 ? 'mt-4' : ''">
+              <v-icon size="16" color="primary">mdi-account-key</v-icon>
+              <span class="text-caption font-weight-bold text-primary text-uppercase tracking-wide">
+                Direct permissions (editable)
+              </span>
+              <v-chip size="x-small" color="primary" variant="tonal">
+                {{ editPermissionsModal.selectedIds.length }}
+              </v-chip>
+            </div>
+            <PermissionsGrid
+              :permissions="scopePermissions"
+              v-model="editPermissionsModal.selectedIds"
+            />
+          </div>
+        </div>
+        <div v-else class="text-center py-6 text-grey">
+          No permissions available in admin scope.
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script setup lang="ts">
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
-const { user } = useCheckUser()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   id: {
@@ -198,259 +269,207 @@ const props = defineProps({
   },
 })
 
-const catalogs = reactive({
-  roles: [],
-  permissions: [],
-})
-
-const permRol = computed(() => {
-  const allRols = user.value?.roles
-  var permisos = [];
-  ///todos los roles
-  for(var r = 0; r < allRols?.length; r++){
-    const perRolls = allRols[r].permissions
-    for(var ar = 0; ar < perRolls?.length; ar++){
-      permisos.push(perRolls[ar])
-    }
-  }
-  return permisos
-})
-
-const getCatalogs = async () => {
-  try {
-    loadingStore.start()
-    const [roles, permissions] = await Promise.all([$api.users.getRoles(), $api.users.getPermissions()])
-    catalogs.roles = roles
-    catalogs.permissions = permissions
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
-
-const linkedUsers = ref<any>([])
-const users = ref<any>([])
-const linkedPermissions = ref<any>([])
-const permissions = ref<any>([])
-const roles = ref<any>([])
-const showRoles = ref(false)
-const selectedRole = ref<number | null>(null)
-const rolePermissionSearch = ref('')
-
-function whoRolDelete() {
-  var canDelete = 'false';
-  var allRolDel = user.value?.roles
-  var idRolDel = 0
-  for(var i=0; i<allRolDel.length; i++){
-    idRolDel = allRolDel[i].id
-    if(idRolDel === 1){
-      canDelete = 'true';
-    }
-  }
-  return canDelete;
-}
+const activeTab = ref('users')
+const linkedUsers = ref<any[]>([])
+const allUsers = ref<any[]>([])
+const scopePermissions = ref<any[]>([])
+const updatingType = ref<number | null>(null)
 
 const form = reactive({
-  user: null,
-  department_type: null,
-  permission: null,
-  give_perm: null
+  user: null as number | null,
+  department_type: null as string | null,
 })
-const availablePermissions = computed(() => {
-  return permissions.value.filter((perm: any) => {
-    return !linkedPermissions.value.some((linked: any) => linked.id === perm.id)
-  })
-})
+
 const departmentTypes = [
   { label: 'Member', value: 'member' },
   { label: 'Coordinator', value: 'coordinator' },
 ]
 
+const editPermissionsModal = ref({
+  show: false,
+  user: null as any,
+  selectedIds: [] as number[],
+  rolePermissionIds: [] as number[],
+  loading: false,
+  saving: false,
+  saved: false,
+})
+
+function totalPermCount(member: any): number {
+  const directIds = new Set((member.permissions ?? []).map((p: any) => p.id))
+  const roleIds = (member.roles ?? []).flatMap((r: any) => (r.permissions ?? []).map((p: any) => p.id))
+  roleIds.forEach((id: number) => directIds.add(id))
+  return directIds.size
+}
+
+function getInitials(name: string): string {
+  return (name ?? '')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+const availableUsers = computed(() =>
+  allUsers.value.filter((u: any) => !linkedUsers.value.some((l: any) => l.id === u.id))
+)
+
+async function reloadDepartment() {
+  if (!props.id) return
+  try {
+    const response = (await $api.departments.getById(props.id)) as any
+    linkedUsers.value = response.users ?? []
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+async function loadScopePermissions() {
+  if (!props.id) return
+  try {
+    scopePermissions.value = (await $api.departments.getAdminScopePermissions(props.id)) as any[]
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 watch(
   () => props.id,
   async (id) => {
     if (id) {
-      const response = (await $api.departments.getById(id)) as any
-      setValues(response)
-      linkedUsers.value = response.users
-      linkedPermissions.value = response.permissions || []
+      try {
+        loadingStore.start()
+        const response = (await $api.departments.getById(id)) as any
+        linkedUsers.value = response.users ?? []
+      } catch (e) {
+        console.error(e)
+      } finally {
+        loadingStore.stop()
+      }
     }
   },
   { immediate: true }
 )
 
-const filteredRolePermissions = computed(() => {
-  const role = roles.value.find((r: any) => r.id === selectedRole.value)
-  if (!role) return []
-  if (!rolePermissionSearch.value) return role.permissions
-  return role.permissions.filter((perm: any) =>
-    perm.name.toLowerCase().includes(rolePermissionSearch.value.toLowerCase())
-  )
-})
-
-const importRolePermissions = async () => {
-  if (!selectedRole.value) {
-    snackbar.add({ type: 'warning', text: 'Please select a role' })
-    return
-  }
-  const role = roles.value.find((r: any) => r.id === selectedRole.value)
-  if (!role) {
-    snackbar.add({ type: 'error', text: 'Role not found' })
-    return
-  }
-  const body = {
-    role_id: role.id,
-  }
-  await $api.departments.importRolePermissions(props.id!, body)
-  // add permissions to linkedPermissions that are not already linked
-  role.permissions.forEach((perm: any) => {
-    if (!linkedPermissions.value.some((p: any) => p.id === perm.id)) {
-      linkedPermissions.value.push(perm)
+async function linkUser() {
+  if (!form.user || !form.department_type) return
+  try {
+    const body = {
+      user_id: form.user,
+      department_type: form.department_type,
     }
-  })
-  snackbar.add({ type: 'success', text: 'Permissions imported' })
-}
-
-const linkPermission = async () => {
-  if (!form.permission) {
-    snackbar.add({ type: 'warning', text: 'Please select a permission' })
-    return
-  }
-  const body = {
-    permission_id: form.permission,
-  }
-  await $api.departments.linkPermission(props.id!, body)
-  const permission = permissions.value.find((p: any) => p.id === form.permission)
-  linkedPermissions.value.push(permission)
-  form.permission = null
-  snackbar.add({ type: 'success', text: 'Permission linked' })
-}
-
-const unlinkPermission = async (permission: any) => {
-  const body = {
-    permission_id: permission.id,
-  }
-  await $api.departments.unlinkPermission(props.id!, body)
-  linkedPermissions.value = linkedPermissions.value.filter((p: any) => p.id !== permission.id)
-  snackbar.add({ type: 'success', text: 'Permission unlinked' })
-}
-
-const editPermissionsModal = ref({
-  show: false,
-})
-
-const permissions_usr = ref<any>([])
-function openEditPermissionsModal(user: any) {
-  editPermissionsModal.value.show = true
-  const perm_usr = $api.users.getUserById(user.id)
-    .then((myPromise) => {
-      return myPromise
-  });
-
-  const permUsr = async () => {
-    return permissions_usr.value = await perm_usr;  
-  };
-  permUsr()
-}
-
-function unlinkPermissionUsr(user: any, data: any){
-  try{
-      const name_permission = data.name
-      const deletePermi = $api.users.deleteUserPermission(user,name_permission)
-      const last_perm_usr = deletePermi
-        .then((myPromisePerm) => {
-          if(myPromisePerm.length<1){
-            const user_obj = {id : user}
-              unlinkUser(user_obj)
-          }
-      });
-      editPermissionsModal.value.show = false
-      return snackbar.add({ type: 'success', text: 'Permission deleted success' })
-  }catch (e) {
+    await $api.departments.linkUser(props.id!, body)
+    const user = allUsers.value.find((u: any) => u.id === form.user)
+    linkedUsers.value.push({ ...user, pivot: { department_type: form.department_type }, roles: [], permissions: [] })
+    form.user = null
+    form.department_type = null
+    snackbar.add({ type: 'success', text: 'User added to department' })
+  } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error adding user' })
   }
 }
 
-const availableUsers = computed(() => {
-  // users that are not linked
-  return users.value.filter((user: any) => {
-    return !linkedUsers.value.some((linkedUser: any) => linkedUser.id === user.id)
+async function changeUserType(member: any, newType: string) {
+  if (member.pivot?.department_type === newType) return
+  try {
+    updatingType.value = member.id
+    await $api.departments.updateUserType(props.id!, { user_id: member.id, department_type: newType })
+    const idx = linkedUsers.value.findIndex((u: any) => u.id === member.id)
+    if (idx >= 0) {
+      linkedUsers.value[idx] = {
+        ...linkedUsers.value[idx],
+        pivot: { ...linkedUsers.value[idx].pivot, department_type: newType },
+      }
+      await reloadDepartment()
+    }
+    snackbar.add({ type: 'success', text: 'Member type updated' })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error updating member type' })
+  } finally {
+    updatingType.value = null
+  }
+}
+
+async function unlinkUser(member: any) {
+  const ok = await confirm({
+    title: 'Remove user?',
+    confirmationText: 'Remove',
+    content: `Remove "${member.name}" from this department? They will lose all department roles and permissions.`,
+    dialogProps: { persistent: true, maxWidth: 420 },
+    confirmationButtonProps: { color: 'error' },
   })
-})
-
-const { handleSubmit, setValues } = useForm({
-  validationSchema: schema,
-})
-
-const onSuccess = async (values: any) => {
-  if (props.id) {
-    await $api.departments.update(props.id, values)
-    snackbar.add({ type: 'success', text: 'Department updated' })
-    router.push('/system/departments')
-    return
-  }
-
-  if (!props.id) {
-    await $api.departments.create(values)
-    snackbar.add({ type: 'success', text: 'Department created' })
-    router.push('/system/departments')
+  if (!ok) return
+  try {
+    await $api.departments.unlinkUser(props.id!, { user_id: member.id })
+    linkedUsers.value = linkedUsers.value.filter((u: any) => u.id !== member.id)
+    snackbar.add({ type: 'success', text: 'User removed from department' })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error removing user' })
   }
 }
 
-function onInvalidSubmit({ values, errors, results }: any) {
-  snackbar.add({ type: 'error', text: 'Please fill all required fields' })
+async function openEditPermissionsModal(member: any) {
+  editPermissionsModal.value = {
+    show: true,
+    user: member,
+    selectedIds: [],
+    rolePermissionIds: [],
+    loading: true,
+    saving: false,
+    saved: false,
+  }
+  try {
+    await loadScopePermissions()
+    const userDetail = (await $api.users.getUserById(member.id)) as any
+    editPermissionsModal.value.selectedIds = userDetail.permissions?.map((p: any) => p.id) ?? []
+    // Collect all permission IDs granted via roles
+    const rolePermIds = (userDetail.roles ?? [])
+      .flatMap((r: any) => (r.permissions ?? []).map((p: any) => p.id))
+    editPermissionsModal.value.rolePermissionIds = [...new Set(rolePermIds)] as number[]
+  } catch (e) {
+    console.error(e)
+  } finally {
+    editPermissionsModal.value.loading = false
+  }
 }
 
-const saveCharge = handleSubmit(onSuccess, onInvalidSubmit)
+let permDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const linkUser = async () => {
-  if (!form.user) {
-    snackbar.add({ type: 'warning', text: 'Please select a user' })
-    return
-  }
-  if (!form.department_type) {
-    snackbar.add({ type: 'warning', text: 'Please select a type' })
-    return
-  }
-  if (!form.give_perm) {
-    snackbar.add({ type: 'warning', text: 'Please select at least one permisson' })
-    return
-  }
-  const body = {
-    user_id: form.user,
-    department_type: form.department_type,
-    give_perm: form.give_perm,
-  }
-  const response = await $api.departments.linkUser(props.id!, body)
-  // find user by id
-  const user = users.value.find((u: any) => u.id === form.user)
-  linkedUsers.value.push({ ...user, pivot: { department_type: form.department_type , give_perm: form.give_perm} })
-  form.user = null
-  form.department_type = null
-  form.give_perm = null
-
-  snackbar.add({ type: 'success', text: 'User linked' })
-}
-
-const unlinkUser = async (user: any) => {
-  const body = {
-    user_id: user.id,
-  }
-  await $api.departments.unlinkUser(props.id!, body)
-  // remove user from linkedUsers
-  linkedUsers.value = linkedUsers.value.filter((u: any) => u.id !== user.id)
-  snackbar.add({ type: 'success', text: 'User unlinked' })
-}
+watch(
+  () => editPermissionsModal.value.selectedIds,
+  (ids) => {
+    if (!editPermissionsModal.value.user || !editPermissionsModal.value.show || editPermissionsModal.value.loading) return
+    if (permDebounceTimer) clearTimeout(permDebounceTimer)
+    permDebounceTimer = setTimeout(async () => {
+      try {
+        editPermissionsModal.value.saving = true
+        editPermissionsModal.value.saved = false
+        await $api.users.updateUserPermissions(editPermissionsModal.value.user.id, {
+          permissions: ids,
+          department_id: props.id,
+        })
+        const idx = linkedUsers.value.findIndex((u: any) => u.id === editPermissionsModal.value.user.id)
+        if (idx >= 0) {
+          linkedUsers.value[idx].permissions = scopePermissions.value.filter((p: any) => ids.includes(p.id))
+        }
+        editPermissionsModal.value.saved = true
+        setTimeout(() => { editPermissionsModal.value.saved = false }, 2000)
+      } catch (e) {
+        console.error(e)
+        snackbar.add({ type: 'error', text: 'Error saving permissions' })
+      } finally {
+        editPermissionsModal.value.saving = false
+      }
+    }, 600)
+  },
+  { deep: true }
+)
 
 onMounted(async () => {
-  await getCatalogs()
-
+  allUsers.value = (await $api.users.getAllUsers()) as any[]
 })
-
-users.value = await $api.users.getAllUsers()
-permissions.value = await $api.users.getPermissions()
-roles.value = await $api.users.getRoles()
 </script>
