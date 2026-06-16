@@ -288,8 +288,8 @@
                     />
                     <div class="flex flex-col gap-1">
                       <div v-if="commissionForm[payment.id].retention_percentage" class="text-sm">
-                        Retention: {{ formatToCurrency(getChargeTotal(payment) * (commissionForm[payment.id].retention_percentage / 100)) }}
-                        <span class="text-gray-500">({{ commissionForm[payment.id].retention_percentage }}% of {{ formatToCurrency(getChargeTotal(payment)) }})</span>
+                        Retention: {{ formatToCurrency(getInvoiceTotal(payment) * (commissionForm[payment.id].retention_percentage / 100)) }}
+                        <span class="text-gray-500">({{ commissionForm[payment.id].retention_percentage }}% of invoice total {{ formatToCurrency(getInvoiceTotal(payment)) }})</span>
                       </div>
                       <div class="text-sm font-bold" :class="getCommissionTotal(payment) > payment.chargeable?.pending_balance ? 'text-red-600' : 'text-green-700'">
                         Total: {{ formatToCurrency(getCommissionTotal(payment)) }} / {{ formatToCurrency(payment.chargeable?.pending_balance) }}
@@ -845,18 +845,16 @@ const commissionForm = computed(() => {
   return commissionFormData
 })
 
-const getChargeTotal = (payment: any) => {
-  const amount = parseFloat(payment.chargeable?.amount || 0)
-  const amountIva = parseFloat(payment.chargeable?.amount_iva || 0)
-  return amount + amountIva
+const getInvoiceTotal = (payment: any) => {
+  return parseFloat(payment.chargeable?.invoice?.total || 0)
 }
 
 const getCommissionTotal = (payment: any) => {
   const form = commissionFormData[payment.id]
   if (!form) return 0
   const commission = form.commission_amount || 0
-  const chargeTotal = getChargeTotal(payment)
-  const retention = form.retention_percentage ? Math.round(chargeTotal * (form.retention_percentage / 100) * 100) / 100 : 0
+  const invoiceTotal = getInvoiceTotal(payment)
+  const retention = form.retention_percentage ? Math.round(invoiceTotal * (form.retention_percentage / 100) * 100) / 100 : 0
   return commission + retention
 }
 
@@ -879,10 +877,10 @@ const confirmApplyCommissionRetention = async (payment: any) => {
   let desc = ''
   if (form.commission_amount) desc += `Commission: ${formatToCurrency(form.commission_amount)}`
   if (form.retention_percentage) {
-    const chargeTotal = getChargeTotal(payment)
-    const retAmount = Math.round(chargeTotal * (form.retention_percentage / 100) * 100) / 100
+    const invoiceTotal = getInvoiceTotal(payment)
+    const retAmount = Math.round(invoiceTotal * (form.retention_percentage / 100) * 100) / 100
     if (desc) desc += ', '
-    desc += `Retention: ${form.retention_percentage}% of ${formatToCurrency(chargeTotal)} = ${formatToCurrency(retAmount)}`
+    desc += `Retention: ${form.retention_percentage}% of invoice total ${formatToCurrency(invoiceTotal)} = ${formatToCurrency(retAmount)}`
   }
 
   const result = await confirm({
