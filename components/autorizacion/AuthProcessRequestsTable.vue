@@ -96,7 +96,25 @@
             <td class="whitespace-nowrap">
               {{ authRequest.resolved_display }}
             </td>
-            <td class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</td>
+            <td>
+              <div class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</div>
+              <template v-if="authRequest.process_data?.charges?.length">
+                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                  <div v-for="(c, ci) in authRequest.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1 text-xs bg-gray-50">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-gray-800 truncate">{{ c.charge_name }}</div>
+                      <div v-if="c.invoice_number" class="text-gray-400">Invoice #{{ c.invoice_number }}</div>
+                    </div>
+                    <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="authRequest.process_data">
+                <div v-for="(val, key) in authRequest.process_data" :key="key" class="text-xs text-gray-600 whitespace-nowrap">
+                  <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
+                </div>
+              </template>
+            </td>
 
             <td>
               <v-chip size="x-small" color="amber">{{ authRequest.status }}</v-chip>
@@ -127,6 +145,27 @@
               <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
               <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
               <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
+              <template v-if="form.auth_request?.process_data">
+                <v-divider class="my-2" />
+                <div class="text-sm font-semibold mb-1">Request details:</div>
+                <template v-if="form.auth_request.process_data.charges?.length">
+                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                    <div v-for="(c, ci) in form.auth_request.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-900 truncate">{{ c.charge_name }}</div>
+                        <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
+                      </div>
+                      <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div v-for="(val, key) in form.auth_request.process_data" :key="key" class="text-sm">
+                    <span class="font-medium capitalize">{{ String(key).replace(/_/g, ' ') }}:</span>
+                    <span class="ml-1">{{ val }}</span>
+                  </div>
+                </template>
+              </template>
             </div>
             <v-autocomplete
               v-model="form.status"

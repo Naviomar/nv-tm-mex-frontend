@@ -45,6 +45,27 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/update-customer-cn`, fetchOptions)
   }
 
+  async updateMeta(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-meta`, fetchOptions)
+  }
+
+  async getAvailableCharges(id: string, invoiceNumber: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/available-charges?invoice_number=${encodeURIComponent(invoiceNumber)}`, fetchOptions)
+  }
+
+  async applyChargeRequest(id: string, requestId: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/apply-charge-request/${requestId}`, fetchOptions)
+  }
+
+  async addDirectCharge(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/add-direct-charge`, fetchOptions)
+  }
+
   async deletePayment(id: string, form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),
