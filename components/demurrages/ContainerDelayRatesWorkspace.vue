@@ -11,7 +11,7 @@
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <v-btn color="primary" prepend-icon="mdi-plus" @click="router.push('/configuration/container-delay-rates/add')">
+            <v-btn v-if="canCreate" color="primary" prepend-icon="mdi-plus" @click="router.push('/configuration/container-delay-rates/add')">
               New configuration
             </v-btn>
             <v-btn color="secondary" variant="outlined" prepend-icon="mdi-compare" @click="compareDialog.show = true">
@@ -159,50 +159,27 @@
               </div>
 
               <div class="flex flex-wrap gap-2">
-                <v-tooltip text="Duplica la configuración actual de esta línea para usarla como base en otra línea" location="bottom">
+                <v-tooltip text="Clona la configuración de esta línea hacia otra línea" location="bottom">
                   <template #activator="{ props: tooltipProps }">
                     <v-btn size="small" variant="outlined" prepend-icon="mdi-content-copy" v-bind="tooltipProps" @click="duplicateConfiguration(line)">
                       Clone
                     </v-btn>
                   </template>
                 </v-tooltip>
-                <v-tooltip text="Actualiza el Rate 1 de todos los contenedores visibles en el periodo seleccionado" location="bottom">
+                <v-tooltip text="Abre el administrador de esta línea: todos los periodos, crear nuevos, editar, historial" location="bottom">
                   <template #activator="{ props: tooltipProps }">
                     <v-btn
                       size="small"
-                      variant="outlined"
-                      prepend-icon="mdi-pencil-box-multiple-outline"
-                      :disabled="!getSelectedPeriod(line)?.rows.length"
+                      color="primary"
+                      prepend-icon="mdi-cog-outline"
+                      :disabled="!getSelectedPeriod(line)?.rawRows[0]?.id"
                       v-bind="tooltipProps"
-                      @click="openBulkDialog(line, 1)"
+                      @click="openConfiguration(line)"
                     >
-                      Bulk Rate 1
+                      Manage line
                     </v-btn>
                   </template>
                 </v-tooltip>
-                <v-tooltip text="Actualiza el Rate 2 de todos los contenedores visibles en el periodo seleccionado" location="bottom">
-                  <template #activator="{ props: tooltipProps }">
-                    <v-btn
-                      size="small"
-                      variant="outlined"
-                      prepend-icon="mdi-pencil-box-multiple-outline"
-                      :disabled="!getSelectedPeriod(line)?.rows.length"
-                      v-bind="tooltipProps"
-                      @click="openBulkDialog(line, 2)"
-                    >
-                      Bulk Rate 2
-                    </v-btn>
-                  </template>
-                </v-tooltip>
-                <v-btn
-                  size="small"
-                  color="primary"
-                  prepend-icon="mdi-open-in-new"
-                  :disabled="!getSelectedPeriod(line)?.rawRows[0]?.id"
-                  @click="openConfiguration(line)"
-                >
-                  Edit configuration
-                </v-btn>
               </div>
             </div>
           </div>
@@ -285,7 +262,7 @@
                           variant="tonal"
                           :color="getCellColor(displayRow.row.rate1, displayRow.row.status)"
                           size="small"
-                          @click="openCellDialog(line, displayRow.period, displayRow.row, 1)"
+                          @click="openConfiguration(line)"
                         >
                           {{ displayRow.row.rate1 ? formatCurrencyAmount(displayRow.row.rate1.amount) : 'Add Rate 1' }}
                         </v-btn>
@@ -295,7 +272,7 @@
                           variant="tonal"
                           :color="getCellColor(displayRow.row.rate2, displayRow.row.status)"
                           size="small"
-                          @click="openCellDialog(line, displayRow.period, displayRow.row, 2)"
+                          @click="openConfiguration(line)"
                         >
                           {{ displayRow.row.rate2 ? formatCurrencyAmount(displayRow.row.rate2.amount) : 'Add Rate 2' }}
                         </v-btn>
@@ -347,7 +324,7 @@
                         block
                         variant="tonal"
                         :color="getCellColor(displayRow.row.rate1, displayRow.row.status)"
-                        @click="openCellDialog(line, displayRow.period, displayRow.row, 1)"
+                        @click="openConfiguration(line)"
                       >
                         {{ displayRow.row.rate1 ? `Rate 1 · ${formatCurrencyAmount(displayRow.row.rate1.amount)}` : 'Add Rate 1' }}
                       </v-btn>
@@ -355,7 +332,7 @@
                         block
                         variant="tonal"
                         :color="getCellColor(displayRow.row.rate2, displayRow.row.status)"
-                        @click="openCellDialog(line, displayRow.period, displayRow.row, 2)"
+                        @click="openConfiguration(line)"
                       >
                         {{ displayRow.row.rate2 ? `Rate 2 · ${formatCurrencyAmount(displayRow.row.rate2.amount)}` : 'Add Rate 2' }}
                       </v-btn>
@@ -526,79 +503,6 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="cellDialog.show" max-width="520" persistent>
-      <v-card rounded="xl">
-        <v-toolbar color="primary" density="comfortable">
-          <v-toolbar-title>
-            {{ cellDialog.rowId ? 'Edit rate cell' : 'Create rate cell' }}
-          </v-toolbar-title>
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" @click="closeCellDialog" />
-        </v-toolbar>
-        <v-card-text class="space-y-4 pt-4">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <v-text-field :model-value="cellDialog.lineName" label="Line" variant="outlined" density="compact" readonly />
-            <v-text-field :model-value="cellDialog.containerName" label="Container" variant="outlined" density="compact" readonly />
-            <v-text-field :model-value="`Rate ${cellDialog.rateType}`" label="Rate type" variant="outlined" density="compact" readonly />
-            <v-text-field
-              v-model="cellDialog.amount"
-              label="Amount"
-              variant="outlined"
-              density="compact"
-              type="number"
-              prefix="$"
-              step="0.01"
-            />
-            <v-text-field v-model="cellDialog.startDate" label="Start date" variant="outlined" density="compact" type="date" />
-            <v-text-field v-model="cellDialog.endDate" label="End date (optional)" variant="outlined" density="compact" type="date" />
-          </div>
-          <div class="text-sm opacity-70">Leave end date empty to keep this rate open-ended.</div>
-        </v-card-text>
-        <v-card-actions class="px-6 pb-6">
-          <v-btn v-if="cellDialog.rowId" color="error" variant="text" prepend-icon="mdi-delete" @click="deleteCellRow">
-            Delete
-          </v-btn>
-          <v-spacer />
-          <v-btn variant="text" @click="closeCellDialog">Cancel</v-btn>
-          <v-btn color="primary" :loading="cellDialog.saving" @click="saveCellDialog">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="bulkDialog.show" max-width="560" persistent>
-      <v-card rounded="xl">
-        <v-toolbar color="secondary" density="comfortable">
-          <v-toolbar-title>Bulk update Rate {{ bulkDialog.rateType }}</v-toolbar-title>
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" @click="bulkDialog.show = false" />
-        </v-toolbar>
-        <v-card-text class="space-y-4 pt-4">
-          <div class="text-sm opacity-70">
-            This will update all visible containers in {{ bulkDialog.lineName }} for {{ bulkDialog.periodLabel }}.
-          </div>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <v-text-field
-              v-model="bulkDialog.amount"
-              label="Amount"
-              density="compact"
-              variant="outlined"
-              type="number"
-              prefix="$"
-              step="0.01"
-            />
-            <v-text-field v-model="bulkDialog.startDate" label="Start date" density="compact" variant="outlined" type="date" />
-            <v-text-field v-model="bulkDialog.endDate" label="End date (optional)" density="compact" variant="outlined" type="date" />
-          </div>
-          <div class="text-sm opacity-70">Leave end date empty to keep the updated rates open-ended.</div>
-        </v-card-text>
-        <v-card-actions class="px-6 pb-6">
-          <v-spacer />
-          <v-btn variant="text" @click="bulkDialog.show = false">Cancel</v-btn>
-          <v-btn color="secondary" :loading="bulkDialog.saving" @click="applyBulkDialog">Apply</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <v-dialog v-model="historyDialog.show" max-width="880" scrollable>
       <v-card rounded="xl">
         <v-toolbar color="info" density="comfortable">
@@ -609,34 +513,7 @@
           <v-btn icon="mdi-close" variant="text" @click="historyDialog.show = false" />
         </v-toolbar>
         <v-card-text class="pt-4">
-          <v-table density="compact">
-            <thead>
-              <tr>
-                <th class="text-left">Rate</th>
-                <th class="text-left">Amount</th>
-                <th class="text-left">Start</th>
-                <th class="text-left">End</th>
-                <th class="text-left">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in historyDialog.rows" :key="`history-${row.id}`">
-                <td>
-                  <v-chip size="small" :color="row.rate_type === 1 ? 'primary' : 'secondary'" label>
-                    Rate {{ row.rate_type }}
-                  </v-chip>
-                </td>
-                <td>{{ formatCurrencyAmount(row.amount) }}</td>
-                <td>{{ formatDateLabel(row.start_date) }}</td>
-                <td>{{ row.end_date ? formatDateLabel(row.end_date) : 'Open ended' }}</td>
-                <td>
-                  <v-chip size="small" :color="row.deleted_at ? 'error' : rowConflictIds.has(row.id) ? 'warning' : 'success'" label>
-                    {{ row.deleted_at ? 'inactive' : rowConflictIds.has(row.id) ? 'conflict' : 'active' }}
-                  </v-chip>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+          <RateHistoryTimeline :rows="historyDialog.rows" :on-date="filters.active_on || todayKey()" />
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -661,12 +538,11 @@
   type RateType,
 } from '~/composables/useContainerDelayRates'
  
- const { $api, $notifications } = useNuxtApp()
+ const { $api } = useNuxtApp()
  const snackbar = useSnackbar()
  const router = useRouter()
  const loadingStore = useLoadingStore()
- const confirm = $notifications.useConfirm()
- 
+
  const lines = ref<NamedCatalog[]>([])
  const containerTypes = ref<NamedCatalog[]>([])
  const allRows = ref<RateRow[]>([])
@@ -694,34 +570,6 @@
    show: false,
    leftLineId: null as number | null,
    rightLineId: null as number | null,
- })
- 
- const cellDialog = reactive({
-   show: false,
-   saving: false,
-   rowId: null as number | null,
-   lineId: null as number | null,
-   lineName: '',
-   containerTypeId: null as number | null,
-   containerName: '',
-   rateType: 1 as RateType,
-   amount: null as number | null,
-   startDate: todayKey(),
-   endDate: null as string | null,
- })
- 
- const bulkDialog = reactive({
-   show: false,
-   saving: false,
-   lineId: null as number | null,
-   lineName: '',
-   periodKey: null as string | null,
-   periodLabel: '',
-   rateType: 1 as RateType,
-   amount: null as number | null,
-   startDate: todayKey(),
-   endDate: null as string | null,
-   rows: [] as MatrixRow[],
  })
  
  const historyDialog = reactive({
@@ -881,13 +729,6 @@
    return line.periods.find((period) => period.key === selectedKey) ?? line.periods[0] ?? null
  }
 
- function getPeriodOptions(line: LineGroup) {
-   return line.periods.map((period) => ({
-     label: period.label,
-     value: period.key,
-   }))
- }
-
  function getDisplayRows(line: LineGroup) {
   const selectedPeriod = getSelectedPeriod(line)
   if (!selectedPeriod) return []
@@ -973,168 +814,6 @@ function openConfiguration(line: LineGroup) {
        end_date: toDateOnly(row.end_date) ?? '',
      },
    })
- }
- 
- function openCellDialog(line: LineGroup, period: PeriodGroup, row: MatrixRow, rateType: RateType) {
-   const cell = rateType === 1 ? row.rate1 : row.rate2
-   cellDialog.show = true
-   cellDialog.rowId = cell?.rowId ?? null
-   cellDialog.lineId = line.line_id
-   cellDialog.lineName = line.line_name
-   cellDialog.containerTypeId = row.container_type_id
-   cellDialog.containerName = row.container_name
-   cellDialog.rateType = rateType
-   cellDialog.amount = cell?.amount ?? null
-   cellDialog.startDate = cell?.startDate ?? period.start_date ?? todayKey()
-   cellDialog.endDate = cell?.endDate ?? period.end_date ?? null
- }
- 
- function closeCellDialog() {
-   cellDialog.show = false
-   cellDialog.saving = false
-   cellDialog.rowId = null
-   cellDialog.lineId = null
-   cellDialog.lineName = ''
-   cellDialog.containerTypeId = null
-   cellDialog.containerName = ''
-   cellDialog.rateType = 1
-   cellDialog.amount = null
-   cellDialog.startDate = todayKey()
-   cellDialog.endDate = null
- }
- 
- async function saveCellDialog() {
-   if (!cellDialog.lineId || !cellDialog.containerTypeId || cellDialog.amount === null || !cellDialog.startDate) {
-     snackbar.add({ type: 'error', text: 'Complete amount and dates before saving.' })
-     return
-   }
- 
-   try {
-     cellDialog.saving = true
-     loadingStore.start()
- 
-     if (cellDialog.rowId) {
-       await $api.containerDelayRates.updateRate(`${cellDialog.rowId}`, {
-         line_id: cellDialog.lineId,
-         container_type_id: cellDialog.containerTypeId,
-         rate_type: cellDialog.rateType,
-         amount: Number(cellDialog.amount),
-         start_date: cellDialog.startDate,
-         end_date: cellDialog.endDate || null,
-       })
-     } else {
-       await $api.containerDelayRates.createRates({
-         line_id: cellDialog.lineId,
-         container_type_ids: [cellDialog.containerTypeId],
-         all_containers: false,
-         rate_type: cellDialog.rateType,
-         amount: Number(cellDialog.amount),
-         start_date: cellDialog.startDate,
-         end_date: cellDialog.endDate || null,
-       })
-     }
- 
-     snackbar.add({ type: 'success', text: 'Rate cell saved' })
-     closeCellDialog()
-     await loadRates()
-   } catch (error: any) {
-     console.error(error)
-     snackbar.add({ type: 'error', text: error?.data?.message || 'Failed to save rate cell' })
-   } finally {
-     cellDialog.saving = false
-     setTimeout(() => loadingStore.stop(), 250)
-   }
- }
- 
- async function deleteCellRow() {
-   if (!cellDialog.rowId) return
- 
-   const result = await confirm({
-     title: 'Delete rate?',
-     content: 'This will deactivate the selected rate row.',
-     confirmationText: 'Delete',
-     dialogProps: { persistent: true, maxWidth: 500 },
-     confirmationButtonProps: { color: 'error' },
-   })
- 
-   if (!result) return
- 
-   try {
-     cellDialog.saving = true
-     loadingStore.start()
-     await $api.containerDelayRates.deleteRate(`${cellDialog.rowId}`)
-     snackbar.add({ type: 'success', text: 'Rate row deleted' })
-     closeCellDialog()
-     await loadRates()
-   } catch (error) {
-     console.error(error)
-     snackbar.add({ type: 'error', text: 'Failed to delete rate row' })
-   } finally {
-     cellDialog.saving = false
-     setTimeout(() => loadingStore.stop(), 250)
-   }
- }
- 
- function openBulkDialog(line: LineGroup, rateType: RateType) {
-   const period = getSelectedPeriod(line)
-   if (!period) return
- 
-   bulkDialog.show = true
-   bulkDialog.lineId = line.line_id
-   bulkDialog.lineName = line.line_name
-   bulkDialog.periodKey = period.key
-   bulkDialog.periodLabel = period.label
-   bulkDialog.rateType = rateType
-   bulkDialog.startDate = period.start_date ?? todayKey()
-   bulkDialog.endDate = period.end_date ?? null
-   bulkDialog.amount = null
-   bulkDialog.rows = period.rows
- }
- 
- async function applyBulkDialog() {
-   if (!bulkDialog.lineId || bulkDialog.amount === null || !bulkDialog.startDate) {
-     snackbar.add({ type: 'error', text: 'Set amount and dates before applying bulk update.' })
-     return
-   }
- 
-   try {
-     bulkDialog.saving = true
-     loadingStore.start()
- 
-     for (const row of bulkDialog.rows) {
-       const cell = bulkDialog.rateType === 1 ? row.rate1 : row.rate2
-       if (cell?.rowId) {
-         await $api.containerDelayRates.updateRate(`${cell.rowId}`, {
-           line_id: bulkDialog.lineId,
-           container_type_id: row.container_type_id,
-           rate_type: bulkDialog.rateType,
-           amount: Number(bulkDialog.amount),
-           start_date: bulkDialog.startDate,
-           end_date: bulkDialog.endDate || null,
-         })
-       } else {
-         await $api.containerDelayRates.createRates({
-           line_id: bulkDialog.lineId,
-           container_type_ids: [row.container_type_id],
-           all_containers: false,
-           rate_type: bulkDialog.rateType,
-           amount: Number(bulkDialog.amount),
-           start_date: bulkDialog.startDate,
-           end_date: bulkDialog.endDate || null,
-         })
-       }
-     }
- 
-     snackbar.add({ type: 'success', text: `Rate ${bulkDialog.rateType} updated for ${bulkDialog.rows.length} containers` })
-     bulkDialog.show = false
-     await loadRates()
-   } catch (error: any) {
-     console.error(error)
-     snackbar.add({ type: 'error', text: error?.data?.message || 'Bulk update failed' })
-   } finally {
-     bulkDialog.saving = false
-     setTimeout(() => loadingStore.stop(), 250)
-   }
  }
  
  function openHistory(line: LineGroup, row: MatrixRow) {

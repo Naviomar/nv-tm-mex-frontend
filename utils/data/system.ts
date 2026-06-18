@@ -11,6 +11,11 @@ const permissions = {
   DemurragesRateOverrideCreate: 'demurrages-rate-override-create',
   DemurragesRateOverrideEdit: 'demurrages-rate-override-edit',
   DemurragesRateOverrideDelete: 'demurrages-rate-override-delete',
+
+  // Container Delay Rates
+  ContainerDelayRatesCreate: 'container-delay-rates-create',
+  ContainerDelayRatesEdit: 'container-delay-rates-edit',
+  ContainerDelayRatesDelete: 'container-delay-rates-delete',
   SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
   MarkSupplierCfdiAsFreeFormat: 'mark-supplier-cfdi-as-free-format',
   RevertSupplierCfdiFromFreeFormat: 'revert-supplier-cfdi-from-free-format',
@@ -322,6 +327,12 @@ const processResources = {
     processName: 'supplier-cfdi-restore',
     description: 'Restore Supplier CFDI',
     keyLabel: 'CFDI',
+  },
+  /** Authorize applying container delay rate changes (create/update/delete batch) */
+  ContainerDelayRatesApplyChanges: {
+    processName: 'container-delay-rates.apply-changes',
+    description: 'Apply Container Delay Rate Changes',
+    keyLabel: 'Line',
   },
 }
 

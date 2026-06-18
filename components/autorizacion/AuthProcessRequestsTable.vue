@@ -109,6 +109,14 @@
                   </div>
                 </div>
               </template>
+              <template v-else-if="authRequest.process_data?.operations?.length">
+                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                  <div v-for="(op, oi) in authRequest.process_data.operations" :key="oi" class="px-2 py-1 text-xs bg-gray-50">
+                    <span class="font-semibold capitalize">{{ op.action }}</span>
+                    <span class="ml-1">{{ describeOperation(op) }}</span>
+                  </div>
+                </div>
+              </template>
               <template v-else-if="authRequest.process_data">
                 <div v-for="(val, key) in authRequest.process_data" :key="key" class="text-xs text-gray-600 whitespace-nowrap">
                   <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
@@ -156,6 +164,14 @@
                         <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
                       </div>
                       <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else-if="form.auth_request.process_data.operations?.length">
+                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                    <div v-for="(op, oi) in form.auth_request.process_data.operations" :key="oi" class="px-2 py-1.5 text-sm bg-gray-50">
+                      <span class="font-medium capitalize">{{ op.action }}</span>
+                      <span class="ml-1">{{ describeOperation(op) }}</span>
                     </div>
                   </div>
                 </template>

@@ -87,6 +87,34 @@ export type DraftRow = {
   rate2: DraftCell
 }
 
+export type RateOp =
+  | {
+      action: 'create'
+      container_type_id: number
+      container_name?: string
+      rate_type: RateType
+      amount: number
+      start_date: string
+      end_date: string | null
+    }
+  | {
+      action: 'update'
+      rate_id: number
+      container_type_id: number
+      container_name?: string
+      rate_type: RateType
+      amount: number
+      start_date: string
+      end_date: string | null
+    }
+  | {
+      action: 'delete'
+      rate_id: number
+      container_type_id?: number
+      container_name?: string
+      rate_type?: RateType
+    }
+
 const INFINITY_DATE = '9999-12-31'
 
 export function cleanContainerDelayQuery(query: Record<string, any>) {
@@ -131,6 +159,12 @@ export function toDateOnly(value?: string | null) {
   return `${value}`.slice(0, 10)
 }
 
+export function dayBefore(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
 export function buildPeriodKey(startDate?: string | null, endDate?: string | null) {
   return `${toDateOnly(startDate) ?? 'null'}__${toDateOnly(endDate) ?? 'null'}`
 }
@@ -155,6 +189,26 @@ export function formatDateLabel(value?: string | null) {
 
 export function getPeriodLabel(startDate?: string | null, endDate?: string | null) {
   return `${formatDateLabel(startDate)} → ${endDate ? formatDateLabel(endDate) : 'Open ended'}`
+}
+
+export function summarizeOperations(ops: RateOp[]) {
+  const creates = ops.filter((op) => op.action === 'create').length
+  const updates = ops.filter((op) => op.action === 'update').length
+  const deletes = ops.filter((op) => op.action === 'delete').length
+  return { creates, updates, deletes, total: ops.length }
+}
+
+export function describeOperation(op: RateOp) {
+  const container = op.container_name ?? (op.container_type_id ? `Container ${op.container_type_id}` : 'Container')
+  const rate = op.rate_type ? `Rate ${op.rate_type}` : 'Rate'
+
+  if (op.action === 'delete') {
+    return `Remove ${rate} · ${container}`
+  }
+
+  const verb = op.action === 'create' ? 'Add' : 'Update'
+  const period = getPeriodLabel(op.start_date, op.end_date)
+  return `${verb} ${rate} · ${container} · ${formatCurrencyAmount(op.amount)} · ${period}`
 }
 
 export function getPeriodStatus(startDate?: string | null, endDate?: string | null, onDate = todayKey()) {
@@ -489,6 +543,116 @@ export function cloneDraftRows(rows: DraftRow[]) {
     rate1: { ...row.rate1 },
     rate2: { ...row.rate2 },
   }))
+}
+
+function draftHasAnyAmount(row: DraftRow) {
+  return asAmount(row.rate1.amount) !== null || asAmount(row.rate2.amount) !== null
+}
+
+/**
+ * Translates an edited set of draft rows into a batch of rate operations.
+ * Open-ended existing rates that a new cell starts after are auto-closed (their
+ * end_date is set to the day before the new start). Overlaps that cannot be
+ * auto-closed are surfaced as real conflicts for the caller to confirm.
+ */
+export function buildRateOperations(draftRows: DraftRow[], lineRows: RateRow[]) {
+  const autoCloseTargets = new Map<number, RateOp>()
+  const realConflictNames: string[] = []
+
+  const newCells = draftRows.filter((row) => draftHasAnyAmount(row) && !row.rate1.rowId && !row.rate2.rowId)
+
+  for (const draft of newCells) {
+    if (!draft.startDate) continue
+
+    for (const existing of lineRows) {
+      if (existing.deleted_at) continue
+      if (existing.container_type_id !== draft.container_type_id) continue
+
+      const draftHasThisRate =
+        (existing.rate_type === 1 && asAmount(draft.rate1.amount) !== null) ||
+        (existing.rate_type === 2 && asAmount(draft.rate2.amount) !== null)
+      if (!draftHasThisRate) continue
+
+      const existingStart = toDateOnly(existing.start_date)
+      const existingEnd = toDateOnly(existing.end_date)
+
+      if (!rangesOverlap(draft.startDate, draft.endDate, existingStart, existingEnd)) continue
+
+      if (!existingEnd && existingStart && existingStart < draft.startDate) {
+        if (existing.id && !autoCloseTargets.has(existing.id)) {
+          autoCloseTargets.set(existing.id, {
+            action: 'update',
+            rate_id: existing.id,
+            container_type_id: existing.container_type_id,
+            container_name: draft.container_name,
+            rate_type: existing.rate_type,
+            amount: asAmount(existing.amount) ?? 0,
+            start_date: existingStart,
+            end_date: dayBefore(draft.startDate),
+          })
+        }
+      } else if (!realConflictNames.includes(draft.container_name)) {
+        realConflictNames.push(draft.container_name)
+      }
+    }
+  }
+
+  const ops: RateOp[] = [...autoCloseTargets.values()]
+
+  for (const row of draftRows) {
+    for (const rateType of [1, 2] as RateType[]) {
+      const cell = rateType === 1 ? row.rate1 : row.rate2
+      const amount = asAmount(cell.amount)
+      const originalAmount = asAmount(cell.originalAmount)
+      const startDate = row.startDate
+      const endDate = row.endDate || null
+
+      if (cell.rowId && amount === null) {
+        ops.push({
+          action: 'delete',
+          rate_id: cell.rowId,
+          container_type_id: row.container_type_id,
+          container_name: row.container_name,
+          rate_type: rateType,
+        })
+        continue
+      }
+
+      if (amount === null || !startDate) continue
+
+      if (cell.rowId) {
+        const changed =
+          amount !== originalAmount ||
+          startDate !== (cell.originalStartDate || null) ||
+          endDate !== (cell.originalEndDate || null)
+        if (changed) {
+          ops.push({
+            action: 'update',
+            rate_id: cell.rowId,
+            container_type_id: row.container_type_id,
+            container_name: row.container_name,
+            rate_type: rateType,
+            amount,
+            start_date: startDate,
+            end_date: endDate,
+          })
+        }
+        continue
+      }
+
+      ops.push({
+        action: 'create',
+        container_type_id: row.container_type_id,
+        container_name: row.container_name,
+        rate_type: rateType,
+        amount,
+        start_date: startDate,
+        end_date: endDate,
+      })
+    }
+  }
+
+  return { ops, autoCloseCount: autoCloseTargets.size, realConflictNames }
 }
 
 function buildMatrixCell(row: RateRow, rateType: RateType, conflictIds: Set<number>) {
