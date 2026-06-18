@@ -262,7 +262,7 @@
                           variant="tonal"
                           :color="getCellColor(displayRow.row.rate1, displayRow.row.status)"
                           size="small"
-                          @click="openConfiguration(line)"
+                          @click="openCellDialog(line, displayRow.period, displayRow.row, 1)"
                         >
                           {{ displayRow.row.rate1 ? formatCurrencyAmount(displayRow.row.rate1.amount) : 'Add Rate 1' }}
                         </v-btn>
@@ -272,7 +272,7 @@
                           variant="tonal"
                           :color="getCellColor(displayRow.row.rate2, displayRow.row.status)"
                           size="small"
-                          @click="openConfiguration(line)"
+                          @click="openCellDialog(line, displayRow.period, displayRow.row, 2)"
                         >
                           {{ displayRow.row.rate2 ? formatCurrencyAmount(displayRow.row.rate2.amount) : 'Add Rate 2' }}
                         </v-btn>
@@ -324,7 +324,7 @@
                         block
                         variant="tonal"
                         :color="getCellColor(displayRow.row.rate1, displayRow.row.status)"
-                        @click="openConfiguration(line)"
+                        @click="openCellDialog(line, displayRow.period, displayRow.row, 1)"
                       >
                         {{ displayRow.row.rate1 ? `Rate 1 · ${formatCurrencyAmount(displayRow.row.rate1.amount)}` : 'Add Rate 1' }}
                       </v-btn>
@@ -332,7 +332,7 @@
                         block
                         variant="tonal"
                         :color="getCellColor(displayRow.row.rate2, displayRow.row.status)"
-                        @click="openConfiguration(line)"
+                        @click="openCellDialog(line, displayRow.period, displayRow.row, 2)"
                       >
                         {{ displayRow.row.rate2 ? `Rate 2 · ${formatCurrencyAmount(displayRow.row.rate2.amount)}` : 'Add Rate 2' }}
                       </v-btn>
@@ -503,6 +503,48 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="cellDialog.show" max-width="520" persistent>
+      <v-card rounded="xl">
+        <v-toolbar color="primary" density="comfortable">
+          <v-toolbar-title>
+            {{ cellDialog.rowId ? 'Edit rate' : 'Add rate' }} · Rate {{ cellDialog.rateType }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" @click="closeCellDialog" />
+        </v-toolbar>
+        <v-card-text class="space-y-4 pt-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <v-text-field :model-value="cellDialog.lineName" label="Line" variant="outlined" density="compact" readonly />
+            <v-text-field :model-value="cellDialog.containerName" label="Container" variant="outlined" density="compact" readonly />
+            <v-text-field v-model="cellDialog.amount" label="Amount" variant="outlined" density="compact" type="number" prefix="$" step="0.01" />
+            <div class="hidden sm:block" />
+            <v-text-field v-model="cellDialog.startDate" label="Start date" variant="outlined" density="compact" type="date" />
+            <v-text-field v-model="cellDialog.endDate" label="End date (optional)" variant="outlined" density="compact" type="date" placeholder="Open ended" />
+          </div>
+          <div class="text-sm opacity-70">
+            Leave end date empty to keep this rate open-ended. Clearing the amount removes this rate. If a previous
+            open-ended rate exists, it is closed automatically.
+          </div>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-6">
+          <v-btn v-if="cellDialog.rowId" color="error" variant="text" prepend-icon="mdi-delete" @click="deleteCellRow">
+            Delete
+          </v-btn>
+          <v-spacer />
+          <v-btn variant="text" @click="closeCellDialog">Cancel</v-btn>
+          <v-btn color="primary" :loading="cellDialog.saving" @click="saveCellDialog">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <RequestRateChangesDialog
+      v-model="requestDialog.show"
+      :line-id="requestDialog.lineId"
+      :line-name="requestDialog.lineName"
+      :ops="requestDialog.ops"
+      @submitted="onRequestSubmitted"
+    />
+
     <v-dialog v-model="historyDialog.show" max-width="880" scrollable>
       <v-card rounded="xl">
         <v-toolbar color="info" density="comfortable">
@@ -523,6 +565,7 @@
  <script setup lang="ts">
  import {
   buildLineGroups,
+  buildRateOperations,
   cleanContainerDelayQuery,
   fetchAllContainerDelayRates,
   formatDateLabel,
@@ -530,18 +573,24 @@
   getPeriodLabel,
   toDateOnly,
   todayKey,
+  type DraftCell,
+  type DraftRow,
   type LineGroup,
   type MatrixRow,
   type NamedCatalog,
   type PeriodGroup,
+  type RateOp,
   type RateRow,
   type RateType,
 } from '~/composables/useContainerDelayRates'
- 
- const { $api } = useNuxtApp()
+ import { useContainerDelayRateActions } from '~/composables/useContainerDelayRateActions'
+
+ const { $api, $notifications } = useNuxtApp()
  const snackbar = useSnackbar()
  const router = useRouter()
  const loadingStore = useLoadingStore()
+ const confirm = $notifications.useConfirm()
+ const { canExecuteDirect, executeDirect, maybeConfirm } = useContainerDelayRateActions()
 
  const lines = ref<NamedCatalog[]>([])
  const containerTypes = ref<NamedCatalog[]>([])
@@ -580,7 +629,31 @@
    containerName: '',
    rows: [] as RateRow[],
  })
- 
+
+ const cellDialog = reactive({
+   show: false,
+   saving: false,
+   rowId: null as number | null,
+   lineId: null as number | null,
+   lineName: '',
+   containerTypeId: null as number | null,
+   containerName: '',
+   rateType: 1 as RateType,
+   amount: null as number | null,
+   originalAmount: null as number | null,
+   startDate: todayKey(),
+   endDate: null as string | null,
+   originalStartDate: null as string | null,
+   originalEndDate: null as string | null,
+ })
+
+ const requestDialog = reactive({
+   show: false,
+   lineId: 0,
+   lineName: '' as string | null,
+   ops: [] as RateOp[],
+ })
+
  const rowConflictIds = computed(() => getConflictRateIds(allRows.value))
  
  const lineGroups = computed(() =>
@@ -816,6 +889,148 @@ function openConfiguration(line: LineGroup) {
    })
  }
  
+ function openCellDialog(line: LineGroup, period: PeriodGroup, row: MatrixRow, rateType: RateType) {
+   const cell = rateType === 1 ? row.rate1 : row.rate2
+   cellDialog.show = true
+   cellDialog.saving = false
+   cellDialog.rowId = cell?.rowId ?? null
+   cellDialog.lineId = line.line_id
+   cellDialog.lineName = line.line_name
+   cellDialog.containerTypeId = row.container_type_id
+   cellDialog.containerName = row.container_name
+   cellDialog.rateType = rateType
+   cellDialog.amount = cell?.amount ?? null
+   cellDialog.originalAmount = cell?.amount ?? null
+   cellDialog.startDate = cell?.startDate ?? period.start_date ?? todayKey()
+   cellDialog.endDate = cell?.endDate ?? period.end_date ?? null
+   cellDialog.originalStartDate = cell?.startDate ?? null
+   cellDialog.originalEndDate = cell?.endDate ?? null
+ }
+
+ function closeCellDialog() {
+   cellDialog.show = false
+   cellDialog.saving = false
+   cellDialog.rowId = null
+   cellDialog.amount = null
+ }
+
+ function emptyDraftCell(): DraftCell {
+   return {
+     rowId: null,
+     amount: null,
+     originalAmount: null,
+     suggestedAmount: null,
+     startDate: null,
+     endDate: null,
+     originalStartDate: null,
+     originalEndDate: null,
+     suggested: false,
+     deletedAt: null,
+   }
+ }
+
+ // Builds a single-container draft and routes it through the shared operation
+ // pipeline (auto-close + permission/request) so a single-cell edit is as safe
+ // as a full period save and never disturbs the other rate of the container.
+ function buildCellOps() {
+   const amount = cellDialog.amount === ('' as any) ? null : cellDialog.amount
+   const targetCell: DraftCell = {
+     rowId: cellDialog.rowId,
+     amount,
+     originalAmount: cellDialog.originalAmount,
+     suggestedAmount: null,
+     startDate: cellDialog.startDate,
+     endDate: cellDialog.endDate || null,
+     originalStartDate: cellDialog.originalStartDate,
+     originalEndDate: cellDialog.originalEndDate,
+     suggested: false,
+     deletedAt: null,
+   }
+
+   const draftRow: DraftRow = {
+     container_type_id: cellDialog.containerTypeId as number,
+     container_name: cellDialog.containerName,
+     startDate: cellDialog.startDate,
+     endDate: cellDialog.endDate || null,
+     originalStartDate: cellDialog.originalStartDate,
+     originalEndDate: cellDialog.originalEndDate,
+     suggestedDates: false,
+     rate1: cellDialog.rateType === 1 ? targetCell : emptyDraftCell(),
+     rate2: cellDialog.rateType === 2 ? targetCell : emptyDraftCell(),
+   }
+
+   const lineRows = allRows.value.filter((row) => row.line_id === cellDialog.lineId)
+   return buildRateOperations([draftRow], lineRows)
+ }
+
+ async function applyCellOps() {
+   const { ops, autoCloseCount, realConflictNames } = buildCellOps()
+
+   if (!ops.length) {
+     snackbar.add({ type: 'info', text: 'No changes to apply.' })
+     return
+   }
+
+   if (!canExecuteDirect(ops)) {
+     requestDialog.lineId = cellDialog.lineId as number
+     requestDialog.lineName = cellDialog.lineName
+     requestDialog.ops = ops
+     requestDialog.show = true
+     cellDialog.show = false
+     return
+   }
+
+   if (!(await maybeConfirm(autoCloseCount, realConflictNames))) return
+
+   try {
+     cellDialog.saving = true
+     loadingStore.start()
+     await executeDirect(ops, cellDialog.lineId as number)
+     snackbar.add({ type: 'success', text: 'Rate saved' })
+     closeCellDialog()
+     await loadRates()
+   } catch (error: any) {
+     console.error(error)
+     snackbar.add({ type: 'error', text: error?.data?.message || 'Failed to save rate' })
+   } finally {
+     cellDialog.saving = false
+     setTimeout(() => loadingStore.stop(), 250)
+   }
+ }
+
+ async function saveCellDialog() {
+   if (!cellDialog.lineId || !cellDialog.containerTypeId) return
+   const amount = cellDialog.amount === ('' as any) ? null : cellDialog.amount
+   if (amount !== null && !cellDialog.startDate) {
+     snackbar.add({ type: 'error', text: 'Set a start date.' })
+     return
+   }
+   if (amount !== null && cellDialog.endDate && cellDialog.endDate < cellDialog.startDate) {
+     snackbar.add({ type: 'error', text: 'End date must be on or after the start date.' })
+     return
+   }
+   await applyCellOps()
+ }
+
+ async function deleteCellRow() {
+   if (!cellDialog.rowId) return
+   const ok = await confirm({
+     title: 'Delete rate?',
+     content: 'This will deactivate the selected rate row.',
+     confirmationText: 'Delete',
+     dialogProps: { persistent: true, maxWidth: 500 },
+     confirmationButtonProps: { color: 'error' },
+   })
+   if (!ok) return
+   cellDialog.amount = null
+   await applyCellOps()
+ }
+
+ async function onRequestSubmitted() {
+   requestDialog.show = false
+   await loadRates()
+ }
+
  function openHistory(line: LineGroup, row: MatrixRow) {
    historyDialog.show = true
    historyDialog.lineId = line.line_id

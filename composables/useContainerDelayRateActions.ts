@@ -9,8 +9,9 @@ export const CONTAINER_DELAY_RATES_PROCESS = 'container-delay-rates.apply-change
  * process authorization request that carries the data and is applied on approval.
  */
 export function useContainerDelayRateActions() {
-  const { $api } = useNuxtApp()
+  const { $api, $notifications } = useNuxtApp()
   const { hasPermission } = useCheckUser()
+  const confirm = $notifications.useConfirm()
 
   const canCreate = computed(() => hasPermission('container-delay-rates-create'))
   const canEdit = computed(() => hasPermission('container-delay-rates-edit'))
@@ -102,6 +103,37 @@ export function useContainerDelayRateActions() {
     })
   }
 
+  /**
+   * Shows the auto-close / overlap confirmations before a direct save.
+   * Returns false if the user cancels.
+   */
+  async function maybeConfirm(autoCloseCount: number, realConflictNames: string[]) {
+    if (autoCloseCount && !realConflictNames.length) {
+      const confirmed = await confirm({
+        title: 'Open-ended rates will be closed',
+        content: `${autoCloseCount} open-ended rate(s) will be closed the day before the new period starts. Continue?`,
+        confirmationText: 'Continue',
+        dialogProps: { persistent: true, maxWidth: 520 },
+        confirmationButtonProps: { color: 'primary' },
+      })
+      if (!confirmed) return false
+    }
+
+    if (realConflictNames.length) {
+      const names = realConflictNames.slice(0, 5).join(', ')
+      const confirmed = await confirm({
+        title: 'Overlapping date ranges',
+        content: `${realConflictNames.length} container(s) have overlapping rates (${names}${realConflictNames.length > 5 ? '...' : ''}). This will create overlapping periods. Continue anyway?`,
+        confirmationText: 'Continue anyway',
+        dialogProps: { persistent: true, maxWidth: 520 },
+        confirmationButtonProps: { color: 'warning' },
+      })
+      if (!confirmed) return false
+    }
+
+    return true
+  }
+
   return {
     canCreate,
     canEdit,
@@ -111,5 +143,6 @@ export function useContainerDelayRateActions() {
     executeDirect,
     submitAsRequest,
     loadLineRequests,
+    maybeConfirm,
   }
 }

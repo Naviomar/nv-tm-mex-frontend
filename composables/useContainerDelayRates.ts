@@ -67,6 +67,7 @@ export type DraftCell = {
   rowId: number | null
   amount: number | null
   originalAmount: number | null
+  suggestedAmount: number | null
   startDate: string | null
   endDate: string | null
   originalStartDate: string | null
@@ -676,6 +677,7 @@ function buildDraftCell(existingRow?: RateRow | null, suggestedRow?: RateRow | n
     rowId: existingRow?.id ?? null,
     amount,
     originalAmount: asAmount(existingRow?.amount),
+    suggestedAmount: asAmount(suggestedRow?.amount),
     startDate: toDateOnly(source?.start_date),
     endDate: toDateOnly(source?.end_date),
     originalStartDate: toDateOnly(existingRow?.start_date),

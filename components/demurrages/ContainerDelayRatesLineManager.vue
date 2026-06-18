@@ -143,7 +143,19 @@
             <v-text-field v-model.number="bulk.rate2" label="Bulk Rate 2" density="compact" variant="outlined"
               type="number" prefix="$" hide-details style="max-width: 160px" />
             <v-btn variant="outlined" @click="applyBulk(2)">Apply R2</v-btn>
+            <v-tooltip v-if="hasSuggestions" text="Llena todas las tarifas con los valores del periodo activo" location="bottom">
+              <template #activator="{ props: tp }">
+                <v-btn variant="tonal" color="warning" prepend-icon="mdi-arrow-right-bold" v-bind="tp" @click="carryForwardAll">
+                  Carry forward all
+                </v-btn>
+              </template>
+            </v-tooltip>
           </div>
+
+          <v-alert v-if="hasSuggestions" type="info" variant="tonal" density="compact">
+            Los valores sugeridos (del periodo activo) se muestran como pista. Solo se guardará lo que captures o lo que
+            traigas con "Carry forward all".
+          </v-alert>
 
           <div class="overflow-x-auto rounded-xl border">
             <v-table density="comfortable" class="min-w-full">
@@ -168,17 +180,31 @@
                   </td>
                   <td>
                     <v-text-field v-model="row.rate1.amount" density="compact" variant="outlined" type="number"
-                      prefix="$" step="0.01" hide-details>
+                      prefix="$" step="0.01" hide-details
+                      :placeholder="row.rate1.suggestedAmount !== null ? `prev ${formatCurrencyAmount(row.rate1.suggestedAmount)}` : ''">
                       <template #append-inner>
-                        <v-chip v-if="row.rate1.suggested" color="warning" size="x-small" label>Suggested</v-chip>
+                        <v-chip
+                          v-if="row.rate1.suggested && row.rate1.suggestedAmount !== null && row.rate1.amount === null"
+                          color="warning" size="x-small" label class="cursor-pointer"
+                          @click="fillSuggested(row.rate1)"
+                        >
+                          {{ formatCurrencyAmount(row.rate1.suggestedAmount) }}
+                        </v-chip>
                       </template>
                     </v-text-field>
                   </td>
                   <td>
                     <v-text-field v-model="row.rate2.amount" density="compact" variant="outlined" type="number"
-                      prefix="$" step="0.01" hide-details>
+                      prefix="$" step="0.01" hide-details
+                      :placeholder="row.rate2.suggestedAmount !== null ? `prev ${formatCurrencyAmount(row.rate2.suggestedAmount)}` : ''">
                       <template #append-inner>
-                        <v-chip v-if="row.rate2.suggested" color="warning" size="x-small" label>Suggested</v-chip>
+                        <v-chip
+                          v-if="row.rate2.suggested && row.rate2.suggestedAmount !== null && row.rate2.amount === null"
+                          color="warning" size="x-small" label class="cursor-pointer"
+                          @click="fillSuggested(row.rate2)"
+                        >
+                          {{ formatCurrencyAmount(row.rate2.suggestedAmount) }}
+                        </v-chip>
                       </template>
                     </v-text-field>
                   </td>
@@ -228,13 +254,12 @@ const props = defineProps<{
   rateId?: number | null
 }>()
 
-const { $api, $notifications } = useNuxtApp()
+const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
 const route = useRoute()
 const loadingStore = useLoadingStore()
-const confirm = $notifications.useConfirm()
-const { canCreate, canEdit, canDelete, canExecuteDirect, executeDirect, loadLineRequests } =
+const { canCreate, canEdit, canDelete, canExecuteDirect, executeDirect, loadLineRequests, maybeConfirm } =
   useContainerDelayRateActions()
 
 const isEdit = computed(() => (props.mode ?? 'create') === 'edit')
@@ -302,6 +327,10 @@ const visibleRows = computed(() => {
   if (!query) return editor.draftRows
   return editor.draftRows.filter((row) => row.container_name.toLowerCase().includes(query))
 })
+
+const hasSuggestions = computed(() =>
+  editor.draftRows.some((row) => row.rate1.suggested || row.rate2.suggested)
+)
 
 const canExecuteAll = computed(() => {
   // Best-effort hint for the button label; the real decision is per-batch on save.
@@ -372,12 +401,31 @@ function openNewPeriod() {
   rows.forEach((row) => {
     row.startDate = todayKey()
     row.endDate = null
+    // Show prior values as hints only; do not pre-fill so save persists only
+    // what the user actually enters (or carries forward explicitly).
+    if (row.rate1.suggested) row.rate1.amount = null
+    if (row.rate2.suggested) row.rate2.amount = null
   })
   editor.mode = 'new'
   editor.title = 'New rate period'
   editor.draftRows = cloneDraftRows(rows)
   editor.initialDraftRows = cloneDraftRows(rows)
   editor.show = true
+}
+
+function carryForwardAll() {
+  editor.draftRows.forEach((row) => {
+    if (row.rate1.suggested && row.rate1.suggestedAmount !== null && row.rate1.amount === null) {
+      row.rate1.amount = row.rate1.suggestedAmount
+    }
+    if (row.rate2.suggested && row.rate2.suggestedAmount !== null && row.rate2.amount === null) {
+      row.rate2.amount = row.rate2.suggestedAmount
+    }
+  })
+}
+
+function fillSuggested(cell: { suggested: boolean; suggestedAmount: number | null; amount: number | null }) {
+  if (cell.suggestedAmount !== null) cell.amount = cell.suggestedAmount
 }
 
 function openEditPeriod(period: PeriodGroup) {
@@ -468,28 +516,7 @@ async function save() {
     return
   }
 
-  if (autoCloseCount && !realConflictNames.length) {
-    const confirmed = await confirm({
-      title: 'Open-ended rates will be closed',
-      content: `${autoCloseCount} open-ended rate(s) will be closed the day before this period starts. Continue?`,
-      confirmationText: 'Continue',
-      dialogProps: { persistent: true, maxWidth: 520 },
-      confirmationButtonProps: { color: 'primary' },
-    })
-    if (!confirmed) return
-  }
-
-  if (realConflictNames.length) {
-    const names = realConflictNames.slice(0, 5).join(', ')
-    const confirmed = await confirm({
-      title: 'Overlapping date ranges',
-      content: `${realConflictNames.length} container(s) have overlapping rates (${names}${realConflictNames.length > 5 ? '...' : ''}). This will create overlapping periods. Continue anyway?`,
-      confirmationText: 'Continue anyway',
-      dialogProps: { persistent: true, maxWidth: 520 },
-      confirmationButtonProps: { color: 'warning' },
-    })
-    if (!confirmed) return
-  }
+  if (!(await maybeConfirm(autoCloseCount, realConflictNames))) return
 
   try {
     saving.value = true
