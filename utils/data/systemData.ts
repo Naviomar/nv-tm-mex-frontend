@@ -711,7 +711,8 @@ const typeInvoices = [
   { deposit: true, withdrawal: false, slug: 'sea', tm: false, wm: true, name: 'Invoice Sea WM', class_name: 'InvoiceSeaWm' },
   { deposit: true, withdrawal: false, slug: 'air', tm: true, wm: false, name: 'Invoice Air TM', class_name: 'InvoiceAirTm' },
   { deposit: true, withdrawal: false, slug: 'air', tm: false, wm: true, name: 'Invoice Air WM', class_name: 'InvoiceAirWm' },
-  { deposit: true, withdrawal: false, slug: 'free-format', tm: true, wm: true, name: 'Free format Invoice', class_name: 'PartyInvoice' },
+  { deposit: true, withdrawal: false, slug: 'free-format', tm: true, wm: false, name: 'Free format Invoice TM', class_name: 'PartyInvoice' },
+  { deposit: true, withdrawal: false, slug: 'free-format', tm: false, wm: true, name: 'Free format Invoice WM', class_name: 'PartyInvoice' },
 
   // F.F. Agents SOA
   { deposit: true, withdrawal: true, slug: 'ff', tm: true, wm: true, name: 'Agent F.F. request payment', class_name: 'FfPayment' },
