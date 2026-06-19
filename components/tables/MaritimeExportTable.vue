@@ -502,7 +502,7 @@ const unifiedVesselVoyageSearch = ref<string | null>(null)
 const unifiedVesselVoyageItems = computed(() => {
   const voyages = catalogs.value.voyage_discharges.map((voyage: any) => ({
     id: `voyage-${voyage.id}`,
-    display_name: voyage.short_name || voyage.name,
+    display_name: (voyage.short_name || voyage.name) + (voyage.voyage?.vessel?.line?.code ? ` (${voyage.voyage.vessel.line.code})` : ''),
     type: 'voyage',
     original_id: voyage.id,
   }))
