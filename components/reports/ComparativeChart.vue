@@ -116,6 +116,26 @@
 
         <v-row v-if="chartData && !loading">
           <v-col cols="12">
+            <!-- Summary totals above chart - one row per year -->
+            <div class="chart-summary-legend">
+              <div
+                v-for="(yd, idx) in chartData"
+                :key="yd.year"
+                class="chart-summary-item"
+              >
+                <span class="summary-color-box" :style="{ background: yearColors[idx % yearColors.length]?.bg ?? '#3b82f6' }"></span>
+                <span class="summary-line">
+                  <strong>{{ yd.year }}</strong>
+                  &nbsp;TEUs: <strong>{{ formatNumber(yd.total_teus) }}</strong>
+                  <template v-if="includeWithoutEta && yd.without_eta?.teus > 0 && yd.year === Math.max(...selectedYears)">
+                    &nbsp;&nbsp;Sin ETA: <strong>{{ formatNumber(yd.without_eta.teus) }}</strong>
+                  </template>
+                  <template v-if="includeProfit">
+                    &nbsp;&nbsp;Profit: <strong>{{ formatCurrency(yd.total_profit || 0) }}</strong>
+                  </template>
+                </span>
+              </div>
+            </div>
             <div class="chart-wrapper" style="position: relative; height: 500px;">
               <Bar v-if="chartConfig" :data="chartConfig.data" :options="chartConfig.options" />
             </div>
@@ -154,7 +174,7 @@
                     </div>
                   </div>
                   
-                  <div class="stat-item-pro stat-profit">
+                  <div v-if="includeProfit" class="stat-item-pro stat-profit">
                     <div class="stat-icon-pro">
                       <v-icon color="#10b981">mdi-cash-multiple</v-icon>
                     </div>
@@ -540,10 +560,11 @@ const chartConfig = computed(() => {
   if (!chartData.value || !Array.isArray(chartData.value)) return null
 
   const datasets: any[] = []
+  const maxYear = selectedYears.value.length > 0 ? Math.max(...selectedYears.value) : null
 
   chartData.value.forEach((yearData: any, index: number) => {
     if (!yearData || !Array.isArray(yearData.months)) return
-    
+
     const teusData = yearData.months.map((m: any) => m.teus ?? 0)
     const profitData = yearData.months.map((m: any) => m.profit ?? 0)
     const teusWithoutEtaData = yearData.months.map((m: any) => m.teus_without_eta ?? 0)
@@ -551,9 +572,14 @@ const chartConfig = computed(() => {
     const defaultColor = { bg: 'rgba(59, 130, 246, 0.8)', border: 'rgb(59, 130, 246)' }
     const color = yearColors[colorIndex] ?? yearColors[0] ?? defaultColor
     const profitColor = color?.border ?? defaultColor.border // Use same color as bar for consistency
-    
+    const isLastYear = maxYear && yearData.year === maxYear
+
     if (!color) return
-    
+
+    // Each year gets its own stack group so bars don't mix.
+    // For last year with Sin ETA: both datasets share the same stack → stacked.
+    const yearStack = `year-${yearData.year}`
+
     // TEUs Bar Chart (with ETA)
     datasets.push({
       type: 'bar',
@@ -565,11 +591,12 @@ const chartConfig = computed(() => {
       yAxisID: 'y',
       order: 2,
       barPercentage: 0.6,
-      categoryPercentage: 0.8
+      categoryPercentage: 0.8,
+      stack: yearStack
     })
-    
-    // TEUs Bar Chart (without ETA) - grouped beside
-    if (includeWithoutEta.value) {
+
+    // TEUs Bar Chart (without ETA) - only for last year, stacked on top
+    if (includeWithoutEta.value && isLastYear) {
       datasets.push({
         type: 'bar',
         label: `${yearData.year} - TEUs (Sin ETA)`,
@@ -580,10 +607,11 @@ const chartConfig = computed(() => {
         yAxisID: 'y',
         order: 2,
         barPercentage: 0.6,
-        categoryPercentage: 0.8
+        categoryPercentage: 0.8,
+        stack: yearStack
       })
     }
-    
+
     // Profit Line Chart
     datasets.push({
       type: 'line',
@@ -631,7 +659,7 @@ const chartConfig = computed(() => {
           }
         },
         legend: {
-          display: true,
+          display: false,
           position: 'top' as const,
           align: 'end' as const,
           labels: {
@@ -645,30 +673,42 @@ const chartConfig = computed(() => {
             boxHeight: 15,
             generateLabels: (chart: any) => {
               const datasets = chart.data.datasets
+              const maxYearVal = selectedYears.value.length > 0 ? Math.max(...selectedYears.value) : null
+              const seen = new Set<string>()
               return datasets.map((dataset: any, i: number) => {
-                // Only show TEUs datasets in legend (skip profit lines)
-                if (!dataset.label?.includes('Profit')) {
-                  const yearLabel = dataset.label?.split(' - ')[0] ?? ''
-                  const yearData = chartData.value?.find((y: any) => y.year.toString() === yearLabel)
-                  const totalTeus = yearData?.total_teus ?? 0
-                  const withoutEta = yearData?.without_eta?.teus ?? 0
-                  
-                  let label = `${yearLabel}: ${formatNumber(totalTeus)}`
-                  if (withoutEta > 0 && includeWithoutEta.value) {
-                    label += ` | sin ETA: ${formatNumber(withoutEta)}`
-                  }
-                  
-                  return {
-                    text: label,
-                    fillStyle: dataset.backgroundColor,
-                    strokeStyle: dataset.borderColor,
-                    lineWidth: 2,
-                    hidden: false,
-                    index: i,
-                    datasetIndex: i
-                  }
+                // Skip profit lines and Sin ETA (they are merged into TEUs label)
+                if (dataset.label?.includes('Profit') || dataset.label?.includes('Sin ETA')) {
+                  return null
                 }
-                return null
+                const yearLabel = dataset.label?.split(' - ')[0] ?? ''
+                if (seen.has(yearLabel)) return null
+                seen.add(yearLabel)
+                const yearNum = parseInt(yearLabel)
+                const yearData = chartData.value?.find((y: any) => y.year.toString() === yearLabel)
+                const totalTeus = yearData?.total_teus ?? 0
+                const withoutEta = yearData?.without_eta?.teus ?? 0
+                const isLastYr = maxYearVal && yearNum === maxYearVal
+
+                let teusLabel = `TEUs: ${formatNumber(totalTeus)}`
+                if (isLastYr && withoutEta > 0 && includeWithoutEta.value) {
+                  teusLabel += ` + ${formatNumber(withoutEta)} sin ETA = ${formatNumber(totalTeus + withoutEta)}`
+                }
+
+                const lines = [`${yearLabel}`, teusLabel]
+                if (includeProfit.value) {
+                  const totalProfit = yearData?.total_profit ?? 0
+                  lines.push(`Profit: ${formatCurrency(totalProfit)}`)
+                }
+
+                return {
+                  text: lines.join('\n'),
+                  fillStyle: dataset.backgroundColor,
+                  strokeStyle: dataset.borderColor,
+                  lineWidth: 2,
+                  hidden: false,
+                  index: i,
+                  datasetIndex: i
+                }
               }).filter(Boolean)
             }
           }
@@ -702,7 +742,13 @@ const chartConfig = computed(() => {
                   totalProfit += item.parsed.y
                 }
               })
-              return `\nTotal TEUs: ${formatNumber(totalTeus)}\nTotal Profit: ${formatCurrency(totalProfit)}`
+              const footerLines = []
+              footerLines.push('─'.repeat(30))
+              footerLines.push(`Total TEUs: ${formatNumber(totalTeus)}`)
+              if (totalProfit > 0 || includeProfit.value) {
+                footerLines.push(`Total Profit: ${formatCurrency(totalProfit)}`)
+              }
+              return footerLines.join('\n')
             },
             // Sort tooltip items by year to show: 2025 Profit, 2025 Teus, 2026 Profit, 2026 Teus
             beforeBody: (tooltipItems: any) => {
@@ -726,12 +772,34 @@ const chartConfig = computed(() => {
         },
         datalabels: {
           display: (context: any) => {
-            // Only show labels on bars (TEUs), not on lines (Profit)
-            return context.dataset.type === 'bar'
+            if (context.dataset.type !== 'bar') return false
+            // For stacked bars: only show label on the LAST dataset of the same stack
+            const datasets = context.chart.data.datasets
+            const currentStack = context.dataset.stack
+            // Find the last bar dataset with the same stack
+            let lastStackIndex = context.datasetIndex
+            for (let i = context.datasetIndex + 1; i < datasets.length; i++) {
+              if (datasets[i].type === 'bar' && datasets[i].stack === currentStack) {
+                lastStackIndex = i
+              }
+            }
+            return context.datasetIndex === lastStackIndex
           },
           anchor: 'end' as const,
           align: 'top' as const,
-          formatter: (value: any) => formatNumber(value),
+          formatter: (value: any, context: any) => {
+            // Sum all bar datasets in the same stack for this data index
+            const datasets = context.chart.data.datasets
+            const currentStack = context.dataset.stack
+            const dataIndex = context.dataIndex
+            let total = 0
+            datasets.forEach((ds: any) => {
+              if (ds.type === 'bar' && ds.stack === currentStack) {
+                total += (ds.data[dataIndex] ?? 0)
+              }
+            })
+            return formatNumber(total)
+          },
           color: '#1976d2',
           font: {
             weight: 'bold' as const,
@@ -775,10 +843,10 @@ const chartConfig = computed(() => {
         },
         y1: {
           type: 'linear',
-          display: true,
+          display: includeProfit.value,
           position: 'right',
           title: {
-            display: true,
+            display: includeProfit.value,
             text: 'Profit (USD)',
             font: {
               size: 14,
@@ -803,6 +871,36 @@ const chartConfig = computed(() => {
 <style scoped>
 .comparative-chart-container {
   width: 100%;
+}
+
+.chart-summary-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.chart-summary-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-color-box {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.summary-line {
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .chart-wrapper {
