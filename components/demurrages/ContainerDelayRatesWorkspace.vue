@@ -11,7 +11,7 @@
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <v-btn v-if="canCreate" color="primary" prepend-icon="mdi-plus" @click="router.push('/configuration/container-delay-rates/add')">
+            <v-btn color="primary" prepend-icon="mdi-plus" @click="router.push('/configuration/container-delay-rates/add')">
               New configuration
             </v-btn>
             <v-btn color="secondary" variant="outlined" prepend-icon="mdi-compare" @click="compareDialog.show = true">
