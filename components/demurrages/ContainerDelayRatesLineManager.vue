@@ -50,7 +50,12 @@
           <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openNewPeriod">New period</v-btn>
         </div>
 
-        <div v-if="!periods.length" class="text-sm opacity-60">No rate periods configured for this line yet.</div>
+        <div v-if="!periods.length" class="flex flex-col items-center gap-3 rounded-xl border border-dashed py-10 text-center">
+          <v-icon icon="mdi-calendar-plus" size="40" class="opacity-40" />
+          <div class="text-base font-medium">No rate periods configured for this line yet.</div>
+          <div class="text-sm opacity-60">Create the first period to start defining container delay rates.</div>
+          <v-btn color="primary" prepend-icon="mdi-plus" @click="openNewPeriod">Create first period</v-btn>
+        </div>
 
         <v-expansion-panels v-else variant="accordion">
           <v-expansion-panel v-for="period in periods" :key="period.key">
@@ -368,7 +373,12 @@ async function onLineChange(id: number | null) {
   loading.value = true
   try {
     await loadLine(id)
-    if (pendingClone.value) openClonedPeriod()
+    if (pendingClone.value) {
+      openClonedPeriod()
+    } else if (!isEdit.value && lineRows.value.length === 0) {
+      // New line with no rates: open the editor immediately so the user can start filling in rates.
+      openNewPeriod()
+    }
   } finally {
     loading.value = false
   }
