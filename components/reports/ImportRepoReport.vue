@@ -6,7 +6,7 @@
         <div class="header-content">
           <div class="header-left">
             <div class="icon-wrapper">
-              <v-icon color="white" size="28">mdi-boat</v-icon>
+              <v-icon color="white" size="28">mdi-ship</v-icon>
             </div>
             <div class="header-text">
               <h2 class="report-title">Import Repo General</h2>
