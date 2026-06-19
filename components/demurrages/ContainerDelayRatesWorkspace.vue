@@ -568,6 +568,7 @@
   buildRateOperations,
   cleanContainerDelayQuery,
   fetchAllContainerDelayRates,
+  filterRateableContainerTypes,
   formatDateLabel,
   getConflictRateIds,
   getPeriodLabel,
@@ -764,7 +765,7 @@
    ])
  
    lines.value = (ls?.data ?? ls ?? []) as NamedCatalog[]
-   containerTypes.value = (cts?.data ?? cts ?? []) as NamedCatalog[]
+   containerTypes.value = filterRateableContainerTypes((cts?.data ?? cts ?? []) as NamedCatalog[])
  }
  
  async function loadRates() {
