@@ -5,7 +5,7 @@
         <v-card-title>
           <div class="flex items-center gap-4">
             <div class="font-bold">New Sea Import reference</div>
-            <div class="flex-1 max-w-md">
+            <div v-if="config.public.legacyFeaturesEnabled" class="flex-1 max-w-md">
               <v-text-field
                 v-model="legacySearch"
                 density="compact"
@@ -21,7 +21,7 @@
           </div>
         </v-card-title>
 
-        <div style="position: relative;">
+        <div v-if="config.public.legacyFeaturesEnabled" style="position: relative;">
           <v-card
             v-if="legacyImpoResults.length > 0"
             class="mx-4 mb-2"
@@ -76,21 +76,22 @@
           </v-card>
         </div>
 
-        <v-expand-transition>
-          <v-alert
-            v-if="legacyImpoApplied"
-            type="info"
-            density="compact"
-            closable
-            class="mx-4 mb-2"
-            @click:close="legacyImpoApplied = false"
-          >
-            <span class="font-bold">Legacy data applied:</span> {{ legacyImpoApplied }}
-          </v-alert>
-        </v-expand-transition>
+        <template v-if="config.public.legacyFeaturesEnabled">
+          <v-expand-transition>
+            <v-alert
+              v-if="legacyImpoApplied"
+              type="info"
+              density="compact"
+              closable
+              class="mx-4 mb-2"
+              @click:close="legacyImpoApplied = false"
+            >
+              <span class="font-bold">Legacy data applied:</span> {{ legacyImpoApplied }}
+            </v-alert>
+          </v-expand-transition>
 
-        <!-- Legacy Preview Dialog -->
-        <v-dialog v-model="legacyPreview.show" max-width="900" persistent>
+          <!-- Legacy Preview Dialog -->
+          <v-dialog v-model="legacyPreview.show" max-width="900" persistent>
           <v-card>
             <v-card-title class="bg-orange-lighten-4">
               <div class="flex items-center gap-2">
@@ -242,7 +243,8 @@
               </v-btn>
             </v-card-actions>
           </v-card>
-        </v-dialog>
+          </v-dialog>
+        </template>
 
         <v-card-subtitle>Mexico Form</v-card-subtitle>
         <v-card-text>
@@ -704,6 +706,7 @@ import { cargoTypes } from '@/utils/data/seaData'
 import { schema } from '~~/forms/maritimeReferenceForm'
 import VeeForm from '@/components/global/VeeForm.vue'
 
+const config = useRuntimeConfig()
 const router = useRouter()
 const route = useRoute()
 const { $api } = useNuxtApp()
