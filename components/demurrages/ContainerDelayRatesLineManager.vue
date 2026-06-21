@@ -239,6 +239,7 @@ import {
   buildRateOperations,
   cloneDraftRows,
   fetchAllContainerDelayRates,
+  filterRateableContainerTypes,
   formatCurrencyAmount,
   formatDateLabel,
   getHistoryRows,
@@ -348,7 +349,7 @@ async function loadCatalogs() {
     $api.containers.getAllTypes({ query: { perPage: 1000 } }),
   ])
   lines.value = (ls?.data ?? ls ?? []) as NamedCatalog[]
-  containerTypes.value = ((cts?.data ?? cts ?? []) as NamedCatalog[])
+  containerTypes.value = filterRateableContainerTypes((cts?.data ?? cts ?? []) as NamedCatalog[])
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
 }

@@ -72,6 +72,18 @@ class ReportsModule extends FetchFactory<any> {
     })
   }
 
+  async getReferencesByLoadingPort(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-loading-port`, {
+      body: params
+    })
+  }
+
+  async getReferencesByDischargePort(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-discharge-port`, {
+      body: params
+    })
+  }
+
   async getExecutivesReport(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',
