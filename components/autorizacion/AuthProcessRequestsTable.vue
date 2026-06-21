@@ -88,9 +88,35 @@
           >
             <td>{{ authRequest.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                  <v-badge
+                    v-if="authRequest.unread_count"
+                    :content="authRequest.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(authRequest) && hasPermission('process-requests-respond')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(authRequest)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(authRequest)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(authRequest)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
             <td class="whitespace-nowrap">
@@ -333,6 +359,7 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (req: any) => {
   activeChatTicket.value = req
+  req.unread_count = 0
   showChatDrawer.value = true
 }
 

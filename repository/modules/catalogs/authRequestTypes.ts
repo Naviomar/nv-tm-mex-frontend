@@ -9,7 +9,7 @@ export interface IDefaultCcUser {
 
 export interface IAuthRequestType {
   id: number
-  kind: 'authorization' | 'process'
+  kind: 'authorization' | 'process' | 'support'
   code: string
   description: string
   redirect: string | null
@@ -19,6 +19,7 @@ export interface IAuthRequestType {
   is_active: boolean
   sort_order: number
   default_cc_users?: IDefaultCcUser[]
+  approvers?: IDefaultCcUser[]
   created_at: string
   updated_at: string
 }
@@ -63,6 +64,18 @@ class AuthRequestTypesModule extends FetchFactory<IAuthRequestType[]> {
 
   async removeDefaultCcUser(id: number, userId: number): Promise<IDefaultCcUser[]> {
     return this.call('DELETE', `${this.RESOURCE}/${id}/default-cc-users/${userId}`)
+  }
+
+  async getApprovers(id: number): Promise<IDefaultCcUser[]> {
+    return this.call('GET', `${this.RESOURCE}/${id}/approvers`)
+  }
+
+  async addApprover(id: number, userId: number): Promise<IDefaultCcUser[]> {
+    return this.call('POST', `${this.RESOURCE}/${id}/approvers`, { body: { user_id: userId } })
+  }
+
+  async removeApprover(id: number, userId: number): Promise<IDefaultCcUser[]> {
+    return this.call('DELETE', `${this.RESOURCE}/${id}/approvers/${userId}`)
   }
 }
 
