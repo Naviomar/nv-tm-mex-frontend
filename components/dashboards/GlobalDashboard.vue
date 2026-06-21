@@ -21,16 +21,6 @@
       <v-icon class="float-icon icon-5" size="110">mdi-earth</v-icon>
       <v-icon class="float-icon icon-6" size="70">mdi-map-marker-path</v-icon>
     </div>
-
-    <div class="no-access-content">
-      <div class="no-access-icon">
-        <v-icon size="44" color="primary">mdi-view-dashboard-outline</v-icon>
-      </div>
-      <h2 class="no-access-title">No Dashboard Access</h2>
-      <p class="no-access-subtitle">
-        You don't have access to any dashboard yet. Contact your administrator to request access.
-      </p>
-    </div>
   </div>
 
   <!-- Normal Dashboard - With Permissions -->
@@ -317,50 +307,6 @@ onMounted(() => {
   }
 }
 
-/* Center message */
-.no-access-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 420px;
-  padding: 0 24px;
-  animation: content-fade 0.6s ease both;
-}
-.no-access-icon {
-  width: 84px;
-  height: 84px;
-  border-radius: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--v-theme-primary), 0.1);
-  margin-bottom: 20px;
-}
-.no-access-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: rgb(var(--v-theme-on-surface));
-  margin-bottom: 8px;
-}
-.no-access-subtitle {
-  font-size: 0.92rem;
-  color: rgba(var(--v-theme-on-surface), 0.65);
-  line-height: 1.5;
-}
-
-@keyframes content-fade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .dashboard-container {
   min-height: 100vh;
