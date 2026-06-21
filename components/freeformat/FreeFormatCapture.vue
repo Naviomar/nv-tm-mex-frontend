@@ -203,36 +203,70 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(charge, idx) in form.charges" :key="`invoice-charge-${idx}`">
-                  <td>
-                    <div class="flex flex-col items-center">
-                      <v-icon @click="removeConcept(Number(idx))" class="cursor-pointer" color="error">mdi-delete</v-icon>
-                    </div>
-                  </td>
-                  <td>{{ charge.name }}</td>
-                  <td>
-                    <v-text-field v-model="charge.notes" density="compact" maxlength="150" />
-                  </td>
-                  <td>
-                    <v-text-field v-model="charge.amount" type="number" density="compact" />
-                  </td>
-                  <td>
-                    <v-checkbox v-model="charge.is_con_iva" density="compact" readonly />
-                  </td>
-                  <td>
-                    <v-autocomplete
-                      v-model="charge.currency_id"
-                      :items="catalogs.currencies"
-                      density="compact"
-                      item-title="name"
-                      item-value="id"
-                      readonly
-                    />
-                  </td>
-                  <td class="text-right">
-                    {{ formatToCurrency(getChargeTotal(charge)) }}
-                  </td>
-                </tr>
+                <template v-for="(charge, idx) in form.charges" :key="`invoice-charge-${idx}`">
+                  <tr>
+                    <td>
+                      <div class="flex flex-col items-center">
+                        <v-icon @click="removeConcept(Number(idx))" class="cursor-pointer" color="error">mdi-delete</v-icon>
+                      </div>
+                    </td>
+                    <td>{{ charge.name }}</td>
+                    <td>
+                      <v-text-field
+                        v-model="charge.notes"
+                        density="compact"
+                        maxlength="150"
+                        @blur="checkChargeDuplicate(idx)"
+                      />
+                    </td>
+                    <td>
+                      <v-text-field v-model="charge.amount" type="number" density="compact" />
+                    </td>
+                    <td>
+                      <v-checkbox v-model="charge.is_con_iva" density="compact" readonly />
+                    </td>
+                    <td>
+                      <v-autocomplete
+                        v-model="charge.currency_id"
+                        :items="catalogs.currencies"
+                        density="compact"
+                        item-title="name"
+                        item-value="id"
+                        readonly
+                      />
+                    </td>
+                    <td class="text-right">
+                      {{ formatToCurrency(getChargeTotal(charge)) }}
+                    </td>
+                  </tr>
+                  <tr v-if="duplicateWarnings[idx]?.length">
+                    <td colspan="7">
+                      <v-alert type="warning" variant="tonal" density="compact" class="my-1">
+                        <div class="font-bold mb-1">
+                          Este boleto ya está facturado en otra(s) factura(s). Verifica antes de continuar:
+                        </div>
+                        <ul class="mb-2">
+                          <li v-for="(match, mIdx) in duplicateWarnings[idx]" :key="`dup-${idx}-${mIdx}`">
+                            <NuxtLink
+                              :to="getInvoiceDetailRoute({ id: match.invoice_id, invoice: { invoice_number: match.invoice_number } })"
+                              target="_blank"
+                              class="font-weight-bold text-decoration-underline"
+                            >
+                              {{ match.invoice_number || match.invoice_id }}
+                            </NuxtLink>
+                            - {{ match.razon_social }} - {{ match.charge_name }} - "{{ match.notes }}"
+                          </li>
+                        </ul>
+                        <v-checkbox
+                          v-model="confirmedDuplicates[idx]"
+                          density="compact"
+                          hide-details
+                          label="Confirmo que no es un duplicado y deseo continuar"
+                        />
+                      </v-alert>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
               <tfoot>
                 <tr>
@@ -258,12 +292,16 @@
 <script setup lang="ts">
 import { partyables } from '@/utils/data/systemData'
 import { currencies, cfdiCatalogs } from '~/utils/data/systemData'
+import { extractTicketNumber } from '~/utils/flightNotes'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
 
 const showAddressDialog = ref(false)
+
+const duplicateWarnings = ref<Record<number, any[]>>({})
+const confirmedDuplicates = ref<Record<number, boolean>>({})
 
 const form = ref<any>({
   type: null,
@@ -371,6 +409,33 @@ const addCharges = () => {
 
 const removeConcept = (index: number | string) => {
   form.value.charges.splice(Number(index), 1)
+  delete duplicateWarnings.value[Number(index)]
+  delete confirmedDuplicates.value[Number(index)]
+}
+
+const checkChargeDuplicate = async (idx: number | string) => {
+  const index = Number(idx)
+  const charge = form.value.charges[index]
+  const ticketNumber = extractTicketNumber(charge?.notes)
+
+  if (!ticketNumber) {
+    delete duplicateWarnings.value[index]
+    delete confirmedDuplicates.value[index]
+    return
+  }
+
+  try {
+    const response: any = await $api.freeFormatInvoices.checkDuplicateTicket({ ticket_number: ticketNumber })
+    if (response?.matches?.length) {
+      duplicateWarnings.value[index] = response.matches
+      confirmedDuplicates.value[index] = false
+    } else {
+      delete duplicateWarnings.value[index]
+      delete confirmedDuplicates.value[index]
+    }
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 const getChargeIva = (charge: any) => {
@@ -410,6 +475,13 @@ const useIsFormValid = () => {
   // all charges must have an amount greater than 0
   if (form.value.charges.some((charge: any) => parseFloat(charge.amount) <= 0)) {
     snackbar.add({ type: 'error', text: 'All charges must have an amount greater than 0' })
+    return false
+  }
+  const hasUnconfirmedDuplicate = Object.keys(duplicateWarnings.value).some(
+    (idx) => duplicateWarnings.value[Number(idx)]?.length && !confirmedDuplicates.value[Number(idx)]
+  )
+  if (hasUnconfirmedDuplicate) {
+    snackbar.add({ type: 'error', text: 'Confirma o corrige los conceptos con posible boleto duplicado antes de continuar' })
     return false
   }
   return true
