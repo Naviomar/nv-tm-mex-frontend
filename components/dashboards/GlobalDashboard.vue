@@ -1,13 +1,35 @@
 <template>
-  <!-- Empty State with Geometric Background - No Permissions -->
+  <!-- Empty State with Maritime/Freight Themed Animated Background - No Permissions -->
   <div v-if="!hasAnyDashboardAccess" class="no-access-container">
     <div class="geometric-bg">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-      <div class="shape shape-4"></div>
-      <div class="shape shape-5"></div>
-      <div class="shape shape-6"></div>
+      <!-- Trade route: dashed path with a ship drifting along it -->
+      <svg class="route-svg" viewBox="0 0 1200 700" preserveAspectRatio="none">
+        <path
+          id="trade-route"
+          class="route-path"
+          d="M -50,520 C 200,420 320,560 480,460 C 650,360 760,480 920,380 C 1050,300 1150,340 1260,260"
+          fill="none"
+        />
+      </svg>
+      <v-icon class="route-ship" size="34">mdi-ferry</v-icon>
+
+      <!-- Floating freight-themed icons -->
+      <v-icon class="float-icon icon-1" size="120">mdi-ferry</v-icon>
+      <v-icon class="float-icon icon-2" size="90">mdi-airplane</v-icon>
+      <v-icon class="float-icon icon-3" size="100">mdi-package-variant-closed</v-icon>
+      <v-icon class="float-icon icon-4" size="80">mdi-anchor</v-icon>
+      <v-icon class="float-icon icon-5" size="110">mdi-earth</v-icon>
+      <v-icon class="float-icon icon-6" size="70">mdi-map-marker-path</v-icon>
+    </div>
+
+    <div class="no-access-content">
+      <div class="no-access-icon">
+        <v-icon size="44" color="primary">mdi-view-dashboard-outline</v-icon>
+      </div>
+      <h2 class="no-access-title">No Dashboard Access</h2>
+      <p class="no-access-subtitle">
+        You don't have access to any dashboard yet. Contact your administrator to request access.
+      </p>
     </div>
   </div>
 
@@ -168,7 +190,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* No Access Container - Geometric Background Only */
+/* No Access Container - Maritime/Freight Themed Animated Background.
+   Uses Vuetify theme CSS variables (not the dead `.theme--dark` Vuetify-2
+   class) so it adapts automatically to light/dark mode. */
 .no-access-container {
   position: fixed;
   top: 0;
@@ -176,17 +200,15 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   overflow: hidden;
-  background: linear-gradient(135deg, 
-    rgba(248, 250, 252, 1) 0%, 
-    rgba(241, 245, 249, 1) 50%, 
-    rgba(248, 250, 252, 1) 100%);
-}
-
-.theme--dark .no-access-container {
-  background: linear-gradient(135deg, 
-    rgba(15, 23, 42, 1) 0%, 
-    rgba(30, 41, 59, 1) 50%, 
-    rgba(15, 23, 42, 1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--v-theme-background)) 0%,
+    rgba(var(--v-theme-primary), 0.04) 50%,
+    rgb(var(--v-theme-background)) 100%
+  );
 }
 
 .geometric-bg {
@@ -198,71 +220,86 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.shape {
+/* Trade route line + drifting ship */
+.route-svg {
   position: absolute;
-  animation: float 25s ease-in-out infinite;
-  opacity: 0.08;
-  filter: blur(1px);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.route-path {
+  stroke: rgba(var(--v-theme-primary), 0.16);
+  stroke-width: 2;
+  stroke-dasharray: 10 10;
+  animation: route-dash 60s linear infinite;
+}
+.route-ship {
+  position: absolute;
+  color: rgba(var(--v-theme-primary), 0.5);
+  offset-path: path("M -50,520 C 200,420 320,560 480,460 C 650,360 760,480 920,380 C 1050,300 1150,340 1260,260");
+  offset-rotate: 0deg;
+  animation: sail 38s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
 }
 
-.shape-1 {
-  width: 400px;
-  height: 400px;
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  top: 5%;
-  left: 5%;
+@keyframes route-dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+@keyframes sail {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+/* Floating freight icons (ships, planes, packages, anchor, globe, route) */
+.float-icon {
+  position: absolute;
+  color: rgba(var(--v-theme-primary), 0.1);
+  animation: float 26s ease-in-out infinite;
+  filter: blur(0.5px);
+}
+
+.icon-1 {
+  top: 8%;
+  left: 6%;
   animation-delay: 0s;
+  color: rgba(var(--v-theme-primary), 0.12);
 }
-
-.shape-2 {
-  width: 280px;
-  height: 280px;
-  background: linear-gradient(135deg, #8b5cf6, #ec4899);
-  border-radius: 50%;
-  top: 50%;
+.icon-2 {
+  top: 14%;
   right: 10%;
-  animation-delay: 5s;
+  animation-delay: 4s;
+  color: rgba(59, 130, 246, 0.1);
 }
-
-.shape-3 {
-  width: 350px;
-  height: 350px;
-  background: linear-gradient(135deg, #10b981, #14b8a6);
-  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+.icon-3 {
+  bottom: 16%;
+  left: 12%;
+  animation-delay: 9s;
+  color: rgba(245, 158, 11, 0.12);
+}
+.icon-4 {
   bottom: 10%;
-  left: 15%;
-  animation-delay: 10s;
+  right: 16%;
+  animation-delay: 13s;
+  color: rgba(var(--v-theme-secondary), 0.12);
 }
-
-.shape-4 {
-  width: 220px;
-  height: 220px;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  border-radius: 30% 70% 53% 47% / 50% 45% 55% 50%;
-  top: 25%;
-  right: 30%;
-  animation-delay: 15s;
+.icon-5 {
+  top: 45%;
+  left: 4%;
+  animation-delay: 6s;
+  color: rgba(16, 185, 129, 0.08);
 }
-
-.shape-5 {
-  width: 320px;
-  height: 320px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-radius: 41% 59% 41% 59% / 41% 59% 41% 59%;
-  bottom: 20%;
-  right: 25%;
-  animation-delay: 20s;
-}
-
-.shape-6 {
-  width: 260px;
-  height: 260px;
-  background: linear-gradient(135deg, #14b8a6, #06b6d4);
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  top: 60%;
-  left: 35%;
-  animation-delay: 12s;
+.icon-6 {
+  top: 55%;
+  right: 6%;
+  animation-delay: 16s;
+  color: rgba(99, 102, 241, 0.1);
 }
 
 @keyframes float {
@@ -270,18 +307,59 @@ onMounted(() => {
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
   25% {
-    transform: translate(30px, -30px) rotate(90deg) scale(1.1);
+    transform: translate(18px, -22px) rotate(4deg) scale(1.05);
   }
   50% {
-    transform: translate(-20px, 20px) rotate(180deg) scale(0.9);
+    transform: translate(-14px, 14px) rotate(-3deg) scale(0.96);
   }
   75% {
-    transform: translate(20px, 15px) rotate(270deg) scale(1.05);
+    transform: translate(14px, 10px) rotate(3deg) scale(1.02);
   }
 }
 
-.theme--dark .shape {
-  opacity: 0.06;
+/* Center message */
+.no-access-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 420px;
+  padding: 0 24px;
+  animation: content-fade 0.6s ease both;
+}
+.no-access-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-primary), 0.1);
+  margin-bottom: 20px;
+}
+.no-access-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 8px;
+}
+.no-access-subtitle {
+  font-size: 0.92rem;
+  color: rgba(var(--v-theme-on-surface), 0.65);
+  line-height: 1.5;
+}
+
+@keyframes content-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dashboard-container {
