@@ -25,12 +25,22 @@
 const darkMode = useDarkMode()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
+// Mismos puertos en mex y chl: puertos reales de carga/descarga de mex
+// (Reports > Sea Import > Loading Ports / Discharge Ports) + los puertos
+// marítimos de chl.
 const MARKERS: [number, number][] = [
-  [19.43, -99.13], // CDMX
-  [25.67, -100.31], // Monterrey
-  [31.62, -106.5], // Juarez
-  [20.97, -89.62], // Merida / Progreso
-  [40.71, -74.0], // NY
+  [19.05, -104.32], // Manzanillo (MEX) — top puerto de descarga
+  [17.96, -102.19], // Lázaro Cárdenas (MEX) — top puerto de descarga
+  [19.18, -96.13], // Veracruz (MEX) — top puerto de descarga
+  [23.22, -106.42], // Mazatlán (MEX) — descarga
+  [-33.59, -71.62], // San Antonio (CHL) — principal puerto de Chile
+  [-33.03, -71.55], // Valparaíso (CHL)
+  [-36.74, -73.13], // San Vicente / Talcahuano (CHL)
+  [-20.21, -70.15], // Iquique (CHL)
+  [-23.65, -70.4], // Antofagasta (CHL)
+  [31.23, 121.47], // Shanghai — top puerto de carga
+  [29.87, 121.54], // Ningbo — top puerto de carga
+  [36.07, 120.38], // Qingdao — carga
   [22.54, 114.05], // Shenzhen
   [1.35, 103.82], // Singapore
 ]
@@ -95,7 +105,10 @@ async function start() {
     dots = buildDotsFromMask(mask)
   }
 
-  const size = 1750
+  const isDark = darkMode.isDark
+  // Centrado y compacto en modo claro; grande y en la esquina en modo oscuro
+  // (pedido explícito: "centrado en modo claro... a la derecha en oscuro").
+  const size = isDark ? 1750 : 1100
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   canvas.width = size * dpr
   canvas.height = size * dpr
@@ -107,7 +120,6 @@ async function start() {
   const tilt = 0.34
   let rotationY = 0
 
-  const isDark = darkMode.isDark
   const dotColor = isDark ? '255, 255, 255' : '60, 80, 150'
   const markerColor = '74, 130, 255'
 
@@ -191,17 +203,12 @@ onBeforeUnmount(() => cancelAnimationFrame(rafId))
   background: #f4f6fb;
 }
 
-/* Mismo tamaño/posición que el canvas (1750px). El radio real de la esfera
-   dibujada en el canvas es size*0.36 = 630px — los stops están en píxeles
-   exactos (no %, que no coinciden con el radio real del canvas) para que el
-   anillo arranque justo después de ese borde y nunca quede encima de los
-   puntos. */
+/* Modo claro: centrado y compacto (1100px, radio real 396px).
+   Modo oscuro: grande, en la esquina inferior derecha (1750px, radio 630px).
+   Los stops del halo están en píxeles exactos para coincidir con el radio
+   real que dibuja el canvas en cada tamaño. */
 .auth-globe-aura {
   position: absolute;
-  bottom: -22%;
-  right: -20%;
-  width: 1750px;
-  height: 1750px;
   border-radius: 50%;
   pointer-events: none;
   filter: blur(22px);
@@ -210,7 +217,26 @@ onBeforeUnmount(() => cancelAnimationFrame(rafId))
   -webkit-mask-image: linear-gradient(to top, black 0%, black 35%, transparent 80%);
   mask-image: linear-gradient(to top, black 0%, black 35%, transparent 80%);
 }
+.theme-light .auth-globe-aura {
+  top: 50%;
+  left: 50%;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 0px,
+    transparent 398px,
+    rgba(64, 130, 255, 0.22) 414px,
+    rgba(64, 130, 255, 0.07) 432px,
+    transparent 454px
+  );
+}
 .theme-dark .auth-globe-aura {
+  bottom: -22%;
+  right: -20%;
+  width: 1750px;
+  height: 1750px;
   background: radial-gradient(
     circle at 50% 50%,
     transparent 0px,
@@ -220,19 +246,18 @@ onBeforeUnmount(() => cancelAnimationFrame(rafId))
     transparent 720px
   );
 }
-.theme-light .auth-globe-aura {
-  background: radial-gradient(
-    circle at 50% 50%,
-    transparent 0px,
-    transparent 632px,
-    rgba(64, 130, 255, 0.22) 658px,
-    rgba(64, 130, 255, 0.07) 685px,
-    transparent 720px
-  );
-}
 
 .auth-globe-canvas {
   position: absolute;
+}
+.theme-light .auth-globe-canvas {
+  top: 50%;
+  left: 50%;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%);
+}
+.theme-dark .auth-globe-canvas {
   bottom: -22%;
   right: -20%;
   width: 1750px;
@@ -248,6 +273,6 @@ onBeforeUnmount(() => cancelAnimationFrame(rafId))
   background: radial-gradient(circle at 78% 72%, transparent 38%, #05070d 72%);
 }
 .theme-light .auth-globe-fade {
-  background: radial-gradient(circle at 78% 72%, transparent 38%, #f4f6fb 72%);
+  background: radial-gradient(circle at 50% 50%, transparent 30%, #f4f6fb 72%);
 }
 </style>
