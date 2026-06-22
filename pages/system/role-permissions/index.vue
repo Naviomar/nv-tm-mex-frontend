@@ -1,14 +1,22 @@
 <template>
   <v-container fluid>
-    <h1 class="text-xl font-bold underline mb-2">Roles and permissions</h1>
+    <div class="d-flex align-center gap-3 mb-6">
+      <v-avatar color="secondary" size="44" rounded="lg">
+        <v-icon size="24" color="white">mdi-shield-account</v-icon>
+      </v-avatar>
+      <div>
+        <div class="text-caption text-grey-darken-1 font-weight-medium text-uppercase tracking-wide">
+          System
+        </div>
+        <h1 class="text-h5 font-weight-bold leading-tight">Roles & Permissions</h1>
+      </div>
+    </div>
     <RolePermissionsTable />
   </v-container>
 </template>
 <script setup lang="ts">
-const { $api } = useNuxtApp()
-
 definePageMeta({
-  title: `Roles and permissions`,
+  title: 'Roles and permissions',
   layout: 'default',
 })
 </script>

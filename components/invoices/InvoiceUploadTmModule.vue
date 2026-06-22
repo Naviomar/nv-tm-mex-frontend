@@ -4,15 +4,20 @@
     <ul class="ml-4 list-disc">
       <li>Export TM invoices with no CFDI.</li>
       <li>Review the data & confirmation</li>
+      <li>Put the XML and PDF of each invoice in a zip file.</li>
       <li>
-        <v-btn size="small" color="blue" variant="tonal" @click="onClickDownloadLayout">Download zip file demo</v-btn>
-      </li>
-      <li>The zip file is an example of how to fill out the excel file called control.</li>
-      <li>
-        You have to put the XML and PDF of each invoice and in the excel file relate the invoice ID with the CFDI UUID
-        to link them.
+        Each invoice is linked automatically using the folio in the XML (it is matched to the invoice number
+        <code>2TM-&lt;folio&gt;</code>). Its CFDI data (fiscal regimen, CFDI use, payment method &amp; payment type)
+        is also completed from the XML when missing.
       </li>
       <li>Upload the zip file with the XML and PDF files.</li>
+      <li>
+        The <strong>control</strong> excel is now optional and only used as a fallback when an invoice can't be matched
+        by folio.
+        <v-btn size="small" color="blue" variant="tonal" class="ml-2" @click="onClickDownloadLayout">
+          Download zip file demo
+        </v-btn>
+      </li>
     </ul>
     <div class="py-4">
       <div class="font-bold mb-2">Filters</div>

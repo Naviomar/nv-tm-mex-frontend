@@ -72,7 +72,7 @@ const getSeaImportSupplierInvoices = async () => {
   try {
     loadingStore.start()
     refunds.value = []
-    const response = await $api.referencias.getSeaImportRefunds(props.referenceId.toString())
+    const response = await $api.referencias.getSeaServiceRefunds(props.referenceId.toString())
     refunds.value = response
   } catch (e) {
     console.error(e)

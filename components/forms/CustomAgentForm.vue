@@ -24,7 +24,7 @@
 
         <div class="flex justify-center items-center mt-4">
           <v-btn class="mr-4" color="secondary" to="/configuration/custom-agents"> Cancel </v-btn>
-          <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="validateBeforeCreate"> Save </v-btn>
         </div>
       </div>
 

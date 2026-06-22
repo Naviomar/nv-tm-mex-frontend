@@ -176,6 +176,10 @@ class SuppliersModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/invoices`, fetchOptions)
   }
 
+  async getSeaServiceSupplierInvoices(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-service/${id}/supplier-invoices`, fetchOptions)
+  }
+
   async getAdvancePaymentsByService(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

@@ -88,15 +88,67 @@
           >
             <td>{{ authRequest.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                  <v-badge
+                    v-if="authRequest.unread_count"
+                    :content="authRequest.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(authRequest) && hasPermission('process-requests-respond')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(authRequest)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(authRequest)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(authRequest)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
             <td class="whitespace-nowrap">
               {{ authRequest.resolved_display }}
             </td>
-            <td class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</td>
+            <td>
+              <div class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</div>
+              <template v-if="authRequest.process_data?.charges?.length">
+                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                  <div v-for="(c, ci) in authRequest.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1 text-xs bg-gray-50">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-gray-800 truncate">{{ c.charge_name }}</div>
+                      <div v-if="c.invoice_number" class="text-gray-400">Invoice #{{ c.invoice_number }}</div>
+                    </div>
+                    <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="authRequest.process_data?.operations?.length">
+                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                  <div v-for="(op, oi) in authRequest.process_data.operations" :key="oi" class="px-2 py-1 text-xs bg-gray-50">
+                    <span class="font-semibold capitalize">{{ op.action }}</span>
+                    <span class="ml-1">{{ describeOperation(op) }}</span>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="authRequest.process_data">
+                <div v-for="(val, key) in authRequest.process_data" :key="key" class="text-xs text-gray-600 whitespace-nowrap">
+                  <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
+                </div>
+              </template>
+            </td>
 
             <td>
               <v-chip size="x-small" color="amber">{{ authRequest.status }}</v-chip>
@@ -127,6 +179,35 @@
               <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
               <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
               <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
+              <template v-if="form.auth_request?.process_data">
+                <v-divider class="my-2" />
+                <div class="text-sm font-semibold mb-1">Request details:</div>
+                <template v-if="form.auth_request.process_data.charges?.length">
+                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                    <div v-for="(c, ci) in form.auth_request.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-900 truncate">{{ c.charge_name }}</div>
+                        <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
+                      </div>
+                      <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else-if="form.auth_request.process_data.operations?.length">
+                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                    <div v-for="(op, oi) in form.auth_request.process_data.operations" :key="oi" class="px-2 py-1.5 text-sm bg-gray-50">
+                      <span class="font-medium capitalize">{{ op.action }}</span>
+                      <span class="ml-1">{{ describeOperation(op) }}</span>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div v-for="(val, key) in form.auth_request.process_data" :key="key" class="text-sm">
+                    <span class="font-medium capitalize">{{ String(key).replace(/_/g, ' ') }}:</span>
+                    <span class="ml-1">{{ val }}</span>
+                  </div>
+                </template>
+              </template>
             </div>
             <v-autocomplete
               v-model="form.status"
@@ -162,7 +243,7 @@
           <TicketChatPanel
             ticket-type="process-request"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -173,12 +254,12 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket)"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('process-requests-respond')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
             <v-btn
-              v-else
+              v-if="canDelete(activeChatTicket)"
               color="error" variant="tonal" size="small"
               @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
             >Delete</v-btn>
@@ -203,12 +284,9 @@
 <script setup lang="ts">
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
-const { isAdminRole } = useCheckUser()
+const { $api } = useNuxtApp()
+const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
-const router = useRouter()
-const authRequestStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -281,13 +359,14 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (req: any) => {
   activeChatTicket.value = req
+  req.unread_count = 0
   showChatDrawer.value = true
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
@@ -327,12 +406,33 @@ const grantAuthorization = async () => {
   }
 }
 
+const canDelete = (authRequest: any) => {
+  if (!authRequest) return false
+  if (!isAdminRole()) return false
+  if (!isPendingToGrant(authRequest) && hasPermission('process-requests-delete')) {
+    return true
+  }
+  if (isPendingToGrant(authRequest) && authRequest.user_id === currentUser.value?.id) {
+    return true
+  }
+  return false
+}
+
 const cancelAuthorization = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.authProcessRequests.cancelRequest(formCancel.value.auth_request.id, {
-      cancel_reason: formCancel.value.cancel_reason,
-    })
+    const useCancelAuth = !hasPermission('process-requests-delete') &&
+                          formCancel.value.auth_request?.user_id === currentUser.value?.id
+
+    if (useCancelAuth) {
+      await $api.authProcessRequests.cancelAuth(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    } else {
+      await $api.authProcessRequests.cancelRequest(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    }
 
     snackbar.add({ type: 'success', text: 'Authorization request canceled' })
     closeCancelDialog()

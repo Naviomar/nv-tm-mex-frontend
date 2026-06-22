@@ -34,10 +34,23 @@
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div>
-            <InputText name="master_awb" density="compact" variant="solo-filled" label="Master AWB *" />
+            <InputText
+              name="master_awb"
+              density="compact"
+              variant="solo-filled"
+              label="Master AWB *"
+              :color="awbDuplicateFieldColor"
+            />
           </div>
           <div>
-            <InputText name="house_awb" density="compact" variant="solo-filled" label="House AWB *" />
+            <InputText
+              name="house_awb"
+              density="compact"
+              variant="solo-filled"
+              label="House AWB *"
+              :color="awbDuplicateFieldColor"
+              :hint="awbDuplicateFieldHint"
+            />
           </div>
 
           <div>
@@ -495,6 +508,15 @@
       </div>
     </DraggableDiv>
 
+    <DuplicateReferenceModal
+      v-model:show="duplicateModal.show"
+      :house-name="duplicateModal.pairLabel"
+      :duplicates="duplicateModal.references"
+      service-type="air-import"
+      @confirm="onConfirmDuplicateSave"
+      @cancel="onCancelDuplicateSave"
+    />
+
     <v-dialog v-model="formRevalidation.show" max-width="800">
       <v-card>
         <v-card-title>Send revalidation</v-card-title>
@@ -614,7 +636,7 @@ const availableAgents = computed(() => {
 const onAgentChange = async (agentId: number | null) => {
   try {
     loadingStore.start()
-    await $api.airImportReferences.updateCustomsAgent(props.id, { custom_agent_id: agentId })
+    await $api.airImport.updateCustomsAgent(props.id, { custom_agent_id: agentId })
     snackbar.add({ type: 'success', text: 'Customs agent updated' })
     getData()
   } catch (e) {
@@ -748,6 +770,23 @@ const { handleSubmit, values, errors, meta, setValues } = useForm({
   validationSchema: schema,
 })
 
+const {
+  duplicateWarning,
+  hasDuplicate,
+  duplicateModalReferences,
+  duplicatePairLabel,
+} = useAirImportMawbHawbDuplicateCheck(() => values.master_awb, () => values.house_awb, () => props.id)
+
+const awbDuplicateFieldColor = computed(() => (hasDuplicate.value ? 'warning' : undefined))
+const awbDuplicateFieldHint = computed(() => duplicateWarning.value ?? undefined)
+
+const duplicateModal = ref({
+  show: false,
+  pairLabel: '',
+  references: [] as any[],
+})
+const proceedDespiteDuplicate = ref(false)
+
 interface SearchParams {
   name?: string
   id?: number
@@ -808,6 +847,18 @@ const getCatalogs = async () => {
 await getCatalogs()
 
 const onSuccess = async () => {
+  if (hasDuplicate.value && !proceedDespiteDuplicate.value) {
+    duplicateModal.value = {
+      show: true,
+      pairLabel: duplicatePairLabel.value,
+      references: duplicateModalReferences.value,
+    }
+    return
+  }
+
+  const confirmDuplicate = proceedDespiteDuplicate.value
+  proceedDespiteDuplicate.value = false
+
   try {
     loadingStore.start()
     const { transits, ...valuesWithoutTransits } = values
@@ -815,6 +866,7 @@ const onSuccess = async () => {
       ...valuesWithoutTransits,
       routes: routes.value,
       charges: charges.value,
+      confirm_duplicate: confirmDuplicate,
     }
     const response = await $api.airImport.updateReference(props.id, body)
 
@@ -860,6 +912,17 @@ const removeRoute = (index: number) => {
 }
 
 const onSaveAirImportClick = handleSubmit(onSuccess, onInvalidSubmit)
+
+const onConfirmDuplicateSave = () => {
+  duplicateModal.value.show = false
+  proceedDespiteDuplicate.value = true
+  onSaveAirImportClick()
+}
+
+const onCancelDuplicateSave = () => {
+  duplicateModal.value.show = false
+  proceedDespiteDuplicate.value = false
+}
 
 const onSaveRevalidation = async () => {
   try {

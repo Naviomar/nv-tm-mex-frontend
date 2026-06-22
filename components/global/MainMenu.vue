@@ -657,6 +657,7 @@
           ></v-list-item>
         </template>
 
+        <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" to="/system/admin-department" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemUsers)" title="Users" prepend-icon="mdi-account-group" to="/system/users" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemRolesPermissions)" title="Roles and permissions" prepend-icon="mdi-shield-account-outline" to="/system/role-permissions" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemBankAccounts)" title="Bank accounts" prepend-icon="mdi-bank-outline" to="/system/bank-accounts" rounded="xl" class="mb-1"></v-list-item>
@@ -676,7 +677,6 @@
       <v-divider class="my-3 border border-[#aaa]!"></v-divider>
       <v-list density="compact" slim nav color="primary" class="px-0">
         <v-list-item
-          v-if="canAccess(menuPermissions.Logout)"
           prepend-icon="mdi-logout"
           title="Logout"
           rounded="xl"
@@ -687,23 +687,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import { menuPermissions } from '~/utils/data/system'
 
 const { logout } = useSanctumAuth()
-const { hasPermission, user } = useCheckUser()
+const { hasPermission } = useCheckUser()
 const route = useRoute()
 const opened = ref<string[]>([])
-
-const hasMenuPermissionsSeeded = computed(() => {
-  const directPermissions = user.value?.permissions?.some((permission: any) => permission.name.startsWith('menu-'))
-  const rolePermissions = user.value?.roles?.some((role: any) =>
-    role.permissions?.some((permission: any) => permission.name.startsWith('menu-'))
-  )
-
-  return !!directPermissions || !!rolePermissions
-})
 
 const authorizationsPermissions = [
   menuPermissions.AuthorizationsRequests,
@@ -812,6 +803,7 @@ const configurationPermissions = [
 ]
 
 const systemPermissions = [
+  menuPermissions.SystemAdminDept,
   menuPermissions.SystemUsers,
   menuPermissions.SystemRolesPermissions,
   menuPermissions.SystemBankAccounts,
@@ -826,18 +818,10 @@ const systemPermissions = [
 ]
 
 const canAccess = (permission: string) => {
-  if (!hasMenuPermissionsSeeded.value) {
-    return true
-  }
-
   return hasPermission(permission)
 }
 
 const hasAnyPermission = (permissions: string[]) => {
-  if (!hasMenuPermissionsSeeded.value) {
-    return true
-  }
-
   return permissions.some((permission) => hasPermission(permission))
 }
 

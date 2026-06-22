@@ -22,6 +22,21 @@ type IReferenciaPagination = {
     next: string
   }
 }
+export type IAirImportDuplicateReference = {
+  id: number
+  reference_number: string
+  master_awb?: string | null
+  house_awb?: string | null
+  consignee?: { id: number; name: string } | null
+  airline?: { id: number; name: string } | null
+  freight_forwarder?: { id: number; name: string } | null
+}
+
+export type IDuplicateMawbHawbCheckResponse = {
+  exists: boolean
+  existing_reference: IAirImportDuplicateReference | null
+}
+
 type IReferencia = {
   id: number
   name: string
@@ -98,6 +113,26 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
 
   async getFormCatalogs(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/form-catalogs`, fetchOptions)
+  }
+
+  async searchDuplicateMawbHawb(
+    masterAwb: string,
+    houseAwb: string,
+    excludeAirReferenceId?: string,
+    fetchOptions?: FetchOptions
+  ): Promise<IDuplicateMawbHawbCheckResponse> {
+    const params = new URLSearchParams({
+      master_awb: masterAwb,
+      house_awb: houseAwb,
+    })
+    if (excludeAirReferenceId) {
+      params.set('exclude_air_reference_id', excludeAirReferenceId)
+    }
+    return this.call(
+      'GET',
+      `${this.RESOURCE}/search-duplicate-mawb-hawb?${params.toString()}`,
+      fetchOptions
+    ) as unknown as Promise<IDuplicateMawbHawbCheckResponse>
   }
 
   async saveSeaExportCharge(id: string, form: any, fetchOptions?: FetchOptions) {

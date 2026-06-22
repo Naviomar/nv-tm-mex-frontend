@@ -1,9 +1,10 @@
 <template>
-  <div 
+  <div
     class="login-page d-flex align-center justify-center"
     :class="darkMode.isDark ? 'theme-dark' : 'theme-light'"
   >
-    
+    <AuthGlobeBackground />
+
     <v-slide-y-transition appear>
       <div class="width-container">
         
@@ -167,7 +168,7 @@ onMounted(async () => {
 /* 1. MODO CLARO */
 .theme-light {
     --bg-gradient: linear-gradient(180deg, #F9FAFB 0%, #E5E7EB 100%);
-    --card-bg: #FFFFFF;
+    --card-bg: rgba(255, 255, 255, 0.85);
 
     /* Variable NUEVA: Borde visible solo en modo claro */
     --card-border: rgba(0,0,0,0.08);
@@ -193,21 +194,23 @@ onMounted(async () => {
 
 /* 2. MODO OSCURO */
 .theme-dark {
-    --bg-gradient: #1E1E1E; 
-    --card-bg: #2D2D2D; 
-    
+    /* Misma paleta oscura que chl (navy oscuro, no gris) para que ambos
+       sistemas se vean consistentes. */
+    --bg-gradient: #05070d;
+    --card-bg: rgba(20, 24, 38, 0.72);
+
     /* Variable NUEVA: Borde transparente (sin marco negro) */
-    --card-border: transparent;
+    --card-border: rgba(255, 255, 255, 0.08);
 
     /* Azul corporativo reutilizado también en modo oscuro */
-    --brand-primary: #415eff;
+    --brand-primary: #2196f3;
 
     --text-title: #FFFFFF;
     --text-subtitle: #B0B0B0;
     --text-label: #E0E0E0;
-    --input-bg: #383838; 
-    --input-focus-bg: #404040;
-    --input-border: #4D4D4D;
+    --input-bg: #1c2030;
+    --input-focus-bg: #232840;
+    --input-border: #343a4d;
     --input-text: #FFFFFF;
     --input-placeholder: #909090;
     --input-focus-border: var(--brand-primary);
@@ -220,13 +223,15 @@ onMounted(async () => {
 
 /* --- ESTILOS GENERALES --- */
 .login-page {
+  position: relative;
   min-height: 100vh;
   width: 100%;
-  background: var(--bg-gradient);
-  transition: background 0.5s ease;
+  overflow: hidden;
 }
 
 .width-container {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 420px;
 }
@@ -235,12 +240,13 @@ onMounted(async () => {
 .custom-card-transition {
   background-color: var(--card-bg) !important;
   color: var(--text-title);
-  box-shadow: 0 20px 25px -5px var(--shadow-color), 
+  box-shadow: 0 20px 25px -5px var(--shadow-color),
               0 10px 10px -5px var(--shadow-color) !important;
-  
+
   /* CORREGIDO: Usar variable específica para el borde de tarjeta */
   border: 1px solid var(--card-border);
-  
+  backdrop-filter: blur(12px);
+
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 

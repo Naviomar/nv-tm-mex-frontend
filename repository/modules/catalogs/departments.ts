@@ -41,6 +41,14 @@ class DepartmentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/unlink-user`, fetchOptions)
   }
 
+  async updateUserType(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-user-type`, fetchOptions)
+  }
+
   async importRolePermissions(id: string, form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),
@@ -95,6 +103,48 @@ class DepartmentsModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
+  }
+
+  async getMyManagedDepartments(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/my-managed`, fetchOptions)
+  }
+
+  async getDepartmentRoles(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/roles`, fetchOptions)
+  }
+
+  async getAdminScopePermissions(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/admin-scope-permissions`, fetchOptions)
+  }
+
+  async linkRole(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/link-role`, fetchOptions)
+  }
+
+  async unlinkRole(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/unlink-role`, fetchOptions)
+  }
+
+  async createMemberRole(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/create-member-role`, fetchOptions)
+  }
+
+  async assignRoleToUser(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/assign-role-to-user`, fetchOptions)
+  }
+
+  async revokeRoleFromUser(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/revoke-role-from-user`, fetchOptions)
+  }
+
+  async syncRolePermissions(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = { body: JSON.stringify(form), ...fetchOptions }
+    return this.call('POST', `${this.RESOURCE}/${id}/sync-role-permissions`, fetchOptions)
   }
 }
 

@@ -105,9 +105,35 @@
           >
             <td>{{ authRequest.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                  <v-badge
+                    v-if="authRequest.unread_count"
+                    :content="authRequest.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(authRequest) && hasPermission('authorization-requests-respond')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(authRequest)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(authRequest)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(authRequest)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
             <td class="whitespace-nowrap">
@@ -122,6 +148,39 @@
                   @click="openHistoryDialog(authRequest)"
                   title="View cancellation history"
                 />
+              </div>
+              <!-- Voyage transfer details -->
+              <div v-if="authRequest.resource === 'voyage-transfer-references' && authRequest.resource_data" class="mt-2">
+                <div class="flex items-center gap-1 flex-wrap">
+                  <v-chip size="x-small" color="red-darken-1" variant="flat">
+                    {{ authRequest.resource_data.source_voyage_name || 'Unknown' }}
+                  </v-chip>
+                  <v-icon size="16" color="grey">mdi-arrow-right</v-icon>
+                  <v-chip size="x-small" color="green-darken-1" variant="flat">
+                    {{ authRequest.resource_data.target_voyage_name || 'Unknown' }}
+                  </v-chip>
+                </div>
+                <div class="text-xs text-grey-darken-1 mt-1">
+                  {{ authRequest.resource_data.total_selected }} reference(s) selected
+                </div>
+              </div>
+              <!-- Voyage change details -->
+              <div v-if="authRequest.resource === 'sea-import-update-locked-voyage' && authRequest.resource_data" class="mt-2">
+                <div class="flex items-center gap-1 flex-wrap">
+                  <v-chip size="x-small" color="red-darken-1" variant="flat">
+                    {{ authRequest.resource_data.old_voyage_name || 'Unknown' }}
+                    <span v-if="authRequest.resource_data.old_voyage_internal_code" class="ml-1">({{ authRequest.resource_data.old_voyage_internal_code }})</span>
+                  </v-chip>
+                  <v-icon size="16" color="grey">mdi-arrow-right</v-icon>
+                  <v-chip size="x-small" color="green-darken-1" variant="flat">
+                    {{ authRequest.resource_data.new_voyage_name || 'Unknown' }}
+                    <span v-if="authRequest.resource_data.new_voyage_internal_code" class="ml-1">({{ authRequest.resource_data.new_voyage_internal_code }})</span>
+                  </v-chip>
+                </div>
+                <div v-if="authRequest.resource_data.new_voyage_eta_date || authRequest.resource_data.new_voyage_arrival_date" class="flex items-center gap-2 mt-1 text-xs text-grey-darken-1">
+                  <span v-if="authRequest.resource_data.new_voyage_eta_date">ETA: {{ formatDateString(authRequest.resource_data.new_voyage_eta_date) }}</span>
+                  <span v-if="authRequest.resource_data.new_voyage_arrival_date">• Arrival: {{ formatDateString(authRequest.resource_data.new_voyage_arrival_date) }}</span>
+                </div>
               </div>
             </td>
             <td style="max-width: 280px;">
@@ -279,7 +338,7 @@
           <TicketChatPanel
             ticket-type="authorization-request"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -290,12 +349,12 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket)"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('authorization-requests-respond')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
             <v-btn
-              v-else
+              v-if="canDelete(activeChatTicket)"
               color="error" variant="tonal" size="small"
               @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
             >Delete</v-btn>
@@ -327,9 +386,9 @@
 import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
-const { $api, $notifications } = useNuxtApp()
+const { $api } = useNuxtApp()
+const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
 const router = useRouter()
 const authRequestStore = useAuthRequestStore()
 
@@ -371,6 +430,7 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (authRequest: any) => {
   activeChatTicket.value = authRequest
+  authRequest.unread_count = 0
   showChatDrawer.value = true
 }
 
@@ -416,10 +476,10 @@ const isPendingToGrant = (authRequest: any) => {
   return authRequest.is_authorized == null
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
@@ -479,12 +539,33 @@ const grantAuthorization = async () => {
   }
 }
 
+const canDelete = (authRequest: any) => {
+  if (!authRequest) return false
+  if (!isAdminRole()) return false
+  if (!isPendingToGrant(authRequest) && hasPermission('authorization-requests-delete')) {
+    return true
+  }
+  if (isPendingToGrant(authRequest) && authRequest.requested_by === currentUser.value?.id) {
+    return true
+  }
+  return false
+}
+
 const cancelAuthorization = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.authRequests.cancelRequest(formCancel.value.auth_request.id, {
-      cancel_reason: formCancel.value.cancel_reason,
-    })
+    const useCancelAuth = !hasPermission('authorization-requests-delete') &&
+                          formCancel.value.auth_request?.requested_by === currentUser.value?.id
+
+    if (useCancelAuth) {
+      await $api.authRequests.cancelAuth(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    } else {
+      await $api.authRequests.cancelRequest(formCancel.value.auth_request.id, {
+        cancel_reason: formCancel.value.cancel_reason,
+      })
+    }
 
     snackbar.add({ type: 'success', text: 'Authorization request canceled' })
     closeCancelDialog()

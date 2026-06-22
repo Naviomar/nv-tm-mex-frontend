@@ -34,6 +34,9 @@ const paymentableName = (payment: any) => {
     if (payment.paymentable?.payable_option_id === 2) {
       return 'Advance payment'
     }
+    if (payment.paymentable?.payable_option_id === 3) {
+      return 'Retention'
+    }
     return 'Payable option'
   }
   return 'Unknown'

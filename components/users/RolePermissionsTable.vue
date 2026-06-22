@@ -38,12 +38,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(role, index) in filterRoles" :key="`role-${role.id}`">
+            <tr v-for="role in filterRoles" :key="`role-${role.id}`">
               <td>
                 <div class="d-flex align-center">
                   <v-icon size="small" color="primary" class="mr-2">mdi-shield</v-icon>
                   <span class="font-weight-medium">{{ role.name }}</span>
-                  <v-chip v-if="index === 0" size="x-small" color="amber" class="ml-2">Super</v-chip>
+                  <v-chip v-if="role.name === 'Super Admin'" size="x-small" color="amber" class="ml-2">Super</v-chip>
                 </div>
               </td>
               <td class="text-center">
@@ -61,7 +61,6 @@
                         variant="tonal"
                         color="primary"
                         icon="mdi-key-variant"
-                        :disabled="index === 0"
                         @click="openEditPermissionsModal(role)"
                       />
                     </template>
@@ -87,7 +86,7 @@
                         variant="tonal"
                         color="error"
                         icon="mdi-delete"
-                        :disabled="index === 0"
+                        :disabled="role.name === 'Super Admin'"
                         @click="confirmDeleteRole(role)"
                       />
                     </template>
@@ -222,7 +221,7 @@
     </v-dialog>
 
     <!-- Modal: Edit Role Permissions -->
-    <v-dialog v-model="editPermissionsModal.show" max-width="700" persistent scrollable>
+    <v-dialog v-model="editPermissionsModal.show" max-width="1200" persistent scrollable>
       <v-card>
         <v-toolbar color="primary" density="compact">
           <v-toolbar-title>
@@ -230,57 +229,25 @@
             Edit Permissions: {{ editPermissionsModal.role?.name }}
           </v-toolbar-title>
           <v-spacer />
+          <div v-if="savingPermissions" class="d-flex align-center mr-3 text-white text-caption">
+            <v-progress-circular indeterminate size="14" width="2" color="white" class="mr-1" />
+            Saving...
+          </div>
+          <div v-else-if="savedPermissions" class="d-flex align-center mr-3 text-white text-caption">
+            <v-icon size="14" class="mr-1">mdi-check</v-icon>
+            Saved
+          </div>
+          <span class="text-white text-caption mr-3">{{ editPermissionsModal.selectedIds.length }} selected</span>
           <v-btn icon @click="editPermissionsModal.show = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
-        <v-card-text class="pa-0" style="max-height: 60vh">
-          <v-text-field
-            v-model="editPermissionsModal.search"
-            prepend-inner-icon="mdi-magnify"
-            placeholder="Search permissions..."
-            density="compact"
-            hide-details
-            clearable
-            class="ma-4"
-            variant="outlined"
+        <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
+          <PermissionsGrid
+            :permissions="permissions"
+            v-model="editPermissionsModal.selectedIds"
           />
-          <v-list density="compact" class="py-0">
-            <v-list-item
-              v-for="perm in filteredEditPermissions"
-              :key="perm.id"
-              class="border-b"
-            >
-              <v-list-item-title>{{ perm.name }}</v-list-item-title>
-              <template #append>
-                <v-switch
-                  :model-value="editPermissionsModal.selectedIds.includes(perm.id)"
-                  color="primary"
-                  hide-details
-                  density="compact"
-                  inset
-                  @update:model-value="togglePermission(perm.id)"
-                />
-              </template>
-            </v-list-item>
-            <v-list-item v-if="filteredEditPermissions.length === 0">
-              <v-list-item-title class="text-center text-grey py-4">
-                No permissions match your search
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
         </v-card-text>
-        <v-divider />
-        <v-card-actions class="pa-4">
-          <div class="text-caption text-grey">
-            {{ editPermissionsModal.selectedIds.length }} permission(s) selected
-          </div>
-          <v-spacer />
-          <v-btn variant="text" @click="editPermissionsModal.show = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" @click="saveRolePermissionsSync" :loading="savingPermissions">
-            Save Changes
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -347,6 +314,7 @@ const showDialogRole = ref(false)
 const showDialogPermission = ref(false)
 const loadingUsers = ref<number | null>(null)
 const savingPermissions = ref(false)
+const savedPermissions = ref(false)
 const roleUserCounts = ref<Record<number, number>>({})
 
 // Edit Permissions Modal
@@ -378,12 +346,6 @@ const filterPermissions = computed(() => {
   })
 })
 
-const filteredEditPermissions = computed(() => {
-  if (!editPermissionsModal.value.search) return permissions.value
-  return permissions.value.filter((p) =>
-    p.name.toLowerCase().includes(editPermissionsModal.value.search.toLowerCase())
-  )
-})
 
 const { user } = useCheckUser()
 
@@ -429,14 +391,6 @@ const openEditPermissionsModal = (roleData: any) => {
   }
 }
 
-const togglePermission = (permId: number) => {
-  const idx = editPermissionsModal.value.selectedIds.indexOf(permId)
-  if (idx >= 0) {
-    editPermissionsModal.value.selectedIds.splice(idx, 1)
-  } else {
-    editPermissionsModal.value.selectedIds.push(permId)
-  }
-}
 
 const showRoleUsers = async (roleData: any) => {
   try {
@@ -491,24 +445,31 @@ const saveRole = async () => {
   }
 }
 
-const saveRolePermissionsSync = async () => {
-  if (!editPermissionsModal.value.role) return
-  try {
-    savingPermissions.value = true
-    await $api.users.syncRolePermissions(
-      editPermissionsModal.value.role.id,
-      editPermissionsModal.value.selectedIds
-    )
-    snackbar.add({ type: 'success', text: 'Permissions updated successfully' })
-    await getRolesAndPermissions()
-    editPermissionsModal.value.show = false
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error updating permissions' })
-  } finally {
-    savingPermissions.value = false
-  }
-}
+let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(
+  () => editPermissionsModal.value.selectedIds,
+  (ids) => {
+    if (!editPermissionsModal.value.role || !editPermissionsModal.value.show) return
+    if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
+    saveDebounceTimer = setTimeout(async () => {
+      try {
+        savingPermissions.value = true
+        savedPermissions.value = false
+        await $api.users.syncRolePermissions(editPermissionsModal.value.role.id, ids)
+        savedPermissions.value = true
+        await getRolesAndPermissions()
+        setTimeout(() => { savedPermissions.value = false }, 2000)
+      } catch (e) {
+        console.error(e)
+        snackbar.add({ type: 'error', text: 'Error updating permissions' })
+      } finally {
+        savingPermissions.value = false
+      }
+    }, 600)
+  },
+  { deep: true }
+)
 
 const confirmDeleteRole = async (rol: any) => {
   const result = await confirm({

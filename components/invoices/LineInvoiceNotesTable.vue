@@ -3,16 +3,78 @@
     <v-card>
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
-          <div>Filters:</div>
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-4">
-              <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
+          <div class="font-bold text-lg mb-3">Filters</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div><v-text-field v-model="filters.invoiceDateFrom" density="compact" type="date" label="Invoice date from" /></div>
+            <div><v-text-field v-model="filters.invoiceDateTo" density="compact" type="date" label="Invoice date to" /></div>
+            <div>
+              <v-autocomplete
+                density="compact"
+                label="Payment status"
+                v-model="filters.paymentStatus"
+                :items="paymentStatusOptions"
+                item-title="name"
+                item-value="value"
+                clearable
+                hide-details
+              />
             </div>
-            <div class="col-span-4">
+            <div>
+              <v-autocomplete
+                density="compact"
+                label="Status"
+                v-model="filters.deletedStatus"
+                :items="deletedStatusOptions"
+                item-title="name"
+                item-value="value"
+                clearable
+                hide-details
+              />
+            </div>
+            <div>
               <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line" />
             </div>
           </div>
-          <div class="flex gap-4 justify-end">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mt-3">
+            <div class="col-span-2">
+              <div class="font-bold text-base">Invoice number multiline</div>
+              <v-textarea
+                v-model="filters.folio"
+                density="compact"
+                label="Multiline invoice number"
+                placeholder="Enter invoice number by line"
+                rows="3"
+                hide-details
+              />
+              <v-btn @click="addFolio" size="small" color="primary">
+                <div class="flex gap-2">
+                  <v-icon>mdi-plus</v-icon>
+                  <div>Add to filters</div>
+                </div>
+              </v-btn>
+            </div>
+            <div class="col-span-3">
+              <div v-if="filters.folios.length > 0" class="flex gap-2 px-2">Searching invoices #</div>
+              <div class="flex gap-2 px-2">
+                <v-chip
+                  v-for="(folio, index) in filters.folios"
+                  size="small"
+                  color="green"
+                  :key="`folio-${index}`"
+                  @click="removeFolio(index)"
+                >
+                  {{ folio }}
+                  <v-icon>mdi-close</v-icon>
+                </v-chip>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mt-3">
+            <div>
+              <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
+            </div>
+          </div>
+          <div class="flex gap-4 justify-end mt-3">
             <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
             <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
           </div>
@@ -201,6 +263,12 @@ const filters = ref({
   referencias: [] as any,
   masterBl: '',
   line_id: '',
+  folio: '',
+  folios: [] as string[],
+  invoiceDateFrom: '',
+  invoiceDateTo: '',
+  paymentStatus: '',
+  deletedStatus: '',
 })
 
 const lineInvoices = ref({
@@ -217,10 +285,39 @@ const lineInvoices = ref({
 // Revisa si alguna de las referencias asociadas tiene estatus de pagado o monto pagado > 0
 const isPaid = (item: any) => {
     if (!item.refs || item.refs.length === 0) return false
-    
+
     return item.refs.some((ref: any) => {
         return ref.invoice?.is_paid == 1 || (ref.invoice?.amount_paid && parseFloat(ref.invoice.amount_paid) > 0)
     })
+}
+
+const paymentStatusOptions = computed(() => [
+  { value: 'paid', name: 'Paid' },
+  { value: 'pending', name: 'Pending' },
+  { value: 'parcial', name: 'Partial' },
+  { value: 'all', name: 'All' },
+])
+
+const deletedStatusOptions = computed(() => [
+  { value: 'active', name: 'Active' },
+  { value: 'deleted', name: 'Cancelled' },
+  { value: 'all', name: 'All' },
+])
+
+const addFolio = () => {
+  if (filters.value.folio) {
+    const folios = filters.value.folio.split(/[\n,;|]/).map(f => f.trim()).filter(f => f)
+    folios.forEach((folio) => {
+      if (!filters.value.folios.includes(folio)) {
+        filters.value.folios.push(folio)
+      }
+    })
+    filters.value.folio = ''
+  }
+}
+
+const removeFolio = (index: number) => {
+  filters.value.folios.splice(index, 1)
 }
 
 const addReferencia = () => {
@@ -303,6 +400,12 @@ const clearFilters = async () => {
     referencias: [],
     masterBl: '',
     line_id: '',
+    folio: '',
+    folios: [],
+    invoiceDateFrom: '',
+    invoiceDateTo: '',
+    paymentStatus: '',
+    deletedStatus: '',
   }
   await getLineInvoices()
 }

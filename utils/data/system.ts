@@ -11,9 +11,77 @@ const permissions = {
   DemurragesRateOverrideCreate: 'demurrages-rate-override-create',
   DemurragesRateOverrideEdit: 'demurrages-rate-override-edit',
   DemurragesRateOverrideDelete: 'demurrages-rate-override-delete',
+
+  // Container Delay Rates
+  ContainerDelayRatesCreate: 'container-delay-rates-create',
+  ContainerDelayRatesEdit: 'container-delay-rates-edit',
+  ContainerDelayRatesDelete: 'container-delay-rates-delete',
   SupplierCfdiValidateSat: 'supplier-cfdi-validate-sat',
   MarkSupplierCfdiAsFreeFormat: 'mark-supplier-cfdi-as-free-format',
   RevertSupplierCfdiFromFreeFormat: 'revert-supplier-cfdi-from-free-format',
+
+  // Customer Invoices
+  CustomerInvoicesIndex: 'customer-invoices-index',
+  CustomerInvoicesView: 'customer-invoices-view',
+  CustomerInvoicesCreate: 'customer-invoices-create',
+  CustomerInvoicesEdit: 'customer-invoices-edit',
+
+  // TM Invoices
+  TmInvoicesIndex: 'tm-invoices-index',
+  TmInvoicesView: 'tm-invoices-view',
+  TmInvoicesCreate: 'tm-invoices-create',
+  TmInvoicesEdit: 'tm-invoices-edit',
+
+  // WM Invoices
+  WmInvoicesIndex: 'wm-invoices-index',
+  WmInvoicesView: 'wm-invoices-view',
+  WmInvoicesCreate: 'wm-invoices-create',
+  WmInvoicesEdit: 'wm-invoices-edit',
+
+  // TM Air Invoices
+  TmAirInvoicesIndex: 'tm-air-invoices-index',
+  TmAirInvoicesView: 'tm-air-invoices-view',
+  TmAirInvoicesEdit: 'tm-air-invoices-edit',
+
+  // WM Air Invoices
+  WmAirInvoicesIndex: 'wm-air-invoices-index',
+  WmAirInvoicesView: 'wm-air-invoices-view',
+  WmAirInvoicesEdit: 'wm-air-invoices-edit',
+
+  // Line Payments
+  LinePaymentsIndex: 'line-payments-index',
+  LinePaymentsView: 'line-payments-view',
+  LinePaymentsCreate: 'line-payments-create',
+  LinePaymentsEdit: 'line-payments-edit',
+  LinePaymentsDelete: 'line-payments-delete',
+
+  // Party Invoices (freight lines + ff agents)
+  PartyInvoicesIndex: 'party-invoices-index',
+  PartyInvoicesView: 'party-invoices-view',
+  PartyInvoicesCreate: 'party-invoices-create',
+  PartyInvoicesEdit: 'party-invoices-edit',
+  PartyInvoicesDelete: 'party-invoices-delete',
+
+  // Supplier Request Payments
+  SupplierReqPaymentsIndex: 'supplier-req-payments-index',
+  SupplierReqPaymentsView: 'supplier-req-payments-view',
+  SupplierReqPaymentsCreate: 'supplier-req-payments-create',
+  SupplierReqPaymentsEdit: 'supplier-req-payments-edit',
+  SupplierReqPaymentsDelete: 'supplier-req-payments-delete',
+
+  // Refunds
+  RefundsIndex: 'refunds-index',
+  RefundsView: 'refunds-view',
+  RefundsCreate: 'refunds-create',
+  RefundsEdit: 'refunds-edit',
+  RefundsDelete: 'refunds-delete',
+
+  // Advance Payments
+  AdvancePaymentsIndex: 'advance-payments-index',
+  AdvancePaymentsView: 'advance-payments-view',
+  AdvancePaymentsCreate: 'advance-payments-create',
+  AdvancePaymentsEdit: 'advance-payments-edit',
+  AdvancePaymentsDelete: 'advance-payments-delete',
 }
 
 const menuPermissions = {
@@ -104,6 +172,7 @@ const menuPermissions = {
   ConfigurationVoyages: 'menu-configuration-voyages',
   ConfigurationWarehouses: 'menu-configuration-warehouses',
   System: 'menu-system',
+  SystemAdminDept: 'menu-system-admin-department',
   SystemUsers: 'menu-system-users',
   SystemRolesPermissions: 'menu-system-roles-permissions',
   SystemBankAccounts: 'menu-system-bank-accounts',
@@ -184,6 +253,18 @@ const authorizeResources = {
     description: 'Skip Agent Change Charge on Sea Import Revalidation',
     redirect: null,
   },
+  /** Update locked arrival voyage on sea import reference */
+  SeaImportUpdateLockedVoyage: {
+    resource: 'sea-import-update-locked-voyage',
+    description: 'Update Locked Sea Import Arrival Voyage',
+    redirect: null,
+  },
+  /** Transfer BLs (references) from one voyage destination to another */
+  VoyageTransferReferences: {
+    resource: 'voyage-transfer-references',
+    description: 'Transfer BLs between Voyage Destinations',
+    redirect: null,
+  },
 }
 
 /**
@@ -246,6 +327,12 @@ const processResources = {
     processName: 'supplier-cfdi-restore',
     description: 'Restore Supplier CFDI',
     keyLabel: 'CFDI',
+  },
+  /** Authorize applying container delay rate changes (create/update/delete batch) */
+  ContainerDelayRatesApplyChanges: {
+    processName: 'container-delay-rates.apply-changes',
+    description: 'Apply Container Delay Rate Changes',
+    keyLabel: 'Line',
   },
 }
 

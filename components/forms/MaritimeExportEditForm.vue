@@ -278,7 +278,7 @@
                   <div class="font-bold">{{ customerCurrentExecutive }}</div>
                 </div>
                 <div v-if="canUpdateExecutive" class="flex flex-col">
-                  <v-btn color="primary" size="x-small" @click="updateServiceExecutive">Update executive</v-btn>
+                  <v-btn color="primary" size="x-small" @click="updateServiceExecutive" :disabled="!hasPermission('sea-export-update-executive')">Update executive</v-btn>
                 </div>
               </div>
               <div>
@@ -648,6 +648,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const exchangeRatesStore = useExchangeRatesStore()
+const { hasPermission } = useCheckUser()
 
 const showExportInfo = ref(true)
 const showCustomerInfo = ref(true)
@@ -1055,7 +1056,7 @@ const updateRefRebate = async () => {
       id: values.id,
       rebate: formRebate.value.amount,
     }
-    await $api.referencias.updateSeaImportRebate(values.id, body)
+    await $api.referenciasExport.updateRebate(values.id, body)
     snackbar.add({ type: 'success', text: 'Rebate updated successfully' })
     await getData()
 

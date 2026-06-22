@@ -60,25 +60,42 @@
         <div class="col-span-2">
           <AFreightForwarderSearch v-model="filters.freight_forwarder_id" />
         </div>
-        <div class="col-span-2">
+        <div class="col-span-4">
           <v-autocomplete
-            v-model="filters.vessel_id"
+            v-model="unifiedVesselVoyageSearch"
             density="compact"
-            label="Vessel"
-            :items="catalogs.vessels"
-            item-title="name"
+            label="Vessel / Voyage"
+            :items="unifiedVesselVoyageItems"
+            item-title="display_name"
             item-value="id"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-autocomplete
-            v-model="filters.voyage_id"
-            density="compact"
-            label="Voyage"
-            :items="catalogs.voyages"
-            item-title="name"
-            item-value="id"
-          />
+            clearable
+            hide-details
+            @update:model-value="onUnifiedSearchChange"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :color="item.raw.type === 'vessel' ? 'blue' : 'teal'">
+                    {{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}
+                  </v-icon>
+                </template>
+                <template #title>
+                  <span>{{ item.raw.display_name }}</span>
+                </template>
+                <template #subtitle>
+                  <v-chip size="x-small" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'" variant="flat">
+                    {{ item.raw.type === 'vessel' ? 'Vessel' : 'Voyage' }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <span class="d-flex align-center gap-1 text-truncate">
+                <v-icon size="14" :color="item.raw.type === 'vessel' ? 'blue' : 'teal'">{{ item.raw.type === 'vessel' ? 'mdi-ferry' : 'mdi-map-marker-path' }}</v-icon>
+                <span class="text-truncate text-body-2">{{ item.raw.display_name }}</span>
+              </span>
+            </template>
+          </v-autocomplete>
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" />
@@ -110,17 +127,6 @@
             :items="deletedStatus"
             item-title="name"
             item-value="value"
-            hide-details
-          />
-        </div>
-        <div class="col-span-4">
-          <v-autocomplete
-            density="compact"
-            label="Vessel - voyage"
-            v-model="filters.voyage_departure_id"
-            :items="catalogs.voyage_discharges"
-            item-title="name"
-            item-value="id"
             hide-details
           />
         </div>
@@ -408,7 +414,6 @@ const initialFilters = {
   consignee_id: '',
   freight_forwarder_id: '',
   vessel_id: '',
-  voyage_id: '',
   voyage_departure_id: '',
   eta: '',
   containerNumber: '',
@@ -597,8 +602,49 @@ const getSeaImportFilters = async () => {
   catalogs.value = response as any
 }
 
+const unifiedVesselVoyageSearch = ref<string | null>(null)
+
+const unifiedVesselVoyageItems = computed(() => {
+  const voyages = catalogs.value.voyage_discharges.map((voyage: any) => ({
+    id: `voyage-${voyage.id}`,
+    display_name: (voyage.short_name || voyage.name) + (voyage.voyage?.vessel?.line?.code ? ` (${voyage.voyage.vessel.line.code})` : ''),
+    type: 'voyage',
+    original_id: voyage.id,
+  }))
+
+  const vessels = catalogs.value.vessels.map((vessel: any) => ({
+    id: `vessel-${vessel.id}`,
+    display_name: vessel.name,
+    type: 'vessel',
+    original_id: vessel.id,
+  }))
+
+  return [...voyages, ...vessels]
+})
+
+const onUnifiedSearchChange = (value: string | null) => {
+  if (!value) {
+    filters.value.vessel_id = ''
+    filters.value.voyage_departure_id = ''
+    return
+  }
+
+  const selectedItem = unifiedVesselVoyageItems.value.find((item) => item.id === value)
+
+  if (selectedItem) {
+    if (selectedItem.type === 'vessel') {
+      filters.value.vessel_id = selectedItem.original_id.toString()
+      filters.value.voyage_departure_id = ''
+    } else {
+      filters.value.voyage_departure_id = selectedItem.original_id.toString()
+      filters.value.vessel_id = ''
+    }
+  }
+}
+
 const clearFilters = async () => {
   await resetFiltersComposable()
+  unifiedVesselVoyageSearch.value = null
   references.value.current_page = 1
   await getSeaImportReferences()
 }

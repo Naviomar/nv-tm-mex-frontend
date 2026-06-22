@@ -110,6 +110,7 @@
                 :bg-color="vesselDepartureSailedColor"
                 :readonly="referencia.voyage_discharge?.locked_at != null"
                 :set-id="values.voyage_discharge_id || undefined"
+                :show-locked-indicator="true"
               />
               <div class="flex items-center gap-2">
                 <span>
@@ -274,7 +275,7 @@
                     <div class="font-bold">{{ customerCurrentExecutive }}</div>
                   </div>
                   <div v-if="canUpdateExecutive" class="flex flex-col">
-                    <v-btn color="primary" size="x-small" @click="updateServiceExecutive">Update executive</v-btn>
+                    <v-btn color="primary" size="x-small" @click="updateServiceExecutive" :disabled="!hasPermission('sea-import-update-executive')">Update executive</v-btn>
                   </div>
                 </div>
                 <div class="col-span-2">
@@ -693,6 +694,7 @@ const snackbar = useSnackbar()
 const exchangeRatesStore = useExchangeRatesStore()
 const router = useRouter()
 const route = useRoute()
+const { hasPermission } = useCheckUser()
 
 const showImportInfo = ref(true)
 const showCustomerInfo = ref(true)
@@ -1128,9 +1130,20 @@ const searchPodPorts = async (search: SearchParams) => {
 }
 
 const getSeaImportCatalogs = async () => {
-  const response = await $api.referencias.getSeaImportFormCatalogs()
+  const consigneeMblIds = masterBls.value
+    .map((mbl: any) => mbl.consignee_mbl_id)
+    .filter((id: any) => id != null)
+  
+  const response = await $api.referencias.getSeaImportFormCatalogs({
+    query: { consignee_mbl_ids: consigneeMblIds }
+  })
   catalogs.value = response as any
 }
+
+// Reload catalogs when masterBls change to include deleted consignee_mbls
+watch(masterBls, () => {
+  getSeaImportCatalogs()
+}, { deep: true })
 
 const updateRefRebate = async () => {
   try {

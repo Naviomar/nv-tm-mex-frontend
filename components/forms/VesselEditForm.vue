@@ -20,7 +20,7 @@
 
             <div class="flex justify-end items-center">
               <v-btn class="mr-4" color="secondary" to="/configuration/vessels"> Cancel </v-btn>
-              <v-btn color="primary" @click="saveVessel"> Save </v-btn>
+              <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="saveVessel"> Save </v-btn>
             </div>
           </v-card-text>
         </v-card>
@@ -35,6 +35,7 @@ const router = useRouter()
 const route = useRoute()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+const loadingStore = useLoadingStore()
 
 const id = route.params.id
 
@@ -47,14 +48,18 @@ const catalogs = ref<any>({
 })
 
 const onSuccess = async (values: any) => {
-  console.log('click submit', values)
-  const body = {
-    ...values,
+  try {
+    loadingStore.loading = true
+    const body = { ...values }
+    await $api.vessels.update(id!.toString(), body)
+    snackbar.add({ type: 'success', text: 'Vessel updated' })
+    router.push('/configuration/vessels')
+  } catch (e: any) {
+    const msg = e?.data?.message || e?.message || 'Error updating vessel'
+    snackbar.add({ type: 'error', text: msg })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
   }
-  const response = await $api.vessels.update(id!.toString(), body)
-
-  snackbar.add({ type: 'success', text: 'Vessel updated' })
-  router.push('/configuration/vessels')
 }
 
 function onInvalidSubmit({ values, errors, results }: any) {

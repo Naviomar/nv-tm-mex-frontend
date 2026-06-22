@@ -77,9 +77,35 @@
           >
             <td>{{ reqAssist.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(reqAssist)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(reqAssist)">
+                  <v-badge
+                    v-if="reqAssist.unread_count"
+                    :content="reqAssist.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(reqAssist) && hasPermission('support_request.manage')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(reqAssist)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(reqAssist)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(reqAssist)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ reqAssist.user?.name }}</td>
 
@@ -162,7 +188,7 @@
           <TicketChatPanel
             ticket-type="support-assistance"
             :ticket-id="activeChatTicket.id"
-            :can-manage="true"
+            :can-manage="isAdminRole()"
             height="580px"
             @close="showChatDrawer = false"
           />
@@ -173,12 +199,12 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket)"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('support_request.manage')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
             <v-btn
-              v-else
+              v-if="canDelete(activeChatTicket)"
               color="error" variant="tonal" size="small"
               @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
             >Delete</v-btn>
@@ -201,14 +227,10 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-const { $api, $notifications } = useNuxtApp()
-const { isAdminRole } = useCheckUser()
+const { $api } = useNuxtApp()
+const { isAdminRole, hasPermission } = useCheckUser()
 const snackbar = useSnackbar()
-const confirm = $notifications.useConfirm()
-const router = useRouter()
-const reqAssistStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -218,10 +240,6 @@ const filters = ref<any>({
   search: '',
   deleted_status: 'active',
   created_by: null,
-})
-
-const catalogs = ref<any>({
-  users: [],
 })
 
 const estatuses = ref<any>([
@@ -277,13 +295,14 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (item: any) => {
   activeChatTicket.value = item
+  item.unread_count = 0
   showChatDrawer.value = true
 }
 
+// TODO: Unused functions
 const priorityColor = (priority: string) => {
   return { critical: 'error', high: 'deep-orange', medium: 'warning', low: 'default' }[priority] ?? 'default'
 }
-
 const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
@@ -322,10 +341,15 @@ const assistSaveReq = async () => {
   }
 }
 
+const canDelete = (reqAssist: any) => {
+  if (!reqAssist) return false
+  return hasPermission('support_request.manage')
+}
+
 const cancelReqAssistance = async () => {
   try {
     loadingStore.loading = true
-    const response = await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
+    await $api.requestAssistances.cancelRequest(formCancel.value.req_assist.id, {
       cancel_reason: formCancel.value.cancel_reason,
     })
 

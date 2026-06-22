@@ -9,8 +9,69 @@
           <v-card-subtitle> Only credit notes not used can be edited. </v-card-subtitle>
           <v-card-text>
             <div class="py-4">
-              <v-text-field v-model="consigneeCreditNote.external_folio" density="compact" label="External folio" class="mb-2" />
-              <v-textarea v-model="consigneeCreditNote.description" density="compact" label="Comments *" class="mb-2" />
+
+              <!-- External folio & Comments -->
+              <div v-if="!metaIsSet">
+                <!-- Fields are empty: allow direct edit -->
+                <v-text-field v-model="consigneeCreditNote.external_folio" density="compact" label="External folio" class="mb-2" />
+                <v-textarea v-model="consigneeCreditNote.description" density="compact" label="Comments *" class="mb-2" />
+                <div class="flex justify-end mb-4">
+                  <v-btn color="secondary" variant="outlined" @click="saveMeta">
+                    Save folio &amp; comments
+                  </v-btn>
+                </div>
+              </div>
+
+              <div v-else>
+                <!-- Fields already set: show read-only + request to change -->
+                <v-text-field
+                  :model-value="consigneeCreditNote.external_folio"
+                  density="compact"
+                  label="External folio"
+                  class="mb-2"
+                  readonly
+                  variant="outlined"
+                  hint="Already set — use a request to change it"
+                  persistent-hint
+                />
+                <v-textarea
+                  :model-value="consigneeCreditNote.description"
+                  density="compact"
+                  label="Comments"
+                  class="mb-2"
+                  readonly
+                  variant="outlined"
+                  hint="Already set — use a request to change it"
+                  persistent-hint
+                />
+
+                <!-- Request to change meta -->
+                <v-card variant="outlined" class="mb-4 border-amber-400">
+                  <v-card-title class="text-sm font-semibold flex items-center gap-2">
+                    <v-icon size="small">mdi-shield-lock-outline</v-icon>
+                    Request to change folio / comments
+                  </v-card-title>
+                  <v-card-text>
+                    <div v-if="pendingMetaRequest" class="text-xs text-amber-700 mb-2">
+                      <v-icon size="x-small">mdi-clock-outline</v-icon> Request pending approval
+                    </div>
+                    <div v-else-if="grantedMetaRequest" class="text-xs text-green-700 mb-2">
+                      <v-icon size="x-small">mdi-check-circle-outline</v-icon> Request approved — changes applied
+                    </div>
+                    <template v-else>
+                      <v-text-field v-model="metaForm.external_folio" density="compact" label="New External folio" class="mb-2" />
+                      <v-textarea v-model="metaForm.description" density="compact" label="New Comments" class="mb-2" rows="2" />
+                      <v-textarea v-model="metaForm.reason" density="compact" label="Reason *" class="mb-2" rows="2" />
+                      <div class="flex justify-end">
+                        <v-btn color="amber-darken-3" size="small" @click="requestMetaChange">
+                          <v-icon size="small" class="mr-1">mdi-shield-lock-outline</v-icon>
+                          Send request
+                        </v-btn>
+                      </div>
+                    </template>
+                  </v-card-text>
+                </v-card>
+              </div>
 
               <div class="text-subtitle-2 font-bold mb-2">Concepts</div>
 
@@ -64,10 +125,175 @@
                   This credit note has no payments, it can be edited.
                 </v-alert>
               </div>
-              <div v-if="!hasPayments" class="flex justify-end">
+              <div v-if="!hasPayments" class="flex justify-end gap-2">
                 <v-btn color="primary" :disabled="hasAmountExceeded || editTotal <= 0" @click="updateCreditNote">
                   Update credit note
                 </v-btn>
+              </div>
+
+              <!-- Direct add charge (no payments) -->
+              <div v-if="!hasPayments" class="mt-4">
+                <v-card variant="outlined" class="border-blue-300">
+                  <v-card-title class="text-sm font-semibold flex items-center gap-2">
+                    <v-icon size="small">mdi-plus-circle-outline</v-icon>
+                    Add charge
+                  </v-card-title>
+                  <v-card-text>
+                    <div v-if="directChargeForm.charges.length > 0" class="mb-3">
+                      <ChargeLineList :charges="directChargeForm.charges" removable @remove="directChargeForm.charges.splice($event,1)" />
+                    </div>
+                    <div class="flex gap-2 items-start mb-2">
+                      <v-text-field
+                        v-model="directChargeForm.invoice_search"
+                        density="compact" label="Invoice number" hide-details class="flex-1"
+                        append-inner-icon="mdi-magnify"
+                        @click:append-inner="searchInvoiceForDirect"
+                        @keyup.enter="searchInvoiceForDirect"
+                      />
+                    </div>
+                    <div v-if="directChargeInvoiceCharges.length > 0" class="flex gap-2 items-start mb-3">
+                      <v-select
+                        v-model="directChargeForm.selected"
+                        :items="directChargeInvoiceCharges"
+                        item-title="label" item-value="id" density="compact"
+                        label="Select charge" return-object hide-details class="flex-1"
+                      />
+                      <v-text-field
+                        v-model.number="directChargeForm.amount"
+                        type="number" density="compact" label="Amount"
+                        :hint="directChargeForm.selected ? `Max: ${directChargeForm.selected.cn_available_balance}` : ''"
+                        persistent-hint style="max-width:130px" min="0"
+                      />
+                      <v-btn color="blue" size="small" class="mt-1"
+                        :disabled="!directChargeForm.selected || !directChargeForm.amount"
+                        @click="addToDirectList">
+                        <v-icon>mdi-plus</v-icon>
+                      </v-btn>
+                    </div>
+                    <div class="flex justify-end">
+                      <v-btn color="primary" size="small"
+                        :disabled="directChargeForm.charges.length === 0"
+                        @click="submitDirectCharges">
+                        <v-icon size="small" class="mr-1">mdi-check</v-icon>
+                        Add charges
+                      </v-btn>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
+
+              <!-- Add charge via request (only when has payments) -->
+              <div v-if="hasPayments" class="mt-4">
+                <!-- Granted requests: show approved data locked, user confirms -->
+                <template v-for="req in grantedChargeRequests" :key="`granted-${req.id}`">
+                  <v-card variant="outlined" class="border-green-500 mb-3">
+                    <v-card-title class="text-sm font-semibold flex items-center gap-2 text-green-800">
+                      <v-icon size="small" color="green">mdi-check-circle-outline</v-icon>
+                      Approved charge request — confirm to apply
+                    </v-card-title>
+                    <v-card-text>
+                      <ChargeLineList
+                        :charges="req.process_data?.charges?.length
+                          ? req.process_data.charges
+                          : [{ charge_name: req.process_data?.charge_name ?? '—', invoice_number: req.process_data?.invoice_number, amount: req.process_data?.amount ?? 0 }]"
+                        class="mb-3"
+                      />
+                      <div class="text-xs text-gray-500 mb-3 italic">Reason: {{ req.reason }}</div>
+                      <div class="flex justify-end">
+                        <v-btn color="green" @click="applyGrantedCharge(req)">
+                          <v-icon size="small" class="mr-1">mdi-check</v-icon>
+                          Apply charges
+                        </v-btn>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </template>
+
+                <!-- Pending requests list -->
+                <div v-if="pendingOnlyChargeRequests.length > 0" class="mb-3">
+                  <div v-for="req in pendingOnlyChargeRequests" :key="req.id" class="border border-amber-300 rounded-lg mb-2 overflow-hidden">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-800 text-xs font-semibold">
+                      <v-icon size="x-small">mdi-clock-outline</v-icon>
+                      Pending approval — {{ req.reason }}
+                    </div>
+                    <ChargeLineList :charges="req.process_data?.charges ?? []" />
+                  </div>
+                </div>
+
+                <!-- New request form (only if no pending/granted requests) -->
+                <v-card v-if="pendingChargeRequests.length === 0" variant="outlined" class="border-blue-400">
+                  <v-card-title class="text-sm font-semibold flex items-center gap-2">
+                    <v-icon size="small">mdi-plus-circle-outline</v-icon>
+                    Request to add charges
+                  </v-card-title>
+                  <v-card-text>
+                    <!-- Charges already added to this request -->
+                    <div v-if="addChargeForm.charges.length > 0" class="mb-3">
+                      <ChargeLineList :charges="addChargeForm.charges" removable @remove="removeCharge($event)" />
+                    </div>
+
+                    <!-- Search invoice and pick charges -->
+                    <div class="flex gap-2 items-start mb-2">
+                      <v-text-field
+                        v-model="addChargeForm.invoice_search"
+                        density="compact" label="Invoice number" hide-details class="flex-1"
+                        append-inner-icon="mdi-magnify"
+                        @click:append-inner="searchInvoiceForCharge"
+                        @keyup.enter="searchInvoiceForCharge"
+                      />
+                      <v-btn icon size="small" variant="text" color="grey"
+                        v-if="addChargeInvoiceCharges.length > 0"
+                        title="Search different invoice"
+                        @click="addChargeInvoiceCharges = []; addChargeForm.invoice_search = ''; addChargeForm.selected_invoice_charge = null; addChargeForm.amount = null">
+                        <v-icon size="small">mdi-close</v-icon>
+                      </v-btn>
+                    </div>
+
+                    <div v-if="addChargeInvoiceCharges.length > 0" class="flex gap-2 items-start mb-2">
+                      <v-select
+                        v-model="addChargeForm.selected_invoice_charge"
+                        :items="addChargeInvoiceCharges"
+                        item-title="label" item-value="id" density="compact"
+                        label="Select charge" return-object hide-details class="flex-1"
+                      />
+                      <v-text-field
+                        v-model.number="addChargeForm.amount"
+                        type="number" density="compact" label="Amount"
+                        :hint="addChargeForm.selected_invoice_charge ? `Max: ${addChargeForm.selected_invoice_charge.cn_available_balance}` : ''"
+                        persistent-hint style="max-width:130px" min="0"
+                      />
+                      <v-btn color="blue" size="small" class="mt-1"
+                        :disabled="!addChargeForm.selected_invoice_charge || !addChargeForm.amount"
+                        @click="addChargeToList"
+                        title="Add to request">
+                        <v-icon>mdi-plus</v-icon>
+                      </v-btn>
+                    </div>
+                    <div v-if="addChargeInvoiceCharges.length > 0" class="text-xs text-gray-500 mb-2">
+                      To add charges from a different invoice, click <v-icon size="x-small">mdi-close</v-icon> to clear and search again.
+                    </div>
+
+                    <v-textarea
+                      v-model="addChargeForm.reason"
+                      density="compact"
+                      label="Reason *"
+                      rows="2"
+                      class="mb-2"
+                    />
+
+                    <div class="flex justify-end">
+                      <v-btn
+                        color="blue"
+                        size="small"
+                        :disabled="addChargeForm.charges.length === 0 || !addChargeForm.reason"
+                        @click="requestAddCharge"
+                      >
+                        <v-icon size="small" class="mr-1">mdi-shield-lock-outline</v-icon>
+                        Send request
+                      </v-btn>
+                    </div>
+                  </v-card-text>
+                </v-card>
               </div>
             </div>
 
@@ -225,6 +451,12 @@ const hasPayments = computed(() => {
   return consigneeCreditNote.value.payments.length > 0
 })
 
+// True when external_folio OR description already have a value
+const metaIsSet = computed(() => {
+  const cn = consigneeCreditNote.value
+  return !!(cn?.external_folio || cn?.description)
+})
+
 const editTotal = computed(() => {
   return editableCharges.value.reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
 })
@@ -244,19 +476,275 @@ const validateChargeAmount = (idx: number) => {
   }
 }
 
-// Linked invoices - M2M invoices array
+// ── Meta (folio + comments) ──────────────────────────────────────────────────
+
+const metaForm = ref({ external_folio: '', description: '', reason: '' })
+
+const saveMeta = async () => {
+  try {
+    loadingStore.loading = true
+    await $api.consigneeCreditNotes.updateMeta(consigneeCreditNote.value.id, {
+      external_folio: consigneeCreditNote.value.external_folio,
+      description: consigneeCreditNote.value.description,
+    })
+    snackbar.add({ type: 'success', text: 'Folio & comments saved' })
+    await getCustomerCreditNote()
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+// ProcessRequests for meta change
+const metaRequests = ref<any[]>([])
+const pendingMetaRequest = computed(() => metaRequests.value.some((r: any) => r.status === 'pending'))
+const grantedMetaRequest = computed(() => metaRequests.value.some((r: any) => r.status === 'granted' && !r.used_at))
+
+const loadMetaRequests = async () => {
+  try {
+    metaRequests.value = await $api.authProcessRequests.getRequestsByResource({
+      process_name: 'credit-note.update-meta',
+      request_key: String(props.id),
+    })
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const requestMetaChange = async () => {
+  if (!metaForm.value.reason) {
+    snackbar.add({ type: 'warning', text: 'Reason is required' })
+    return
+  }
+  try {
+    loadingStore.loading = true
+    await $api.authProcessRequests.requestAuthorization({
+      process_name: 'credit-note.update-meta',
+      request_key: String(consigneeCreditNote.value.id),
+      display_name: `Update Folio/Comments on Credit Note #${consigneeCreditNote.value.id}`,
+      reason: metaForm.value.reason,
+      process_data: {
+        external_folio: metaForm.value.external_folio,
+        description: metaForm.value.description,
+      },
+    })
+    snackbar.add({ type: 'success', text: 'Request sent' })
+    metaForm.value = { external_folio: '', description: '', reason: '' }
+    await loadMetaRequests()
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+// ── Add charge via request ───────────────────────────────────────────────────
+
+const addChargeForm = ref<any>({
+  invoice_search: '',
+  selected_invoice_charge: null,
+  amount: null,
+  reason: '',
+  charges: [] as any[], // list of charges to include in the request
+})
+const addChargeInvoiceCharges = ref<any[]>([])
+const pendingChargeRequests = ref<any[]>([])
+
+const grantedChargeRequests = computed(() =>
+  pendingChargeRequests.value.filter((r: any) => r.status === 'granted' && !r.used_at)
+)
+const pendingOnlyChargeRequests = computed(() =>
+  pendingChargeRequests.value.filter((r: any) => r.status === 'pending')
+)
+
+const loadPendingChargeRequests = async () => {
+  try {
+    pendingChargeRequests.value = await $api.authProcessRequests.getRequestsByResource({
+      process_name: 'credit-note.add-charge',
+      request_key: String(props.id),
+    })
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// ── Direct add charge (no payments) ─────────────────────────────────────────
+
+const directChargeForm = ref<any>({
+  invoice_search: '',
+  selected: null,
+  amount: null,
+  charges: [] as any[],
+})
+const directChargeInvoiceCharges = ref<any[]>([])
+
+const searchInvoiceForDirect = async () => {
+  if (!directChargeForm.value.invoice_search) return
+  try {
+    loadingStore.loading = true
+    const result = await $api.consigneeCreditNotes.getAvailableCharges(
+      consigneeCreditNote.value.id,
+      directChargeForm.value.invoice_search,
+    )
+    const charges = result?.invoice?.charges ?? []
+    directChargeInvoiceCharges.value = charges
+      .filter((c: any) => (c.cn_available_balance ?? 0) > 0)
+      .map((c: any) => ({
+        ...c,
+        label: `${c.charge?.name ?? 'Concept'} — available: $${c.cn_available_balance}`,
+      }))
+    if (directChargeInvoiceCharges.value.length === 0)
+      snackbar.add({ type: 'warning', text: 'No available charges found on that invoice' })
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const addToDirectList = () => {
+  const ic = directChargeForm.value.selected
+  if (!ic || !directChargeForm.value.amount) return
+  if (directChargeForm.value.amount > ic.cn_available_balance) {
+    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${ic.cn_available_balance})` })
+    return
+  }
+  directChargeForm.value.charges.push({
+    invoice_charge_id: ic.id,
+    charge_id: ic.charge_id,
+    charge_name: ic.charge?.name ?? 'Concept',
+    invoice_number: directChargeForm.value.invoice_search,
+    amount: directChargeForm.value.amount,
+  })
+  directChargeForm.value.selected = null
+  directChargeForm.value.amount = null
+}
+
+const submitDirectCharges = async () => {
+  if (directChargeForm.value.charges.length === 0) return
+  try {
+    loadingStore.loading = true
+    await $api.consigneeCreditNotes.addDirectCharge(consigneeCreditNote.value.id, {
+      charges: directChargeForm.value.charges,
+    })
+    snackbar.add({ type: 'success', text: 'Charge(s) added successfully' })
+    directChargeForm.value = { invoice_search: '', selected: null, amount: null, charges: [] }
+    directChargeInvoiceCharges.value = []
+    await getCustomerCreditNote()
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const addChargeToList = () => {
+  const ic = addChargeForm.value.selected_invoice_charge
+  if (!ic || !addChargeForm.value.amount) return
+  if (addChargeForm.value.amount > ic.cn_available_balance) {
+    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${ic.cn_available_balance})` })
+    return
+  }
+  addChargeForm.value.charges.push({
+    invoice_charge_id: ic.id,
+    charge_id: ic.charge_id,
+    charge_name: ic.charge?.name ?? 'Concept',
+    invoice_number: addChargeForm.value.invoice_search,
+    amount: addChargeForm.value.amount,
+  })
+  addChargeForm.value.selected_invoice_charge = null
+  addChargeForm.value.amount = null
+}
+
+const removeCharge = (idx: number) => {
+  addChargeForm.value.charges.splice(idx, 1)
+}
+
+const applyGrantedCharge = async (req: any) => {
+  try {
+    loadingStore.loading = true
+    await $api.consigneeCreditNotes.applyChargeRequest(
+      String(consigneeCreditNote.value.id),
+      String(req.id),
+    )
+    snackbar.add({ type: 'success', text: 'Charge applied successfully' })
+    await getCustomerCreditNote()
+    await loadPendingChargeRequests()
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const searchInvoiceForCharge = async () => {
+  if (!addChargeForm.value.invoice_search) return
+  try {
+    loadingStore.loading = true
+    const result = await $api.consigneeCreditNotes.getAvailableCharges(
+      consigneeCreditNote.value.id,
+      addChargeForm.value.invoice_search,
+    )
+    const charges = result?.invoice?.charges ?? []
+    addChargeInvoiceCharges.value = charges
+      .filter((c: any) => (c.cn_available_balance ?? 0) > 0)
+      .map((c: any) => ({
+        ...c,
+        label: `${c.charge?.name ?? 'Concept'} — available: $${c.cn_available_balance}`,
+      }))
+    if (addChargeInvoiceCharges.value.length === 0) {
+      snackbar.add({ type: 'warning', text: 'No available charges found on that invoice' })
+    }
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const requestAddCharge = async () => {
+  if (!addChargeForm.value.reason) {
+    snackbar.add({ type: 'warning', text: 'Reason is required' })
+    return
+  }
+  if (addChargeForm.value.charges.length === 0) {
+    snackbar.add({ type: 'warning', text: 'Add at least one charge' })
+    return
+  }
+  try {
+    loadingStore.loading = true
+    const chargeNames = addChargeForm.value.charges.map((c: any) => c.charge_name).join(', ')
+    await $api.authProcessRequests.requestAuthorization({
+      process_name: 'credit-note.add-charge',
+      request_key: String(consigneeCreditNote.value.id),
+      display_name: `Add Charges to Credit Note #${consigneeCreditNote.value.id}: ${chargeNames}`,
+      reason: addChargeForm.value.reason,
+      process_data: { charges: addChargeForm.value.charges },
+    })
+    snackbar.add({ type: 'success', text: 'Request sent — pending approval' })
+    addChargeForm.value = { invoice_search: '', selected_invoice_charge: null, amount: null, reason: '', charges: [] }
+    addChargeInvoiceCharges.value = []
+    await loadPendingChargeRequests()
+  } catch (e: any) {
+    if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+// ── Linked invoices ──────────────────────────────────────────────────────────
+
 const linkedInvoices = computed(() => {
   if (consigneeCreditNote.value?.invoices?.length > 0) return consigneeCreditNote.value.invoices
   if (consigneeCreditNote.value?.invoice) return [consigneeCreditNote.value.invoice]
   return []
 })
 
-// All party invoices - M2M party_invoices array
 const allPartyInvoices = computed(() => {
   const invoices = []
   if (consigneeCreditNote.value?.party_invoice) invoices.push(consigneeCreditNote.value.party_invoice)
   if (consigneeCreditNote.value?.party_invoices?.length > 0) invoices.push(...consigneeCreditNote.value.party_invoices)
-  // Remove duplicates by invoice_id
   const seen = new Set()
   return invoices.filter(pi => {
     if (!pi?.invoice?.id) return false
@@ -283,17 +771,6 @@ const getInvoiceServices = (inv: any) => {
     return (inv.invoiceable.services || []).map((s: any) => s.referencia?.reference_number).join(', ') || '-'
   return '-'
 }
-
-// Backward compat: used when invoices[] is empty
-const getInvoiceType = computed(() => {
-  const inv = consigneeCreditNote.value?.invoice
-  if (!inv) return ''
-  if (inv.invoiceable_type?.includes('InvoiceSeaTm')) return `TM Sea Invoice #${inv.invoiceable_id}`
-  if (inv.invoiceable_type?.includes('InvoiceSeaWm')) return `WM Sea Invoice #${inv.invoiceable_id}`
-  if (inv.invoiceable_type?.includes('InvoiceAirTm')) return `TM Air Invoice #${inv.invoiceable_id}`
-  if (inv.invoiceable_type?.includes('InvoiceAirWm')) return `WM Air Invoice #${inv.invoiceable_id}`
-  return ''
-})
 
 const getInvoiceableType = (payment: any) => {
   const t = payment.chargeable?.invoice?.invoiceable_type
@@ -378,4 +855,5 @@ const getCustomerCreditNote = async () => {
 }
 
 await getCustomerCreditNote()
+await Promise.all([loadMetaRequests(), loadPendingChargeRequests()])
 </script>

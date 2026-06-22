@@ -29,6 +29,7 @@ type IVoyage = {
   arrival_date: string
   eta_date: string
   created_at: string
+  locked_at?: string | null
 }
 
 class VoyagesModule extends FetchFactory<any> {
@@ -185,6 +186,14 @@ class VoyagesModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE2}/${id}/unlock`, fetchOptions)
+  }
+
+  async transferReferences(id: string, form: { target_voyage_destination_id: number; reference_ids?: number[]; auth_request_id?: number }, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE2}/${id}/transfer-references`, fetchOptions)
   }
 }
 

@@ -1,20 +1,27 @@
 <template>
   <div>
-    <v-btn color="green" size="small" variant="outlined" @click="goToPaymentableUrl">
-      <v-icon>mdi-open-in-new</v-icon> {{ paymentableName(payment) }} #{{ payment.paymentable_id }}
-    </v-btn>
+    <template v-if="shortType === 'Payable'">
+      <v-chip color="orange-darken-2" size="small" variant="flat">
+        <v-icon start>mdi-percent-outline</v-icon>
+        {{ paymentableName(payment) }}
+      </v-chip>
+    </template>
+    <template v-else>
+      <v-btn color="green" size="small" variant="outlined" @click="goToPaymentableUrl">
+        <v-icon>mdi-open-in-new</v-icon> {{ paymentableName(payment) }} #{{ payment.paymentable_id }}
+      </v-btn>
 
-    <!-- Conditional block for BankMovement details -->
-    <v-card
-      v-if="shortType === 'BankMovement' && payment.paymentable"
-      class="pa-3"
-      variant="text"
-    >
-      <div class="text-sm">
-        <div><strong>Fecha de movimiento:</strong> {{ formatDateOnlyString(payment.paymentable.movement_date) }}</div>
-        <div><strong>Referencia:</strong> {{ payment.paymentable.reference }}</div>
-      </div>
-    </v-card>
+      <v-card
+        v-if="shortType === 'BankMovement' && payment.paymentable"
+        class="pa-3"
+        variant="text"
+      >
+        <div class="text-sm">
+          <div><strong>Fecha de movimiento:</strong> {{ formatDateOnlyString(payment.paymentable.movement_date) }}</div>
+          <div><strong>Referencia:</strong> {{ payment.paymentable.reference }}</div>
+        </div>
+      </v-card>
+    </template>
   </div>
 </template>
 <script setup lang="ts">

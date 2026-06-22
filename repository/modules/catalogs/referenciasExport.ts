@@ -57,6 +57,14 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/sea-export/${id}`, fetchOptions)
   }
 
+  async getSeaExportFullDetailById(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-export/${id}/full-detail`, fetchOptions)
+  }
+
+  async getSeaExportProfit(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-export/${id}/profit`, fetchOptions)
+  }
+
   async getSeaExportFilters(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-export/filters`, fetchOptions)
   }
@@ -95,6 +103,15 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/sea-export/${id}/update-customs-agent`, fetchOptions)
+  }
+
+  async updateRebate(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      headers: { 'Content-Type': 'application/json' },
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/update-rebate`, fetchOptions)
   }
 
   async uploadMasterBlFile(id: string, form: any, fetchOptions?: FetchOptions) {

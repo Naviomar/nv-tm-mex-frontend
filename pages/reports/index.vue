@@ -1,46 +1,20 @@
 <template>
   <v-container fluid class="pa-6 reports-page-container">
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-6">
-          <div>
-            <h1 class="text-h5 font-weight-bold mb-2">
-              <v-icon size="40" color="primary" class="mr-3">mdi-chart-box-multiple</v-icon>
-              Reports & Analytics
-            </h1>
-            <p class="text-body-1">
-              Comprehensive reporting and data visualization tools for business intelligence
-            </p>
-          </div>
-          <v-btn-toggle
-            v-model="viewMode"
-            mandatory
-            rounded="lg"
-            color="primary"
-            variant="outlined"
-            divided
-            density="comfortable"
-          >
-            <v-btn value="charts" size="large">
-              <v-icon start>mdi-chart-bar</v-icon>
-              Charts
-            </v-btn>
-            <v-btn value="reports" size="large">
-              <v-icon start>mdi-table</v-icon>
-              Reports
-            </v-btn>
-          </v-btn-toggle>
-        </div>
-      </v-col>
-    </v-row>
-    
-    <ReportTabs :view-mode="viewMode" />
+    <div class="d-flex align-center mb-6">
+      <v-icon size="40" color="primary" class="mr-3">mdi-chart-box-multiple</v-icon>
+      <div>
+        <h1 class="text-h5 font-weight-bold mb-1">Reports & Analytics</h1>
+        <p class="text-body-2 mb-0 text-grey-darken-1">
+          Business intelligence and data visualization, organized by department
+        </p>
+      </div>
+    </div>
+
+    <ReportsShell />
   </v-container>
 </template>
 
 <script setup lang="ts">
-const viewMode = ref<'charts' | 'reports'>('reports')
-
 definePageMeta({
   title: 'Reports & Analytics',
   layout: 'default',
@@ -56,18 +30,5 @@ definePageMeta({
 .theme--dark .reports-page-container,
 :deep(.theme--dark) .reports-page-container {
   background: rgb(var(--v-theme-surface));
-}
-
-:deep(.v-btn-toggle) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.theme--dark :deep(.v-btn-toggle) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-:deep(.v-btn-toggle .v-btn--active) {
-  background: rgb(var(--v-theme-primary)) !important;
-  color: white !important;
 }
 </style>

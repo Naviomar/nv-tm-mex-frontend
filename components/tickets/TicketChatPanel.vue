@@ -40,7 +40,7 @@
 
     <!-- CC Users -->
     <TicketCcUsers
-      v-if="ticketType === 'authorization-request' || ticketType === 'process-request'"
+      v-if="ticketType === 'authorization-request' || ticketType === 'process-request' || ticketType === 'support-assistance'"
       :ticket-type="ticketType"
       :ticket-id="ticketId"
     />
@@ -351,6 +351,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useTicketChat } from '~/composables/useTicketChat'
+import { useCheckUser } from '~/composables/useCheckUser'
 import type { TicketType, TicketMessage } from '~/repository/modules/catalogs/ticketMessages'
 
 const props = defineProps<{
@@ -399,8 +400,10 @@ const editDivRef = ref<HTMLElement | null>(null)
 const isSavingEdit = ref(false)
 const showHistoryFor = ref<number[]>([])
 
+const { isAdminRole } = useCheckUser()
+
 const currentUserId = computed(() => $auth?.user?.id ?? 0)
-const showInternalToggle = computed(() => props.canManage ?? false)
+const showInternalToggle = computed(() => (props.canManage ?? false) && isAdminRole())
 
 // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -436,6 +439,7 @@ function getAvatarColor(senderId: number) {
 
 function sanitizeHtml(html: string) {
   // Basic tag allowlist — prevents XSS while preserving formatting
+  // TODO: Unused variable
   const allowed = /<\/?(b|i|u|strong|em|ul|ol|li|br|p|span)[^>]*>/gi
   return html.replace(/<(?!\/?(b|i|u|strong|em|ul|ol|li|br|p|span)\b)[^>]+>/gi, '')
 }
@@ -453,7 +457,7 @@ function showDateSeparator(idx: number) {
   if (idx === 0) return true
   const prev = visibleMessages.value[idx - 1]
   const curr = visibleMessages.value[idx]
-  return new Date(prev.created_at).toDateString() !== new Date(curr.created_at).toDateString()
+  return new Date(prev.created_at).toDateString() !== new Date(curr?.created_at).toDateString()
 }
 
 async function scrollToBottom() {
@@ -501,14 +505,16 @@ async function submitMessage() {
   if (!body && !files.length) return
 
   try {
-    await sendMessage(body ?? '', composerInternal.value, files)
+    const isInternal = composerInternal.value && showInternalToggle.value
+    await sendMessage(body ?? '', isInternal, files)
     if (editorRef.value) editorRef.value.innerHTML = ''
     composerHasContent.value = false
     composerInternal.value = false
     stagedFiles.value = []
     await scrollToBottom()
-  } catch (_) {
+  } catch (err) {
     // errors handled in composable
+    console.error(err);
   }
 }
 
@@ -521,8 +527,8 @@ async function startEdit(msg: TicketMessage) {
     const range = document.createRange()
     range.selectNodeContents(editDivRef.value)
     range.collapse(false)
-    window.getSelection()?.removeAllRanges()
-    window.getSelection()?.addRange(range)
+    globalThis.getSelection()?.removeAllRanges()
+    globalThis.getSelection()?.addRange(range)
   }
 }
 
@@ -540,8 +546,9 @@ async function saveEdit() {
     await editMessage(editingMessageId.value, newBody)
     editingMessageId.value = null
     editDivRef.value = null
-  } catch (_) {
+  } catch (err) {
     // error handled in composable
+    console.error(err);
   } finally {
     isSavingEdit.value = false
   }
@@ -556,6 +563,7 @@ function toggleHistory(msgId: number) {
   }
 }
 
+// TODO: Unused function
 async function handleDeleteMessage(id: number) {
   await deleteMessage(id)
 }

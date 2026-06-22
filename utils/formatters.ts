@@ -279,6 +279,11 @@ const getPaymentChargeableName = (payment: any) => {
     return text
   }
 
+  if (payment.chargeable_type.includes('Payable')) {
+    const optName = payment.chargeable?.payable_option?.name || 'bank-commission'
+    return optName.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+  }
+
   return 'Unknown'
 }
 

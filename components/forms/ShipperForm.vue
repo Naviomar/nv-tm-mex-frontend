@@ -42,7 +42,7 @@
         </div>
         <div class="flex justify-center items-center">
           <v-btn class="mr-4" color="secondary" to="/configuration/shippers"> Cancel </v-btn>
-          <v-btn color="primary" @click="validateBeforeCreate"> Save </v-btn>
+          <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="validateBeforeCreate"> Save </v-btn>
         </div>
       </div>
     </div>

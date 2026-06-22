@@ -24,9 +24,13 @@
       <template v-slot:item="{ item, props }">
         <v-list-item
           v-bind="props"
-          :title="`${item.title} ${item.raw.deleted_at ? '(Eliminado)' : ''}`"
-          :disabled="item.raw.deleted_at != null"
-        ></v-list-item>
+          :title="`${item.title} ${item.raw.deleted_at ? '(Eliminado)' : ''} ${item.raw.locked_at && showLockedIndicator ? '(LOCKED)' : ''}`"
+          :disabled="item.raw.deleted_at != null || (item.raw.locked_at != null && showLockedIndicator)"
+        >
+          <template v-if="item.raw.locked_at && showLockedIndicator" v-slot:prepend>
+            <v-icon color="orange-600" size="small" class="mr-0">mdi-lock</v-icon>
+          </template>
+        </v-list-item>
       </template>
     </v-autocomplete>
     <div v-if="canClear">
@@ -99,6 +103,11 @@ const props = defineProps({
     default: '',
   },
   readonly: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  showLockedIndicator: {
     type: Boolean,
     required: false,
     default: false,
