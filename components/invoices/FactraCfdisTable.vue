@@ -93,6 +93,31 @@
                 label="By service type"
               />
             </div>
+            <div class="col-span-2">
+              <v-text-field
+                v-model="filters.reqPayFolio"
+                clearable
+                density="compact"
+                label="Request payment folio"
+                hide-details
+                @keyup.enter="getSupplierCfdis"
+              />
+            </div>
+            <div class="col-span-2">
+              <v-autocomplete
+                v-model="filters.hasReqPay"
+                density="compact"
+                :items="[
+                  { name: 'Yes', value: true },
+                  { name: 'No', value: false },
+                ]"
+                item-title="name"
+                item-value="value"
+                clearable
+                hide-details
+                label="Linked to a request payment"
+              />
+            </div>
           </div>
 
           <div class="grid grid-cols-3 gap-4 py-4">
@@ -572,6 +597,8 @@ const filters = ref<any>({
   amountProvisioned: null,
   blockedAtEntry: '',
   deleted_status: '',
+  reqPayFolio: '',
+  hasReqPay: null,
 })
 
 const initialYear = 2022
@@ -736,9 +763,6 @@ const addFolios = () => {
   // Split by spaces, commas, semicolons, pipes or line breaks
   const raw = filters.value.ifolio.split(/[\s,;|\n]+/).map((s: string) => s.trim()).filter(Boolean)
   for (const token of raw) {
-    // Support A-109553 format: parse as serie + folio
-    // We store as-is because backend folios filter does whereIn('folio', ...) — the serie part
-    // needs to be handled. We push the token and also a stripped-number variant so both match.
     if (!filters.value.folios.includes(token)) {
       filters.value.folios.push(token)
     }
@@ -849,6 +873,8 @@ const clearFilters = async () => {
     amountProvisioned: null,
     blockedAtEntry: '',
     deleted_status: '',
+    reqPayFolio: '',
+    hasReqPay: null,
   }
   await getSupplierCfdis()
 }
