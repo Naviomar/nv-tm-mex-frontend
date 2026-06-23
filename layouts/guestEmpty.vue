@@ -6,7 +6,24 @@
       </v-main>
 
       <v-footer name="footer" app class="auth-footer" :class="darkMode.isDark ? 'theme-dark' : 'theme-light'">
-        <span class="auth-footer-text">{{ appName }} © {{ year }}</span>
+        <v-tooltip :text="hideGlobeMotion ? 'Mostrar animación' : 'Ocultar animación (puntos)'" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon
+              size="small"
+              variant="text"
+              class="auth-footer-btn"
+              @click="toggleGlobeMotion"
+            >
+              <v-icon size="20">{{ hideGlobeMotion ? 'mdi-blur-off' : 'mdi-blur' }}</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <span class="auth-footer-text flex-grow-1 text-center">{{ appName }} © {{ year }}</span>
+
+        <SwitchDarkLightMode class="auth-footer-btn" />
       </v-footer>
       <SnackbarApiErrors />
       <OverlayLoading />
@@ -16,6 +33,7 @@
 <script lang="ts" setup>
 const config = useRuntimeConfig()
 const darkMode = useDarkMode()
+const { hideGlobeMotion, toggleGlobeMotion } = useReducedMotion()
 
 const appName = computed(() => config.public.appName)
 const year = new Date().getFullYear()
@@ -23,9 +41,21 @@ const year = new Date().getFullYear()
 
 <style scoped>
 .auth-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   backdrop-filter: blur(6px);
-  justify-content: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.auth-footer-btn :deep(.v-icon) {
+  opacity: 0.65;
+}
+.theme-dark .auth-footer-btn :deep(.v-icon) {
+  color: #fff;
+}
+.theme-light .auth-footer-btn :deep(.v-icon) {
+  color: #000;
 }
 
 .auth-footer.theme-dark {
