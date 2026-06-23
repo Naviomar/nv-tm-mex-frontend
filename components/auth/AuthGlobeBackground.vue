@@ -1,7 +1,9 @@
 <template>
   <div class="auth-globe-bg" :class="darkMode.isDark ? 'theme-dark' : 'theme-light'">
-    <div class="auth-globe-aura"></div>
-    <canvas ref="canvasRef" class="auth-globe-canvas"></canvas>
+    <template v-if="!hideGlobeMotion">
+      <div class="auth-globe-aura"></div>
+      <canvas ref="canvasRef" class="auth-globe-canvas"></canvas>
+    </template>
     <div class="auth-globe-fade"></div>
   </div>
 </template>
@@ -23,6 +25,7 @@
  */
 
 const darkMode = useDarkMode()
+const { hideGlobeMotion } = useReducedMotion()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 // Mismos puertos en mex y chl: puertos reales de carga/descarga de mex
@@ -405,8 +408,20 @@ function loadMask(): Promise<ImageData> {
   })
 }
 
-watch(() => darkMode.isDark, start)
-onMounted(start)
+watch(() => darkMode.isDark, () => {
+  if (!hideGlobeMotion.value) start()
+})
+watch(hideGlobeMotion, (hidden) => {
+  if (hidden) {
+    cancelAnimationFrame(rafId)
+  } else {
+    // El canvas recién se vuelve a montar (v-if) cuando se reactiva.
+    nextTick(start)
+  }
+})
+onMounted(() => {
+  if (!hideGlobeMotion.value) start()
+})
 onBeforeUnmount(() => cancelAnimationFrame(rafId))
 </script>
 
