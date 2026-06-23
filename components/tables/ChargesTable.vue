@@ -31,10 +31,11 @@
                 v-model="filters.name"
                 variant="outlined"
                 density="comfortable"
-                label="Search by name or code"
+                label="Search by name, code or similar name"
+                hint="Also matches charges by their similar (CFDI) names"
+                persistent-hint
                 prepend-inner-icon="mdi-magnify"
                 clearable
-                hide-details
               />
             </div>
             <div class="filter-item filter-status">

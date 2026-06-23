@@ -83,6 +83,7 @@
       :table-totals="tableTotals"
       :height="500"
       :loading="loading"
+      export-file-name="teus-per-month"
     />
   </div>
 </template>

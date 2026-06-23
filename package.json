@@ -45,7 +45,8 @@
     "moment-timezone": "^0.6.0",
     "nanoid": "^5.1.5",
     "nuxt-meilisearch": "^1.3.10",
-    "vue3-apexcharts": "^1.11.1"
+    "vue3-apexcharts": "^1.11.1",
+    "xlsx": "^0.18.5"
   },
   "volta": {
     "node": "20.18.1"

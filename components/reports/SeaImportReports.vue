@@ -88,44 +88,105 @@
         class="mb-6"
       />
 
+      <!-- Client: last-year donut + year-comparison bar -->
       <v-row>
         <v-col cols="12">
-          <ClientChart :items="clientItems" :loading="loadingBreakdowns" />
+          <ClientChart :items="clientItemsLastYear" :year="maxYear" :loading="loadingBreakdowns" />
+        </v-col>
+      </v-row>
+      <v-row v-if="selectedYears.length > 1">
+        <v-col cols="12">
+          <CategoryYearCompareChart
+            title="References by Client — Year Comparison"
+            icon="mdi-account-group"
+            color="#3b82f6"
+            :items="clientRows"
+            :years="selectedYears"
+            :loading="loadingBreakdowns"
+            export-file-name="clients-year-comparison"
+          />
         </v-col>
       </v-row>
 
+      <!-- Line: last-year bar + year-comparison bar -->
       <v-row>
         <v-col cols="12" lg="6">
           <CategoryBarChart
-            title="TEUs by Shipping Line"
+            :title="maxYear ? `TEUs by Shipping Line — ${maxYear}` : 'TEUs by Shipping Line'"
             icon="mdi-ship"
             color="#6366f1"
-            :items="lineItems"
+            :items="lineItemsLastYear"
             :show-references="false"
             :loading="loadingBreakdowns"
+            export-file-name="lines-by-teus"
           />
         </v-col>
         <v-col cols="12" lg="6">
-          <CategoryBarChart
-            title="Loading Ports"
-            icon="mdi-anchor"
-            color="#0ea5e9"
-            :items="loadingPortItems"
+          <CategoryYearCompareChart
+            v-if="selectedYears.length > 1"
+            title="TEUs by Shipping Line — Year Comparison"
+            icon="mdi-ship"
+            color="#6366f1"
+            :items="lineRows"
+            :years="selectedYears"
             :loading="loadingBreakdowns"
-            :top-n="15"
+            export-file-name="lines-year-comparison"
           />
         </v-col>
       </v-row>
 
+      <!-- Loading ports: last-year bar + year-comparison bar -->
       <v-row>
         <v-col cols="12" lg="6">
           <CategoryBarChart
-            title="Discharge Ports"
+            :title="maxYear ? `Loading Ports — ${maxYear}` : 'Loading Ports'"
             icon="mdi-anchor"
-            color="#22c55e"
-            :items="dischargePortItems"
+            color="#0ea5e9"
+            :items="loadingPortItemsLastYear"
             :loading="loadingBreakdowns"
             :top-n="15"
+            export-file-name="loading-ports"
+          />
+        </v-col>
+        <v-col cols="12" lg="6">
+          <CategoryYearCompareChart
+            v-if="selectedYears.length > 1"
+            title="Loading Ports — Year Comparison"
+            icon="mdi-anchor"
+            color="#0ea5e9"
+            :items="loadingPortRows"
+            :years="selectedYears"
+            :loading="loadingBreakdowns"
+            :top-n="10"
+            export-file-name="loading-ports-year-comparison"
+          />
+        </v-col>
+      </v-row>
+
+      <!-- Discharge ports: last-year bar + year-comparison bar -->
+      <v-row>
+        <v-col cols="12" lg="6">
+          <CategoryBarChart
+            :title="maxYear ? `Discharge Ports — ${maxYear}` : 'Discharge Ports'"
+            icon="mdi-anchor"
+            color="#22c55e"
+            :items="dischargePortItemsLastYear"
+            :loading="loadingBreakdowns"
+            :top-n="15"
+            export-file-name="discharge-ports"
+          />
+        </v-col>
+        <v-col cols="12" lg="6">
+          <CategoryYearCompareChart
+            v-if="selectedYears.length > 1"
+            title="Discharge Ports — Year Comparison"
+            icon="mdi-anchor"
+            color="#22c55e"
+            :items="dischargePortRows"
+            :years="selectedYears"
+            :loading="loadingBreakdowns"
+            :top-n="10"
+            export-file-name="discharge-ports-year-comparison"
           />
         </v-col>
       </v-row>
@@ -144,15 +205,25 @@ const includeEnTransito = ref(false)
 
 const ejecutivos = ref<any[]>([])
 const chartData = ref<any[]>([])
-const clientItems = ref<any[]>([])
-const lineItems = ref<any[]>([])
-const loadingPortItems = ref<any[]>([])
-const dischargePortItems = ref<any[]>([])
+
+// Raw per-year breakdown rows, as returned by the backend: {year, name, teus, references?}.
+const clientRows = ref<any[]>([])
+const lineRows = ref<any[]>([])
+const loadingPortRows = ref<any[]>([])
+const dischargePortRows = ref<any[]>([])
 
 const loading = ref(false)
 const loadingBreakdowns = ref(false)
 
 const hasData = computed(() => chartData.value.length > 0)
+
+const maxYear = computed(() => selectedYears.value.length ? Math.max(...selectedYears.value) : null)
+
+// "Primary" chart data: the last selected year only.
+const clientItemsLastYear = computed(() => clientRows.value.filter(r => r.year === maxYear.value))
+const lineItemsLastYear = computed(() => lineRows.value.filter(r => r.year === maxYear.value))
+const loadingPortItemsLastYear = computed(() => loadingPortRows.value.filter(r => r.year === maxYear.value))
+const dischargePortItemsLastYear = computed(() => dischargePortRows.value.filter(r => r.year === maxYear.value))
 
 const availableYears = computed(() => {
   const current = new Date().getFullYear()
@@ -198,10 +269,10 @@ const loadBreakdowns = async () => {
       $api.reports.getReferencesByLoadingPort(baseParams()),
       $api.reports.getReferencesByDischargePort(baseParams()),
     ])
-    clientItems.value = (clients?.data ?? []).map((c: any) => ({ name: c.client_name, teus: Number(c.total_teus) || 0 }))
-    lineItems.value = (lines?.data ?? []).map((l: any) => ({ name: l.line_name, teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 }))
-    loadingPortItems.value = (loadingPorts?.data ?? []).map((p: any) => ({ name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
-    dischargePortItems.value = (dischargePorts?.data ?? []).map((p: any) => ({ name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
+    clientRows.value = (clients?.data ?? []).map((c: any) => ({ year: c.year, name: c.client_name, teus: Number(c.total_teus) || 0 }))
+    lineRows.value = (lines?.data ?? []).map((l: any) => ({ year: l.year, name: l.line_name, teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 }))
+    loadingPortRows.value = (loadingPorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
+    dischargePortRows.value = (dischargePorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
   } catch (error) {
     console.error('Error loading breakdowns:', error)
     snackbar.add({ type: 'error', text: 'Failed to load breakdown charts' })
