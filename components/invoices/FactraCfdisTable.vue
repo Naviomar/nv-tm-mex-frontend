@@ -36,7 +36,9 @@
               label="End date"
               hide-details
             />
-            <ASupplierSearch v-model="filters.supplierId" label="Supplier" hide-details />
+            <div class="col-span-2">
+              <ASupplierSearch v-model="filters.supplierId" label="Supplier" hide-details />
+            </div>
             <v-autocomplete
               v-model="filters.hasSupplier"
               density="compact"
@@ -49,22 +51,26 @@
               hide-details
               label="Linked to supplier"
             />
-            <v-text-field
-              v-model="filters.rfcEmisor"
-              clearable
-              density="compact"
-              label="RFC Emisor"
-              hide-details
-              @keyup.enter="getSupplierCfdis"
-            />
-            <v-text-field
-              v-model="filters.uuid"
-              clearable
-              density="compact"
-              label="CFDI UUID"
-              hide-details
-              @keyup.enter="getSupplierCfdis"
-            />
+            <div class="col-span-2">
+              <v-text-field
+                v-model="filters.rfcEmisor"
+                clearable
+                density="compact"
+                label="RFC Emisor"
+                hide-details
+                @keyup.enter="getSupplierCfdis"
+              />
+            </div>
+            <div class="col-span-2">
+              <v-text-field
+                v-model="filters.uuid"
+                clearable
+                density="compact"
+                label="CFDI UUID"
+                hide-details
+                @keyup.enter="getSupplierCfdis"
+              />
+            </div>
             <v-autocomplete
               v-model="filters.serviceType"
               density="compact"
