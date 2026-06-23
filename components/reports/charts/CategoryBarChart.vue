@@ -12,6 +12,7 @@
     :table-totals="tableTotals"
     :height="height"
     :loading="loading"
+    :export-file-name="exportFileName"
   />
 </template>
 
@@ -34,6 +35,7 @@ const props = withDefaults(defineProps<{
   topN?: number
   /** Whether the underlying data carries a references count. */
   showReferences?: boolean
+  exportFileName?: string
 }>(), {
   icon: 'mdi-chart-bar',
   color: 'primary',
@@ -42,6 +44,7 @@ const props = withDefaults(defineProps<{
   height: 420,
   topN: 0,
   showReferences: true,
+  exportFileName: 'report',
 })
 
 const { formatInt, categoryPalette, apexBaseOptions } = useReportFormatters()
