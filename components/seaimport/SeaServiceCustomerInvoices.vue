@@ -65,7 +65,7 @@
             <div class="flex flex-col items-end gap-1 mb-2">
               {{ formatToCurrency(getTotalInvoice(seaInvoice.invoice)) }}
               {{ getCurrencyName(seaInvoice.invoice.currency_id) }}
-              <UserInfoBadge :item="seaInvoice.invoice" />
+              
             </div>
           </td>
           <td class="p-2">
@@ -105,7 +105,7 @@
                   </td>
                   <td class="text-center">
                     <div class="flex items-center justify-center gap-4">
-                      <UserInfoBadge :item="cn" />
+                      <UserInfoBadge :item="cn" v-if="cn" />
                       <PreviewCustomerCreditNote :id="cn.id" size="small" />
                     </div>
                   </td>
