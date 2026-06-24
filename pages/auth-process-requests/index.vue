@@ -6,6 +6,7 @@
       <h1 class="text-xl font-bold">Authorization Process Requests</h1>
     </div>
     <div class="pt-4">
+      <LiveChatsPanel ticket-type="process-request" />
       <AuthProcessRequestsTable />
     </div>
   </v-container>

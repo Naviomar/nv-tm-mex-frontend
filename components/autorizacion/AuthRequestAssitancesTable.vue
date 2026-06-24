@@ -231,6 +231,8 @@ import { deletedStatus } from '~/utils/data/systemData'
 const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission } = useCheckUser()
 const snackbar = useSnackbar()
+const router = useRouter()
+const route = useRoute()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -425,4 +427,17 @@ const clearFilters = async () => {
 }
 
 await getRequestAssistances()
+
+const openChatFromQuery = () => {
+  const ticketId = route.query.ticketId ? Number(route.query.ticketId) : null
+  if (!ticketId || route.query.openChat !== '1') return
+  const row = reqAssistances.value.data.find((r: any) => r.id === ticketId)
+  openChat(row ?? { id: ticketId })
+  router.replace({ query: { ...route.query, openChat: undefined, ticketId: undefined } })
+}
+openChatFromQuery()
+
+watch(() => route.query.openChat, (val) => {
+  if (val === '1') openChatFromQuery()
+})
 </script>

@@ -390,6 +390,7 @@ const { $api } = useNuxtApp()
 const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
 const router = useRouter()
+const route = useRoute()
 const authRequestStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
@@ -655,6 +656,19 @@ onMounted(async () => {
   nextTick(() => {
     measureTruncation()
   })
+  openChatFromQuery()
+})
+
+const openChatFromQuery = () => {
+  const ticketId = route.query.ticketId ? Number(route.query.ticketId) : null
+  if (!ticketId || route.query.openChat !== '1') return
+  const row = authRequests.value.data.find((r: any) => r.id === ticketId)
+  openChat(row ?? { id: ticketId })
+  router.replace({ query: { ...route.query, openChat: undefined, ticketId: undefined } })
+}
+
+watch(() => route.query.openChat, (val) => {
+  if (val === '1') openChatFromQuery()
 })
 
 // ── Collapsible Comments ──────────────────────────────────────────────────

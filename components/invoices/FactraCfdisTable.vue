@@ -11,54 +11,46 @@
       </v-card-title>
       <v-card-text>
         <div class="mb-4" @keyup.enter="onClickFilters">
-          <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div class="col-span-2 md:col-span-1">
-              <v-text-field
-                v-model="filters.invoiceDate"
-                clearable
-                type="date"
-                density="compact"
-                label="Invoice date"
-                hide-details
-              />
-            </div>
-            <div class="col-span-2 md:col-span-1">
-              <v-text-field
-                v-model="filters.startDate"
-                clearable
-                type="date"
-                density="compact"
-                label="Start date"
-                hide-details
-              />
-            </div>
-            <div class="col-span-2 md:col-span-1">
-              <v-text-field
-                v-model="filters.endDate"
-                clearable
-                type="date"
-                density="compact"
-                label="End date"
-                hide-details
-              />
-            </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <v-text-field
+              v-model="filters.invoiceDate"
+              clearable
+              type="date"
+              density="compact"
+              label="Invoice date"
+              hide-details
+            />
+            <v-text-field
+              v-model="filters.startDate"
+              clearable
+              type="date"
+              density="compact"
+              label="Start date"
+              hide-details
+            />
+            <v-text-field
+              v-model="filters.endDate"
+              clearable
+              type="date"
+              density="compact"
+              label="End date"
+              hide-details
+            />
             <div class="col-span-2">
               <ASupplierSearch v-model="filters.supplierId" label="Supplier" hide-details />
             </div>
-            <div class="col-span-2 md:col-span-1">
-              <v-autocomplete
-                v-model="filters.hasSupplier"
-                density="compact"
-                :items="[
-                  { name: 'Yes', value: true },
-                  { name: 'No', value: false },
-                ]"
-                item-title="name"
-                item-value="value"
-                hide-details
-                label="Linked to supplier"
-              />
-            </div>
+            <v-autocomplete
+              v-model="filters.hasSupplier"
+              density="compact"
+              :items="[
+                { name: 'Yes', value: true },
+                { name: 'No', value: false },
+              ]"
+              item-title="name"
+              item-value="value"
+              hide-details
+              label="Linked to supplier"
+            />
             <div class="col-span-2">
               <v-text-field
                 v-model="filters.rfcEmisor"
@@ -79,58 +71,109 @@
                 @keyup.enter="getSupplierCfdis"
               />
             </div>
-            <div class="col-span-2">
-              <v-autocomplete
-                v-model="filters.serviceType"
-                density="compact"
-                :items="[
-                  { name: 'Sea services', value: 'sea' },
-                  { name: 'Air services', value: 'air' },
-                ]"
-                item-title="name"
-                item-value="value"
-                hide-details
-                label="By service type"
-              />
-            </div>
-            <div class="col-span-2">
-              <v-text-field
-                v-model="filters.reqPayFolio"
-                clearable
-                density="compact"
-                label="Request payment folio"
-                hide-details
-                @keyup.enter="getSupplierCfdis"
-              />
-            </div>
-            <div class="col-span-2">
-              <v-autocomplete
-                v-model="filters.hasReqPay"
-                density="compact"
-                :items="[
-                  { name: 'Yes', value: true },
-                  { name: 'No', value: false },
-                ]"
-                item-title="name"
-                item-value="value"
-                clearable
-                hide-details
-                label="Linked to a request payment"
-              />
-            </div>
+            <v-autocomplete
+              v-model="filters.serviceType"
+              density="compact"
+              :items="[
+                { name: 'Sea services', value: 'sea' },
+                { name: 'Air services', value: 'air' },
+              ]"
+              item-title="name"
+              item-value="value"
+              hide-details
+              label="By service type"
+            />
+            <v-text-field
+              v-model="filters.reqPayFolio"
+              clearable
+              density="compact"
+              label="Request payment folio"
+              hide-details
+              @keyup.enter="getSupplierCfdis"
+            />
+            <v-autocomplete
+              v-model="filters.hasReqPay"
+              density="compact"
+              :items="[
+                { name: 'Yes', value: true },
+                { name: 'No', value: false },
+              ]"
+              item-title="name"
+              item-value="value"
+              clearable
+              hide-details
+              label="Linked to a request payment"
+            />
+            <v-autocomplete
+              v-model="filters.amountProvisioned"
+              density="compact"
+              :items="[
+                { name: 'Full amount', value: 1 },
+                { name: 'Partial amount', value: 2 },
+                { name: 'No amount', value: 3 },
+              ]"
+              item-title="name"
+              item-value="value"
+              hide-details
+              label="Amount provisioned"
+            />
+            <v-autocomplete
+              v-model="filters.tipoComprobante"
+              density="compact"
+              :items="[
+                { name: 'Ingreso', value: 'I' },
+                { name: 'Egreso', value: 'E' },
+                { name: 'Traslado', value: 'T' },
+                { name: 'Nomina', value: 'N' },
+                { name: 'Pago', value: 'P' },
+              ]"
+              item-title="name"
+              item-value="value"
+              hide-details
+              label="Tipo de comprobante"
+            />
+            <v-autocomplete
+              v-model="filters.blockedAtEntry"
+              density="compact"
+              :items="[
+                { name: 'Blocked at entry', value: true },
+                { name: 'Not blocked at entry', value: false },
+              ]"
+              item-title="name"
+              item-value="value"
+              clearable
+              hide-details
+              label="Entry status"
+            />
+            <v-autocomplete
+              v-model="filters.currencyId"
+              density="compact"
+              :items="currencies"
+              item-title="name"
+              item-value="id"
+              hide-details
+              label="By currency"
+            />
+            <v-autocomplete
+              density="compact"
+              label="Status"
+              v-model="filters.deleted_status"
+              :items="deletedStatus"
+              item-title="name"
+              item-value="value"
+              hide-details
+            />
           </div>
 
-          <div class="grid grid-cols-3 gap-4 py-4">
-            <div v-if="filters.serviceType" class="">
-              <v-autocomplete
-                v-model="filters.serviceYear"
-                :prepend-icon="filters.serviceType == 'sea' ? 'mdi-ferry' : 'mdi-airplane'"
-                :items="prefixYears"
-                density="compact"
-                label="Service Year"
-              />
-            </div>
-            <div v-if="filters.serviceType" class="">
+          <div v-if="filters.serviceType" class="grid grid-cols-2 md:grid-cols-6 gap-4 py-4">
+            <v-autocomplete
+              v-model="filters.serviceYear"
+              :prepend-icon="filters.serviceType == 'sea' ? 'mdi-ferry' : 'mdi-airplane'"
+              :items="prefixYears"
+              density="compact"
+              label="Service Year"
+            />
+            <div class="col-span-2">
               <v-text-field
                 v-model="filters.serviceNumbers"
                 density="compact"
@@ -139,69 +182,9 @@
               />
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div class="col-span-2">
-              <v-autocomplete
-                v-model="filters.amountProvisioned"
-                density="compact"
-                :items="[
-                  { name: 'Full amount', value: 1 },
-                  { name: 'Partial amount', value: 2 },
-                  { name: 'No amount', value: 3 },
-                ]"
-                item-title="name"
-                item-value="value"
-                hide-details
-                label="Amount provisioned"
-              />
-            </div>
-            <div class="col-span-2">
-              <v-autocomplete
-                v-model="filters.tipoComprobante"
-                density="compact"
-                :items="[
-                  { name: 'Ingreso', value: 'I' },
-                  { name: 'Egreso', value: 'E' },
-                  { name: 'Traslado', value: 'T' },
-                  { name: 'Nomina', value: 'N' },
-                  { name: 'Pago', value: 'P' },
-                ]"
-                item-title="name"
-                item-value="value"
-                hide-details
-                label="Tipo de comprobante"
-              />
-            </div>
-            <div class="col-span-2 md:col-span-1">
-              <v-autocomplete
-                v-model="filters.blockedAtEntry"
-                density="compact"
-                :items="[
-                  { name: 'Blocked at entry', value: true },
-                  { name: 'Not blocked at entry', value: false },
-                ]"  
-                item-title="name"
-                item-value="value"
-                clearable
-                hide-details
-                label="Entry status"
-              />
-            </div>
-            <div class="col-span-2 md:col-span-1">
-              <v-autocomplete
-                v-model="filters.currencyId"
-                density="compact"
-                :items="currencies"
-                item-title="name"
-                item-value="id"
-                hide-details
-                label="By currency"
-              />
-            </div>
-          </div>
             <!-- Multi-folio search (supports A-109553 or 109553 formats) -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 py-4 items-start">
-            <div class="col-span-1 md:col-span-2">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 items-start">
+            <div class="md:col-span-2">
               <div class="flex gap-2 items-start">
                 <v-textarea
                   v-model="filters.ifolio"
@@ -226,19 +209,7 @@
                 </v-btn>
               </div>
             </div>
-            <div class="">
-              <v-autocomplete
-                density="compact"
-                label="Status"
-                v-model="filters.deleted_status"
-                :items="deletedStatus"
-                item-title="name"
-                item-value="value"
-                
-                hide-details
-              />
-            </div>
-            <div class="col-span-1 md:col-span-2">
+            <div>
               <div v-if="filters.folios.length > 0" class="text-xs text-grey mb-1">Searching by folios:</div>
               <div class="flex flex-wrap gap-2">
                 <v-chip
@@ -253,7 +224,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="grid grid-cols-1">
             <div class="flex gap-2">
               <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>

@@ -20,8 +20,23 @@ export function useTableFilters<T extends Record<string, any>>(
 
   const { storageKey, arrayFields = [], enablePerPage = false, defaultPerPage = 10 } = options
 
+  /**
+   * Clone initial filters, deep-copying array fields so mutations
+   * (e.g. push/splice on a referencias array) never leak back into
+   * initialFilters and survive a future resetFilters/Clear.
+   */
+  const cloneInitialFilters = (): T => {
+    const clone = { ...initialFilters } as T
+    for (const key of arrayFields) {
+      if (Array.isArray((initialFilters as any)[key])) {
+        ;(clone as any)[key] = [...(initialFilters as any)[key]]
+      }
+    }
+    return clone
+  }
+
   // Create reactive filters
-  const filters = ref<T>({ ...initialFilters }) as Ref<T>
+  const filters = ref<T>(cloneInitialFilters()) as Ref<T>
   const currentPage = ref(1)
   const perPage = ref(defaultPerPage)
 
@@ -89,7 +104,7 @@ export function useTableFilters<T extends Record<string, any>>(
     }
 
     // Load filters
-    const newFilters = { ...initialFilters }
+    const newFilters = cloneInitialFilters()
     for (const key of Object.keys(initialFilters)) {
       const queryKey = key
       if (query[queryKey] !== undefined) {
@@ -154,7 +169,7 @@ export function useTableFilters<T extends Record<string, any>>(
    * Reset filters to initial values and sync to URL
    */
   const resetFilters = async () => {
-    filters.value = { ...initialFilters } as T
+    filters.value = cloneInitialFilters()
     currentPage.value = 1
     perPage.value = defaultPerPage
     await syncToUrl()
