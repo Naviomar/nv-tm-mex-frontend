@@ -424,6 +424,8 @@ const clearFilters = async () => {
   await getVoyages()
 }
 
-await getVoyageCatalogs()
-await Promise.all([getVoyages(), loadActiveTransferRequests()])
+onMounted(async () => {
+  await getVoyageCatalogs()
+  await Promise.all([getVoyages(), loadActiveTransferRequests()])
+})
 </script>

@@ -1,109 +1,87 @@
 <template>
   <v-dialog v-model="isOpen" max-width="840px" scrollable>
-
-    <v-card class="tracking-card">
-
+    <v-card class="bg-white dark:bg-[#09090b] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden tracking-dialog">
+      
       <!-- HEADER -->
-      <div :class="['tracking-header', carrierBrandClass]">
-        <div class="flex items-center gap-3">
-          <v-icon size="large" color="white">mdi-sail-boat</v-icon>
-
+      <div class="px-6 py-5 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-[#09090b] flex items-center justify-between backdrop-blur-sm sticky top-0 z-10">
+        <div class="flex items-center gap-4">
+          <div class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800" :style="{ color: carrierHexColor }">
+            <v-icon size="small">mdi-radar</v-icon>
+          </div>
           <div>
-            <div class="text-xs opacity-75 uppercase tracking-widest font-semibold text-slate-200">
-              Real-Time Tracking
+            <div class="text-[10px] font-bold tracking-widest uppercase text-zinc-400 dark:text-zinc-500 mb-0.5">
+              Live Tracking
             </div>
-
-            <div class="flex items-center gap-2 font-bold text-lg text-white">
-              Ref: {{ reference?.reference_number }}
-
-              <v-chip
+            <div class="text-lg font-bold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+              {{ reference?.reference_number }}
+              <div
                 v-if="isAutomated"
-                size="x-small"
-                variant="flat"
-                :color="carrierHexColor"
-                class="text-white font-bold"
+                class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider"
+                :style="{ color: carrierHexColor, backgroundColor: carrierHexColor + '15', border: `1px solid ${carrierHexColor}30` }"
               >
                 LIVE {{ carrierName }}
-              </v-chip>
+              </div>
             </div>
           </div>
         </div>
-
-        <v-btn icon="mdi-close" variant="text" color="white" @click="isOpen = false" />
+        <v-btn icon="mdi-close" variant="text" size="small" class="text-zinc-400 dark:text-zinc-500" @click="isOpen = false" />
       </div>
 
       <!-- BODY -->
-      <v-card-text class="tracking-body bg-[#090d16] px-6 py-6">
+      <v-card-text class="p-6 bg-white dark:bg-[#09090b]">
 
         <!-- MISMATCH WARNING -->
-        <div v-if="isMismatched" class="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-          <div class="flex items-start gap-3">
-            <v-icon color="amber" class="mt-0.5">mdi-alert</v-icon>
-            <div>
-              <span class="text-amber-400 font-bold text-sm uppercase tracking-wider block mb-1">¡Atención! Posible inconsistencia detectada</span>
-              <p class="text-sm text-slate-300 leading-relaxed">
-                Hemos detectado que el número de <strong>Master BL</strong> podría no corresponder con la <strong>naviera registrada</strong> (por ejemplo, un BL de COSCO con la línea Hapag-Lloyd, o viceversa). 
-                Por favor, verifica que tu registro esté bien e intenta de nuevo. ¡Gracias por revisar!
-              </p>
-            </div>
+        <div v-if="isMismatched" class="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
+          <v-icon color="amber-500" size="small" class="mt-0.5">mdi-alert</v-icon>
+          <div>
+            <span class="text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider block mb-1">Posible inconsistencia</span>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              El número de <strong>Master BL</strong> podría no corresponder con la naviera registrada. Por favor verifica los datos.
+            </p>
           </div>
         </div>
 
         <!-- TRACKER SYNC ALERTS -->
-        <div v-if="props.referencia?.tracker_sync_alerts?.length" class="mb-6 bg-slate-800/50 border border-red-900/30 rounded-lg p-4">
-          <div class="flex items-center gap-2 mb-2">
-            <v-icon color="red" size="small">mdi-alert-circle-outline</v-icon>
-            <span class="text-white font-bold text-sm uppercase tracking-wider">Tracker sync alert(s)</span>
+        <div v-if="props.referencia?.tracker_sync_alerts?.length" class="mb-6 bg-zinc-50 dark:bg-zinc-900/50 border border-red-500/20 rounded-xl overflow-hidden">
+          <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2 bg-red-500/5">
+            <v-icon color="red-500" size="small">mdi-alert-circle-outline</v-icon>
+            <span class="text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider">Alertas de Sincronización</span>
           </div>
-          <v-table density="compact" class="bg-transparent text-slate-300">
-            <thead>
-              <tr>
-                <th class="text-left w-20 text-slate-400">Type</th>
-                <th class="text-left text-slate-400">Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(alert, idx) in props.referencia.tracker_sync_alerts" :key="idx" class="border-b border-slate-700/50">
-                <td class="text-xs font-semibold" :class="alert.type === 'error' ? 'text-red-400' : 'text-amber-400'">{{ alert.type }}</td>
-                <td class="text-sm">{{ alert.message }}</td>
-              </tr>
-            </tbody>
-          </v-table>
+          <div class="p-4 space-y-3">
+            <div v-for="(alert, idx) in props.referencia.tracker_sync_alerts" :key="idx" class="flex gap-3 text-xs">
+              <span class="font-bold uppercase tracking-wider mt-0.5" :class="alert.type === 'error' ? 'text-red-500' : 'text-amber-500'">{{ alert.type }}</span>
+              <span class="text-zinc-600 dark:text-zinc-400">{{ alert.message }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- LOADING -->
-        <div v-if="loading" class="center my-8">
-          <v-progress-circular indeterminate :color="carrierHexColor" size="48" />
-          <p class="text-sm text-slate-400 mt-4 font-medium">
-            Consultando naviera en tiempo real...
-          </p>
+        <div v-if="loading" class="flex flex-col items-center justify-center py-16">
+          <v-progress-circular indeterminate :color="carrierHexColor" size="32" width="3" />
+          <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-4 font-bold uppercase tracking-widest">Consultando Naviera...</p>
         </div>
 
         <!-- MAIN LAYOUT WHEN NOT LOADING -->
         <div v-else>
           <!-- SUMMARY CARD -->
-          <div class="summary-card">
+          <div class="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                Último movimiento
+              <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Último Evento Registrado</div>
+              <div v-if="milestones.length" class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                <v-icon size="small" :color="carrierHexColor">mdi-map-marker-outline</v-icon>
+                <span>{{ parseDescription(milestones[milestones.length - 1]?.event_description).location }}</span>
+                <span class="text-zinc-300 dark:text-zinc-700 font-normal mx-1">•</span>
+                <span class="text-zinc-500 dark:text-zinc-400">{{ formatDateOnly(milestones[milestones.length - 1]?.event_date) }}</span>
               </div>
-
-              <div v-if="milestones.length" class="text-sm font-bold text-amber-400 mt-1">
-                {{ parseDescription(milestones[milestones.length - 1]?.event_description).location }}
-                <span class="text-slate-400 font-normal mx-1.5">·</span>
-                {{ formatDateOnly(milestones[milestones.length - 1]?.event_date) }}
-              </div>
-
-              <div v-else class="text-sm text-slate-500 mt-1 font-medium">
-                Sin eventos registrados aún
-              </div>
+              <div v-else class="text-sm text-zinc-400 dark:text-zinc-600 font-medium">Sin eventos registrados</div>
             </div>
-
+            
             <v-btn
               :loading="syncing"
-              :color="carrierHexColor"
+              variant="flat"
               size="small"
-              class="text-white font-bold px-4"
+              class="font-bold rounded-lg px-5 text-white"
+              :style="{ backgroundColor: carrierHexColor }"
               prepend-icon="mdi-refresh"
               @click="triggerLiveSync"
             >
@@ -111,142 +89,130 @@
             </v-btn>
           </div>
 
-          <!-- INTERACTIVE CONTAINER SELECTOR (FILTER CHIPS) -->
-          <div v-if="uniqueContainers.length > 1" class="flex flex-wrap gap-2 mb-6 items-center bg-[#0f172a] p-3 rounded-lg border border-slate-800">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-bold mr-1 flex items-center gap-1">
-              <v-icon size="14">mdi-filter-outline</v-icon>
-              Filtrar Contenedor:
+          <!-- INTERACTIVE CONTAINER SELECTOR -->
+          <div v-if="uniqueContainers.length > 1" class="flex flex-wrap gap-2 mb-8 items-center">
+            <span class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mr-2 flex items-center gap-1">
+              <v-icon size="small">mdi-filter-variant</v-icon> Filtro:
             </span>
             
-            <v-chip
-              size="small"
-              :color="!selectedContainer ? carrierHexColor : 'grey-darken-3'"
-              variant="flat"
-              class="cursor-pointer text-white font-medium"
+            <button
+              class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all uppercase tracking-wider border"
+              :class="!selectedContainer ? 'text-zinc-800 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700' : 'text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'"
               @click="selectedContainer = null"
             >
               Todos
-            </v-chip>
+            </button>
             
-            <v-chip
+            <button
               v-for="c in uniqueContainers"
               :key="c"
-              size="small"
-              :color="selectedContainer === c ? carrierHexColor : 'grey-darken-3'"
-              variant="flat"
-              class="cursor-pointer text-white font-medium"
+              class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all font-mono uppercase tracking-wider border"
+              :class="selectedContainer === c ? 'text-white border-transparent shadow-sm' : 'text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'"
+              :style="selectedContainer === c ? { backgroundColor: carrierHexColor } : {}"
               @click="selectedContainer = c"
             >
               {{ c }}
-            </v-chip>
+            </button>
           </div>
 
-          <!-- PREMIUM HIGH-FIDELITY TIMELINE -->
-          <div v-if="filteredMilestones.length" class="timeline-container mt-6">
-            <div class="timeline-line"></div>
+          <!-- MINIMALIST TIMELINE -->
+          <div v-if="filteredMilestones.length" class="relative pl-6 py-2">
+            <!-- Timeline vertical line -->
+            <div class="absolute top-2 bottom-2 left-[11px] w-[2px] bg-zinc-100 dark:bg-zinc-800/80 rounded-full"></div>
             
             <div
               v-for="(m, i) in filteredMilestones"
               :key="i"
-              class="timeline-item"
-              :class="{ 'latest-item': i === filteredMilestones.length - 1 }"
-              :style="i === filteredMilestones.length - 1 ? { color: carrierHexColor } : {}"
+              class="relative mb-6 last:mb-0 group py-1"
             >
               <!-- Timeline Dot -->
               <div
-                class="timeline-dot"
-                :style="{ backgroundColor: carrierHexColor, boxShadow: `0 0 10px ${carrierHexColor}80` }"
-              >
-                <v-icon size="x-small" color="white">
-                  {{ getEventIcon(m.event?.name, parseDescription(m.event_description).transport) }}
-                </v-icon>
-              </div>
+                class="absolute -left-6 top-3 w-2.5 h-2.5 rounded-full ring-4 ring-white dark:ring-[#09090b] transition-transform duration-300 group-hover:scale-125 z-10"
+                :class="i === highlightedIndex ? 'animate-pulse' : ''"
+                :style="{ backgroundColor: i === highlightedIndex ? carrierHexColor : '#a1a1aa' }"
+              ></div>
               
-              <!-- Timeline Content Card -->
-              <div class="timeline-content">
-                <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
-                  <div>
-                    <h3 class="timeline-event-name" :style="{ color: carrierHexColor }">
-                      {{ m.event?.name }}
-                    </h3>
-                    
-                    <!-- Containers tags associated with this event -->
-                    <div v-if="m.containers && m.containers.length" class="flex flex-wrap gap-1.5 mt-1.5">
-                      <span
-                        v-for="c in m.containers"
-                        :key="c.id"
-                        class="container-tag"
-                      >
-                        <v-icon size="10" class="mr-1">mdi-package-variant-closed</v-icon>
-                        {{ c.reference_container?.container_number }}
-                      </span>
-                    </div>
-                  </div>
+              <!-- Timeline Content -->
+              <div
+                class="pl-4 p-3 rounded-xl border transition-all duration-300"
+                :class="[
+                  i === highlightedIndex 
+                    ? 'shadow-sm bg-zinc-50/65 dark:bg-zinc-900/40'
+                    : 'bg-transparent border-transparent hover:bg-zinc-50/40 dark:hover:bg-zinc-900/20 hover:border-zinc-200/50 dark:hover:border-zinc-800/40'
+                ]"
+                :style="i === highlightedIndex ? { borderColor: `${carrierHexColor}35` } : {}"
+              >
+                <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-1 mb-2">
+                  <h3 
+                    class="text-[13px] font-bold tracking-wide uppercase"
+                    :class="i === highlightedIndex ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors'"
+                  >
+                    {{ parseDescription(m.event_description).status || m.event?.name }}
+                  </h3>
                   
-                  <!-- Date/Time Tag -->
-                  <div class="text-right">
-                    <div class="timeline-date font-bold text-xs text-slate-100">
-                      {{ formatDateOnly(m.event_date) }}
-                    </div>
-                    <div class="timeline-time text-slate-400 text-xs mt-0.5 font-mono">
-                      {{ parseDescription(m.event_description).time }} hrs
-                    </div>
+                  <div class="flex items-center gap-2 text-zinc-400 dark:text-zinc-500">
+                    <span class="text-xs font-semibold">{{ formatDateOnly(m.event_date) }}</span>
+                    <span class="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-800">{{ parseDescription(m.event_description).time }}</span>
                   </div>
                 </div>
+
+                <!-- Containers tags associated with this event -->
+                <div v-if="m.containers && m.containers.length" class="flex flex-wrap gap-1.5 my-2">
+                  <span
+                    v-for="c in m.containers"
+                    :key="c.id"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  >
+                    <v-icon size="10" class="text-zinc-400 dark:text-zinc-600">mdi-package-variant-closed</v-icon>
+                    {{ c.reference_container?.container_number }}
+                  </span>
+                </div>
                 
-                <!-- Location and Logistics Metadata Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800">
-                  <div class="flex items-center gap-1.5 text-xs text-slate-300">
-                    <v-icon size="14" color="slate-400">mdi-map-marker-outline</v-icon>
-                    <span class="font-medium text-slate-400">Lugar:</span>
-                    <span class="text-slate-200 font-semibold truncate">{{ parseDescription(m.event_description).location }}</span>
+                <!-- Location & Transport Metadata -->
+                <div class="flex flex-wrap gap-x-6 gap-y-2 mt-3 pt-3 border-t border-zinc-200/60 dark:border-zinc-800/40">
+                  <div class="flex items-center gap-1.5 text-xs">
+                    <v-icon size="14" class="text-zinc-400 dark:text-zinc-500">mdi-map-marker-outline</v-icon>
+                    <span class="text-zinc-700 dark:text-zinc-300 font-medium">{{ parseDescription(m.event_description).location }}</span>
                   </div>
                   
-                  <div class="flex items-center gap-1.5 text-xs text-slate-300">
-                    <v-icon size="14" color="slate-400">
+                  <div class="flex items-center gap-1.5 text-xs">
+                    <v-icon size="14" class="text-zinc-400 dark:text-zinc-500">
                       {{ parseDescription(m.event_description).transport === 'TRUCK' ? 'mdi-truck-outline' : 'mdi-ferry' }}
                     </v-icon>
-                    <span class="font-medium text-slate-400">Transporte:</span>
-                    <span class="text-slate-200 font-semibold truncate">{{ parseDescription(m.event_description).transport }}</span>
+                    <span class="text-zinc-500 dark:text-zinc-400">{{ parseDescription(m.event_description).transport }}</span>
                   </div>
                   
-                  <div v-if="parseDescription(m.event_description).voyage && parseDescription(m.event_description).voyage !== '-'" class="flex items-center gap-1.5 text-xs text-slate-300 md:col-span-2">
-                    <v-icon size="14" color="slate-400">mdi-compass-outline</v-icon>
-                    <span class="font-medium text-slate-400">Viaje:</span>
-                    <span class="bg-[#1e293b] px-2 py-0.5 rounded text-[10px] text-slate-200 font-bold font-mono">
-                      {{ parseDescription(m.event_description).voyage }}
-                    </span>
+                  <div v-if="parseDescription(m.event_description).voyage && parseDescription(m.event_description).voyage !== '-'" class="flex items-center gap-1.5 text-xs">
+                    <v-icon size="14" class="text-zinc-400 dark:text-zinc-500">mdi-compass-outline</v-icon>
+                    <span class="text-zinc-500 dark:text-zinc-400">Viaje: <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ parseDescription(m.event_description).voyage }}</span></span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- EMPTY TIMELINE STATE -->
-          <div v-else class="empty py-12 px-6">
+          <!-- EMPTY STATE -->
+          <div v-else class="flex flex-col items-center justify-center py-16 text-center">
             <template v-if="syncing">
-              <v-progress-circular indeterminate :color="carrierHexColor" size="48" />
-              <p class="mt-4 font-semibold text-slate-300 text-sm">Sincronizando automáticamente...</p>
+              <v-progress-circular indeterminate :color="carrierHexColor" size="32" width="3" />
+              <p class="mt-4 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">Sincronizando automáticamente...</p>
             </template>
             <template v-else>
-              <v-icon size="60" color="slate-600">mdi-package-variant-closed</v-icon>
-              <p class="mt-4 font-semibold text-slate-300 text-sm">Sin eventos registrados</p>
-              <p class="text-xs text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
-                ¿No ves ningún evento? Por favor, verifica que el número de BL, Booking o Contenedor esté bien registrado y corresponda a la naviera seleccionada.
-              </p>
-              <p class="text-xs text-slate-500 mt-4">
-                Si todo es correcto, haz clic en el botón <strong>Sync</strong> superior para reintentar. ¡Muchas gracias!
+              <div class="w-16 h-16 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mb-5 text-zinc-400 dark:text-zinc-700">
+                <v-icon size="28">mdi-package-variant-closed</v-icon>
+              </div>
+              <p class="font-bold text-zinc-800 dark:text-zinc-300 text-sm">Sin eventos registrados</p>
+              <p class="text-xs text-zinc-500 mt-2 max-w-sm leading-relaxed">
+                Verifica que el número de BL o Contenedor corresponda a la naviera seleccionada. Haz clic en <strong>Sync</strong> para reintentar.
               </p>
             </template>
           </div>
         </div>
 
       </v-card-text>
-
     </v-card>
   </v-dialog>
 </template>
-
 <script setup lang="ts">
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -330,11 +296,11 @@ const carrierBrandClass = computed(() => {
 })
 
 const parseDescription = (desc: string) => {
-  if (!desc) return { location: '-', time: '-', transport: '-', voyage: '-' }
+  if (!desc) return { status: '', location: '-', time: '-', transport: '-', voyage: '-' }
   try {
     return JSON.parse(desc)
   } catch {
-    return { location: desc, time: '-', transport: '-', voyage: '-' }
+    return { status: '', location: desc, time: '-', transport: '-', voyage: '-' }
   }
 }
 
@@ -357,6 +323,26 @@ const filteredMilestones = computed(() => {
   return milestones.value.filter(m => {
     return m.containers && m.containers.some((c: any) => c.reference_container?.container_number === selectedContainer.value)
   })
+})
+
+const highlightedIndex = computed(() => {
+  if (!filteredMilestones.value.length) return -1
+  
+  const today = new Date()
+  let minDiff = Infinity
+  let closestIdx = -1
+
+  filteredMilestones.value.forEach((m, idx) => {
+    if (!m.event_date) return
+    const eventDate = new Date(m.event_date)
+    const diff = Math.abs(eventDate.getTime() - today.getTime())
+    if (diff < minDiff) {
+      minDiff = diff
+      closestIdx = idx
+    }
+  })
+
+  return closestIdx !== -1 ? closestIdx : filteredMilestones.value.length - 1
 })
 
 const getEventIcon = (eventName: string, transport: string) => {
@@ -477,158 +463,54 @@ watch(
 )
 </script>
 
-<style scoped>
-.tracking-card {
-  background: #090d16;
-  color: white;
-  border-radius: 16px;
-  border: 1px solid #1e293b;
-  overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.6);
+<style>
+/* Global CSS rules to override Vuetify modal colors in both themes */
+.tracking-dialog {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #27272a !important;
+  border-color: #e4e4e7 !important;
 }
 
-.tracking-header {
-  padding: 18px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #1e293b;
-  backdrop-filter: blur(10px);
+.tracking-dialog .v-card-text {
+  background-color: #ffffff !important;
+  color: #3f3f46 !important;
 }
 
-.cosco-brand {
-  background: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
+.dark .tracking-dialog,
+.dark-mode .tracking-dialog {
+  background: #09090b !important;
+  background-color: #09090b !important;
+  color: #fafafa !important;
+  border-color: #27272a !important;
 }
 
-.hapag-brand {
-  background: linear-gradient(135deg, #0f172a 0%, #ea580c 100%);
+.dark .tracking-dialog .v-card-text,
+.dark-mode .tracking-dialog .v-card-text {
+  background-color: #09090b !important;
+  color: #d4d4d8 !important;
 }
 
-.summary-card {
-  background: #0f172a;
-  padding: 16px 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid #1e293b;
+/* Minimalist scrollbar */
+.tracking-dialog .v-card-text::-webkit-scrollbar {
+  width: 6px;
 }
-
-.timeline-container {
-  position: relative;
-  padding-left: 28px;
+.tracking-dialog .v-card-text::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.timeline-line {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 10px;
-  width: 2px;
-  background: linear-gradient(to bottom, #1e293b, #334155, #1e293b);
+.tracking-dialog .v-card-text::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
 }
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 24px;
+.dark .tracking-dialog .v-card-text::-webkit-scrollbar-thumb,
+.dark-mode .tracking-dialog .v-card-text::-webkit-scrollbar-thumb {
+  background-color: #27272a;
 }
-
-.timeline-dot {
-  position: absolute;
-  left: -28px;
-  top: 4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: transform 0.2s ease-in-out;
+.tracking-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.25);
 }
-
-.timeline-item:hover .timeline-dot {
-  transform: scale(1.15);
-}
-
-.timeline-content {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.timeline-item:hover .timeline-content {
-  background: #131b2e;
-  border-color: #475569;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
-}
-
-.timeline-event-name {
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.container-tag {
-  background: rgba(148, 163, 184, 0.08);
-  color: #94a3b8;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  display: inline-flex;
-  align-items: center;
-}
-
-.latest-item .timeline-content {
-  background: rgba(15, 23, 42, 0.6);
-  border-color: currentColor; /* Inherits carrier brand color border */
-}
-
-/* Pulsing effect for latest timeline dot */
-.latest-item .timeline-dot::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: inherit;
-  opacity: 0.6;
-  animation: pulse-ring 1.8s infinite;
-  z-index: -1;
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-}
-
-.empty {
-  text-align: center;
-  color: #64748b;
-}
-
-.center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.dark .tracking-dialog .v-card-text::-webkit-scrollbar-thumb:hover,
+.dark-mode .tracking-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
+  background-color: #3f3f46;
 }
 </style>
