@@ -10,8 +10,8 @@
                 <v-icon size="20">mdi-message-text-outline</v-icon>
               </v-avatar>
               <div class="d-flex flex-column">
-                <span class="chat-card__title">Online Chat</span>
-                <span class="chat-card__subtitle">We usually reply in a few minutes</span>
+                <span class="chat-card__title">Live Chats</span>
+                <span class="chat-card__subtitle">Follow up on your request chats</span>
               </div>
             </div>
             <v-btn
@@ -24,7 +24,7 @@
           </v-card-title>
           <v-divider class="chat-card__divider" />
           <v-card-text class="pa-0 chat-card__body">
-            <Broadcast :is-open="drawer" @new-message="emit('new-message', $event)" />
+            <LiveChatsPanel v-if="drawer" hide-header inline />
           </v-card-text>
         </v-card>
       </div>
@@ -88,6 +88,9 @@ watch(
   border-radius: 16px 0 16px 16px; /* top-right square, other corners rounded */
   overflow: hidden;
   border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-card__header {
@@ -129,5 +132,10 @@ watch(
 
 .chat-card__body {
   background-color: rgb(var(--v-theme-background));
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 </style>

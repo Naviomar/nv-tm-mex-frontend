@@ -1,7 +1,7 @@
 <template>
   <ReportChartCard
     title="References by Client"
-    subtitle="Top 10 clients by TEUs"
+    :subtitle="year ? `Top 10 clients by TEUs — ${year}` : 'Top 10 clients by TEUs'"
     icon="mdi-account-group"
     type="donut"
     :series="series"
@@ -11,6 +11,7 @@
     :table-totals="tableTotals"
     :height="460"
     :loading="loading"
+    export-file-name="clients-by-teus"
   >
     <!-- Chart slot: donut beside a totals summary panel -->
     <template #chart>
@@ -60,9 +61,12 @@ interface ClientItem {
 const props = withDefaults(defineProps<{
   items: ClientItem[]
   loading?: boolean
+  /** Year this snapshot represents (shown in the subtitle), e.g. the last selected year. */
+  year?: number | null
 }>(), {
   items: () => [],
   loading: false,
+  year: null,
 })
 
 const { formatInt, categoryPalette, apexBaseOptions } = useReportFormatters()

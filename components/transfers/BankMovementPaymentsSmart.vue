@@ -561,12 +561,25 @@ const movementType = computed(() => bankMovement.value?.type?.trim() ?? '')
 
 const typeInvoicesByMovementType = computed(() => {
   if (!bankMovement.value?.id) return []
-  if (movementType.value === 'deposit') {
-    return typeInvoices.filter((type: any) => type.deposit)
+  
+  if(movementType.value === 'deposit'){
+      if(bankMovement.value?.bank_account?.system_account_id !== 2 && bankMovement.value?.bank_account?.inv_type === 'tm'){
+          return typeInvoices.filter((type: any) => type.deposit && type.tm)
+      }
+      if(bankMovement.value?.bank_account?.system_account_id === 2 && bankMovement.value?.bank_account?.inv_type === 'wm'){
+          return typeInvoices.filter((type: any) => type.deposit && type.wm)
+      }
   }
-  if (movementType.value === 'withdrawal') {
-    return typeInvoices.filter((type: any) => type.withdrawal)
+
+  if(movementType.value === 'withdrawal'){
+      if(bankMovement.value?.bank_account?.system_account_id !== 2 && bankMovement.value?.bank_account?.inv_type === 'tm'){
+          return typeInvoices.filter((type: any) => type.withdrawal && type.tm)
+      }
+      if(bankMovement.value?.bank_account?.system_account_id === 2 && bankMovement.value?.bank_account?.inv_type === 'wm'){
+          return typeInvoices.filter((type: any) => type.withdrawal && type.wm)
+      }
   }
+
   return []
 })
 
@@ -654,10 +667,17 @@ const addInvoiceToSearch = () => {
       )
     )
     // remove duplicates in refs array using set
-
-    refs.forEach((ref) => {
-      filters.value.invoices.push(ref)
-    })
+    if(bankMovement.value.bank_account.inv_type === 'tm' && filters.value.invoiceNumber.includes('TM')){
+        refs.forEach((ref) => {
+          filters.value.invoices.push(ref)
+        })
+    }
+    if(bankMovement.value.bank_account.inv_type === 'wm' && filters.value.invoiceNumber.includes('WM')){
+        refs.forEach((ref) => {
+          filters.value.invoices.push(ref)
+        })
+    }
+    
     filters.value.invoices = [...new Set(filters.value.invoices)]
     filters.value.invoiceNumber = ''
   }

@@ -12,6 +12,17 @@
       </div>
       <div class="rcc-actions">
         <slot name="actions" />
+        <v-btn
+          v-if="tableItems.length"
+          size="small"
+          variant="outlined"
+          color="success"
+          :loading="exporting"
+          @click="handleExport"
+        >
+          <v-icon size="18" start>mdi-file-excel-outline</v-icon>
+          Excel
+        </v-btn>
         <v-btn-toggle
           v-model="view"
           mandatory
@@ -108,6 +119,8 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   defaultView?: 'chart' | 'table'
   tableItemsPerPage?: number
+  /** Base file name (without extension) used when exporting the table to Excel. */
+  exportFileName?: string
 }>(), {
   iconColor: 'primary',
   type: 'bar',
@@ -119,13 +132,26 @@ const props = withDefaults(defineProps<{
   loading: false,
   defaultView: 'chart',
   tableItemsPerPage: 10,
+  exportFileName: 'report',
 })
 
+const { exportTableToExcel } = useExcelExport()
+
 const view = ref<'chart' | 'table'>(props.defaultView)
+const exporting = ref(false)
 
 const heightPx = computed(() =>
   typeof props.height === 'number' ? `${props.height}px` : props.height
 )
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    await exportTableToExcel(props.tableHeaders, props.tableItems, props.tableTotals, props.exportFileName, props.title)
+  } finally {
+    exporting.value = false
+  }
+}
 
 // Soft tinted badge behind the icon. Works for hex colors; named Vuetify colors
 // fall back to a neutral primary tint.

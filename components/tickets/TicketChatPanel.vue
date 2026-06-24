@@ -38,9 +38,9 @@
       </v-btn>
     </div>
 
-    <!-- CC Users -->
+    <!-- CC Users (staff only) -->
     <TicketCcUsers
-      v-if="ticketType === 'authorization-request' || ticketType === 'process-request' || ticketType === 'support-assistance'"
+      v-if="canManage && (ticketType === 'authorization-request' || ticketType === 'process-request' || ticketType === 'support-assistance')"
       :ticket-type="ticketType"
       :ticket-id="ticketId"
     />

@@ -36,8 +36,23 @@ export interface TicketMessage {
   deleted_at?: string | null
 }
 
+export interface LiveChat {
+  ticket_type: TicketType
+  ticket_id: number
+  label: string
+  requester: string | null
+  unread_count: number
+  last_message: string
+  last_message_at: string
+  action_url: string
+}
+
 class TicketMessagesModule extends FetchFactory<any> {
   private RESOURCE = '/ticket-messages'
+
+  async getLiveChats(fetchOptions?: FetchOptions): Promise<LiveChat[]> {
+    return this.call('GET', `${this.RESOURCE}/live-chats`, fetchOptions)
+  }
 
   async getMessages(type: TicketType, id: number, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${type}/${id}`, fetchOptions)
