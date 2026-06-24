@@ -6,129 +6,114 @@
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
             <div class="font-bold">Customer WM {{ invoiceType }} #{{ invoiceWm.invoice.invoice_number }}</div>
             <div class="flex flex-wrap gap-2 md:gap-4 items-center">
-              <v-chip
-                :color="isPaid ? 'green' : 'warning'"
-                text-color="white"
-                size="small"
-                class="capitalize"
-                v-if="!isCancelled"
-              >
+              <v-chip :color="isPaid ? 'green' : 'warning'" text-color="white" size="small" class="capitalize"
+                v-if="!isCancelled">
                 {{ isPaid ? 'Paid' : 'Payment pending' }}
               </v-chip>
               <div v-if="invoiceWm.from_deleted_invoice">
                 <v-chip size="small" color="orange" variant="tonal">
-                  Re-invoice from 
-                  <NuxtLink 
-                    :to="`/invoices/search/wm-view-${invoiceWm.from_deleted_invoice}`" 
-                    target="_blank"
-                    class="text-orange font-weight-bold text-decoration-underline ml-1"
-                  >
+                  Re-invoice from
+                  <NuxtLink :to="`/invoices/search/wm-view-${invoiceWm.from_deleted_invoice}`" target="_blank"
+                    class="text-orange font-weight-bold text-decoration-underline ml-1">
                     #{{ invoiceWm.parent_deleted?.invoice?.invoice_number || invoiceWm.from_deleted_invoice }}
                   </NuxtLink>
                 </v-chip>
               </div>
               <div v-if="invoiceWm.replacement_invoice_id">
                 <v-chip size="small" color="blue" variant="tonal">
-                  Replaced by 
-                  <NuxtLink 
-                    :to="`/invoices/search/wm-view-${invoiceWm.replacement_invoice_id}`" 
-                    target="_blank"
-                    class="text-blue font-weight-bold text-decoration-underline ml-1"
-                  >
+                  Replaced by
+                  <NuxtLink :to="`/invoices/search/wm-view-${invoiceWm.replacement_invoice_id}`" target="_blank"
+                    class="text-blue font-weight-bold text-decoration-underline ml-1">
                     #{{ invoiceWm.replacement_invoice?.invoice?.invoice_number || invoiceWm.replacement_invoice_id }}
                   </NuxtLink>
                 </v-chip>
               </div>
             </div>
-            </div>
-          </v-card-title>
-          <v-card-text>
-            <!-- Customer & Amount Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <v-card variant="tonal" color="blue">
-                <v-card-text>
-                  <div class="flex items-start gap-3">
-                    <v-icon size="32" color="blue-darken-2">mdi-account-circle</v-icon>
-                    <div class="flex-1">
-                      <div class="text-xs text-blue-darken-1 font-semibold mb-1">CUSTOMER</div>
-                      <div class="font-bold text-base">{{ invoiceWm.consignee?.name }}</div>
-                      <div class="text-sm mt-2">
-                        <div class="text-xs text-grey-darken-1">RFC</div>
-                        <div class="font-semibold">{{ invoiceWm.rfc }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </v-card-text>
-              </v-card>
-
-              <v-card variant="tonal" color="green">
-                <v-card-text>
-                  <div class="flex items-start gap-3">
-                    <v-icon size="32" color="green-darken-2">mdi-cash-multiple</v-icon>
-                    <div class="flex-1">
-                      <div class="text-xs text-green-darken-1 font-semibold mb-1">AMOUNT</div>
-                      <div class="font-bold text-xl">{{ getCurrencyName(invoiceWm.invoice?.currency_id) }} {{ formatToCurrency(invoiceWm.invoice?.total) }}</div>
-                      <div v-if="invoiceWm.invoice?.currency_id != 2" class="text-sm mt-1">
-                        <span class="text-grey-darken-1">Exchange Rate:</span> {{ formatToCurrency(1 / invoiceWm.exchange_rate) }}
-                      </div>
-                    </div>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </div>
-
-            <!-- Address -->
-            <v-card variant="tonal" color="orange" class="mb-4">
+          </div>
+        </v-card-title>
+        <v-card-text>
+          <!-- Customer & Amount Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <v-card variant="tonal" color="blue">
               <v-card-text>
                 <div class="flex items-start gap-3">
-                  <v-icon color="orange-darken-2">mdi-map-marker</v-icon>
+                  <v-icon size="32" color="blue-darken-2">mdi-account-circle</v-icon>
                   <div class="flex-1">
-                    <div class="text-xs text-orange-darken-1 font-semibold mb-1">ADDRESS</div>
-                    <div class="font-medium">{{ invoiceWm.address || 'No address provided' }}</div>
+                    <div class="text-xs text-blue-darken-1 font-semibold mb-1">CUSTOMER</div>
+                    <div class="font-bold text-base">{{ invoiceWm.consignee?.name }}</div>
+                    <div class="text-sm mt-2">
+                      <div class="text-xs text-grey-darken-1">RFC</div>
+                      <div class="font-semibold">{{ invoiceWm.rfc }}</div>
+                    </div>
                   </div>
                 </div>
               </v-card-text>
             </v-card>
 
-            <v-divider class="my-4"></v-divider>
-            <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
-              <PreviewWmInvoice service="sea" :invoice="invoiceWm" />
-              <div v-if="!isCancelled" class="flex flex-col gap-2">
-                <v-btn v-if="isProforma" color="warning" size="small" @click="onEditProformaClick"
-                  ><v-icon>mdi-pencil-outline</v-icon>Edit proforma</v-btn
-                >
+            <v-card variant="tonal" color="green">
+              <v-card-text>
+                <div class="flex items-start gap-3">
+                  <v-icon size="32" color="green-darken-2">mdi-cash-multiple</v-icon>
+                  <div class="flex-1">
+                    <div class="text-xs text-green-darken-1 font-semibold mb-1">AMOUNT</div>
+                    <div class="font-bold text-xl">{{ getCurrencyName(invoiceWm.invoice?.currency_id) }} {{
+                      formatToCurrency(invoiceWm.invoice?.total) }}</div>
+                    <div v-if="invoiceWm.invoice?.currency_id != 2" class="text-sm mt-1">
+                      <span class="text-grey-darken-1">Exchange Rate:</span> {{ formatToCurrency(1 /
+                      invoiceWm.exchange_rate) }}
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
 
-                <v-btn v-if="isProforma" color="red" size="small" @click="onDeleteProformaClick"
-                  ><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn
-                >
-
-                <v-btn v-if="isProforma" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
-                  ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
-                >
+          <!-- Address -->
+          <v-card variant="tonal" color="orange" class="mb-4">
+            <v-card-text>
+              <div class="flex items-start gap-3">
+                <v-icon color="orange-darken-2">mdi-map-marker</v-icon>
+                <div class="flex-1">
+                  <div class="text-xs text-orange-darken-1 font-semibold mb-1">ADDRESS</div>
+                  <div class="font-medium">{{ invoiceWm.address || 'No address provided' }}</div>
+                </div>
               </div>
+            </v-card-text>
+          </v-card>
 
-              <AuthorizeProcessSmart
-                v-if="!isCancelled && !isProforma"
-                label="Cancel WM invoice"
-                :resource="authorizeResources.CancelInvoiceWm.resource"
-                :resourceId="invoiceWm.id"
-              >
-                <template #auth>
-                  <v-btn color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
-                </template>
-              </AuthorizeProcessSmart>
+          <v-divider class="my-4"></v-divider>
+          <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
+            <PreviewWmInvoice service="sea" :invoice="invoiceWm" />
+            <div v-if="!isCancelled" class="flex flex-col gap-2">
+              <v-btn v-if="isProforma" color="warning" size="small"
+                @click="onEditProformaClick"><v-icon>mdi-pencil-outline</v-icon>Edit proforma</v-btn>
+
+              <v-btn v-if="isProforma" color="red" size="small"
+                @click="onDeleteProformaClick"><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn>
+
+              <v-btn v-if="isProforma" color="purple" size="small"
+                @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
+                invoice</v-btn>
             </div>
-            <v-alert v-if="isCancelled" density="compact" type="error" elevation="2">
-              <div>This invoice has been cancelled at {{ formatDateString(invoiceWm.cancelled_at) }}</div>
-              <div>Reason: {{ invoiceWm.cancelled_reason }}</div>
-              <div>Cancelled by: {{ invoiceWm.cancel_by?.name }}</div>
-            </v-alert>
-          </v-card-text>
+
+            <AuthorizeProcessSmart v-if="!isCancelled && !isProforma" label="Cancel WM invoice"
+              :resource="authorizeResources.CancelInvoiceWm.resource" :resourceId="invoiceWm.id">
+              <template #auth>
+                <v-btn color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
+              </template>
+            </AuthorizeProcessSmart>
+          </div>
+          <v-alert v-if="isCancelled" density="compact" type="error" elevation="2">
+            <div>This invoice has been cancelled at {{ formatDateString(invoiceWm.cancelled_at) }}</div>
+            <div>Reason: {{ invoiceWm.cancelled_reason }}</div>
+            <div>Cancelled by: {{ invoiceWm.cancel_by?.name }}</div>
+          </v-alert>
+        </v-card-text>
       </v-card>
       <div>
         <v-card v-if="isProforma && !isCancelled" density="compact" class="mb-2">
-          <v-card-title
-            ><div class="text-base">Updates available until: {{ expirationDate }}</div>
+          <v-card-title>
+            <div class="text-base">Updates available until: {{ expirationDate }}</div>
           </v-card-title>
           <v-card-text>
             <ClientOnly>
@@ -138,25 +123,20 @@
         </v-card>
 
         <v-card v-if="!isFreeFormat" color="" class="mb-4">
-          <v-card-title><div class="font-bold">Linked services</div></v-card-title>
+          <v-card-title>
+            <div class="font-bold">Linked services</div>
+          </v-card-title>
           <v-card-text>
             <div class="flex gap-2">
-              <v-btn
-                v-for="(service, index) in invoiceWm.services_all"
-                :key="`linked-ref-${index}`"
-                color="primary"
-                size="small"
-                variant="tonal"
-                :to="`/maritime/${service.referencia.impoExpo == 'I' ? 'import' : 'export'}/view-details-${
-                  service.referencia?.id
-                }`"
-              >
+              <v-btn v-for="(service, index) in invoiceWm.services_all" :key="`linked-ref-${index}`" color="primary"
+                size="small" variant="tonal" :to="`/maritime/${service.referencia.impoExpo == 'I' ? 'import' : 'export'}/view-details-${service.referencia?.id
+                  }`">
                 <div class="flex items-center gap-2">
                   <v-icon>mdi-open-in-new</v-icon>
                   <span>Service #{{ service.referencia?.reference_number }} details</span>
                   <v-icon :color="service.deleted_at ? 'red' : 'green'">{{
                     service.deleted_at ? 'mdi-delete-variant' : 'mdi-plus'
-                  }}</v-icon>
+                    }}</v-icon>
                 </div>
               </v-btn>
             </div>
@@ -167,11 +147,11 @@
     <div>
       <SendCustomerInvoiceByEmail :id="$props.id" :invoice="invoiceWm" invoice_type="wm" />
       <v-card v-if="isProforma" color="blue-lighten-4" class="mb-4">
-          <v-card-title
-            ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
-          >
-          <v-card-text>
-            <div class="overflow-x-auto">
+        <v-card-title>
+          <div class="font-bold">{{ invoiceType }} detail</div>
+        </v-card-title>
+        <v-card-text>
+          <div class="overflow-x-auto">
             <v-table density="compact">
               <thead>
                 <tr>
@@ -201,16 +181,16 @@
                 </tr>
               </tfoot>
             </v-table>
-            </div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </v-card-text>
+      </v-card>
 
-        <v-card v-if="!isProforma" color="grey-lighten-4" class="mb-4">
-          <v-card-title
-            ><div class="font-bold">{{ invoiceType }} detail</div></v-card-title
-          >
-          <v-card-text>
-            <div class="overflow-x-auto">
+      <v-card v-if="!isProforma" color="grey-lighten-4" class="mb-4">
+        <v-card-title>
+          <div class="font-bold">{{ invoiceType }} detail</div>
+        </v-card-title>
+        <v-card-text>
+          <div class="overflow-x-auto">
             <v-table density="compact">
               <thead>
                 <tr>
@@ -234,25 +214,21 @@
                   <td class="text-right">{{ formatToCurrency(getWmConceptTotal(charge)) }}</td>
                   <td class="text-right">{{ formatToCurrency(charge.pending_balance) }}</td>
                   <td>
-                    <v-chip
-                      :color="charge.pending_balance > 0 ? 'red' : 'green'"
-                      text-color="white"
-                      small
-                      class="capitalize"
-                    >
+                    <v-chip :color="charge.pending_balance > 0 ? 'red' : 'green'" text-color="white" small
+                      class="capitalize">
                       {{ charge.pending_balance > 0 ? 'Pending' : 'Paid' }}
                     </v-chip>
                   </td>
                   <td>
                     <div v-for="(payment, index) in charge.payments" :key="`bank-movement-${index}`">
-                      <v-chip v-if="payment.paymentable_type?.includes('Payable')" color="orange-darken-2" text-color="white" small>
+                      <v-chip v-if="payment.paymentable_type?.includes('Payable')" color="orange-darken-2"
+                        text-color="white" small>
                         <v-icon>mdi-percent-outline</v-icon>{{ paymentableName(payment) }}
                         {{ formatToCurrency(payment.amount) }}
                       </v-chip>
-                      <v-chip v-else color="blue" text-color="white" small @click="viewPayment(payment)"
-                        ><v-icon>mdi-eye-outline</v-icon>Payment #{{ payment.id }}
-                        {{ formatToCurrency(payment.amount) }}</v-chip
-                      >
+                      <v-chip v-else color="blue" text-color="white" small
+                        @click="viewPayment(payment)"><v-icon>mdi-eye-outline</v-icon>Payment #{{ payment.id }}
+                        {{ formatToCurrency(payment.amount) }}</v-chip>
                     </div>
                   </td>
                   <td>
@@ -270,9 +246,9 @@
                 </tr>
               </tfoot>
             </v-table>
-            </div>
-          </v-card-text>
-        </v-card>
+          </div>
+        </v-card-text>
+      </v-card>
     </div>
     <v-dialog v-model="showCancelDialog" max-width="400">
       <v-card>
@@ -280,14 +256,8 @@
         <v-card-text>
           <div>Are you sure you want to cancel this invoice?</div>
           <div>
-            <v-textarea
-              v-model="cancel.reason"
-              label="Reason"
-              hint="Please provide a reason for the cancellation"
-              counter
-              rows="3"
-              clearable
-            ></v-textarea>
+            <v-textarea v-model="cancel.reason" label="Reason" hint="Please provide a reason for the cancellation"
+              counter rows="3" clearable></v-textarea>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -568,8 +538,8 @@ const viewPayment = (payment: any) => {
     return
   }
   // ConsigneeCreditNote or unified CreditNote
-  if (payment.paymentable_type.includes('ConsigneeCreditNote') || 
-      (payment.paymentable_type.includes('CreditNote') && !payment.paymentable_type.includes('LineCreditNote'))) {
+  if (payment.paymentable_type.includes('ConsigneeCreditNote') ||
+    (payment.paymentable_type.includes('CreditNote') && !payment.paymentable_type.includes('LineCreditNote'))) {
     router.push(`/invoices/search/credit-notes/view-${payment.paymentable_id}`)
     return
   }

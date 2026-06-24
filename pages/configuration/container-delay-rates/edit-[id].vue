@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <ContainerDelayRatesConfigurator mode="edit" :rateId="id" />
+    <ContainerDelayRatesLineManager mode="edit" :rateId="id" />
   </v-container>
 </template>
 <script setup lang="ts">

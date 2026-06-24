@@ -77,9 +77,35 @@
           >
             <td>{{ reqAssist.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(reqAssist)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(reqAssist)">
+                  <v-badge
+                    v-if="reqAssist.unread_count"
+                    :content="reqAssist.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(reqAssist) && hasPermission('support_request.manage')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(reqAssist)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(reqAssist)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(reqAssist)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ reqAssist.user?.name }}</td>
 
@@ -205,6 +231,8 @@ import { deletedStatus } from '~/utils/data/systemData'
 const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission } = useCheckUser()
 const snackbar = useSnackbar()
+const router = useRouter()
+const route = useRoute()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
@@ -269,6 +297,7 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (item: any) => {
   activeChatTicket.value = item
+  item.unread_count = 0
   showChatDrawer.value = true
 }
 
@@ -398,4 +427,17 @@ const clearFilters = async () => {
 }
 
 await getRequestAssistances()
+
+const openChatFromQuery = () => {
+  const ticketId = route.query.ticketId ? Number(route.query.ticketId) : null
+  if (!ticketId || route.query.openChat !== '1') return
+  const row = reqAssistances.value.data.find((r: any) => r.id === ticketId)
+  openChat(row ?? { id: ticketId })
+  router.replace({ query: { ...route.query, openChat: undefined, ticketId: undefined } })
+}
+openChatFromQuery()
+
+watch(() => route.query.openChat, (val) => {
+  if (val === '1') openChatFromQuery()
+})
 </script>

@@ -6,7 +6,7 @@
         <div class="header-content">
           <div class="header-left">
             <div class="icon-wrapper">
-              <v-icon color="white" size="28">mdi-boat</v-icon>
+              <v-icon color="white" size="28">mdi-ship</v-icon>
             </div>
             <div class="header-text">
               <h2 class="report-title">Import Repo General</h2>
@@ -52,8 +52,10 @@
             </div>
           </div>
           
+          <!-- All filters flow in a clean 2-column grid (md=6) so the layout never
+               leaves an orphaned blank column, regardless of filter count. -->
           <v-row>
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-date-picker
                 v-model="filters.fromDate"
                 label="From Date"
@@ -66,7 +68,7 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-date-picker
                 v-model="filters.toDate"
                 label="To Date"
@@ -79,13 +81,13 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.voyage_id"
                 :items="voyages"
                 item-title="name"
                 item-value="id"
-                label="Voyage"
+                label="Vsl / Voyage"
                 density="compact"
                 hide-details
                 clearable
@@ -95,21 +97,19 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
-              <ACustomerSearch 
-                v-model="filters.consignee_id" 
+            <v-col cols="12" md="6">
+              <ACustomerSearch
+                v-model="filters.consignee_id"
                 :hide-details="true"
                 density="compact"
                 variant="outlined"
                 label="Consignee"
               />
             </v-col>
-          </v-row>
 
-          <v-row class="mt-4">
-            <v-col cols="12" md="3">
-              <AFreightForwarderSearch 
-                v-model="filters.ff_id" 
+            <v-col cols="12" md="6">
+              <AFreightForwarderSearch
+                v-model="filters.ff_id"
                 :hide-details="true"
                 density="compact"
                 variant="outlined"
@@ -117,7 +117,7 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.line_id"
                 :items="lines"
@@ -133,7 +133,7 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.executive_id"
                 :items="executives"
@@ -149,7 +149,7 @@
               />
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.release"
                 :items="releaseOptions"
@@ -164,10 +164,8 @@
                 auto-select-first
               />
             </v-col>
-          </v-row>
 
-          <v-row class="mt-4">
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.transportType"
                 :items="transportTypes"
@@ -179,6 +177,70 @@
                 clearable
                 variant="outlined"
                 prepend-inner-icon="mdi-truck"
+                auto-select-first
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.originPort_id"
+                :items="ports"
+                item-title="name"
+                item-value="id"
+                label="Origin"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-map-marker-outline"
+                auto-select-first
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.loadingPort_id"
+                :items="ports"
+                item-title="name"
+                item-value="id"
+                label="Loading"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-anchor"
+                auto-select-first
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.dischargePort_id"
+                :items="ports"
+                item-title="name"
+                item-value="id"
+                label="Discharge"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-anchor"
+                auto-select-first
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.destinationPort_id"
+                :items="ports"
+                item-title="name"
+                item-value="id"
+                label="Destination"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-map-marker-outline"
                 auto-select-first
               />
             </v-col>
@@ -229,8 +291,9 @@ const router = useRouter()
 const route = useRoute()
 const loadingStore = useLoadingStore()
 
-// Helper to format date as YYYY-MM-DD
-function formatDate(date: Date) {
+// Helper to format date as YYYY-MM-DD (handles both Date objects and strings)
+function formatDate(date: Date | string) {
+  if (typeof date === 'string') return date.slice(0, 10)
   return date.toISOString().slice(0, 10)
 }
 
@@ -252,12 +315,13 @@ const releaseOptions = [
   { title: 'Not Released', value: '0' },
 ]
 
-// Transport type options
+// Transport type options — matches the legacy report's "TRANSPORT MODE" select
+// (terr_tipo): RAIL, TRUCK, RAIL_TRUCK. Value 'RAILTRUCK' (no underscore) is the
+// exact stored value the backend filters on.
 const transportTypes = [
-  { title: 'FCL', value: 'FCL' },
-  { title: 'LCL', value: 'LCL' },
-  { title: 'RORO', value: 'RORO' },
-  { title: 'Breakbulk', value: 'Breakbulk' },
+  { title: 'RAIL', value: 'RAIL' },
+  { title: 'TRUCK', value: 'TRUCK' },
+  { title: 'RAIL TRUCK', value: 'RAILTRUCK' },
 ]
 
 // Initialize the filters with the date range
@@ -271,12 +335,17 @@ const filters = ref<any>({
   executive_id: null,
   release: null,
   transportType: null,
+  originPort_id: null,
+  loadingPort_id: null,
+  dischargePort_id: null,
+  destinationPort_id: null,
 })
 
 // Catalog data
 const voyages = ref<any[]>([])
 const lines = ref<any[]>([])
 const executives = ref<any[]>([])
+const ports = ref<any[]>([])
 
 // Function to apply filters and generate Excel report
 const applyFilters = async () => {
@@ -299,6 +368,10 @@ const applyFilters = async () => {
         executive: filters.value.executive_id,
         release: filters.value.release,
         transportType: filters.value.transportType,
+        originPort: filters.value.originPort_id,
+        loadingPort: filters.value.loadingPort_id,
+        dischargePort: filters.value.dischargePort_id,
+        destinationPort: filters.value.destinationPort_id,
       },
     }
 
@@ -349,20 +422,26 @@ const clearFilters = () => {
   filters.value.executive_id = null
   filters.value.release = null
   filters.value.transportType = null
+  filters.value.originPort_id = null
+  filters.value.loadingPort_id = null
+  filters.value.dischargePort_id = null
+  filters.value.destinationPort_id = null
 }
 
 // Load catalog data on mount
 onMounted(async () => {
   try {
-    const [voyagesData, linesData, executivesData] = await Promise.all([
+    const [voyagesData, linesData, executivesData, portsData] = await Promise.all([
       $api.importRepo.getVoyages(),
       $api.importRepo.getLines(),
       $api.importRepo.getExecutives(),
+      $api.importRepo.getPorts(),
     ])
-    
+
     voyages.value = voyagesData.data || []
     lines.value = linesData.data || []
     executives.value = executivesData.data || []
+    ports.value = portsData.data || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   }

@@ -404,9 +404,14 @@ const removeCharge = async (index: number) => {
   })
 
   if (result) {
+    const body = buyRateCharges.value[index]
+    if (!body.id) {
+      buyRateCharges.value.splice(index, 1)
+      updateBuyRate()
+      return
+    }
     try {
       loadingStore.start()
-      const body = buyRateCharges.value[index]
       await $api.referencias.deleteSeaImportBuyCharge(props.referencia.id, body)
       buyRateCharges.value.splice(index, 1)
       snackbar.add({ type: 'success', text: 'Charge deleted successfully' })

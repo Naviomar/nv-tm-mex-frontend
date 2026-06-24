@@ -105,9 +105,35 @@
           >
             <td>{{ authRequest.id }}</td>
             <td>
-              <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                  <v-badge
+                    v-if="authRequest.unread_count"
+                    :content="authRequest.unread_count"
+                    color="error"
+                    overlap
+                  >
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-badge>
+                  <v-icon v-else>mdi-message-text-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="isPendingToGrant(authRequest) && hasPermission('authorization-requests-respond')"
+                  icon size="small" variant="text" color="primary"
+                  title="Respond"
+                  @click="showFormGrant(authRequest)"
+                >
+                  <v-icon>mdi-check-circle-outline</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canDelete(authRequest)"
+                  icon size="small" variant="text" color="error"
+                  title="Cancel"
+                  @click="showFormCancel(authRequest)"
+                >
+                  <v-icon>mdi-close-circle-outline</v-icon>
+                </v-btn>
+              </div>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
             <td class="whitespace-nowrap">
@@ -364,6 +390,7 @@ const { $api } = useNuxtApp()
 const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
 const router = useRouter()
+const route = useRoute()
 const authRequestStore = useAuthRequestStore()
 
 const loadingIndicator = useLoadingIndicator()
@@ -404,6 +431,7 @@ const activeChatTicket = ref<any>(null)
 
 const openChat = (authRequest: any) => {
   activeChatTicket.value = authRequest
+  authRequest.unread_count = 0
   showChatDrawer.value = true
 }
 
@@ -628,6 +656,19 @@ onMounted(async () => {
   nextTick(() => {
     measureTruncation()
   })
+  openChatFromQuery()
+})
+
+const openChatFromQuery = () => {
+  const ticketId = route.query.ticketId ? Number(route.query.ticketId) : null
+  if (!ticketId || route.query.openChat !== '1') return
+  const row = authRequests.value.data.find((r: any) => r.id === ticketId)
+  openChat(row ?? { id: ticketId })
+  router.replace({ query: { ...route.query, openChat: undefined, ticketId: undefined } })
+}
+
+watch(() => route.query.openChat, (val) => {
+  if (val === '1') openChatFromQuery()
 })
 
 // ── Collapsible Comments ──────────────────────────────────────────────────
