@@ -298,9 +298,26 @@ const addLegacyDestination = (portName: string, etaDate: string) => {
   }
 }
 
+const ensureVesselInCatalog = (vessel: any) => {
+  if (!vessel) return
+  const exists = catalogs.value.vessels.some((v: any) => v.id === vessel.id)
+  if (!exists) {
+    catalogs.value.vessels.push({
+      id: vessel.id,
+      name: vessel.name,
+      line: vessel.line ? {
+        id: vessel.line.id,
+        name: vessel.line.name,
+        commercial_name: vessel.line.commercial_name || vessel.line.name || null
+      } : null
+    } as never)
+  }
+}
+
 defineExpose({
   setValues,
   addLegacyDestination,
+  ensureVesselInCatalog,
 })
 
 onMounted(async () => {

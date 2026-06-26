@@ -11,6 +11,14 @@ class LegacyModule extends FetchFactory<any> {
     })
   }
 
+  async getTrackingVoyages(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/tracking-voyages`, fetchOptions)
+  }
+
+  async confirmVoyage(id: number, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/confirm-voyage/${id}`, fetchOptions)
+  }
+
   async findMatchingVessel(name: string, lineCode?: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/find-matching-vessel`, {
       ...fetchOptions,
