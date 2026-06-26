@@ -368,8 +368,10 @@ function formatDate(date: Date) {
 
 // Today
 const today = new Date()
+//First month of the year to show all
+const firstMonth = new Date(today.getFullYear(),0)
 // First day of last month
-const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+const firstDayLastMonth = new Date(today.getFullYear(), firstMonth.getMonth(), 1)
 // Last day of current month
 const lastDayCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 

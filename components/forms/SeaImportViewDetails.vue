@@ -241,7 +241,7 @@
                   <th class="text-left">Fuera / Dentro BL</th>
                   <th class="text-left">+ IVA</th>
                   <th class="text-left">TM/WM</th>
-                  <th class="text-left">Created by</th>
+                  <th class="text-left">Created at</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,7 +255,11 @@
                   <td>
                     {{ charge.inv_type }}
                   </td>
-                  <td>{{ charge.created_by?.name }}</td>
+                  <td class="whitespace-nowrap">
+                    <UserInfoBadge :item="charge">
+                      {{ formatDateString(charge.created_at) }}
+                    </UserInfoBadge>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
