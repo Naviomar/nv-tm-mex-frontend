@@ -178,6 +178,7 @@ const menuPermissions = {
   SystemBankAccounts: 'menu-system-bank-accounts',
   SystemMailNotifications: 'menu-system-mail-notifications',
   SystemMailNotificationGroups: 'menu-system-mail-notification-groups',
+  SystemEmailTemplates: 'menu-system-email-templates',
   SystemAlertTypes: 'menu-system-alert-types',
   SystemAuthRequestTypes: 'menu-system-auth-request-types',
   SystemSupportTickets: 'menu-system-support-tickets',

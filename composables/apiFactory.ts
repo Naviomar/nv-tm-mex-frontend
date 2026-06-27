@@ -11,6 +11,7 @@ import ConsigneesModule from '~/repository/modules/catalogs/consignees'
 import VesselsModule from '~/repository/modules/catalogs/vessels'
 import VoyagesModule from '~/repository/modules/catalogs/voyages'
 import ExchangeRateModule from '~/repository/modules/catalogs/exchangerates'
+import EmailTemplatesModule from '~/repository/modules/catalogs/emailTemplates'
 import ExecutivesModule from '~/repository/modules/catalogs/executives'
 import FreightForwardersModule from '~/repository/modules/catalogs/freightforwarders'
 import PortsModule from '~/repository/modules/catalogs/ports'
@@ -165,6 +166,7 @@ interface IApiInstance {
   handlers: HandlerModule
   warehouses: WarehouseModule
   exchangeRates: ExchangeRateModule
+  emailTemplates: EmailTemplatesModule
   refunds: RefundModule
   advancePayments: AdvancePaymentModule
   supplierInvoices: SupplierInvoicesModule
@@ -262,6 +264,7 @@ export function useApiFactory() {
     handlers: new HandlerModule(client),
     warehouses: new WarehouseModule(client),
     exchangeRates: new ExchangeRateModule(client),
+    emailTemplates: new EmailTemplatesModule(client),
     refunds: new RefundModule(client),
     advancePayments: new AdvancePaymentModule(client),
     freightBanks: new FreightBanksModule(client),
