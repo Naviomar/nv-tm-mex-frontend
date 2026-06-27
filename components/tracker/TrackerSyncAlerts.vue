@@ -29,22 +29,52 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <PremiumLiveTrackingModal
+      v-if="showLiveTrackingModal"
+      v-model="showLiveTrackingModal"
+      :referencia-id="props.referencia?.id"
+      :referencia="props.referencia"
+    />
   </div>
 </template>
 <script setup lang="ts">
+import PremiumLiveTrackingModal from '@/components/tracking/PremiumLiveTrackingModal.vue'
+
 const props = defineProps({
   syncAlerts: {
     type: Array as any,
     required: false,
     default: [],
   },
+  referencia: {
+    type: Object as any,
+    required: false,
+    default: null,
+  }
 })
 
 const hasAlerts = computed(() => props.syncAlerts != null && props.syncAlerts.length > 0)
 
 const showDialog = ref(false)
+const showLiveTrackingModal = ref(false)
+
+const isLiveTrackable = (item: any) => {
+  if (!item || !item.line) return false
+  const name = (item.line.name || '').toLowerCase()
+  const comm = (item.line.commercial_name || '').toLowerCase()
+  const code = (item.line.code || '').toUpperCase()
+
+  return (
+    name.includes('hapag') || comm.includes('hapag') || name.includes('lloyd') || code === 'HLCU' || code === 'HLAG'
+  )
+}
 
 const viewAlerts = () => {
-  showDialog.value = true
+  if (props.referencia && isLiveTrackable(props.referencia)) {
+    showLiveTrackingModal.value = true
+  } else {
+    showDialog.value = true
+  }
 }
 </script>

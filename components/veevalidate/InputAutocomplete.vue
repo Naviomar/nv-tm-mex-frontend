@@ -42,7 +42,7 @@ const props = defineProps({
   label: String,
   multiple: Boolean,
   items: Array,
-  itemTitle: String,
+  itemTitle: [String, Function, Array],
   itemValue: String,
   variant: String || 'flat',
   density: String,
