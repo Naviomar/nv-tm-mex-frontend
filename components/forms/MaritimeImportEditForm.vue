@@ -797,6 +797,8 @@ const isRefDeleted = computed(() => {
   return referencia.value?.deleted_at != null
 })
 
+const isFormInitialized = ref(false)
+
 const lineResponsableVessels = computed(() => {
   const filtered = catalogs.value.vessels.filter((vessel: any) => vessel.line_id === values.line_id)
   
@@ -814,8 +816,15 @@ const lineResponsableVessels = computed(() => {
   return filtered
 })
 
-const refreshVessels = async (value: any) => {
-  setValues({ vessel_departure_id: '', voyage_discharge_id: null })
+const refreshVessels = async (newLineId: any) => {
+  if (!isFormInitialized.value) return
+  if (values.vessel_departure_id && catalogs.value.vessels.length > 0) {
+    const vesselBelongsToNewLine = catalogs.value.vessels.some(
+      (v: any) => String(v.id) === String(values.vessel_departure_id) && String(v.line_id) === String(newLineId)
+    )
+    if (vesselBelongsToNewLine) return
+  }
+  setValues({ vessel_departure_id: null, voyage_discharge_id: null })
 }
 
 const cargo = computed(() => {
@@ -1172,11 +1181,11 @@ const updateRefRebate = async () => {
 }
 
 const getData = async () => {
+  isFormInitialized.value = false
   try {
     loadingStore.start()
     const response = (await $api.referencias.getSeaImportById(props.id)) as any
 
-    // console.log(response)
     referencia.value = response
     setValues(response)
     incident.value = response.incident
@@ -1201,6 +1210,7 @@ const getData = async () => {
   } catch (e) {
     console.error(e)
   } finally {
+    isFormInitialized.value = true
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
@@ -1282,7 +1292,7 @@ const onSuccess = async () => {
       incident: values.incident ?? null,
       line_id: values.line_id ?? null,
       voyage_departure: values.voyage_departure ?? null,
-      vessel_departure_id: values.vessel_departure_id ?? null,
+      vessel_departure_id: values.vessel_departure_id || null,
       etd_date: values.etd_date ?? null,
       eta_date: values.eta_date ?? null,
       origin_id: values.origin_id ?? null,
@@ -1302,7 +1312,7 @@ const onSuccess = async () => {
       credit_days: values.credit_days ?? 0,
       executive_id: values.executive_id ?? null,
       consignee_id: values.consignee_id ?? null,
-      freight_forwarder_id: values.freight_forwarder_id ?? null,
+      freight_forwarder_id: values.freight_forwarder_id || null,
       shipper_id: values.shipper_id ?? null,
       notify: values.notify ?? null,
       cargo_type: values.cargo_type ?? null,
