@@ -39,15 +39,6 @@
               </div>
             </div>
 
-            <div
-              v-if="includeEnTransito && isMaxYear(yd.year) && yd.without_eta?.teus > 0"
-              class="ysc-entransito"
-            >
-              <v-icon size="16" color="warning" class="mr-1">mdi-truck-fast-outline</v-icon>
-              <span class="ysc-label">En Transito</span>
-              <span class="ysc-value-sm text-warning ml-auto">{{ formatInt(yd.without_eta.teus) }} TEUs</span>
-            </div>
-
             <!-- Comparable range sub-panel -->
             <div v-if="yd.comparable_range" class="ysc-comparable">
               <div class="ysc-comparable-title">
@@ -64,6 +55,15 @@
                   <span class="ysc-value-sm text-success">{{ formatCurrency(yd.comparable_range.profit || 0) }}</span>
                 </div>
               </div>
+            </div>
+
+            <div
+              v-if="includeEnTransito && isMaxYear(yd.year) && yd.without_eta?.teus > 0"
+              class="ysc-entransito"
+            >
+              <v-icon size="16" color="warning" class="mr-1">mdi-truck-fast-outline</v-icon>
+              <span class="ysc-label">En Transito</span>
+              <span class="ysc-value-sm text-warning ml-auto">{{ formatInt(yd.without_eta.teus) }} TEUs</span>
             </div>
           </div>
         </v-card>
@@ -136,17 +136,14 @@ const built = computed(() => {
     series.push({ name, type: 'column', group: `g${yd.year}`, data: monthsTeus(yd) })
     colors.push(color)
     teusNames.push(name)
-  })
 
-  if (props.includeEnTransito && maxYear.value !== null) {
-    const ydMax = props.chartData.find((y: any) => y.year === maxYear.value)
-    if (ydMax) {
-      const name = `${maxYear.value} En Transito`
-      series.push({ name, type: 'column', group: `g${maxYear.value}`, data: monthsEnTransito(ydMax) })
+    if (props.includeEnTransito && isMaxYear(yd.year)) {
+      const enTransitoName = `${yd.year} En Transito`
+      series.push({ name: enTransitoName, type: 'column', group: `g${yd.year}`, data: monthsEnTransito(yd) })
       colors.push('#f59e0b')
-      teusNames.push(name)
+      teusNames.push(enTransitoName)
     }
-  }
+  })
 
   if (props.includeProfit) {
     props.chartData.forEach((yd: any, idx: number) => {
@@ -240,7 +237,13 @@ const options = computed(() => {
         padding: 3,
       },
     },
-    legend: { position: 'top', horizontalAlign: 'center' },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'center',
+      itemMargin: { horizontal: 10, vertical: 4 },
+      fontSize: '12px',
+      offsetY: 4,
+    },
     tooltip: {
       theme: 'dark',
       shared: true,

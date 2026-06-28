@@ -79,4 +79,40 @@ const schemaNotes = toTypedSchema(
   })
 )
 
-export { schema, schemaEdit, schemaDestinationEdit, schemaDestUpdateEta, schemaNotes, schemaDestNotifyPort }
+const schemaVoyageInDestination = toTypedSchema(
+  yup.object().shape({
+    name: yup.string().required('Name is required'),
+    vessel_id: yup.number().required('Vessel is required'),
+    internal_code: yup.string().nullable(),
+    impoExpo: yup.string().required('Import/Export is required'),
+  })
+)
+
+const schemaVoyageDestinationEdit = toTypedSchema(
+  yup.object().shape({
+    name: yup.string().required('Name is required'),
+    vessel_id: yup.number().required('Vessel is required'),
+    internal_code: yup.string().nullable(),
+    impoExpo: yup.string().required('Import/Export is required'),
+    pod_id: yup
+      .mixed()
+      .test('is-object-or-string', 'data must be either a string or an object with a name property', (value) => {
+        if (typeof value === 'string') return true
+        if (typeof value === 'number') return true
+        if (typeof value === 'object' && value !== null) {
+          return yup
+            .object({
+              name: yup.string().required('POL is required'),
+            })
+            .isValidSync(value)
+        }
+        return false
+      })
+      .required('Destination port is required'),
+    eta_date: yup.string().nullable(),
+    arrival_date: yup.string().nullable(),
+    locked_at: yup.string().nullable(),
+  })
+)
+
+export { schema, schemaEdit, schemaDestinationEdit, schemaDestUpdateEta, schemaNotes, schemaDestNotifyPort, schemaVoyageInDestination, schemaVoyageDestinationEdit }

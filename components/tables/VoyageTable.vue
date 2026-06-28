@@ -26,12 +26,11 @@
           />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.text" density="compact" label="Voyage" />
+          <v-text-field v-model="filters.vesselName" density="compact" label="Vessel name" placeholder="MSC FLORA" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.vesselName" density="compact" label="Vessel name" />
+          <v-text-field v-model="filters.text" density="compact" label="Voyage" placeholder="2621W" />
         </div>
-
         <div v-if="false" class="col-span-1">
           <v-autocomplete
             v-model="filters.voyage"
