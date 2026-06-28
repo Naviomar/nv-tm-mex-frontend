@@ -50,7 +50,7 @@ class ReportsModule extends FetchFactory<any> {
     })
   }
 
-  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, ejecutivo_id?: number }) {
+  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, includeWithoutEta?: boolean, ejecutivo_id?: number }) {
     return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
       body: params
     })
@@ -68,6 +68,18 @@ class ReportsModule extends FetchFactory<any> {
 
   async getReferencesByLine(params: { years: number[], ejecutivo_id?: number }) {
     return this.call('POST', `${this.RESOURCE}/references-by-line`, {
+      body: params
+    })
+  }
+
+  async getReferencesByLoadingPort(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-loading-port`, {
+      body: params
+    })
+  }
+
+  async getReferencesByDischargePort(params: { years: number[], ejecutivo_id?: number }) {
+    return this.call('POST', `${this.RESOURCE}/references-by-discharge-port`, {
       body: params
     })
   }

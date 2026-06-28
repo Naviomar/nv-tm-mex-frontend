@@ -118,6 +118,23 @@ export type RateOp =
 
 const INFINITY_DATE = '9999-12-31'
 
+// Container types with no delay rate handling yet — hidden from the catalog/editor.
+const EXCLUDED_CONTAINER_TYPE_NAMES = new Set([
+  '20DCSOC',
+  '20TK',
+  '40DCSOC',
+  '40HCSOC',
+  '40TK',
+  'BULK',
+  'Caja 53',
+  'LCL',
+  'RORO',
+])
+
+export function filterRateableContainerTypes(containerTypes: NamedCatalog[]) {
+  return containerTypes.filter((type) => !EXCLUDED_CONTAINER_TYPE_NAMES.has(type.name))
+}
+
 export function cleanContainerDelayQuery(query: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(query).filter(([, value]) => {

@@ -46,6 +46,14 @@ class FreeFormatInvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/get-party-info-invoice`, fetchOptions)
   }
 
+  async checkDuplicateTicket(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/check-duplicate-ticket`, fetchOptions)
+  }
+
   async createPartyInvoice(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

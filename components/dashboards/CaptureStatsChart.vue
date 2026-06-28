@@ -40,8 +40,11 @@
           <div class="text-grey-600 mt-4">Loading statistics...</div>
         </div>
 
-        <div v-else-if="chartData" class="chart-container">
-          <Line :data="chartData" :options="chartOptions" />
+        <div v-else-if="hasData" class="chart-container">
+          <client-only>
+            <apexchart type="area" height="350" :options="chartOptions" :series="series" />
+            <template #fallback><v-skeleton-loader type="image" height="350" /></template>
+          </client-only>
         </div>
 
         <div v-else class="text-center py-12 text-grey-600">
@@ -60,21 +63,6 @@
 </template>
 
 <script setup lang="ts">
-import { Line } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
-
 const props = defineProps({
   modelValue: Boolean,
   title: String,
@@ -99,58 +87,56 @@ const dialog = computed({
   set: (val) => emit('update:modelValue', val)
 })
 
+const { apexBaseOptions } = useReportFormatters()
+
 const period = ref('monthly')
 const loading = ref(false)
 const stats = ref<any[]>([])
-const chartData = ref<any>(null)
 const totalCaptures = ref(0)
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: true,
-  aspectRatio: 2.5,
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      padding: 12,
-      titleFont: {
-        size: 14,
-        weight: 'bold' as const
-      },
-      bodyFont: {
-        size: 13
-      },
-      callbacks: {
-        label: function(context: any) {
-          return `Captures: ${context.parsed.y}`
-        }
-      }
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0
-      },
-      grid: {
-        color: 'rgba(0, 0, 0, 0.05)'
-      }
-    },
-    x: {
-      grid: {
-        display: false
-      }
-    }
+const hasData = computed(() => stats.value.length > 0)
+
+const chartColor = computed(() => {
+  const map: Record<string, string> = {
+    blue: '#3b82f6',
+    teal: '#14b8a6',
+    indigo: '#6366f1',
+    cyan: '#06b6d4',
   }
+  return map[props.chipColor ?? 'blue'] ?? map.blue
+})
+
+const labels = computed(() =>
+  stats.value.map(s => {
+    if (period.value === 'monthly') {
+      const [year, month] = s.period.split('-')
+      return new Date(year, month - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+    }
+    return new Date(s.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  })
+)
+
+const series = computed(() => [{
+  name: 'Captures',
+  data: stats.value.map(s => parseInt(s.total) || 0),
+}])
+
+const chartOptions = computed(() => apexBaseOptions({
+  chart: { type: 'area', toolbar: { show: false } },
+  colors: [chartColor.value],
+  stroke: { width: 3, curve: 'smooth' },
+  fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02 } },
+  markers: { size: 4, hover: { size: 6 } },
+  dataLabels: { enabled: false },
+  xaxis: { categories: labels.value },
+  yaxis: { min: 0, labels: { formatter: (v: number) => Math.round(v).toString() } },
+  legend: { show: false },
+  tooltip: { theme: 'dark', y: { formatter: (v: number) => `Captures: ${v}` } },
 }))
 
 const fetchStats = async () => {
   if (!props.statType) return
-  
+
   loading.value = true
   try {
     const params = {
@@ -162,69 +148,16 @@ const fetchStats = async () => {
 
     const endpoint = props.statType.startsWith('sea-') ? 'getSeaCaptureStats' : 'getAirCaptureStats'
     const response = await $api.dashboard[endpoint](params)
-    
+
     stats.value = response.stats || []
-    updateChartData()
+    totalCaptures.value = stats.value.reduce((sum: number, s: any) => sum + (parseInt(s.total) || 0), 0)
   } catch (error) {
     console.error('Error fetching stats:', error)
     stats.value = []
+    totalCaptures.value = 0
   } finally {
     loading.value = false
   }
-}
-
-const updateChartData = () => {
-  if (!stats.value.length) {
-    chartData.value = null
-    totalCaptures.value = 0
-    return
-  }
-
-  const labels = stats.value.map(s => {
-    if (period.value === 'monthly') {
-      const [year, month] = s.period.split('-')
-      return new Date(year, month - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
-    }
-    return new Date(s.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  })
-
-  const data = stats.value.map(s => parseInt(s.total) || 0)
-  totalCaptures.value = data.reduce((sum, val) => sum + val, 0)
-
-  chartData.value = {
-    labels,
-    datasets: [
-      {
-        label: 'Captures',
-        data,
-        borderColor: getChartColor(),
-        backgroundColor: getChartBackgroundColor(),
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: '#fff',
-        pointBorderWidth: 2
-      }
-    ]
-  }
-}
-
-const getChartColor = () => {
-  if (props.chipColor === 'blue') return 'rgb(59, 130, 246)'
-  if (props.chipColor === 'teal') return 'rgb(20, 184, 166)'
-  if (props.chipColor === 'indigo') return 'rgb(99, 102, 241)'
-  if (props.chipColor === 'cyan') return 'rgb(6, 182, 212)'
-  return 'rgb(59, 130, 246)'
-}
-
-const getChartBackgroundColor = () => {
-  if (props.chipColor === 'blue') return 'rgba(59, 130, 246, 0.1)'
-  if (props.chipColor === 'teal') return 'rgba(20, 184, 166, 0.1)'
-  if (props.chipColor === 'indigo') return 'rgba(99, 102, 241, 0.1)'
-  if (props.chipColor === 'cyan') return 'rgba(6, 182, 212, 0.1)'
-  return 'rgba(59, 130, 246, 0.1)'
 }
 
 const close = () => {

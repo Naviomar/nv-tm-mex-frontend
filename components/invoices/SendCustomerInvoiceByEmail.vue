@@ -8,7 +8,7 @@
       @click="emailProcess.showForm.value = !emailProcess.showForm.value"
       >Send invoice by email</v-btn
     >
-    <div v-if="emailProcess.showForm.value" class="absolute z-10 min-w-96">
+    <v-dialog v-model="emailProcess.showForm.value" max-width="500">
       <v-card color="orange-lighten-4">
         <v-card-title>Send {{ invoice_type }} invoice by email</v-card-title>
         <v-card-text>
@@ -35,7 +35,7 @@
           </div>
         </v-card-actions>
       </v-card>
-    </div>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">

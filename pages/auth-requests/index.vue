@@ -6,6 +6,7 @@
       <h1 class="text-xl font-bold">Authorization Requests</h1>
     </div>
     <div class="pt-4">
+      <LiveChatsPanel ticket-type="authorization-request" />
       <AuthorizationRequestsTable />
     </div>
   </v-container>

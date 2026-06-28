@@ -56,6 +56,19 @@ class SeaTrackingModule extends FetchFactory<any> {
     return this.call('POST', `${this.PUBLIC_RESOURCE}/search`, fetchOptions)
   }
 
+  // 👇 NUEVOS MÉTODOS PARA EL TRACKING EN TIEMPO REAL 👇
+
+  async getLiveTimeline(id: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/live-timeline`, fetchOptions)
+  }
+
+  async syncLive(id: number | string, fetchOptions?: FetchOptions) {
+    // Es un POST, así que preparamos las opciones vacías si no vienen
+    fetchOptions = {
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/sync-live`, fetchOptions)
+  }
 }
 
 export default SeaTrackingModule

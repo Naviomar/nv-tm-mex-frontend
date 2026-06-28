@@ -1001,7 +1001,7 @@ const searchPodPorts = async (search: SearchParams) => {
       }, {})
 
     // Add additional static values to the query if needed
-    query['country_ids'] = [140, 90, 65, 12, 52, 170, 61, 157, 1, 96, 167].join(',')
+    query['country_ids'] = [140, 90, 65, 12, 52, 170, 61, 157, 1, 96, 167, 48].join(',')
     const response = await $api.ports.searchPorts({
       query: query,
     })
