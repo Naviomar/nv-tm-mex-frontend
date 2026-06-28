@@ -179,7 +179,6 @@ export default defineNuxtConfig({
       apiUrlChile: process.env.CHILE_API_URL || 'http://localhost:8000/api/v1',
       appName: process.env.APP_NAME || 'TM System',
       appUrl: process.env.APP_URL || 'http://localhost:3000',
-      legacyFeaturesEnabled: process.env.LEGACY_FEATURES_ENABLED !== 'false',
     },
   },
 
