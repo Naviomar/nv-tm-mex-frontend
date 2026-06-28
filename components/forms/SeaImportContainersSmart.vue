@@ -225,20 +225,21 @@ const { handleSubmit, values, errors, meta, handleReset, setValues } = useForm({
   validationSchema: schemaEdit,
 })
 
-const vDischarge = (props.impoExpo === 'E'
-  ? $api.referenciasExport.getReferenciaById(props.referenciaId!.toString())
-  : $api.referencias.getSeaImportById(props.referenciaId!.toString())
-)
-  .then((myPromise) => {
-    //var lock = false
-    console.log("LOCK1::",myPromise.voyage_discharge.locked_at!= null)
-    return myPromise.voyage_discharge.locked_at != null
-  });
+const vDischarge = props.referenciaId
+  ? (props.impoExpo === 'E'
+    ? $api.referenciasExport.getReferenciaById(props.referenciaId.toString())
+    : $api.referencias.getSeaImportById(props.referenciaId.toString())
+  )
+    .then((myPromise) => {
+      console.log("LOCK1::",myPromise.voyage_discharge.locked_at!= null)
+      return myPromise.voyage_discharge.locked_at != null
+    })
+  : Promise.resolve(false);
 const validatelocked = async () => {
   return isLocked.value = await vDischarge;
   ///console.log("A:",isLocked.value);
   //return isLocked.value
-  
+
 };
 validatelocked();
 
