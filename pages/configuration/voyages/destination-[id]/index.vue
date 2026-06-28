@@ -5,7 +5,7 @@
     >
     <v-card>
       <v-card-title>
-        <h3>Voyage details #{{ id }}</h3>
+        <h3>Edit voyage #{{ id }}</h3>
       </v-card-title>
       <v-card-text>
         <VoyageDestEditForm />

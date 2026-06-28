@@ -2,39 +2,89 @@
   <div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="">
-        <div>
-          <InputAutocomplete
-            name="pod_id"
-            density="compact"
-            label="Update port"
-            :items="podPorts"
-            item-value="id"
-            item-title="country_port"
-            :readonly="values.locked_at"
-          />
-        </div>
-        <div>
-          <InputText name="eta_date" type="date" density="compact" :label="labelEtaDate" :readonly="values.locked_at" />
-        </div>
-        <div>
-          <InputText name="arrival_date" type="date" density="compact" :label="labelAtaDate" />
-        </div>
+        <!-- Unified edit form -->
+        <v-card density="compact" class="mb-4">
+          <v-card-text>
+            <v-alert v-if="voyageHasReferences" type="warning" density="compact" class="mb-4">
+              This voyage has {{ totalVoyageReferences }} reference(s) linked. Vessel, Import/Export, and port cannot be changed.
+            </v-alert>
 
-        <v-alert v-if="isImport && !hasInitDemurrages" type="warning" density="compact">
-          When registering the ATA of the destination and being an import, the demurrage process will begin to linked
-          services since it is an import destination.
-        </v-alert>
+            <!-- Voyage fields -->
+            <div class="text-subtitle-2 font-bold mb-2">Voyage</div>
+            <div class="mb-4">
+              <InputAutocomplete
+                name="vessel_id"
+                density="compact"
+                label="Vessel"
+                :items="catalogs.vessels"
+                item-value="id"
+                :item-title="(row : any) => `${row.line?.name} - ${row.name}`"
+                :readonly="voyageHasReferences"
+                :append-inner-icon="voyageHasReferences ? 'mdi-lock' : undefined"
+              />
+            </div>
+            <div class="mb-4">
+              <InputText name="name" density="compact" label="Voyage" />
+            </div>
+            <div class="mb-4">
+              <InputText name="internal_code" density="compact" label="Internal code" />
+            </div>
+            <div class="mb-4">
+              <InputAutocomplete
+                name="impoExpo"
+                density="compact"
+                label="Import / Export"
+                :items="[
+                  { id: 'I', name: 'Import' },
+                  { id: 'E', name: 'Export' },
+                ]"
+                item-value="id"
+                item-title="name"
+                :readonly="voyageHasReferences"
+                :append-inner-icon="voyageHasReferences ? 'mdi-lock' : undefined"
+              />
+            </div>
 
-        <v-alert v-if="isImport && hasInitDemurrages" type="info" density="compact">
-          This destination has already started the demurrage process, you can no longer update the destination. All
-          services and new services linked to this destination will be demurraged.
-        </v-alert>
+            <v-divider class="my-4" />
 
-        <div class="flex justify-center items-center gap-2 py-4">
-          <v-btn class="mr-4" color="secondary" @click="goToVoyages"> Cancel </v-btn>
-          <v-btn color="primary" @click="onVoyageClickUpdate"> Update destination </v-btn>
-          <div v-if="values.locked_at" class="text-red-500">This destination is locked</div>
-        </div>
+            <!-- Destination fields -->
+            <div class="text-subtitle-2 font-bold mb-2">Destination</div>
+            <div class="mb-4">
+              <InputAutocomplete
+                name="pod_id"
+                density="compact"
+                label="Port"
+                :items="podPorts"
+                item-value="id"
+                item-title="country_port"
+                :readonly="values.locked_at || voyageHasReferences"
+                :append-inner-icon="(values.locked_at || voyageHasReferences) ? 'mdi-lock' : undefined"
+              />
+            </div>
+            <div class="mb-4">
+              <InputText name="eta_date" type="date" density="compact" :label="labelEtaDate" :readonly="values.locked_at" :append-inner-icon="values.locked_at ? 'mdi-lock' : undefined" />
+            </div>
+            <div class="mb-4">
+              <InputText name="arrival_date" type="date" density="compact" :label="labelAtaDate" />
+            </div>
+
+            <v-alert v-if="isImport && !hasInitDemurrages" type="warning" density="compact">
+              When registering the ATA of the destination and being an import, the demurrage process will begin to linked
+              services since it is an import destination.
+            </v-alert>
+
+            <v-alert v-if="isImport && hasInitDemurrages" type="info" density="compact">
+              This destination has already started the demurrage process, you can no longer update the destination. All
+              services and new services linked to this destination will be demurraged.
+            </v-alert>
+
+            <div class="flex justify-center items-center gap-2 py-4">
+              <v-btn class="mr-4" color="secondary" @click="goToVoyages"> Cancel </v-btn>
+              <v-btn color="primary" :disabled="loadingStore.loading" :loading="loadingStore.loading" @click="onUnifiedUpdate"> Update </v-btn>
+              <div v-if="values.locked_at" class="text-red-500">This destination is locked</div>
+            </div>
+          </v-card-text>
+        </v-card>
       </div>
       <div class="">
         <v-card density="compact" class="mb-4">
@@ -94,6 +144,7 @@
                   <th class="font-bold!">Port</th>
                   <th class="font-bold!">{{ labelEtaDate }}</th>
                   <th class="font-bold!">{{ labelAtaDate }}</th>
+                  <th class="font-bold!">Refs</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,6 +166,7 @@
                   <td>{{ item.pod?.name }} - {{ item.pod?.country?.name }}</td>
                   <td>{{ formatDateOnlyString(item.eta_date) }}</td>
                   <td>{{ item.arrival_date }}</td>
+                  <td>{{ item.referencias?.length || item.total_references || 0 }}</td>
                 </tr>
               </tbody>
             </v-table>
@@ -127,7 +179,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { schemaDestinationEdit } from '~~/forms/voyageForm'
+import { schemaVoyageDestinationEdit } from '~~/forms/voyageForm'
 
 const router = useRouter()
 const route = useRoute()
@@ -137,13 +189,9 @@ const loadingStore = useLoadingStore()
 
 const id = route.params.id
 
-const showBankForm = ref(false)
-
-const { handleSubmit, values, errors, resetForm } = useForm({
-  validationSchema: schemaDestinationEdit,
+const { values, resetForm } = useForm({
+  validationSchema: schemaVoyageDestinationEdit,
 })
-
-const lines = ref<any>([])
 
 const data = ref({
   voyage: null as any,
@@ -216,6 +264,16 @@ const hasInitDemurrages = computed(() => {
   return data.value.destination?.init_demurrage_at != null
 })
 
+const voyageHasReferences = computed(() => {
+  const destinations = data.value.voyage?.destinations ?? []
+  return destinations.some((d: any) => (d.referencias?.length ?? d.total_references ?? 0) > 0)
+})
+
+const totalVoyageReferences = computed(() => {
+  const destinations = data.value.voyage?.destinations ?? []
+  return destinations.reduce((sum: number, d: any) => sum + (d.referencias?.length ?? d.total_references ?? 0), 0)
+})
+
 const podPorts = computed(() => {
   if (!data.value.voyage?.impoExpo) return []
 
@@ -233,21 +291,34 @@ const podPorts = computed(() => {
   return []
 })
 
-const onSuccess = async (values: any) => {
+const onUnifiedUpdate = async () => {
   try {
     loadingStore.start()
-    const body = { ...values } as any
-    if (data.value.destination.locked_at) {
-      await $api.voyages.updateDestinationWithPermission(id!.toString(), values)
+
+    const voyageBody = {
+      name: values.name,
+      vessel_id: values.vessel_id,
+      internal_code: values.internal_code ?? null,
+      impoExpo: values.impoExpo,
     }
-    if (!data.value.destination.locked_at) {
-      await $api.voyages.updateDestination(id!.toString(), values)
+    await $api.voyages.update(data.value.voyage?.id.toString(), voyageBody)
+
+    const destValues = {
+      pod_id: values.pod_id,
+      eta_date: values.eta_date,
+      arrival_date: values.arrival_date,
+    } as any
+    if (data.value.destination.locked_at) {
+      await $api.voyages.updateDestinationWithPermission(id!.toString(), destValues)
+    } else {
+      await $api.voyages.updateDestination(id!.toString(), destValues)
     }
 
-    snackbar.add({ type: 'success', text: 'Destination updated' })
+    snackbar.add({ type: 'success', text: 'Voyage & destination updated' })
     await getData()
-  } catch (e) {
-    console.error(e)
+  } catch (e: any) {
+    const msg = e?.data?.message || e?.message || 'Error updating'
+    snackbar.add({ type: 'error', text: msg })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
@@ -262,10 +333,6 @@ const sameDestColor = (dest: any) => {
   return ''
 }
 
-function onInvalidSubmit({ values, errors, results }: any) {
-  snackbar.add({ type: 'error', text: 'Complete required fields' })
-}
-
 const getVoyageCatalogs = async () => {
   const response = await $api.voyages.getCatalogs()
 
@@ -276,10 +343,20 @@ const getData = async () => {
   const response = await $api.voyages.getDestinationDetailsById(route.params.id!.toString())
   data.value = response as any
   data.value.destination.pod_id = catalogs.value.ports.find((c: any) => c.id === data.value.destination?.pod_id).id
-  resetForm({ values: data.value.destination as any })
-}
 
-const onVoyageClickUpdate = handleSubmit(onSuccess, onInvalidSubmit)
+  resetForm({
+    values: {
+      name: data.value.voyage?.name,
+      vessel_id: data.value.voyage?.vessel_id,
+      internal_code: data.value.voyage?.internal_code ?? null,
+      impoExpo: data.value.voyage?.impoExpo,
+      pod_id: data.value.destination?.pod_id,
+      eta_date: data.value.destination?.eta_date,
+      arrival_date: data.value.destination?.arrival_date,
+      locked_at: data.value.destination?.locked_at,
+    } as any,
+  })
+}
 
 await getVoyageCatalogs()
 await getData()
