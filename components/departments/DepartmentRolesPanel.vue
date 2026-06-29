@@ -10,6 +10,49 @@
       </v-btn>
     </div>
 
+    <!-- Link Existing Role -->
+    <v-card variant="outlined" class="mb-4">
+      <v-card-title class="text-subtitle-1 font-weight-bold">
+        <v-icon class="mr-2" color="primary">mdi-link-variant</v-icon>
+        Link Existing Role to Department
+      </v-card-title>
+      <v-card-text>
+        <v-row dense>
+          <v-col cols="12" md="5">
+            <v-autocomplete
+              v-model="linkForm.roleId"
+              :items="allRoles"
+              item-title="name"
+              item-value="id"
+              label="Select role"
+              density="compact"
+              variant="outlined"
+              hide-details
+              clearable
+            />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-autocomplete
+              v-model="linkForm.roleType"
+              :items="roleTypes"
+              item-title="label"
+              item-value="value"
+              label="Role type"
+              density="compact"
+              variant="outlined"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-btn color="primary" :disabled="!linkForm.roleId || !linkForm.roleType" @click="linkExistingRole">
+              <v-icon start>mdi-link</v-icon>
+              Link Role
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
     <!-- Roles list -->
     <v-card v-if="roles.length > 0" variant="outlined">
       <v-list density="compact" class="py-0">
@@ -293,6 +336,17 @@ const emit = defineEmits<{
 const roles = ref<any[]>([])
 const scopePermissions = ref<any[]>([])
 const saving = ref(false)
+const allRoles = ref<any[]>([])
+
+const roleTypes = [
+  { label: 'Admin', value: 'admin' },
+  { label: 'Member', value: 'member' },
+]
+
+const linkForm = ref({
+  roleId: null as number | null,
+  roleType: 'admin' as string,
+})
 
 const createDialog = ref({
   show: false,
@@ -414,6 +468,26 @@ watch(
   { deep: true }
 )
 
+async function linkExistingRole() {
+  if (!linkForm.value.roleId || !linkForm.value.roleType) return
+  try {
+    saving.value = true
+    await $api.departments.linkRole(props.departmentId, {
+      role_id: linkForm.value.roleId,
+      role_type: linkForm.value.roleType,
+    })
+    snackbar.add({ type: 'success', text: 'Role linked' })
+    linkForm.value = { roleId: null, roleType: 'admin' }
+    await loadRoles()
+    emit('roles-changed')
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error linking role' })
+  } finally {
+    saving.value = false
+  }
+}
+
 async function unlinkRole(role: any) {
   const result = await confirm({
     title: 'Unlink Role?',
@@ -477,6 +551,7 @@ async function assignRoleFromDialog() {
 
 onMounted(async () => {
   await loadRoles()
+  allRoles.value = (await $api.users.getRoles()) as any[] ?? []
 })
 
 watch(() => props.departmentId, async () => {
