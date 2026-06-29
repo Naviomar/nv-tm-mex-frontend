@@ -17,6 +17,10 @@
     <!-- Tabs: only shown when editing an existing department -->
     <template v-if="props.id">
       <v-tabs v-model="activeTab" color="primary" class="mb-4">
+        <v-tab value="members">
+          <v-icon start>mdi-account-group</v-icon>
+          Members
+        </v-tab>
         <v-tab value="roles">
           <v-icon start>mdi-shield-account</v-icon>
           Roles
@@ -30,6 +34,11 @@
       </v-tabs>
 
       <v-window v-model="activeTab">
+        <!-- ====== MEMBERS TAB ====== -->
+        <v-window-item value="members">
+          <DepartmentAdminForm :id="props.id" />
+        </v-window-item>
+
         <!-- ====== ROLES TAB ====== -->
         <v-window-item value="roles">
           <v-card variant="outlined" class="mb-4">
@@ -202,7 +211,7 @@ const props = defineProps({
   },
 })
 
-const activeTab = ref('roles')
+const activeTab = ref('members')
 const linkedRoles = ref<any[]>([])
 const linkedPermissions = ref<any[]>([])
 const allRoles = ref<any[]>([])
