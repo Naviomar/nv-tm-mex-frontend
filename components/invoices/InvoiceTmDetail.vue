@@ -143,7 +143,7 @@
                 ><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn
               >
 
-              <v-btn v-if="isProforma" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
+              <v-btn v-if="isProforma && user.id != 9" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
                 ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
               >
             </div>
@@ -426,6 +426,7 @@ const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { user } = useCheckUser()
 
 const props = defineProps({
   id: {

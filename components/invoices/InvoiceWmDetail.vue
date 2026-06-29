@@ -91,7 +91,10 @@
               <v-btn v-if="isProforma" color="red" size="small"
                 @click="onDeleteProformaClick"><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn>
 
-              <v-btn v-if="isProforma" color="purple" size="small"
+              <v-btn v-if="isProforma && user.id != 9" color="purple" size="small"
+                @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
+                invoice</v-btn>
+              <v-btn v-if="isProforma && user.id == 9 && invoiceCustommer == 81" color="purple" size="small"
                 @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
                 invoice</v-btn>
             </div>
@@ -307,6 +310,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { user } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -434,6 +438,11 @@ const isPaid = computed(() => {
     return false
   }
   return invoiceWm.value?.invoice.is_paid === 1
+})
+
+const invoiceCustommer = computed(() => {
+  const id_cnn = invoiceWm.value?.consignee_id
+  return id_cnn
 })
 
 const invoiceCharges = computed(() => {
