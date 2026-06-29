@@ -354,13 +354,7 @@
                         'bg-red-100! dark:bg-red-900!': payment.deleted_at,
                       }"
                     >
-                      <td>
-                        <TrashButton
-                          :item="payment"
-                          :can-restore="false"
-                          @click="confirmDeleteCreditNotePayment(payment)"
-                        />
-                      </td>
+                      <td></td>
                       <td>
                         <v-chip color="blue" text-color="white" size="small" @click="viewInvoice(payment)">
                           <v-icon>mdi-eye-outline</v-icon>{{ getInvoiceableType(payment) }} Invoice #{{
