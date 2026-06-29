@@ -17,19 +17,23 @@
     <!-- Tabs: only shown when editing an existing department -->
     <template v-if="props.id">
       <v-tabs v-model="activeTab" color="primary" class="mb-4">
+        <v-tab value="members">
+          <v-icon start>mdi-account-group</v-icon>
+          Members
+        </v-tab>
         <v-tab value="roles">
           <v-icon start>mdi-shield-account</v-icon>
           Roles
           <v-chip size="x-small" class="ml-2">{{ linkedRoles.length }}</v-chip>
         </v-tab>
-        <v-tab value="permissions">
-          <v-icon start>mdi-key</v-icon>
-          Permissions
-          <v-chip size="x-small" class="ml-2">{{ linkedPermissions.length }}</v-chip>
-        </v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab">
+        <!-- ====== MEMBERS TAB ====== -->
+        <v-window-item value="members">
+          <DepartmentAdminForm :id="props.id" />
+        </v-window-item>
+
         <!-- ====== ROLES TAB ====== -->
         <v-window-item value="roles">
           <v-card variant="outlined" class="mb-4">
@@ -111,78 +115,6 @@
             </v-card-text>
           </v-card>
         </v-window-item>
-
-        <!-- ====== PERMISSIONS TAB ====== -->
-        <v-window-item value="permissions">
-          <v-card variant="outlined" class="mb-4">
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              <v-icon class="mr-2" color="primary">mdi-key-plus</v-icon>
-              Add Permission to Department
-            </v-card-title>
-            <v-card-text>
-              <v-row dense>
-                <v-col cols="12" md="6">
-                  <v-autocomplete
-                    v-model="form.permission"
-                    density="compact"
-                    :items="availablePermissions"
-                    item-title="name"
-                    item-value="id"
-                    label="Select permission"
-                    variant="outlined"
-                    hide-details
-                    clearable
-                  />
-                </v-col>
-                <v-col cols="12" md="2">
-                  <v-btn color="primary" :disabled="!form.permission" @click="linkPermission">
-                    <v-icon start>mdi-plus</v-icon>
-                    Add
-                  </v-btn>
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-btn size="small" color="brown" variant="outlined" @click="showImportRoles = !showImportRoles">
-                    <v-icon start>mdi-import</v-icon>
-                    Import from Role
-                  </v-btn>
-                </v-col>
-              </v-row>
-
-              <div v-if="showImportRoles" class="mt-4 pa-3 border rounded">
-                <v-row dense>
-                  <v-col cols="12" md="8">
-                    <v-autocomplete
-                      v-model="selectedImportRole"
-                      :items="allRoles"
-                      item-title="name"
-                      item-value="id"
-                      label="Select role to import from"
-                      density="compact"
-                      variant="outlined"
-                      hide-details
-                    />
-                  </v-col>
-                  <v-col cols="12" md="4">
-                    <v-btn color="brown" :disabled="!selectedImportRole" @click="importRolePermissions">
-                      <v-icon start>mdi-import</v-icon>
-                      Import all
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </div>
-            </v-card-text>
-          </v-card>
-
-          <PermissionsGrid
-            v-if="linkedPermissions.length > 0"
-            :permissions="linkedPermissions"
-            :model-value="linkedPermissions.map((p: any) => p.id)"
-            :readonly="true"
-          />
-          <v-alert v-else type="info" variant="tonal" density="compact">
-            No permissions linked to this department yet.
-          </v-alert>
-        </v-window-item>
       </v-window>
     </template>
   </div>
@@ -202,31 +134,19 @@ const props = defineProps({
   },
 })
 
-const activeTab = ref('roles')
+const activeTab = ref('members')
 const linkedRoles = ref<any[]>([])
-const linkedPermissions = ref<any[]>([])
 const allRoles = ref<any[]>([])
-const allPermissions = ref<any[]>([])
-const showImportRoles = ref(false)
-const selectedImportRole = ref<number | null>(null)
 
 const roleForm = reactive({
   role_id: null as number | null,
   role_type: 'admin' as string,
 })
 
-const form = reactive({
-  permission: null as number | null,
-})
-
 const roleTypes = [
   { label: 'Admin', value: 'admin' },
   { label: 'Member', value: 'member' },
 ]
-
-const availablePermissions = computed(() =>
-  allPermissions.value.filter((p: any) => !linkedPermissions.value.some((l: any) => l.id === p.id))
-)
 
 const { handleSubmit, setValues } = useForm({
   validationSchema: schema,
@@ -254,7 +174,6 @@ async function loadDepartment(id: string) {
     loadingStore.start()
     const response = (await $api.departments.getById(id)) as any
     setValues(response)
-    linkedPermissions.value = response.permissions ?? []
     linkedRoles.value = response.roles ?? []
   } catch (e) {
     console.error(e)
@@ -294,44 +213,7 @@ async function unlinkRole(role: any) {
   }
 }
 
-async function linkPermission() {
-  if (!form.permission) return
-  try {
-    await $api.departments.linkPermission(props.id!, { permission_id: form.permission })
-    const perm = allPermissions.value.find((p: any) => p.id === form.permission)
-    linkedPermissions.value.push(perm)
-    form.permission = null
-    snackbar.add({ type: 'success', text: 'Permission linked' })
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error linking permission' })
-  }
-}
-
-async function importRolePermissions() {
-  if (!selectedImportRole.value) return
-  try {
-    await $api.departments.importRolePermissions(props.id!, { role_id: selectedImportRole.value })
-    const role = allRoles.value.find((r: any) => r.id === selectedImportRole.value)
-    if (role?.permissions) {
-      role.permissions.forEach((p: any) => {
-        if (!linkedPermissions.value.some((l: any) => l.id === p.id)) {
-          linkedPermissions.value.push(p)
-        }
-      })
-    }
-    showImportRoles.value = false
-    selectedImportRole.value = null
-    snackbar.add({ type: 'success', text: 'Permissions imported' })
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error importing permissions' })
-  }
-}
-
 onMounted(async () => {
-  const [roles, perms] = await Promise.all([$api.users.getRoles(), $api.users.getPermissions()]) as any[]
-  allRoles.value = roles ?? []
-  allPermissions.value = perms ?? []
+  allRoles.value = (await $api.users.getRoles()) as any[] ?? []
 })
 </script>

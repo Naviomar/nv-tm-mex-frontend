@@ -91,7 +91,6 @@
                     density="compact"
                     label="Amount"
                     hide-details
-                    :disabled="hasPayments"
                     min="0"
                     :max="charge.cn_available_balance"
                     @update:model-value="validateChargeAmount(idx)"
@@ -115,75 +114,19 @@
                 One or more amounts exceed the maximum available.
               </v-alert>
 
-              <div v-if="hasPayments">
-                <v-alert icon="mdi-alert" color="amber" density="compact">
-                  This credit note has payments, it can't be edited.
-                </v-alert>
-              </div>
-              <div v-if="!hasPayments" class="mb-4">
+              <div class="mb-4">
                 <v-alert icon="mdi-check" color="green-darken-4" density="compact">
-                  This credit note has no payments, it can be edited.
+                  Edit charge amounts and click Update to apply changes.
                 </v-alert>
               </div>
-              <div v-if="!hasPayments" class="flex justify-end gap-2">
+              <div class="flex justify-end gap-2">
                 <v-btn color="primary" :disabled="hasAmountExceeded || editTotal <= 0" @click="updateCreditNote">
                   Update credit note
                 </v-btn>
               </div>
 
-              <!-- Direct add charge (no payments) -->
-              <div v-if="!hasPayments" class="mt-4">
-                <v-card variant="outlined" class="border-blue-300">
-                  <v-card-title class="text-sm font-semibold flex items-center gap-2">
-                    <v-icon size="small">mdi-plus-circle-outline</v-icon>
-                    Add charge
-                  </v-card-title>
-                  <v-card-text>
-                    <div v-if="directChargeForm.charges.length > 0" class="mb-3">
-                      <ChargeLineList :charges="directChargeForm.charges" removable @remove="directChargeForm.charges.splice($event,1)" />
-                    </div>
-                    <div class="flex gap-2 items-start mb-2">
-                      <v-text-field
-                        v-model="directChargeForm.invoice_search"
-                        density="compact" label="Invoice number" hide-details class="flex-1"
-                        append-inner-icon="mdi-magnify"
-                        @click:append-inner="searchInvoiceForDirect"
-                        @keyup.enter="searchInvoiceForDirect"
-                      />
-                    </div>
-                    <div v-if="directChargeInvoiceCharges.length > 0" class="flex gap-2 items-start mb-3">
-                      <v-select
-                        v-model="directChargeForm.selected"
-                        :items="directChargeInvoiceCharges"
-                        item-title="label" item-value="id" density="compact"
-                        label="Select charge" return-object hide-details class="flex-1"
-                      />
-                      <v-text-field
-                        v-model.number="directChargeForm.amount"
-                        type="number" density="compact" label="Amount"
-                        :hint="directChargeForm.selected ? `Max: ${directChargeForm.selected.cn_available_balance}` : ''"
-                        persistent-hint style="max-width:130px" min="0"
-                      />
-                      <v-btn color="blue" size="small" class="mt-1"
-                        :disabled="!directChargeForm.selected || !directChargeForm.amount"
-                        @click="addToDirectList">
-                        <v-icon>mdi-plus</v-icon>
-                      </v-btn>
-                    </div>
-                    <div class="flex justify-end">
-                      <v-btn color="primary" size="small"
-                        :disabled="directChargeForm.charges.length === 0"
-                        @click="submitDirectCharges">
-                        <v-icon size="small" class="mr-1">mdi-check</v-icon>
-                        Add charges
-                      </v-btn>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </div>
-
-              <!-- Add charge via request (only when has payments) -->
-              <div v-if="hasPayments" class="mt-4">
+              <!-- Charge requests status (only when there are active requests) -->
+              <div v-if="hasActiveChargeRequests" class="mt-4">
                 <!-- Granted requests: show approved data locked, user confirms -->
                 <template v-for="req in grantedChargeRequests" :key="`granted-${req.id}`">
                   <v-card variant="outlined" class="border-green-500 mb-3">
@@ -219,14 +162,87 @@
                     <ChargeLineList :charges="req.process_data?.charges ?? []" />
                   </div>
                 </div>
+              </div>
 
-                <!-- New request form (only if no pending/granted requests) -->
-                <v-card v-if="pendingChargeRequests.length === 0" variant="outlined" class="border-blue-400">
+              <!-- Toggle between Add charge and Request to add charges -->
+              <div class="mt-4 flex gap-2">
+                <v-btn :variant="chargeAddMode === 'direct' ? 'flat' : 'outlined'" :color="chargeAddMode === 'direct' ? 'primary' : 'grey'" size="small" @click="chargeAddMode = 'direct'">
+                  <v-icon size="small" class="mr-1">mdi-plus-circle-outline</v-icon>
+                  Add charge
+                </v-btn>
+                <v-btn :variant="chargeAddMode === 'request' ? 'flat' : 'outlined'" :color="chargeAddMode === 'request' ? 'blue' : 'grey'" size="small" @click="chargeAddMode = 'request'">
+                  <v-icon size="small" class="mr-1">mdi-shield-lock-outline</v-icon>
+                  Request to add charges
+                </v-btn>
+              </div>
+
+              <!-- Direct add charge (only for invoices already linked to this CN) -->
+              <div v-if="chargeAddMode === 'direct'" class="mt-2">
+                <v-card variant="outlined" class="border-blue-300">
                   <v-card-title class="text-sm font-semibold flex items-center gap-2">
                     <v-icon size="small">mdi-plus-circle-outline</v-icon>
+                    Add charge
+                  </v-card-title>
+                  <v-card-text>
+                    <div class="text-xs text-gray-500 mb-2">
+                      Search by invoice number already linked to this credit note. For other invoices, use "Request to add charges" below.
+                    </div>
+                    <div v-if="directChargeForm.charges.length > 0" class="mb-3">
+                      <ChargeLineList :charges="directChargeForm.charges" removable @remove="directChargeForm.charges.splice($event,1)" />
+                    </div>
+                    <div class="flex gap-2 items-start mb-2">
+                      <v-text-field
+                        v-model="directChargeForm.invoice_search"
+                        density="compact" label="Invoice number (linked to this CN)" hide-details class="flex-1"
+                        append-inner-icon="mdi-magnify"
+                        @click:append-inner="searchInvoiceForDirect"
+                        @keyup.enter="searchInvoiceForDirect"
+                      />
+                    </div>
+                    <div v-if="directChargeInvoiceCharges.length > 0" class="flex gap-2 items-start mb-3">
+                      <v-select
+                        v-model="directChargeForm.selected"
+                        :items="directChargeInvoiceCharges"
+                        item-title="label" item-value="id" density="compact"
+                        label="Select charge" return-object hide-details class="flex-1"
+                      />
+                      <v-text-field
+                        v-model.number="directChargeForm.amount"
+                        type="number" density="compact" label="Amount"
+                        :hint="directChargeForm.selected ? `Max: ${formatToCurrency(directChargeRemainingBalance)}` : ''"
+                        persistent-hint style="max-width:150px" min="0"
+                        :max="directChargeRemainingBalance"
+                        :disabled="!directChargeForm.selected"
+                      />
+                      <v-btn color="blue" size="small" class="mt-1"
+                        :disabled="!directChargeForm.selected || !directChargeForm.amount || directChargeForm.amount > directChargeRemainingBalance"
+                        @click="addToDirectList">
+                        <v-icon>mdi-plus</v-icon>
+                      </v-btn>
+                    </div>
+                    <div class="flex justify-end">
+                      <v-btn color="primary" size="small"
+                        :disabled="directChargeForm.charges.length === 0"
+                        @click="submitDirectCharges">
+                        <v-icon size="small" class="mr-1">mdi-check</v-icon>
+                        Add charges
+                      </v-btn>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
+
+              <!-- Request to add charges (for any invoice, requires approval) -->
+              <div v-if="chargeAddMode === 'request'" class="mt-2">
+                <v-card variant="outlined" class="border-blue-400">
+                  <v-card-title class="text-sm font-semibold flex items-center gap-2">
+                    <v-icon size="small">mdi-shield-lock-outline</v-icon>
                     Request to add charges
                   </v-card-title>
                   <v-card-text>
+                    <div class="text-xs text-gray-500 mb-2">
+                      Request authorization to add charges from any invoice. This requires approval before applying.
+                    </div>
                     <!-- Charges already added to this request -->
                     <div v-if="addChargeForm.charges.length > 0" class="mb-3">
                       <ChargeLineList :charges="addChargeForm.charges" removable @remove="removeCharge($event)" />
@@ -259,11 +275,13 @@
                       <v-text-field
                         v-model.number="addChargeForm.amount"
                         type="number" density="compact" label="Amount"
-                        :hint="addChargeForm.selected_invoice_charge ? `Max: ${addChargeForm.selected_invoice_charge.cn_available_balance}` : ''"
-                        persistent-hint style="max-width:130px" min="0"
+                        :hint="addChargeForm.selected_invoice_charge ? `Max: ${formatToCurrency(requestChargeRemainingBalance)}` : ''"
+                        persistent-hint style="max-width:150px" min="0"
+                        :max="requestChargeRemainingBalance"
+                        :disabled="!addChargeForm.selected_invoice_charge"
                       />
                       <v-btn color="blue" size="small" class="mt-1"
-                        :disabled="!addChargeForm.selected_invoice_charge || !addChargeForm.amount"
+                        :disabled="!addChargeForm.selected_invoice_charge || !addChargeForm.amount || addChargeForm.amount > requestChargeRemainingBalance"
                         @click="addChargeToList"
                         title="Add to request">
                         <v-icon>mdi-plus</v-icon>
@@ -336,13 +354,7 @@
                         'bg-red-100! dark:bg-red-900!': payment.deleted_at,
                       }"
                     >
-                      <td>
-                        <TrashButton
-                          :item="payment"
-                          :can-restore="false"
-                          @click="confirmDeleteCreditNotePayment(payment)"
-                        />
-                      </td>
+                      <td></td>
                       <td>
                         <v-chip color="blue" text-color="white" size="small" @click="viewInvoice(payment)">
                           <v-icon>mdi-eye-outline</v-icon>{{ getInvoiceableType(payment) }} Invoice #{{
@@ -451,6 +463,25 @@ const hasPayments = computed(() => {
   return consigneeCreditNote.value.payments.length > 0
 })
 
+// Pending charge requests (loaded from API)
+const pendingChargeRequests = ref<any[]>([])
+
+// If there are pending/granted requests, show the status section
+const hasActiveChargeRequests = computed(() => pendingChargeRequests.value.length > 0)
+
+// Toggle between 'direct' and 'request' modes for adding charges
+const chargeAddMode = ref<'direct' | 'request'>('direct')
+
+// Auto-fill invoice search when switching to request mode (if empty)
+watch(chargeAddMode, (mode) => {
+  if (mode === 'request' && !addChargeForm.value.invoice_search) {
+    const linked = linkedInvoices.value
+    if (linked.length > 0 && linked[0].invoice_number) {
+      addChargeForm.value.invoice_search = linked[0].invoice_number
+    }
+  }
+})
+
 // True when external_folio OR description already have a value
 const metaIsSet = computed(() => {
   const cn = consigneeCreditNote.value
@@ -549,7 +580,6 @@ const addChargeForm = ref<any>({
   charges: [] as any[], // list of charges to include in the request
 })
 const addChargeInvoiceCharges = ref<any[]>([])
-const pendingChargeRequests = ref<any[]>([])
 
 const grantedChargeRequests = computed(() =>
   pendingChargeRequests.value.filter((r: any) => r.status === 'granted' && !r.used_at)
@@ -569,7 +599,7 @@ const loadPendingChargeRequests = async () => {
   }
 }
 
-// ── Direct add charge (no payments) ─────────────────────────────────────────
+// ── Direct add charge ──────────────────────────────────────────────────
 
 const directChargeForm = ref<any>({
   invoice_search: '',
@@ -579,10 +609,46 @@ const directChargeForm = ref<any>({
 })
 const directChargeInvoiceCharges = ref<any[]>([])
 
+// Remaining balance for the selected invoice charge in direct add mode,
+// subtracting amounts already added to the list for the same invoice_charge_id
+const directChargeRemainingBalance = computed(() => {
+  const sel = directChargeForm.value.selected
+  if (!sel) return 0
+  const alreadyAdded = directChargeForm.value.charges
+    .filter((c: any) => c.invoice_charge_id === sel.id)
+    .reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
+  return Math.max(0, (sel.cn_available_balance ?? 0) - alreadyAdded)
+})
+
+// Remaining balance for the selected invoice charge in request mode,
+// subtracting amounts already added to the request list
+const requestChargeRemainingBalance = computed(() => {
+  const sel = addChargeForm.value.selected_invoice_charge
+  if (!sel) return 0
+  const alreadyAdded = addChargeForm.value.charges
+    .filter((c: any) => c.invoice_charge_id === sel.id)
+    .reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0)
+  return Math.max(0, (sel.cn_available_balance ?? 0) - alreadyAdded)
+})
+
 const searchInvoiceForDirect = async () => {
   if (!directChargeForm.value.invoice_search) return
   try {
     loadingStore.loading = true
+
+    // Check if the searched invoice is already linked to this CN
+    const linkedInvoiceNumbers = linkedInvoices.value.map((inv: any) => inv.invoice_number)
+    const isLinked = linkedInvoiceNumbers.includes(directChargeForm.value.invoice_search)
+
+    if (!isLinked) {
+      snackbar.add({
+        type: 'warning',
+        text: 'This invoice is not linked to this credit note. Use "Request to add charges" for invoices not linked to this CN.',
+      })
+      directChargeInvoiceCharges.value = []
+      return
+    }
+
     const result = await $api.consigneeCreditNotes.getAvailableCharges(
       consigneeCreditNote.value.id,
       directChargeForm.value.invoice_search,
@@ -592,10 +658,10 @@ const searchInvoiceForDirect = async () => {
       .filter((c: any) => (c.cn_available_balance ?? 0) > 0)
       .map((c: any) => ({
         ...c,
-        label: `${c.charge?.name ?? 'Concept'} — available: $${c.cn_available_balance}`,
+        label: `${c.charge?.name ?? 'Concept'} — available: ${formatToCurrency(c.cn_available_balance)}`,
       }))
     if (directChargeInvoiceCharges.value.length === 0)
-      snackbar.add({ type: 'warning', text: 'No available charges found on that invoice' })
+      snackbar.add({ type: 'warning', text: 'No available charges on this invoice (fully paid). Use "Request to add charges" for other invoices.' })
   } catch (e: any) {
     if (e?.data?.message) snackbar.add({ type: 'error', text: e.data.message })
   } finally {
@@ -606,8 +672,8 @@ const searchInvoiceForDirect = async () => {
 const addToDirectList = () => {
   const ic = directChargeForm.value.selected
   if (!ic || !directChargeForm.value.amount) return
-  if (directChargeForm.value.amount > ic.cn_available_balance) {
-    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${ic.cn_available_balance})` })
+  if (directChargeForm.value.amount > directChargeRemainingBalance.value) {
+    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${formatToCurrency(directChargeRemainingBalance.value)})` })
     return
   }
   directChargeForm.value.charges.push({
@@ -642,8 +708,8 @@ const submitDirectCharges = async () => {
 const addChargeToList = () => {
   const ic = addChargeForm.value.selected_invoice_charge
   if (!ic || !addChargeForm.value.amount) return
-  if (addChargeForm.value.amount > ic.cn_available_balance) {
-    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${ic.cn_available_balance})` })
+  if (addChargeForm.value.amount > requestChargeRemainingBalance.value) {
+    snackbar.add({ type: 'error', text: `Amount exceeds available balance (${formatToCurrency(requestChargeRemainingBalance.value)})` })
     return
   }
   addChargeForm.value.charges.push({
@@ -847,6 +913,13 @@ const getCustomerCreditNote = async () => {
     const response = await $api.consigneeCreditNotes.getCreditNoteById(props.id.toString())
     consigneeCreditNote.value = response
     buildEditableCharges()
+
+    // Auto-fill direct charge search with the first linked invoice and run search
+    const linked = linkedInvoices.value
+    if (linked.length > 0 && linked[0].invoice_number) {
+      directChargeForm.value.invoice_search = linked[0].invoice_number
+      await searchInvoiceForDirect()
+    }
   } catch (e) {
     console.error(e)
   } finally {
