@@ -1,26 +1,24 @@
 <template>
   <v-container fluid>
-    <v-btn color="slate" size="small" variant="outlined" to="/system/departments" class="mb-4"
-      >Back to departments</v-btn
-    >
-    <v-card>
-      <v-card-title>
-        <h3>Manage User Permissions (Department)</h3>
-      </v-card-title>
-      <v-card-text>
-        <div class="mb-4 p-4 bg-slate-50 border rounded text-gray-700">
-          <p>
-            Aquí puedes administrar los permisos de los usuarios miembros en los departamentos donde eres coordinador.
-            <br />
-            Solo podrás modificar los permisos que tiene asignado el departamento, y únicamente para los usuarios que
-            son miembros (no coordinadores).
-            <br />
-            Los cambios se aplican de inmediato al activar o desactivar cada permiso.
-          </p>
+    <div class="mb-4">
+      <v-btn color="slate" size="small" variant="tonal" prepend-icon="mdi-arrow-left" to="/system/departments" class="mb-4">
+        Back to departments
+      </v-btn>
+      <div class="d-flex align-center gap-3">
+        <v-avatar color="primary" size="48" rounded="lg">
+          <v-icon size="26" color="white">mdi-account-key</v-icon>
+        </v-avatar>
+        <div>
+          <div class="text-h5 font-weight-bold">Manage User Permissions</div>
+          <div class="text-caption text-grey-darken-1">Department coordinator permissions</div>
         </div>
-        <DepartmentUserPermissionsForm />
-      </v-card-text>
-    </v-card>
+      </div>
+    </div>
+    <v-alert type="info" variant="tonal" density="compact" class="mb-4 rounded-lg">
+      Manage permissions for member users in departments where you are coordinator. You can only modify permissions
+      assigned to the department, and only for members (not coordinators). Changes apply immediately.
+    </v-alert>
+    <DepartmentUserPermissionsForm />
   </v-container>
 </template>
 <script setup lang="ts">

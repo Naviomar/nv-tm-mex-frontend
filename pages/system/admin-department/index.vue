@@ -21,8 +21,8 @@
         <v-chip
           v-for="dept in managedDepartments"
           :key="dept.id"
-          :color="selectedDeptId === String(dept.id) ? 'primary' : undefined"
-          :variant="selectedDeptId === String(dept.id) ? 'flat' : 'outlined'"
+          :color="selectedDeptId === String(dept.id) ? 'primary' : 'grey-darken-1'"
+          :variant="selectedDeptId === String(dept.id) ? 'flat' : 'tonal'"
           class="cursor-pointer"
           @click="selectedDeptId = String(dept.id)"
         >
