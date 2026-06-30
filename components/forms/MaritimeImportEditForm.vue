@@ -710,6 +710,7 @@ const props = defineProps({
 const catalogs = ref({
   lines: [] as any,
   sea_regions: [] as any,
+  sea_import_pod_country_ids: [] as number[],
   consignees: [] as any,
   consignee_mbls: [] as any,
   freights: [] as any,
@@ -1125,7 +1126,7 @@ const searchPodPorts = async (search: SearchParams) => {
       }, {})
 
     // Add additional static values to the query if needed
-    query['country_ids'] = [140, 90, 65, 12, 52, 170, 61, 157, 1, 96, 167, 48].join(',')
+    query['country_ids'] = catalogs.value.sea_import_pod_country_ids.join(',')
     const response = await $api.ports.searchPorts({
       query: query,
     })

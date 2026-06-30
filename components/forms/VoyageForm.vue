@@ -128,6 +128,7 @@ const loadingStore = useLoadingStore()
 const catalogs = ref({
   vessels: [],
   ports: [],
+  sea_import_pod_country_codes: [] as string[],
 })
 
 const form = ref({
@@ -211,13 +212,10 @@ const clearDestinationProt = () => {
 const podPorts = computed(() => {
   if (!values.impoExpo) return []
 
-  const importCountries = ['SV', 'AR', 'CR', 'PE', 'DO', 'NI', 'US', 'GT', 'HN', 'PA', 'MX']
-
-  // if import only mexico ports
   if (values.impoExpo === 'I') {
-    return catalogs.value.ports.filter((port: any) => importCountries.includes(port.country?.code))
+    const originCodes = catalogs.value.sea_import_pod_country_codes
+    return catalogs.value.ports.filter((port: any) => originCodes.includes(port.country?.code))
   }
-  // if export exclude mexico ports
   if (values.impoExpo === 'E') {
     return catalogs.value.ports.filter((port: any) => port.country?.code === 'MX')
   }

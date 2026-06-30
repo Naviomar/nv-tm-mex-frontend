@@ -90,6 +90,10 @@ class CountriesModule extends FetchFactory<any> {
     }
     return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
   }
+
+  async toggleSeaImportPod(id: string | number, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/toggle-sea-import-pod`, fetchOptions)
+  }
 }
 
 export default CountriesModule
