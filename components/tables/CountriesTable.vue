@@ -67,8 +67,8 @@
                   size="x-small"
                   :color="country.is_sea_import_pod ? 'blue' : 'default'"
                   :variant="country.is_sea_import_pod ? 'flat' : 'outlined'"
-                  class="cursor-pointer"
-                  @click="toggleSeaImportPod(country)"
+                  :class="hasPermission('countries-config-sea') ? 'cursor-pointer' : ''"
+                  @click="hasPermission('countries-config-sea') && toggleSeaImportPod(country)"
                 >
                   <v-icon start size="x-small">{{ country.is_sea_import_pod ? 'mdi-check' : 'mdi-minus' }}</v-icon>
                   {{ country.is_sea_import_pod ? 'Yes' : 'No' }}
@@ -91,6 +91,7 @@
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
+const { hasPermission } = useCheckUser()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
