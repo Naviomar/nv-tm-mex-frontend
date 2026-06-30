@@ -48,6 +48,11 @@ const permissions = {
   WmAirInvoicesView: 'wm-air-invoices-view',
   WmAirInvoicesEdit: 'wm-air-invoices-edit',
 
+  // Convert Proforma to Invoice
+  TmInvoicesConvertToInvoice: 'tm-invoices-convert-to-invoice',
+  WmInvoicesConvertToInvoice: 'wm-invoices-convert-to-invoice',
+  WmInvoicesConvertToInvoiceLimited: 'wm-invoices-convert-to-invoice-limited',
+
   // Line Payments
   LinePaymentsIndex: 'line-payments-index',
   LinePaymentsView: 'line-payments-view',

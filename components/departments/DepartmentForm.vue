@@ -1,15 +1,21 @@
 <template>
   <div>
     <!-- Basic info form -->
-    <v-card variant="outlined" class="mb-4">
-      <v-card-text>
+    <v-card variant="flat" class="mb-4 rounded-lg" bg-color="grey-lighten-5">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center gap-2 mb-4">
+          <v-avatar color="primary" size="32" rounded="lg">
+            <v-icon size="18" color="white">mdi-office-building</v-icon>
+          </v-avatar>
+          <div class="text-subtitle-1 font-weight-bold">Department Information</div>
+        </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <InputText density="compact" name="name" label="Name *" />
-          <InputText density="compact" name="description" label="Description" />
+          <InputText density="compact" name="name" label="Name *" variant="outlined" />
+          <InputText density="compact" name="description" label="Description" variant="outlined" />
         </div>
         <div class="flex gap-3">
-          <v-btn color="secondary" variant="outlined" to="/system/departments">Cancel</v-btn>
-          <v-btn color="primary" @click="saveCharge">Save</v-btn>
+          <v-btn color="secondary" variant="tonal" to="/system/departments">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save" @click="saveCharge">Save</v-btn>
         </div>
       </v-card-text>
     </v-card>

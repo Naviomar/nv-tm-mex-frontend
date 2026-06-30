@@ -150,6 +150,10 @@ class InvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/convert-proforma-to-invoice`, fetchOptions)
   }
 
+  async getWmConvertAllowedCustomers(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/wm-convert-allowed-customers`, fetchOptions)
+  }
+
   async removeProformaConcept(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

@@ -91,10 +91,7 @@
               <v-btn v-if="isProforma" color="red" size="small"
                 @click="onDeleteProformaClick"><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn>
 
-              <v-btn v-if="isProforma && user.id != 9" color="purple" size="small"
-                @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
-                invoice</v-btn>
-              <v-btn v-if="isProforma && user.id == 9 && invoiceCustommer == 81" color="purple" size="small"
+              <v-btn v-if="isProforma && canConvertToInvoice" color="purple" size="small"
                 @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
                 invoice</v-btn>
             </div>
@@ -304,13 +301,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { authorizeResources } from '~/utils/data/system'
+import { authorizeResources, permissions } from '~/utils/data/system'
 import { paymentableName } from '~/utils/data/morphNames'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
-const { user } = useCheckUser()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -440,9 +437,14 @@ const isPaid = computed(() => {
   return invoiceWm.value?.invoice.is_paid === 1
 })
 
-const invoiceCustommer = computed(() => {
-  const id_cnn = invoiceWm.value?.consignee_id
-  return id_cnn
+const wmAllowedCustomerIds = ref<number[]>([])
+
+const canConvertToInvoice = computed(() => {
+  if (hasPermission(permissions.WmInvoicesConvertToInvoice)) return true
+  if (hasPermission(permissions.WmInvoicesConvertToInvoiceLimited)) {
+    return wmAllowedCustomerIds.value.includes(invoiceWm.value?.consignee_id)
+  }
+  return false
 })
 
 const invoiceCharges = computed(() => {
@@ -501,6 +503,13 @@ const getChargeCfdiNames = async () => {
 
 await getData()
 await getChargeCfdiNames()
+
+try {
+  const res = await $api.invoices.getWmConvertAllowedCustomers() as any
+  wmAllowedCustomerIds.value = res?.customer_ids ?? []
+} catch (e) {
+  console.error('Failed to load WM convert allowed customers', e)
+}
 
 const onCancelClick = async () => {
   showCancelDialog.value = !showCancelDialog.value
