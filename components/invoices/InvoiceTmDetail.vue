@@ -143,7 +143,7 @@
                 ><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn
               >
 
-              <v-btn v-if="isProforma && user.id != 9" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
+              <v-btn v-if="isProforma && canConvertToInvoice" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
                 ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
               >
             </div>
@@ -421,12 +421,12 @@
 <script setup lang="ts">
 import { addWorkingDays } from '~/utils/date'
 import { paymentableName } from '~/utils/data/morphNames'
-import { authorizeResources } from '~/utils/data/system'
+import { authorizeResources, permissions } from '~/utils/data/system'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
-const { user } = useCheckUser()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -601,6 +601,10 @@ const isPaid = computed(() => {
     return false
   }
   return invoiceTm.value?.invoice.is_paid === 1
+})
+
+const canConvertToInvoice = computed(() => {
+  return hasPermission(permissions.TmInvoicesConvertToInvoice)
 })
 
 const invoiceCharges = computed(() => {
