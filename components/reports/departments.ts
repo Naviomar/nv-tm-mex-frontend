@@ -28,8 +28,8 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     icon: 'mdi-ferry',
     color: 'indigo',
     reports: [
-      { key: 'comparative', title: 'Comparative Analytics', icon: 'mdi-chart-line', component: 'SeaImportReports', permission: 'reports-cobranza-view' },
-      { key: 'import-repo', title: 'Import Repo', icon: 'mdi-table-large', component: 'ImportRepoReport', permission: 'reports-import-repo-view' },
+      { key: 'comparative', title: 'Comparative Analytics', icon: 'mdi-chart-line', component: 'SeaImportReports', permission: 'reports-maritime-import-comparative-view' },
+      { key: 'import-repo', title: 'Import Repo', icon: 'mdi-table-large', component: 'ImportRepoReport', permission: 'reports-maritime-import-repo-view' },
     ],
   },
   {
@@ -59,9 +59,9 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     icon: 'mdi-finance',
     color: 'green',
     reports: [
-      { key: 'cobranza', title: 'Cobranza', icon: 'mdi-cash-multiple', component: 'CobranzaReport', permission: 'reports-cobranza-view' },
-      { key: 'payments-history', title: 'Payments History', icon: 'mdi-history', component: 'PaymentsHistoryReport', permission: 'reports-payments-history-view' },
-      { key: 'movement-payments', title: 'Movement Payments', icon: 'mdi-transfer', component: 'MovementPaymentsReport', permission: 'reports-movements-payments-view' },
+      { key: 'cobranza', title: 'Cobranza', icon: 'mdi-cash-multiple', component: 'CobranzaReport', permission: 'reports-finance-cobranza-view' },
+      { key: 'payments-history', title: 'Payments History', icon: 'mdi-history', component: 'PaymentsHistoryReport', permission: 'reports-finance-payments-history-view' },
+      { key: 'movement-payments', title: 'Movement Payments', icon: 'mdi-transfer', component: 'MovementPaymentsReport', permission: 'reports-finance-movements-payments-view' },
     ],
   },
   {
@@ -70,9 +70,9 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     icon: 'mdi-receipt-text',
     color: 'amber',
     reports: [
-      { key: 'invoices', title: 'Customer Invoices', icon: 'mdi-receipt-text', component: 'CustomerInvoicesReport', permission: 'reports-customer-invoices-view' },
-      { key: 'pending-invoice', title: 'Pending Invoice', icon: 'mdi-receipt-clock-outline', component: 'ChargesPendingInvoiceReport', permission: 'reports-charges-pending-invoice-view' },
-      { key: 'executive', title: 'Executive Reports', icon: 'mdi-account-star', component: 'ExecutiveReport', permission: 'reports-executives-view' },
+      { key: 'invoices', title: 'Customer Invoices', icon: 'mdi-receipt-text', component: 'CustomerInvoicesReport', permission: 'reports-billing-customer-invoices-view' },
+      { key: 'pending-invoice', title: 'Pending Invoice', icon: 'mdi-receipt-clock-outline', component: 'ChargesPendingInvoiceReport', permission: 'reports-billing-charges-pending-invoice-view' },
+      { key: 'executive', title: 'Executive Reports', icon: 'mdi-account-star', component: 'ExecutiveReport', permission: 'reports-billing-executives-view' },
     ],
   },
   {
