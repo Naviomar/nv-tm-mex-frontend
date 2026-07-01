@@ -84,8 +84,13 @@ import {
   ExecutiveReport,
 } from '#components'
 import { REPORT_DEPARTMENTS } from './departments'
+import { useCheckUser } from '~/composables/useCheckUser'
 
-const departments = REPORT_DEPARTMENTS
+const { hasPermission } = useCheckUser()
+
+const departments = computed(() =>
+  REPORT_DEPARTMENTS.filter(d => !d.permission || hasPermission(d.permission))
+)
 
 // Explicit map from the component name used in departments.ts to the actual
 // component. Importing from '#components' is the Nuxt-supported way to reference
@@ -101,10 +106,10 @@ const componentMap: Record<string, any> = {
   ExecutiveReport,
 }
 
-const activeDeptKey = ref<string>(departments[0]?.key ?? '')
-const activeReportKey = ref<string>(departments[0]?.reports[0]?.key ?? '')
+const activeDeptKey = ref<string>(departments.value[0]?.key ?? '')
+const activeReportKey = ref<string>(departments.value[0]?.reports[0]?.key ?? '')
 
-const activeDept = computed(() => departments.find(d => d.key === activeDeptKey.value) ?? null)
+const activeDept = computed(() => departments.value.find(d => d.key === activeDeptKey.value) ?? null)
 const activeReport = computed(() =>
   activeDept.value?.reports.find(r => r.key === activeReportKey.value) ?? activeDept.value?.reports[0] ?? null
 )
@@ -118,7 +123,7 @@ const resolvedComponent = computed(() => {
 
 const selectDept = (key: string) => {
   activeDeptKey.value = key
-  const dept = departments.find(d => d.key === key)
+  const dept = departments.value.find(d => d.key === key)
   activeReportKey.value = dept?.reports[0]?.key ?? ''
 }
 </script>

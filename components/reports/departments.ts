@@ -12,6 +12,8 @@ export interface ReportDept {
   icon: string
   color: string
   reports: DeptReport[]
+  /** Menu permission required to see this department's reports. */
+  permission?: string
 }
 
 /**
@@ -25,6 +27,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Maritime Import',
     icon: 'mdi-ferry',
     color: 'indigo',
+    permission: 'reports-maritime-import',
     reports: [
       { key: 'comparative', title: 'Comparative Analytics', icon: 'mdi-chart-line', component: 'SeaImportReports' },
       { key: 'import-repo', title: 'Import Repo', icon: 'mdi-table-large', component: 'ImportRepoReport' },
@@ -35,6 +38,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Maritime Export',
     icon: 'mdi-ferry',
     color: 'cyan',
+    permission: 'reports-maritime-export',
     reports: [],
   },
   {
@@ -42,6 +46,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Air Import',
     icon: 'mdi-airplane-landing',
     color: 'blue',
+    permission: 'reports-air-import',
     reports: [],
   },
   {
@@ -49,6 +54,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Air Export',
     icon: 'mdi-airplane-takeoff',
     color: 'light-blue',
+    permission: 'reports-air-export',
     reports: [],
   },
   {
@@ -56,6 +62,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Finance',
     icon: 'mdi-finance',
     color: 'green',
+    permission: 'reports-finance',
     reports: [
       { key: 'cobranza', title: 'Cobranza', icon: 'mdi-cash-multiple', component: 'CobranzaReport' },
       { key: 'payments-history', title: 'Payments History', icon: 'mdi-history', component: 'PaymentsHistoryReport' },
@@ -67,6 +74,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Billing',
     icon: 'mdi-receipt-text',
     color: 'amber',
+    permission: 'reports-billing',
     reports: [
       { key: 'invoices', title: 'Customer Invoices', icon: 'mdi-receipt-text', component: 'CustomerInvoicesReport' },
       { key: 'pending-invoice', title: 'Pending Invoice', icon: 'mdi-receipt-clock-outline', component: 'ChargesPendingInvoiceReport' },
@@ -78,6 +86,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Accounting',
     icon: 'mdi-calculator',
     color: 'teal',
+    permission: 'reports-accounting',
     reports: [],
   },
 ]
