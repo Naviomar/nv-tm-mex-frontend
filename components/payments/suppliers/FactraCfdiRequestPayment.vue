@@ -131,8 +131,12 @@
                     density="compact"
                     label="Select to pay"
                     hide-details
-                    :disabled="supCfdi.sat_status === 'Cancelado'"
+                    :disabled="supCfdi.sat_status === 'Cancelado' || supCfdi.legacy_payment_request"
                   />
+                  <v-chip v-if="supCfdi.legacy_payment_request" color="deep-orange" size="x-small" variant="flat" class="mt-1">
+                    <v-icon size="x-small" start>mdi-alert-circle</v-icon>
+                    TM1 pay request
+                  </v-chip>
                 </td>
                 <td>
                   {{ supCfdi.requested_payment ? 'Yes' : 'No' }}
@@ -140,6 +144,9 @@
                 <td>
                   {{ supCfdi.serie }}{{ supCfdi.folio }}
                   <v-chip v-if="supCfdi.is_free_format" color="deep-purple" size="x-small" class="ml-1">Libre</v-chip>
+                  <v-chip v-if="supCfdi.legacy_payment_request" color="deep-orange" size="x-small" variant="tonal" class="ml-1">
+                    <v-icon size="x-small" start>mdi-alert</v-icon>TM1
+                  </v-chip>
                 </td>
                 <td>{{ supCfdi.supplier?.name }}</td>
                 <td>{{ supCfdi.tipo_comprobante }}</td>
