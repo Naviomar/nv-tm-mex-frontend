@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-tabs v-model="activeTab" color="primary" class="mb-4" bg-color="transparent">
+    <v-tabs v-model="activeTab" color="primary" class="mb-4">
       <v-tab value="users">
         <v-icon start>mdi-account-group</v-icon>
         Members
@@ -11,16 +11,22 @@
         Roles & Permissions
       </v-tab>
     </v-tabs>
+    <v-divider class="mb-4" />
 
     <v-window v-model="activeTab">
       <!-- ====== USERS TAB ====== -->
       <v-window-item value="users">
         <!-- Add user row -->
-        <v-card variant="outlined" class="mb-4">
+        <v-card variant="flat" class="mb-4 rounded-lg" bg-color="blue-grey-lighten-5">
           <v-card-text class="pa-4">
-            <div class="text-caption font-weight-bold text-grey-darken-2 mb-3 text-uppercase tracking-wide">
-              <v-icon size="14" class="mr-1" color="primary">mdi-account-plus</v-icon>
-              Add member
+            <div class="d-flex align-center gap-2 mb-4">
+              <v-avatar color="primary" size="32" rounded="lg">
+                <v-icon size="18" color="white">mdi-account-plus</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">Add member</div>
+                <div class="text-caption text-grey-darken-1">Link a user to this department</div>
+              </div>
             </div>
             <v-row dense align="center">
               <v-col cols="12" md="5">
@@ -32,6 +38,7 @@
                   item-value="id"
                   label="Search user by email or name"
                   variant="outlined"
+                  bg-color="white"
                   hide-details
                   clearable
                 >
@@ -56,6 +63,7 @@
                   item-value="value"
                   label="Type"
                   variant="outlined"
+                  bg-color="white"
                   hide-details
                 />
               </v-col>
@@ -63,6 +71,7 @@
                 <v-btn
                   color="primary"
                   variant="flat"
+                  block
                   :disabled="!form.user || !form.department_type"
                   @click="linkUser"
                   prepend-icon="mdi-account-plus"
@@ -75,28 +84,49 @@
         </v-card>
 
         <!-- Members table -->
-        <v-card variant="outlined">
+        <v-card variant="flat" class="rounded-lg" bg-color="grey-lighten-5">
           <v-card-text class="pa-0">
-            <v-table density="comfortable" hover>
+            <v-table density="comfortable" hover class="rounded-lg">
               <thead>
                 <tr class="bg-grey-lighten-4">
                   <th style="width: 56px"></th>
-                  <th>Member</th>
-                  <th style="width: 155px">Type</th>
-                  <th>Roles</th>
-                  <th style="width: 110px">Permissions</th>
+                  <th>
+                    <span class="d-flex align-center gap-2 text-caption font-weight-bold text-grey-darken-1">
+                      <v-icon size="16">mdi-account</v-icon> Member
+                    </span>
+                  </th>
+                  <th style="width: 155px">
+                    <span class="d-flex align-center gap-2 text-caption font-weight-bold text-grey-darken-1">
+                      <v-icon size="16">mdi-badge-account</v-icon> Type
+                    </span>
+                  </th>
+                  <th>
+                    <span class="d-flex align-center gap-2 text-caption font-weight-bold text-grey-darken-1">
+                      <v-icon size="16">mdi-shield-account</v-icon> Roles
+                    </span>
+                  </th>
+                  <th style="width: 110px">
+                    <span class="d-flex align-center gap-2 text-caption font-weight-bold text-grey-darken-1">
+                      <v-icon size="16">mdi-key-variant</v-icon> Permissions
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(member, index) in linkedUsers" :key="`user-${index}`">
                   <td>
-                    <v-btn
-                      size="x-small"
-                      variant="tonal"
-                      color="error"
-                      icon="mdi-account-minus"
-                      @click="unlinkUser(member)"
-                    />
+                    <v-tooltip text="Remove from department" location="top">
+                      <template #activator="{ props: tProps }">
+                        <v-btn
+                          v-bind="tProps"
+                          size="x-small"
+                          variant="tonal"
+                          color="error"
+                          icon="mdi-account-minus"
+                          @click="unlinkUser(member)"
+                        />
+                      </template>
+                    </v-tooltip>
                   </td>
                   <td>
                     <div class="d-flex align-center gap-2 py-1">
@@ -178,8 +208,8 @@
 
   <!-- Modal: Edit User Permissions -->
   <v-dialog v-model="editPermissionsModal.show" max-width="1200" persistent scrollable>
-    <v-card>
-      <v-toolbar color="primary" density="compact">
+    <v-card class="rounded-lg">
+      <v-toolbar color="primary" density="comfortable" class="rounded-t-lg">
         <v-toolbar-title>
           <v-icon class="mr-2">mdi-key-variant</v-icon>
           Permissions: {{ editPermissionsModal.user?.name }}
@@ -208,7 +238,7 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
-      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
+      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4 rounded-b-lg">
         <div v-if="editPermissionsModal.loading" class="text-center py-6">
           <v-progress-circular indeterminate color="primary" />
         </div>
@@ -216,8 +246,8 @@
           <!-- Role permissions (read-only, shown as context) -->
           <div v-if="editPermissionsModal.rolePermissionIds.length > 0" class="mb-4">
             <div class="d-flex align-center gap-2 mb-2">
-              <v-icon size="16" color="secondary">mdi-shield-account</v-icon>
-              <span class="text-caption font-weight-bold text-secondary text-uppercase tracking-wide">
+              <v-icon size="18" color="secondary">mdi-shield-account</v-icon>
+              <span class="text-subtitle-2 font-weight-bold text-secondary">
                 Permissions via role (read-only)
               </span>
               <v-chip size="x-small" color="secondary" variant="tonal">
@@ -234,8 +264,8 @@
           <!-- Direct permissions (editable) -->
           <div>
             <div class="d-flex align-center gap-2 mb-2" :class="editPermissionsModal.rolePermissionIds.length > 0 ? 'mt-4' : ''">
-              <v-icon size="16" color="primary">mdi-account-key</v-icon>
-              <span class="text-caption font-weight-bold text-primary text-uppercase tracking-wide">
+              <v-icon size="18" color="primary">mdi-account-key</v-icon>
+              <span class="text-subtitle-2 font-weight-bold text-primary">
                 Direct permissions (editable)
               </span>
               <v-chip size="x-small" color="primary" variant="tonal">

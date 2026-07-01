@@ -91,7 +91,7 @@
               <v-btn v-if="isProforma" color="red" size="small"
                 @click="onDeleteProformaClick"><v-icon>mdi-delete-outline</v-icon>Delete proforma</v-btn>
 
-              <v-btn v-if="isProforma" color="purple" size="small"
+              <v-btn v-if="isProforma && canConvertToInvoice" color="purple" size="small"
                 @click="onConvertProformaToInvoiceClick"><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to
                 invoice</v-btn>
             </div>
@@ -301,12 +301,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { authorizeResources } from '~/utils/data/system'
+import { authorizeResources, permissions } from '~/utils/data/system'
 import { paymentableName } from '~/utils/data/morphNames'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -436,6 +437,16 @@ const isPaid = computed(() => {
   return invoiceWm.value?.invoice.is_paid === 1
 })
 
+const wmAllowedCustomerIds = ref<number[]>([])
+
+const canConvertToInvoice = computed(() => {
+  if (hasPermission(permissions.WmInvoicesConvertToInvoice)) return true
+  if (hasPermission(permissions.WmInvoicesConvertToInvoiceLimited)) {
+    return wmAllowedCustomerIds.value.includes(invoiceWm.value?.consignee_id)
+  }
+  return false
+})
+
 const invoiceCharges = computed(() => {
   if (isCancelled.value) {
     return invoiceWm.value?.invoice?.charges_cancelled
@@ -492,6 +503,13 @@ const getChargeCfdiNames = async () => {
 
 await getData()
 await getChargeCfdiNames()
+
+try {
+  const res = await $api.invoices.getWmConvertAllowedCustomers() as any
+  wmAllowedCustomerIds.value = res?.customer_ids ?? []
+} catch (e) {
+  console.error('Failed to load WM convert allowed customers', e)
+}
 
 const onCancelClick = async () => {
   showCancelDialog.value = !showCancelDialog.value

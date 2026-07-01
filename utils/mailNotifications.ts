@@ -12,6 +12,8 @@ export const PORT_FILTERABLE_NOTIFICATIONS = [
   'SeaImportChecklistNotify',
   'SeaImportPendingRevalidationInd',
   'DemurragesThreeDaysLeft',
+  'SeaVoyageDestUpdatedEtaConfirmed',
+  'SeaVoyageDestUpdatedEtaConsignee',
 ] as const
 
 /**

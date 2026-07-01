@@ -164,6 +164,147 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <v-dialog v-model="previewDialog.show" max-width="1200" persistent>
+      <v-card>
+        <v-card-title class="bg-blue-darken-1 text-white">
+          Confirm BofA payments to upload
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-skeleton-loader v-if="previewDialog.loading" type="table" />
+          <div v-if="!previewDialog.loading">
+            <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
+              <div class="font-weight-medium">Please verify that the Reference column is correct for each payment before uploading.</div>
+              <div class="text-caption mt-1">If this file was created from a CSV export, we recommend uploading it in Excel (.xlsx) format instead to avoid reference parsing issues.</div>
+            </v-alert>
+
+            <div v-if="previewDialog.movements.length > 0">
+              <h3 class="text-h6 mb-2">
+                <v-icon color="green" class="mr-1">mdi-check-circle</v-icon>
+                Valid payments ({{ previewDialog.movements.length }})
+              </h3>
+              <v-table density="compact" class="border">
+                <thead>
+                  <tr class="bg-green-lighten-4">
+                    <th class="text-left" style="width: 40px">
+                      <v-checkbox
+                        v-model="previewDialog.selectAll"
+                        hide-details
+                        density="compact"
+                        @update:model-value="onToggleSelectAll"
+                      />
+                    </th>
+                    <th class="text-left" style="min-width: 140px">Date</th>
+                    <th class="text-left">Amount</th>
+                    <th class="text-left">Direction</th>
+                    <th class="text-left">Account Name</th>
+                    <th class="text-left">Data Type</th>
+                    <th class="text-left">BAI Code</th>
+                    <th class="text-left">Description</th>
+                    <th class="text-left bg-yellow-lighten-3">Reference</th>
+                    <th class="text-left w-64">Text</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="movement in previewDialog.movements"
+                    :key="`prev-mov-${movement.row_index}`"
+                  >
+                    <td>
+                      <v-checkbox
+                        :model-value="previewDialog.selectedIndices.includes(movement.row_index)"
+                        hide-details
+                        density="compact"
+                        @update:model-value="onToggleRow(movement.row_index, $event)"
+                      />
+                    </td>
+                    <td>{{ formatDateOnlyString(movement.movement_date) }}</td>
+                    <td>{{ formatToCurrency(movement.amount) }}</td>
+                    <td>
+                      <v-chip
+                        :color="movement.movement === 'deposit' ? 'green' : 'red'"
+                        size="x-small"
+                        variant="tonal"
+                      >
+                        {{ movement.movement }}
+                      </v-chip>
+                    </td>
+                    <td class="text-caption">{{ movement.account_name || '-' }}</td>
+                    <td class="text-caption">{{ movement.data_type || '-' }}</td>
+                    <td class="text-caption">{{ movement.bai_code || '-' }}</td>
+                    <td>{{ movement.description }}</td>
+                    <td class="bg-yellow-lighten-4 font-weight-medium">{{ movement.reference }}</td>
+                    <td class="text-truncate" style="max-width: 200px">{{ movement.text }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="bg-green-lighten-4">
+                    <td colspan="8" class="text-right font-weight-bold">
+                      Selected: {{ previewDialog.selectedIndices.length }} / {{ previewDialog.movements.length }}
+                    </td>
+                    <td colspan="2" class="font-weight-bold">
+                      Total: {{ formatToCurrency(selectedTotalAmount) }}
+                    </td>
+                  </tr>
+                </tfoot>
+              </v-table>
+            </div>
+
+            <div v-if="previewDialog.errors.length > 0" class="mt-4">
+              <h3 class="text-h6 mb-2">
+                <v-icon color="red" class="mr-1">mdi-alert-circle</v-icon>
+                Errors ({{ previewDialog.errors.length }})
+              </h3>
+              <v-alert type="warning" variant="tonal" density="compact" class="mb-2">
+                These payments cannot be uploaded and are not selectable.
+              </v-alert>
+              <v-table density="compact" class="border">
+                <thead>
+                  <tr class="bg-red-lighten-4">
+                    <th class="text-left" style="width: 40px"></th>
+                    <th class="text-left">Date</th>
+                    <th class="text-left">Amount</th>
+                    <th class="text-left">Description</th>
+                    <th class="text-left">Reference</th>
+                    <th class="text-left w-64">Text</th>
+                    <th class="text-left">Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(err, index) in previewDialog.errors"
+                    :key="`prev-err-${index}`"
+                    class="bg-red-lighten-5"
+                  >
+                    <td>
+                      <v-checkbox disabled hide-details density="compact" />
+                    </td>
+                    <td>{{ err.movement?.movement_date ? formatDateOnlyString(err.movement.movement_date) : '-' }}</td>
+                    <td>{{ err.movement?.amount ? formatToCurrency(err.movement.amount) : '-' }}</td>
+                    <td>{{ err.movement?.description || '-' }}</td>
+                    <td>{{ err.movement?.reference || '-' }}</td>
+                    <td class="text-truncate" style="max-width: 200px">{{ err.movement?.text || '-' }}</td>
+                    <td class="text-red font-weight-medium">{{ err.error }}</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-actions class="px-4 pb-4">
+          <v-spacer />
+          <v-btn variant="text" @click="onCancelPreview">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            :disabled="previewDialog.selectedIndices.length === 0 || previewDialog.loading"
+            @click="onConfirmUpload"
+          >
+            <v-icon start>mdi-upload</v-icon>
+            Confirm upload ({{ previewDialog.selectedIndices.length }})
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -186,6 +327,21 @@ const results = ref<any>({
   data: [],
 })
 
+const previewDialog = ref({
+  show: false,
+  loading: false,
+  movements: [] as any[],
+  errors: [] as any[],
+  selectedIndices: [] as number[],
+  selectAll: false,
+})
+
+const selectedTotalAmount = computed(() => {
+  return previewDialog.value.movements
+    .filter((m: any) => previewDialog.value.selectedIndices.includes(m.row_index))
+    .reduce((sum: number, m: any) => sum + Number(m.amount), 0)
+})
+
 const onClickStartImport = async () => {
   if (!form.value.bank_account_id) {
     snackbar.add({
@@ -202,7 +358,7 @@ const onClickStartImport = async () => {
     return
   }
 
-  await uploadBankMovements()
+  await previewUpload()
 }
 
 onMounted(async () => {
@@ -275,7 +431,66 @@ const getBankMovements = async () => {
   }
 }
 
-const uploadBankMovements = async () => {
+const previewUpload = async () => {
+  try {
+    previewDialog.value.loading = true
+    const body = {
+      bank_account_id: form.value.bank_account_id,
+      archivo: form.value.archivo,
+    }
+    const response = await $api.bankMovements.previewUpload(body)
+    const data = response as any
+
+    if (data.is_bofa) {
+      previewDialog.value.movements = data.movements || []
+      previewDialog.value.errors = data.errors || []
+      previewDialog.value.selectedIndices = []
+      previewDialog.value.selectAll = false
+      previewDialog.value.show = true
+    } else {
+      await uploadBankMovements()
+    }
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error previewing file' })
+  } finally {
+    previewDialog.value.loading = false
+  }
+}
+
+const onToggleSelectAll = (checked: boolean) => {
+  if (checked) {
+    previewDialog.value.selectedIndices = previewDialog.value.movements.map((m: any) => m.row_index)
+  } else {
+    previewDialog.value.selectedIndices = []
+  }
+}
+
+const onToggleRow = (rowIndex: number, checked: boolean) => {
+  if (checked) {
+    if (!previewDialog.value.selectedIndices.includes(rowIndex)) {
+      previewDialog.value.selectedIndices.push(rowIndex)
+    }
+  } else {
+    previewDialog.value.selectedIndices = previewDialog.value.selectedIndices.filter((idx: number) => idx !== rowIndex)
+  }
+  previewDialog.value.selectAll =
+    previewDialog.value.selectedIndices.length === previewDialog.value.movements.length
+}
+
+const onCancelPreview = () => {
+  previewDialog.value.show = false
+  previewDialog.value.movements = []
+  previewDialog.value.errors = []
+  previewDialog.value.selectedIndices = []
+}
+
+const onConfirmUpload = async () => {
+  previewDialog.value.show = false
+  await uploadBankMovements(previewDialog.value.selectedIndices)
+}
+
+const uploadBankMovements = async (selectedIndices?: number[]) => {
   try {
     results.value.hasResults = false
     loadingStore.loading = true
@@ -283,12 +498,14 @@ const uploadBankMovements = async () => {
       bank_account_id: form.value.bank_account_id,
       archivo: form.value.archivo,
     }
-    const response = await $api.bankMovements.uploadBankMovements(body)
+    const response = await $api.bankMovements.uploadBankMovements(body, selectedIndices)
 
     snackbar.add({ type: 'success', text: 'Bank movements uploaded successfully' })
 
     results.value.hasResults = true
     results.value.data = response
+
+    await getBankMovements()
   } catch (e) {
     console.error(e)
   } finally {

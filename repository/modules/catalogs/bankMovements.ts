@@ -133,8 +133,22 @@ class BankMovementsModule extends FetchFactory<any> {
     return this.call("POST", `${this.RESOURCE}/${id}/set-nota`, fetchOptions);
   }
 
-  async uploadBankMovements(form: any, fetchOptions?: FetchOptions) {
+  async previewUpload(form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form);
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    };
+    return this.call("POST", `${this.RESOURCE}/upload-preview`, fetchOptions);
+  }
+
+  async uploadBankMovements(form: any, selectedIndices?: number[], fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form);
+    if (selectedIndices && selectedIndices.length > 0) {
+      selectedIndices.forEach((idx) => {
+        body.append("selected_indices[]", String(idx));
+      });
+    }
     fetchOptions = {
       body: body,
       ...fetchOptions,

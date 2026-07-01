@@ -33,6 +33,12 @@
               <th class="text-left">Name</th>
               <th class="text-left">ISO Code 2</th>
               <th class="text-left">ISO Code 3</th>
+              <th class="text-left">
+                <div class="flex items-center gap-1">
+                  <v-icon size="x-small" color="blue">mdi-ferry</v-icon>
+                  Sea Import POD
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +62,18 @@
               <td>{{ country.name }}</td>
               <td>{{ country.code }}</td>
               <td>{{ country.code2 }}</td>
+              <td>
+                <v-chip
+                  size="x-small"
+                  :color="country.is_sea_import_pod ? 'blue' : 'default'"
+                  :variant="country.is_sea_import_pod ? 'flat' : 'outlined'"
+                  :class="hasPermission('countries-config-sea') ? 'cursor-pointer' : ''"
+                  @click="hasPermission('countries-config-sea') && toggleSeaImportPod(country)"
+                >
+                  <v-icon start size="x-small">{{ country.is_sea_import_pod ? 'mdi-check' : 'mdi-minus' }}</v-icon>
+                  {{ country.is_sea_import_pod ? 'Yes' : 'No' }}
+                </v-chip>
+              </td>
             </tr>
           </tbody>
         </v-table>
@@ -73,6 +91,7 @@
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
+const { hasPermission } = useCheckUser()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -160,6 +179,22 @@ const getCountries = async () => {
     countries.value = response as any
   } catch (e) {
     console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const toggleSeaImportPod = async (country: any) => {
+  try {
+    loadingStore.start()
+    await $api.countries.toggleSeaImportPod(country.id)
+    country.is_sea_import_pod = !country.is_sea_import_pod
+    snackbar.add({ type: 'success', text: `${country.name} sea import POD ${country.is_sea_import_pod ? 'enabled' : 'disabled'}` })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error updating country' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
