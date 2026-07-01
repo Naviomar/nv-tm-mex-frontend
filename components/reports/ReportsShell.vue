@@ -19,11 +19,11 @@
             <v-list-item-title>{{ dept.title }}</v-list-item-title>
             <template #append>
               <v-chip
-                v-if="dept.reports.length"
+                v-if="visibleReportsForDept(dept).length"
                 size="x-small"
                 :color="dept.color"
                 variant="flat"
-              >{{ dept.reports.length }}</v-chip>
+              >{{ visibleReportsForDept(dept).length }}</v-chip>
               <v-chip v-else size="x-small" color="grey" variant="tonal">soon</v-chip>
             </template>
           </v-list-item>
@@ -34,7 +34,7 @@
       <div class="dept-content">
         <Transition name="dept-swap" mode="out-in">
           <div v-if="activeDept" :key="activeDept.key">
-            <div v-if="activeDept.reports.length" class="content-inner">
+            <div v-if="visibleReports.length" class="content-inner">
               <v-tabs
                 v-model="activeReportKey"
                 :color="activeDept.color"
@@ -42,7 +42,7 @@
                 class="report-tabs mb-4"
               >
                 <v-tab
-                  v-for="report in activeDept.reports"
+                  v-for="report in visibleReports"
                   :key="report.key"
                   :value="report.key"
                   class="text-none"
@@ -83,14 +83,24 @@ import {
   ChargesPendingInvoiceReport,
   ExecutiveReport,
 } from '#components'
-import { REPORT_DEPARTMENTS } from './departments'
+import { REPORT_DEPARTMENTS, type ReportDept } from './departments'
 import { useCheckUser } from '~/composables/useCheckUser'
 
 const { hasPermission } = useCheckUser()
 
 const departments = computed(() =>
-  REPORT_DEPARTMENTS.filter(d => !d.permission || hasPermission(d.permission))
+  REPORT_DEPARTMENTS.filter(dept => {
+    if (dept.reports.length === 0) return true
+    return dept.reports.some(r => !r.permission || hasPermission(r.permission))
+  })
 )
+
+const visibleReports = computed(() =>
+  activeDept.value?.reports.filter(r => !r.permission || hasPermission(r.permission)) ?? []
+)
+
+const visibleReportsForDept = (dept: ReportDept) =>
+  dept.reports.filter(r => !r.permission || hasPermission(r.permission))
 
 // Explicit map from the component name used in departments.ts to the actual
 // component. Importing from '#components' is the Nuxt-supported way to reference
@@ -111,7 +121,7 @@ const activeReportKey = ref<string>(departments.value[0]?.reports[0]?.key ?? '')
 
 const activeDept = computed(() => departments.value.find(d => d.key === activeDeptKey.value) ?? null)
 const activeReport = computed(() =>
-  activeDept.value?.reports.find(r => r.key === activeReportKey.value) ?? activeDept.value?.reports[0] ?? null
+  visibleReports.value.find(r => r.key === activeReportKey.value) ?? visibleReports.value[0] ?? null
 )
 
 // Nuxt auto-imported components don't resolve from a plain string in <component :is>,
