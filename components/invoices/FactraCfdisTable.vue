@@ -467,7 +467,13 @@
                     </v-chip>
                   </div>
                 </td>
-                <td class="whitespace-nowrap">{{ `${cfdi.serie_folio}` }}</td>
+                <td class="whitespace-nowrap">
+                  {{ `${cfdi.serie_folio}` }}
+                  <v-chip v-if="cfdi.legacy_payment_request" color="deep-orange" size="x-small" variant="flat" class="ml-1">
+                    <v-icon size="x-small" start>mdi-alert-circle</v-icon>
+                    TM1 pay request
+                  </v-chip>
+                </td>
                 <td>
                   <v-icon v-if="cfdi.supplier_id != null" color="primary">mdi-link</v-icon>
                   <v-icon v-if="cfdi.supplier_id == null" color="red">mdi-link-off</v-icon>
