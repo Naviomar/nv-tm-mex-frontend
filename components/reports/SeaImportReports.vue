@@ -43,7 +43,7 @@
             </v-select>
           </v-col>
           <v-col cols="6" md="2">
-            <v-checkbox v-model="includeProfit" label="Include Profit" color="primary" density="comfortable" hide-details :disabled="loading" />
+            <v-checkbox v-if="canSeeProfit" v-model="includeProfit" label="Include Profit" color="primary" density="comfortable" hide-details :disabled="loading" />
           </v-col>
           <v-col cols="6" md="3">
             <div class="d-flex align-center gap-2">
@@ -195,13 +195,23 @@
 </template>
 
 <script setup lang="ts">
+import { permissions } from '~/utils/data/system'
+import { useCheckUser } from '~/composables/useCheckUser'
+
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
+
+const canSeeProfit = computed(() => hasPermission(permissions.SeaImportProfit))
 
 const selectedYears = ref<number[]>([])
 const selectedEjecutivo = ref<number | null>(null)
 const includeProfit = ref(true)
 const includeEnTransito = ref(false)
+
+watch(canSeeProfit, (val) => {
+  if (!val) includeProfit.value = false
+}, { immediate: true })
 
 const ejecutivos = ref<any[]>([])
 const chartData = ref<any[]>([])
