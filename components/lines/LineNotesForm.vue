@@ -36,15 +36,17 @@
                 <th>Date</th>
               </tr>
             </thead>
-            <tr
-              class="odd:bg-blue-100 dark:odd:bg-neutral-700"
-              v-for="(note, index) in notes"
-              :key="`ref-note-${index}`"
-            >
-              <td class="p-2">{{ note.creator?.name }}</td>
-              <td>{{ note.note }}</td>
-              <td>{{ formatDateString(note.created_at) }}</td>
-            </tr>
+            <tbody>
+              <tr
+                class="odd:bg-blue-100 dark:odd:bg-neutral-700"
+                v-for="(note, index) in notes"
+                :key="`ref-note-${index}`"
+              >
+                <td class="p-2">{{ note.creator?.name }}</td>
+                <td>{{ note.note }}</td>
+                <td>{{ formatDateString(note.created_at) }}</td>
+              </tr>
+            </tbody>
           </v-table>
         </div>
       </v-card-text>

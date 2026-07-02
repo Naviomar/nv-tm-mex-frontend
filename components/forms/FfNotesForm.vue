@@ -127,38 +127,78 @@
                 >
               </div>
 
-              <div v-for="(charge, index) in concepts" :key="`ff-concept-${index}`" class="grid grid-cols-5 gap-3">
-                <div class="col-span-2">
-                  <v-autocomplete
-                    v-model="charge.charge_id"
-                    density="compact"
-                    label="Charge"
-                    :items="props.charges"
-                    item-title="name"
-                    item-value="id"
-                    variant="solo-filled"
-                  />
-                </div>
-                <div class="">
-                  <v-text-field
-                    v-model="charge.amount"
-                    density="compact"
-                    variant="solo-filled"
-                    label="Amount"
-                    clearable
-                    prepend-inner-icon="mdi-currency-usd"
-                  />
-                </div>
+              <div v-for="(charge, index) in concepts" :key="`ff-concept-${index}`" class="mb-2">
+                <div class="grid grid-cols-12 gap-3">
+                  <div class="col-span-5">
+                    <v-autocomplete
+                      v-model="charge.charge_id"
+                      density="compact"
+                      label="Charge"
+                      :items="props.charges"
+                      item-title="name"
+                      item-value="id"
+                      variant="solo-filled"
+                    />
+                  </div>
+                  <div class="col-span-3" v-if="props.serviceType === 'sea'">
+                    <label htmlfor="capture_option">
 
-                <div class="">
-                  <v-btn
-                    color="red"
-                    variant="outlined"
-                    icon="mdi-delete-outline"
-                    size="x-small"
-                    @click="removeCharge(index)"
-                  >
-                  </v-btn>
+                    <select
+                      v-model="charge.capture_option"
+                      id="capture_option"
+                      class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
+                      @change="(e: any) => {
+                        const val = e?.target?.value;
+                        charge.capture_option = val;
+                        if (val === 'container') {
+                          charge.amount_per_container = charge.amount || 0;
+                          charge.amount = charge.amount_per_container * containerCount;
+                        } else {
+                          charge.amount_per_container = null;
+                        }
+                      }"
+                    >
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="bl">BL</option>
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="container">Container</option>
+                    </select>
+                   </label>
+                  </div>
+                  <div class="col-span-3">
+                    <v-text-field
+                      v-if="charge.capture_option === 'container'"
+                      v-model.number="charge.amount_per_container"
+                      type="number"
+                      label="Rate / Cntr"
+                      density="compact"
+                      variant="solo-filled"
+                      prepend-inner-icon="mdi-currency-usd"
+                      @update:model-value="(val: any) => {
+                        charge.amount = (parseFloat(val) || 0) * containerCount;
+                      }"
+                    />
+                    <v-text-field
+                      v-else
+                      v-model.number="charge.amount"
+                      type="number"
+                      label="Amount"
+                      density="compact"
+                      variant="solo-filled"
+                      prepend-inner-icon="mdi-currency-usd"
+                    />
+                  </div>
+                  <div class="col-span-1 flex items-center justify-center">
+                    <v-btn
+                      color="red"
+                      variant="outlined"
+                      icon="mdi-delete-outline"
+                      size="x-small"
+                      @click="removeCharge(index)"
+                    >
+                    </v-btn>
+                  </div>
+                </div>
+                <div v-if="charge.capture_option === 'container'" class="text-xs text-grey ml-2 mb-2 font-medium">
+                  Total: {{ formatToCurrency(charge.amount_per_container || 0) }} × {{ containerCount }} cntrs = {{ formatToCurrency(charge.amount || 0) }}
                 </div>
               </div>
               <div class="flex justify-end gap-4">
@@ -354,7 +394,12 @@
             <tbody>
               <tr v-for="(charge, index) in ffNoteDetails.ffNote.concepts" :key="`ff-charge-${index}`">
                 <td>{{ charge.charge.name }}</td>
-                <td>{{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }} {{ charge.amount }}</td>
+                <td>
+                  {{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }} {{ formatToCurrency(charge.amount) }}
+                  <span v-if="charge.capture_option === 'container'" class="text-grey text-xs">
+                    ({{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }} {{ formatToCurrency(charge.amount_per_container) }}/cntr)
+                  </span>
+                </td>
               </tr>
             </tbody>
             <tfoot>
@@ -410,6 +455,21 @@ const props = defineProps({
     type: Object,
     required: false,
   },
+  containers: {
+    type: Array,
+    required: false,
+    default: () => [],
+  },
+})
+
+const containerCount = computed(() => props.containers?.length ?? 0)
+
+watch(containerCount, (newCount) => {
+  concepts.value.forEach((charge: any) => {
+    if (charge.capture_option === 'container') {
+      charge.amount = (parseFloat(charge.amount_per_container) || 0) * newCount
+    }
+  })
 })
 
 const emits = defineEmits(['requestSellCharges', 'refresh'])
@@ -498,6 +558,8 @@ const addCharge = () => {
   concepts.value.push({
     charge_id: null,
     amount: 0,
+    capture_option: 'bl',
+    amount_per_container: 0,
   })
 }
 
@@ -597,6 +659,8 @@ const initForms = async () => {
     {
       charge_id: null,
       amount: 0,
+      capture_option: 'bl',
+      amount_per_container: 0,
     },
   ]
 }
@@ -624,7 +688,8 @@ const validateForm = async () => {
   // for each charge validate if all fields are filled
   let validCharges = true
   concepts.value.forEach((charge: any) => {
-    if (!charge.charge_id || !charge.amount) {
+    const isContainer = charge.capture_option === 'container'
+    if (!charge.charge_id || (isContainer ? !charge.amount_per_container : !charge.amount)) {
       snackbar.add({
         type: 'warning',
         text: 'You must fill all fields',
@@ -850,6 +915,7 @@ const saveFfNotes = async () => {
       credit_debit_notes: creditDebitNotes.value,
       service_id: props.referenciaId,
       service_type: props.serviceType,
+      containers: props.containers,
     }
     const response = await $api.ffNotes.saveFfNotes(body)
     snackbar.add({
@@ -894,5 +960,9 @@ const fetchServiceFfNotes = async () => {
 
 onMounted(async () => {
   await fetchServiceFfNotes()
+})
+
+defineExpose({
+  fetchServiceFfNotes,
 })
 </script>
