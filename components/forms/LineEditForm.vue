@@ -290,15 +290,17 @@
                     />
                   </div>
                   <div class="col-span-3">
-                    <label for="capture_option"></label>
+                    <label for="capture_option">
                     <select
                     id="capture_option"
+                    name="capture_option"
                       v-model="concept.capture_option"
-                      class="block w-full h-[40px] rounded-md border-0 py-1.5 px-3 text-gray-900 bg-white! text-gray-900! dark:bg-neutral-800! dark:text-neutral-100! shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:ring-neutral-700!"
+                      class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
                     >
-                      <option value="bl">BL</option>
-                      <option value="container">Container</option>
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="bl">BL</option>
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="container">Container</option>
                     </select>
+</label>
                   </div>
                   <div class="col-span-4 flex gap-2 items-center">
                     <v-text-field
@@ -348,40 +350,42 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in defaultNotes.items.value" :key="`dn-${index}`">
-                  <td>
-                    <v-btn color="red" icon="mdi-delete-outline" size="x-small" variant="outlined" @click="defaultNotes.remove(item)" />
-                  </td>
-                  <td>
-                    <v-chip size="x-small" :color="item.impoExpo === 'I' ? 'blue' : 'orange'">{{ item.impoExpo === 'I' ? 'Import' : 'Export' }}</v-chip>
-                  </td>
-                  <td>
-                    <v-chip size="x-small" :color="item.type === 'C' ? 'green' : 'red'">{{ item.type === 'C' ? 'Credit' : 'Debit' }}</v-chip>
-                  </td>
-                  <td class="whitespace-nowrap text-xs">{{ item.inbound ? 'From Agent' : 'From TM' }}</td>
-                  <td class="whitespace-nowrap text-xs">
-                    <div class="flex items-center gap-1">
-                      <v-chip size="x-small" :color="item.party_type?.includes('Consignee') ? 'purple' : 'teal'">
-                        {{ item.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
-                      </v-chip>
-                      {{ item.party?.name }}
-                    </div>
-                  </td>
-                  <td class="whitespace-nowrap text-xs">
-                    <span v-if="item.consignee">{{ item.consignee?.name }}</span>
-                    <v-chip v-else size="x-small" color="grey">All</v-chip>
-                  </td>
-                  <td class="text-xs">{{ item.currency?.code ?? item.currency?.name }}</td>
-                  <td class="whitespace-nowrap text-xs">{{ item.from_date }}</td>
-                  <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
-                  <td class="text-xs whitespace-nowrap">{{ item.notes ?? '—' }}</td>
-                  <td class="text-xs">
-                    <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">
-                      {{ c.charge?.name }}: {{ formatToCurrency(c.amount) }} <span class="text-grey-darken-1">({{ c.capture_option === 'container' ? 'Container' : 'BL' }})</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="defaultNotes.items.value.length === 0">
+                <template v-if="defaultNotes.items.value.length > 0">
+                  <tr v-for="item in defaultNotes.items.value" :key="item.id">
+                    <td>
+                      <v-btn color="red" icon="mdi-delete-outline" size="x-small" variant="outlined" @click="defaultNotes.remove(item)" />
+                    </td>
+                    <td>
+                      <v-chip size="x-small" :color="item.impoExpo === 'I' ? 'blue' : 'orange'">{{ item.impoExpo === 'I' ? 'Import' : 'Export' }}</v-chip>
+                    </td>
+                    <td>
+                      <v-chip size="x-small" :color="item.type === 'C' ? 'green' : 'red'">{{ item.type === 'C' ? 'Credit' : 'Debit' }}</v-chip>
+                    </td>
+                    <td class="whitespace-nowrap text-xs">{{ item.inbound ? 'From Agent' : 'From TM' }}</td>
+                    <td class="whitespace-nowrap text-xs">
+                      <div class="flex items-center gap-1">
+                        <v-chip size="x-small" :color="item.party_type?.includes('Consignee') ? 'purple' : 'teal'">
+                          {{ item.party_type?.includes('Consignee') ? 'Consignee' : 'FF' }}
+                        </v-chip>
+                        {{ item.party?.name }}
+                      </div>
+                    </td>
+                    <td class="whitespace-nowrap text-xs">
+                      <span v-if="item.consignee">{{ item.consignee?.name }}</span>
+                      <v-chip v-else size="x-small" color="grey">All</v-chip>
+                    </td>
+                    <td class="text-xs">{{ item.currency?.code ?? item.currency?.name }}</td>
+                    <td class="whitespace-nowrap text-xs">{{ item.from_date }}</td>
+                    <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
+                    <td class="text-xs whitespace-nowrap">{{ item.notes ?? '—' }}</td>
+                    <td class="text-xs">
+                      <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">
+                        {{ c.charge?.name }}: {{ formatToCurrency(c.amount) }} <span class="text-grey-darken-1">({{ c.capture_option === 'container' ? 'Container' : 'BL' }})</span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+                <tr v-else>
                   <td colspan="11" class="text-center text-grey py-2 text-sm">No default notes configured</td>
                 </tr>
               </tbody>

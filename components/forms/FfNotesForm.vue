@@ -141,11 +141,12 @@
                     />
                   </div>
                   <div class="col-span-3" v-if="props.serviceType === 'sea'">
-                    <label htmlfor="capture_option">Amount Type</label>
+                    <label htmlfor="capture_option">
+
                     <select
                       v-model="charge.capture_option"
                       id="capture_option"
-                      class="block w-full h-[40px] rounded-md border-0 py-1.5 px-3 text-sm transition-colors duration-200 outline-none bg-[#f5f5f5] text-gray-900 focus:bg-[#e0e0e0] dark:bg-[#303030] dark:text-neutral-100 dark:focus:bg-[#3d3d3d]"
+                      class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
                       @change="(e: any) => {
                         const val = e?.target?.value;
                         charge.capture_option = val;
@@ -157,30 +158,32 @@
                         }
                       }"
                     >
-                      <option value="bl" class="bg-white text-gray-900 dark:bg-neutral-800 dark:text-neutral-100">BL</option>
-                      <option value="container" class="bg-white text-gray-900 dark:bg-neutral-800 dark:text-neutral-100">Container</option>
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="bl">BL</option>
+                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="container">Container</option>
                     </select>
+                   </label>
                   </div>
                   <div class="col-span-3">
-                    <label htmlfor="amount_per_container">Rate / Cntr</label>
-                    <input
-                      id="amount_per_container"
+                    <v-text-field
                       v-if="charge.capture_option === 'container'"
                       v-model.number="charge.amount_per_container"
                       type="number"
-                      placeholder="Rate / Cntr"
-                      class="block w-full h-[40px] rounded-md border-0 py-1.5 px-3 text-sm transition-colors duration-200 outline-none bg-[#f5f5f5] text-gray-900 placeholder-gray-500 focus:bg-[#e0e0e0] dark:bg-[#303030] dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-[#3d3d3d]"
-                      @input="(e: any) => {
-                        charge.amount = (parseFloat(e?.target?.value) || 0) * containerCount;
+                      label="Rate / Cntr"
+                      density="compact"
+                      variant="solo-filled"
+                      prepend-inner-icon="mdi-currency-usd"
+                      @update:model-value="(val: any) => {
+                        charge.amount = (parseFloat(val) || 0) * containerCount;
                       }"
                     />
-                    <input
-                    id="amount"
+                    <v-text-field
                       v-else
                       v-model.number="charge.amount"
                       type="number"
-                      placeholder="Amount"
-                      class="block w-full h-[40px] rounded-md border-0 py-1.5 px-3 text-sm transition-colors duration-200 outline-none bg-[#f5f5f5] text-gray-900 placeholder-gray-500 focus:bg-[#e0e0e0] dark:bg-[#303030] dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-[#3d3d3d]"
+                      label="Amount"
+                      density="compact"
+                      variant="solo-filled"
+                      prepend-inner-icon="mdi-currency-usd"
                     />
                   </div>
                   <div class="col-span-1 flex items-center justify-center">
