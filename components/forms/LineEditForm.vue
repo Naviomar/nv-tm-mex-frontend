@@ -276,9 +276,9 @@
                 <div
                   v-for="(concept, idx) in defaultNotes.form.value.concepts"
                   :key="`dn-concept-${idx}`"
-                  class="grid grid-cols-3 gap-2 mb-1"
+                  class="grid grid-cols-12 gap-2 mb-1"
                 >
-                  <div class="col-span-2">
+                  <div class="col-span-5">
                     <v-autocomplete
                       v-model="concept.charge_id"
                       density="compact"
@@ -289,12 +289,23 @@
                       variant="solo-filled"
                     />
                   </div>
-                  <div class="flex gap-2 items-center">
+                  <div class="col-span-3">
+                    <label for="capture_option"></label>
+                    <select
+                    id="capture_option"
+                      v-model="concept.capture_option"
+                      class="block w-full h-[40px] rounded-md border-0 py-1.5 px-3 text-gray-900 bg-white! text-gray-900! dark:bg-neutral-800! dark:text-neutral-100! shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:ring-neutral-700!"
+                    >
+                      <option value="bl">BL</option>
+                      <option value="container">Container</option>
+                    </select>
+                  </div>
+                  <div class="col-span-4 flex gap-2 items-center">
                     <v-text-field
                       v-model="concept.amount"
                       density="compact"
                       variant="solo-filled"
-                      label="Amount *"
+                      :label="concept.capture_option === 'container' ? 'Rate / Cntr *' : 'Amount *'"
                       type="number"
                       prepend-inner-icon="mdi-currency-usd"
                     />
@@ -365,7 +376,9 @@
                   <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
                   <td class="text-xs whitespace-nowrap">{{ item.notes ?? '—' }}</td>
                   <td class="text-xs">
-                    <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">{{ c.charge?.name }}: {{ formatToCurrency(c.amount) }}</div>
+                    <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">
+                      {{ c.charge?.name }}: {{ formatToCurrency(c.amount) }} <span class="text-grey-darken-1">({{ c.capture_option === 'container' ? 'Container' : 'BL' }})</span>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="defaultNotes.items.value.length === 0">
@@ -540,7 +553,7 @@ const useDefaultFfNotes = () => {
     party_id: null,
     consignee_id: null,
     notes: null,
-    concepts: [{ charge_id: null, amount: null }],
+    concepts: [{ charge_id: null, amount: null, capture_option: 'bl' }],
   })
 
   const form = ref<any>(emptyForm())
@@ -573,7 +586,7 @@ const useDefaultFfNotes = () => {
   }
 
   const addConcept = () => {
-    form.value.concepts.push({ charge_id: null, amount: null })
+    form.value.concepts.push({ charge_id: null, amount: null, capture_option: 'bl' })
   }
 
   const removeConcept = (idx: number) => {
