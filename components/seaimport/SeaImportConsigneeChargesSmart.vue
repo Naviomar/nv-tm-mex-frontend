@@ -262,9 +262,18 @@
 
         <div class="py-4">
           <div class="py-2">
-            <v-btn color="primary" size="small" @click="toggleChargeAddForm">Add charge to reference</v-btn>
+            <v-btn v-if="canEditCharges" color="primary" size="small" @click="toggleChargeAddForm">Add charge to reference</v-btn>
+            <ProcessAuthorizationWrapper
+              v-else
+              process-name="sea-import.add-charge-locked"
+              :request-key="String(props.id)"
+              label="Request charge addition"
+              :process-data="{ referencia_id: parseInt(props.id) }"
+              :field-catalogs="lockedChargeFieldCatalogs"
+              @refresh="getData"
+            />
           </div>
-          <div v-if="chargeForm.show">
+          <div v-if="chargeForm.show && canEditCharges">
             <div class="grid grid-cols-9 gap-1">
               <div class="col-span-1">
                 <v-autocomplete
@@ -371,6 +380,7 @@
         </div>
       </v-card-text>
     </v-card>
+
   </div>
 </template>
 <script setup lang="ts">
@@ -683,6 +693,11 @@ const getSeaImportCatalogs = async () => {
 const unsavedChanged = (charge: any) => {
   return charge.unsaved === true
 }
+
+const lockedChargeFieldCatalogs = computed(() => ({
+  charges: (catalogs.value.charges as any[]).map((c: any) => ({ label: c.name, value: c.id, code: c.code })),
+  currencies: (currencies as any[]).map((c: any) => ({ label: c.name, value: c.id })),
+}))
 
 onMounted(async () => {
   await getSeaImportCatalogs()
