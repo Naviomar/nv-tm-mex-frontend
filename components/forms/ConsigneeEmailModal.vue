@@ -1,6 +1,6 @@
 <template>
-  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="1600" width="97vw" persistent scrollable>
-    <v-card style="height: 90vh; display: flex; flex-direction: column;">
+  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="1800" width="99vw" persistent scrollable>
+    <v-card style="height: 95vh; display: flex; flex-direction: column;">
       <v-card-title class="d-flex align-center gap-2 pa-5 pb-4">
         <v-icon color="primary">mdi-email-outline</v-icon>
         <span v-if="mode === 'create'" class="text-h6">
@@ -129,11 +129,40 @@
               density="comfortable"
               variant="outlined"
               :return-object="true"
-              chips
-              closable-chips
               multiple
               hide-details
-            />
+            >
+              <template v-slot:selection="{ index }">
+                <v-chip v-if="index === 0" size="small" color="primary" variant="tonal">
+                  {{ mailNotificationsValue.length }} selected
+                </v-chip>
+              </template>
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :title="formatNotificationName(item.raw.short_name)">
+                  <template v-slot:prepend="{ isSelected }">
+                    <v-icon :color="isSelected ? 'primary' : 'transparent'" size="small" class="mr-2">
+                      mdi-check
+                    </v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
+
+            <!-- Chip grid — full control outside autocomplete -->
+            <div v-if="mailNotificationsValue.length > 0" class="noty-chip-grid mt-2">
+              <v-chip
+                v-for="item in mailNotificationsValue"
+                :key="item.id"
+                closable
+                size="large"
+                color="primary"
+                variant="tonal"
+                class="noty-chip"
+                @click:close="removeNotification(item)"
+              >
+                {{ formatNotificationName(item.short_name) }}
+              </v-chip>
+            </div>
           </div>
 
           <v-divider />
@@ -190,11 +219,16 @@
                 <v-icon color="primary" size="small">mdi-bell-outline</v-icon>
                 <span class="text-subtitle-2 font-weight-medium">Assigned Notifications</span>
                 <v-chip size="x-small" color="primary" variant="tonal">{{ values.mail_notifications.length }}</v-chip>
+                <v-spacer />
+                <span class="text-caption text-medium-emphasis">Set all:</span>
+                <v-btn-toggle density="compact" rounded="lg" color="primary" variant="outlined">
+                  <v-btn size="x-small" class="type-btn" @click="setAllType('TO')">TO</v-btn>
+                  <v-btn size="x-small" class="type-btn" @click="setAllType('CC')">CC</v-btn>
+                </v-btn-toggle>
               </div>
               <div class="notifications-grid">
-                <template v-for="(notification, index) in values.mail_notifications" :key="index">
+                <template v-for="(notification, index) in sortedNotifications" :key="notification.id ?? index">
                   <div
-                    v-if="customerMailNotifications.find((item: any) => item.id === notification.id)"
                     class="notif-item"
                     :class="notification.type === 'CC' ? 'notif-item--cc' : 'notif-item--to'"
                   >
@@ -374,7 +408,7 @@ const applyGroupNotifications = (groups: any[] | null) => {
 
   setValues({
     ...values,
-    mail_notifications: Array.from(notificationsMap.values()),
+    mail_notifications: sortByName(Array.from(notificationsMap.values())),
   })
 }
 
@@ -403,11 +437,11 @@ watch(() => props.show, (newVal) => {
         email: props.emailData.email,
         notes: props.emailData.notes || '',
         mail_notification_ids: props.emailData.mail_notifications?.map((m: any) => m.id) || [],
-        mail_notifications: props.emailData.mail_notifications?.map((notification: any) => ({
+        mail_notifications: sortByName(props.emailData.mail_notifications?.map((notification: any) => ({
           short_name: notification.short_name,
           id: notification.id,
           type: notification.pivot?.type,
-        })) || [],
+        })) || []),
         ports: props.emailData.ports?.map((p: any) => p.id) || [],
         airports: props.emailData.airports?.map((a: any) => a.id) || [],
       })
@@ -455,14 +489,17 @@ const airports = computed({
   }
 })
 
+const sortByName = (arr: any[]) =>
+  [...arr].sort((a, b) => (a.short_name ?? '').localeCompare(b.short_name ?? ''))
+
 const mailNotificationsValue = computed({
   get: () => values.mail_notifications || [],
   set: (val: any[]) => {
-    const notifications = val.map((item: any) => ({
+    const notifications = sortByName(val.map((item: any) => ({
       id: item.id,
       short_name: item.short_name,
-      type: item.type || 'TO', // Default type if not set
-    }))
+      type: item.type || 'TO',
+    })))
     setValues({ ...values, mail_notifications: notifications })
   }
 })
@@ -475,6 +512,25 @@ function displayNameForNotification(notification: { id: number; short_name?: str
   const fromCatalog = customerMailNotifications.value.find((item: any) => item.id === notification.id)?.short_name
   const name = (fromCatalog ?? notification.short_name ?? '').toString().trim()
   return name || `(ID: ${notification.id})`
+}
+
+const sortedNotifications = computed(() => {
+  return [...(values.mail_notifications || [])].sort((a, b) => {
+    const nameA = displayNameForNotification(a)
+    const nameB = displayNameForNotification(b)
+    return nameA.localeCompare(nameB)
+  })
+})
+
+const removeNotification = (item: any) => {
+  const updated = (values.mail_notifications || []).filter((n: any) => n.id !== item.id)
+  setValues({ ...values, mail_notifications: updated })
+}
+
+const setAllType = (type: 'TO' | 'CC') => {
+  setValues({
+    mail_notifications: values.mail_notifications!.map((item: any) => ({ ...item, type })),
+  })
 }
 
 const onChangeType = (value: any, notification: any) => {
@@ -631,5 +687,25 @@ const submitForm = () => {
   font-weight: 600 !important;
   min-width: 32px !important;
   padding: 0 6px !important;
+}
+
+.noty-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 6px;
+}
+
+.noty-chip {
+  width: 100% !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  justify-content: space-between !important;
+}
+
+.noty-chip :deep(.v-chip__content) {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.3;
 }
 </style>
