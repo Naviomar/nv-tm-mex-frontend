@@ -28,17 +28,15 @@ class FetchFactory<T> {
       async onResponseError(context) {
         console.error('🚀 on Response Error', context.response?._data)
         apiErrorStore.addError(context.response)
+        // console.error('onResponseError', context)
         if (context.response.status === 401) {
           console.warn('🚀 401', context.response)
           if (import.meta.client) {
-            const route = useRoute()
-            const isExcluded = route.meta?.sanctum?.excluded === true
-            if (!isExcluded) {
-              await nuxtApp.runWithContext(() =>
-                navigateTo(sanctumOptions.redirect.onAuthOnly as string)
-              );
-            }
+            await nuxtApp.runWithContext(() =>
+              navigateTo(sanctumOptions.redirect.onAuthOnly as string)
+            );
           }
+          // auth.logout()
         }
       },
     }
