@@ -53,6 +53,25 @@
           </div>
         </div>
 
+        <!-- invoice_charge_builder: code-driven invoice search widget mockup -->
+        <div v-else-if="el.type === 'invoice_charge_builder'" class="preview-charge-builder" style="border-color: rgba(var(--v-theme-info), 0.5)">
+          <div class="preview-charge-builder-label" style="color: rgb(0,188,212); background: rgba(0,188,212,0.08)">
+            <v-icon size="12" color="cyan">mdi-receipt-text-plus-outline</v-icon>
+            Invoice charge builder
+            <v-chip size="x-small" color="cyan" variant="tonal" class="ml-1" style="font-size:9px">code-driven</v-chip>
+          </div>
+          <div class="preview-charge-builder-body">
+            <div class="d-flex gap-1 mb-1">
+              <div class="preview-input" style="height:22px;flex:1" />
+              <div class="preview-input" style="height:22px;width:28px;background:rgba(var(--v-theme-info),0.1)" />
+            </div>
+            <div class="d-flex gap-1">
+              <div class="preview-input" style="height:22px;flex:2" />
+              <div class="preview-input" style="height:22px;flex:1" />
+            </div>
+          </div>
+        </div>
+
         <!-- form_field -->
         <div v-else-if="el.type === 'form_field'" class="preview-field">
           <label class="text-caption text-medium-emphasis d-block mb-1">

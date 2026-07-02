@@ -10,10 +10,17 @@
           </div>
         </div>
       </div>
-      <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
-        New Type
-      </v-btn>
+      <div class="d-flex align-center gap-2">
+        <v-btn color="secondary" variant="tonal" prepend-icon="mdi-sitemap-outline" @click="showCreationGuide = true">
+          How to create a new type
+        </v-btn>
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
+          New Type
+        </v-btn>
+      </div>
     </div>
+
+    <RequestTypeCreationGuide v-model="showCreationGuide" />
 
     <!-- Filters -->
     <v-card variant="flat" class="mb-4" rounded="lg" border>
@@ -100,9 +107,29 @@
           <v-divider />
           <v-card-actions class="px-3">
             <v-btn size="small" variant="text" prepend-icon="mdi-pencil" color="primary" @click="openEditDialog(type)">Edit</v-btn>
+            <v-btn
+              size="small"
+              variant="text"
+              :prepend-icon="showFlowForId.has(type.id) ? 'mdi-chevron-up' : 'mdi-sitemap'"
+              color="secondary"
+              @click="toggleFlow(type.id)"
+            >Flow</v-btn>
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-palette-outline"
+              color="deep-purple"
+              @click="openTemplateEditor(type)"
+            >Template</v-btn>
             <v-spacer />
             <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="confirmDelete(type)" />
           </v-card-actions>
+          <v-expand-transition>
+            <div v-if="showFlowForId.has(type.id)" class="px-3 pb-3">
+              <v-divider class="mb-2" />
+              <RequestFlowDiagram :auto-execute="isAutoExecute(type.code)" />
+            </div>
+          </v-expand-transition>
         </v-card>
       </v-col>
 
@@ -115,6 +142,13 @@
     <div v-else class="d-flex justify-center py-12">
       <v-progress-circular indeterminate color="primary" />
     </div>
+
+    <!-- Template editor canvas -->
+    <RequestTemplateEditor
+      v-model="showTemplateEditor"
+      :request-type="templateEditorType"
+      @saved="onTemplateSaved"
+    />
 
     <!-- Create/Edit Dialog -->
     <v-dialog v-model="showDialog" max-width="680" scrollable>
@@ -269,6 +303,39 @@
                 <v-list-item v-bind="props" :title="item.raw.name" :subtitle="item.raw.email" />
               </template>
             </v-autocomplete>
+            <!-- Form Fields Editor -->
+            <v-divider class="my-4" />
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center gap-2">
+                <v-icon size="18" color="orange">mdi-form-select</v-icon>
+                <span class="text-subtitle-2 font-weight-bold">Dynamic Form Fields</span>
+              </div>
+              <v-btn size="small" variant="tonal" color="orange" prepend-icon="mdi-plus" @click="openAddFieldDialog">Add field</v-btn>
+            </div>
+            <div v-if="!(form.form_fields?.length)" class="text-caption text-disabled mb-2">
+              No dynamic fields. The request form will only show the reason textarea.
+            </div>
+            <div v-else class="d-flex flex-column gap-1 mb-2">
+              <div
+                v-for="(field, idx) in form.form_fields"
+                :key="field.name + idx"
+                class="d-flex align-center gap-2 pa-2 border rounded"
+              >
+                <v-chip size="x-small" color="orange" variant="tonal">{{ field.type }}</v-chip>
+                <code class="text-caption">{{ field.name }}</code>
+                <span class="text-caption flex-grow-1">{{ field.label }}</span>
+                <v-chip v-if="field.required" size="x-small" color="error" variant="tonal">required</v-chip>
+                <v-btn icon size="x-small" variant="text" :disabled="idx === 0" @click="moveField(idx, -1)">
+                  <v-icon>mdi-chevron-up</v-icon>
+                </v-btn>
+                <v-btn icon size="x-small" variant="text" :disabled="idx === (form.form_fields?.length ?? 0) - 1" @click="moveField(idx, 1)">
+                  <v-icon>mdi-chevron-down</v-icon>
+                </v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeField(idx)">
+                  <v-icon>mdi-delete-outline</v-icon>
+                </v-btn>
+              </div>
+            </div>
           </template>
         </v-card-text>
 
@@ -276,6 +343,58 @@
         <v-card-actions class="justify-end px-6 pb-4">
           <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
           <v-btn color="primary" :loading="saving" @click="save">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Field editor sub-dialog -->
+    <v-dialog v-model="showFieldDialog" max-width="460">
+      <v-card>
+        <v-card-title class="pt-4 px-6 text-subtitle-1 font-weight-bold">Add Form Field</v-card-title>
+        <v-card-text class="px-6 py-3">
+          <v-select
+            v-model="fieldForm.type"
+            label="Type"
+            :items="fieldTypeOptions"
+            item-title="label"
+            item-value="value"
+            density="compact"
+            variant="outlined"
+          />
+          <v-text-field
+            v-model="fieldForm.name"
+            label="Field name (snake_case)"
+            density="compact"
+            variant="outlined"
+            hint="Used as key in form_data"
+            class="mt-3"
+          />
+          <v-text-field
+            v-model="fieldForm.label"
+            label="Label (shown to user)"
+            density="compact"
+            variant="outlined"
+            class="mt-3"
+          />
+          <v-switch v-model="fieldForm.required" label="Required" density="compact" color="error" hide-details class="mt-2" />
+          <template v-if="fieldForm.type === 'radio' || fieldForm.type === 'select'">
+            <v-divider class="my-3" />
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-caption font-weight-bold">Options</span>
+              <v-btn size="x-small" variant="tonal" color="orange" @click="addFieldOption">Add option</v-btn>
+            </div>
+            <div v-for="(opt, oi) in fieldForm.options" :key="oi" class="d-flex gap-2 mb-1 align-center">
+              <v-text-field v-model="opt.label" label="Label" density="compact" variant="outlined" hide-details />
+              <v-text-field v-model="opt.value" label="Value" density="compact" variant="outlined" hide-details />
+              <v-btn icon size="x-small" variant="text" color="error" @click="fieldForm.options!.splice(oi, 1)">
+                <v-icon>mdi-delete-outline</v-icon>
+              </v-btn>
+            </div>
+          </template>
+        </v-card-text>
+        <v-card-actions class="justify-end px-6 pb-4">
+          <v-btn variant="text" @click="showFieldDialog = false">Cancel</v-btn>
+          <v-btn color="primary" @click="saveField">Add</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -300,10 +419,18 @@
 </template>
 
 <script setup lang="ts">
-import type { IAuthRequestType, IDefaultCcUser } from '~/repository/modules/catalogs/authRequestTypes'
+import type { IAuthRequestType, IDefaultCcUser, IFormField, IRequestTemplate } from '~/repository/modules/catalogs/authRequestTypes'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+
+const AUTO_EXECUTE_PROCESS_CODES = [
+  'credit-note.update-meta',
+  'credit-note.add-charge',
+  'container-delay-rates.apply-changes',
+  'invoice-sea.delete-charge-proforma',
+  'sea-import.add-charge-locked',
+]
 
 definePageMeta({
   title: 'Auth Request Types - System',
@@ -314,7 +441,26 @@ const types = ref<IAuthRequestType[]>([])
 const loading = ref(false)
 const showDialog = ref(false)
 const showDeleteDialog = ref(false)
+const showCreationGuide = ref(false)
 const editingType = ref<IAuthRequestType | null>(null)
+
+// Template editor
+const showTemplateEditor = ref(false)
+const templateEditorType = ref<IAuthRequestType | null>(null)
+const { invalidate: invalidateCatalog } = useRequestTypeCatalog()
+
+function openTemplateEditor(type: IAuthRequestType) {
+  templateEditorType.value = type
+  showTemplateEditor.value = true
+}
+
+function onTemplateSaved(template: IRequestTemplate) {
+  if (templateEditorType.value) {
+    const idx = types.value.findIndex(t => t.id === templateEditorType.value!.id)
+    if (idx !== -1) types.value[idx]!.template = template
+  }
+  invalidateCatalog()
+}
 const deletingType = ref<IAuthRequestType | null>(null)
 const saving = ref(false)
 const deleting = ref(false)
@@ -362,6 +508,7 @@ const form = ref({
   icon: '',
   color: '',
   is_active: true,
+  form_fields: [] as IFormField[],
 })
 
 const codeRules = [(v: string) => !!v || 'Code is required']
@@ -401,13 +548,13 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, form_fields: [] }
   showDialog.value = true
 }
 
 const openEditDialog = async (type: IAuthRequestType) => {
   editingType.value = type
-  form.value = { ...type } as any
+  form.value = { ...type, form_fields: [...(type.form_fields ?? [])] } as any
   ccUsers.value = type.default_cc_users ?? []
   approvers.value = type.approvers ?? []
   showDialog.value = true
@@ -487,7 +634,7 @@ const addCcUser = async (user: IDefaultCcUser | null) => {
   try {
     ccUsers.value = await $api.authRequestTypes.addDefaultCcUser(editingType.value.id, user.id)
     const idx = types.value.findIndex(t => t.id === editingType.value!.id)
-    if (idx >= 0) types.value[idx].default_cc_users = [...ccUsers.value]
+    if (idx >= 0) types.value[idx]!.default_cc_users = [...ccUsers.value]
   } catch {
     snackbar.add({ type: 'error', text: 'Error adding CC user' })
   } finally {
@@ -501,7 +648,7 @@ const removeCcUser = async (userId: number) => {
   try {
     ccUsers.value = await $api.authRequestTypes.removeDefaultCcUser(editingType.value.id, userId)
     const idx = types.value.findIndex(t => t.id === editingType.value!.id)
-    if (idx >= 0) types.value[idx].default_cc_users = [...ccUsers.value]
+    if (idx >= 0) types.value[idx]!.default_cc_users = [...ccUsers.value]
   } catch {
     snackbar.add({ type: 'error', text: 'Error removing CC user' })
   }
@@ -530,7 +677,7 @@ const addApprover = async (user: IDefaultCcUser | null) => {
   try {
     approvers.value = await $api.authRequestTypes.addApprover(editingType.value.id, user.id)
     const idx = types.value.findIndex(t => t.id === editingType.value!.id)
-    if (idx >= 0) types.value[idx].approvers = [...approvers.value]
+    if (idx >= 0) types.value[idx]!.approvers = [...approvers.value]
   } catch {
     snackbar.add({ type: 'error', text: 'Error adding approver' })
   } finally {
@@ -544,10 +691,94 @@ const removeApprover = async (userId: number) => {
   try {
     approvers.value = await $api.authRequestTypes.removeApprover(editingType.value.id, userId)
     const idx = types.value.findIndex(t => t.id === editingType.value!.id)
-    if (idx >= 0) types.value[idx].approvers = [...approvers.value]
+    if (idx >= 0) types.value[idx]!.approvers = [...approvers.value]
   } catch {
     snackbar.add({ type: 'error', text: 'Error removing approver' })
   }
+}
+
+// ── Flow diagram ──────────────────────────────────────────────────────────────
+
+const showFlowForId = ref(new Set<number>())
+
+function toggleFlow(id: number) {
+  if (showFlowForId.value.has(id)) {
+    showFlowForId.value.delete(id)
+  } else {
+    showFlowForId.value.add(id)
+  }
+  showFlowForId.value = new Set(showFlowForId.value)
+}
+
+function isAutoExecute(code: string) {
+  return AUTO_EXECUTE_PROCESS_CODES.includes(code)
+}
+
+// ── Form fields editor ────────────────────────────────────────────────────────
+
+const showFieldDialog = ref(false)
+const fieldTypeOptions = [
+  { label: 'Text', value: 'text' },
+  { label: 'Textarea', value: 'textarea' },
+  { label: 'Number', value: 'number' },
+  { label: 'Select', value: 'select' },
+  { label: 'Radio', value: 'radio' },
+  { label: 'Checkbox', value: 'checkbox' },
+]
+const fieldForm = ref<{
+  type: IFormField['type']
+  name: string
+  label: string
+  required: boolean
+  options: { label: string; value: string }[]
+}>({
+  type: 'text',
+  name: '',
+  label: '',
+  required: false,
+  options: [],
+})
+
+function openAddFieldDialog() {
+  fieldForm.value = { type: 'text' as IFormField['type'], name: '', label: '', required: false, options: [] }
+  showFieldDialog.value = true
+}
+
+function addFieldOption() {
+  if (!fieldForm.value.options) fieldForm.value.options = []
+  fieldForm.value.options.push({ label: '', value: '' })
+}
+
+function saveField() {
+  const f = fieldForm.value
+  if (!f.name.trim() || !f.label.trim()) {
+    snackbar.add({ type: 'error', text: 'Field name and label are required' })
+    return
+  }
+  if (!form.value.form_fields) form.value.form_fields = []
+  const newField: IFormField = {
+    type: f.type,
+    name: f.name.trim(),
+    label: f.label.trim(),
+    required: f.required,
+  }
+  if ((f.type === 'radio' || f.type === 'select') && f.options?.length) {
+    newField.options = f.options.filter(o => o.label || o.value).map(o => ({ label: o.label, value: o.value as string | number }))
+  }
+  form.value.form_fields.push(newField)
+  showFieldDialog.value = false
+}
+
+function removeField(idx: number) {
+  form.value.form_fields?.splice(idx, 1)
+}
+
+function moveField(idx: number, direction: -1 | 1) {
+  const fields = form.value.form_fields
+  if (!fields) return
+  const swapIdx = idx + direction
+  if (swapIdx < 0 || swapIdx >= fields.length) return
+  ;[fields[idx], fields[swapIdx]] = [fields[swapIdx], fields[idx]]
 }
 
 onMounted(() => loadTypes())

@@ -28,7 +28,7 @@ export interface IFormField {
 
 // ── Template interfaces ────────────────────────────────────────────────────
 
-export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder'
+export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder' | 'invoice_charge_builder'
 export type IAlertBlockType = 'info' | 'warning' | 'error' | 'success'
 
 export interface ITemplateElementBase {
@@ -67,12 +67,22 @@ export interface ITemplateElementChargeBuilder extends ITemplateElementBase {
   charges_catalog_key: string
 }
 
+/**
+ * Code-driven element: renders invoice search + charge picker for credit notes.
+ * credit_note_id_key: key in processData that holds the credit note ID.
+ */
+export interface ITemplateElementInvoiceChargeBuilder extends ITemplateElementBase {
+  type: 'invoice_charge_builder'
+  credit_note_id_key: string
+}
+
 export type ITemplateElement =
   | ITemplateElementFormField
   | ITemplateElementSection
   | ITemplateElementTextBlock
   | ITemplateElementAlertBlock
   | ITemplateElementChargeBuilder
+  | ITemplateElementInvoiceChargeBuilder
 
 export interface ITemplateReasonField {
   show: boolean

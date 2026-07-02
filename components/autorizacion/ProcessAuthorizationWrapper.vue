@@ -101,11 +101,19 @@
               @update:model-value="formData = $event"
             />
 
-            <!-- charge_builder: code-driven multi-charge widget -->
+            <!-- charge_builder: code-driven multi-charge widget (static catalog) -->
             <ChargeBuilderField
               v-else-if="el.type === 'charge_builder'"
               :model-value="chargesData[el.id] ?? []"
               :charges-catalog="fieldCatalogs[(el as any).charges_catalog_key] ?? []"
+              @update:model-value="chargesData[el.id] = $event"
+            />
+
+            <!-- invoice_charge_builder: invoice search + charge picker for credit notes -->
+            <InvoiceChargeBuilderField
+              v-else-if="el.type === 'invoice_charge_builder'"
+              :model-value="chargesData[el.id] ?? []"
+              :credit-note-id="props.processData?.[(el as any).credit_note_id_key]"
               @update:model-value="chargesData[el.id] = $event"
             />
           </template>

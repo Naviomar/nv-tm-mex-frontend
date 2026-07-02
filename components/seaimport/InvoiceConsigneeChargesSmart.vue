@@ -92,7 +92,19 @@
             </div>
             <div class="flex flex-col justify-center items-center gap-2">
               <div v-if="isProfroma">
-                <v-btn density="compact" variant="outlined" color="red" @click="deleteCharge(charge)">Delete</v-btn>
+                <template v-if="canDeleteProformaCharge">
+                  <v-btn density="compact" variant="outlined" color="red" @click="deleteCharge(charge)">Delete</v-btn>
+                </template>
+                <template v-else>
+                  <ProcessAuthorizationWrapper
+                    process-name="invoice-sea.delete-charge-proforma"
+                    :request-key="String(charge.id)"
+                    label="Request deletion"
+                    :display-name="charge.charge?.name ?? ''"
+                    :process-data="buildDeleteProcessData(charge)"
+                    @refresh="emits('refresh')"
+                  />
+                </template>
                 <v-btn
                   v-if="unsavedChanged(charge)"
                   density="compact"
@@ -131,6 +143,7 @@ import { currencies } from '@/utils/data/systemData'
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   referenciaId: {
@@ -385,5 +398,17 @@ const updateCharge = async (charge: any) => {
 
 const unsavedChanged = (charge: any) => {
   return charge.unsaved === true
+}
+
+const canDeleteProformaCharge = computed(() => hasPermission('customer-invoices-edit'))
+
+function buildDeleteProcessData(charge: any) {
+  return {
+    invoice_charge_id: charge.id,
+    invoice_id: props.invoice.id,
+    invoice_type: props.invoiceType,
+    service_type: props.serviceType,
+    charge_name: charge.charge?.name ?? '',
+  }
 }
 </script>
