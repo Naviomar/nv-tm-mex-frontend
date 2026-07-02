@@ -1,36 +1,39 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title>
-      <div class="flex justify-between items-center">
-        <div class="flex items-center gap-2">
-          <v-icon>mdi-email-outline</v-icon>
-          <span>Emails</span>
-        </div>
-        <v-btn icon size="x-small" @click="openAddEmailsDialog" color="success">
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
+    <v-card-title class="d-flex align-center justify-space-between pa-4 pb-3">
+      <div class="d-flex align-center gap-2">
+        <v-icon color="primary">mdi-email-outline</v-icon>
+        <span class="text-h6">Emails</span>
+        <v-chip v-if="emails && emails.length > 0" size="x-small" color="primary" variant="tonal">
+          {{ emails.length }}
+        </v-chip>
       </div>
+      <v-btn size="small" color="success" variant="tonal" prepend-icon="mdi-plus" @click="openAddEmailsDialog">
+        Add email
+      </v-btn>
     </v-card-title>
-    <v-card-text>
-      <div v-if="!emails || emails.length === 0" class="text-center py-4 text-gray-500">
-        No emails registered
+    <v-divider />
+    <v-card-text class="pa-0">
+      <div v-if="!emails || emails.length === 0" class="text-center py-8 text-medium-emphasis">
+        <v-icon size="40" class="mb-2 opacity-30">mdi-email-off-outline</v-icon>
+        <p class="text-body-2">No emails registered</p>
       </div>
-      <v-table v-else density="compact">
+      <v-table v-else density="compact" class="emails-table">
         <thead>
           <tr>
-            <th class="text-left" width="100">Actions</th>
-            <th class="text-left">Email</th>
-            <th class="text-left">Notifications</th>
-            <th class="text-left">Notes</th>
+            <th width="88">Actions</th>
+            <th>Email</th>
+            <th>Notifications</th>
+            <th>Notes</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(email, index) in emails" :key="`email-${index}`">
             <td>
-              <div class="flex gap-1">
+              <div class="d-flex gap-1">
                 <v-btn
                   size="x-small"
-                  variant="text"
+                  variant="tonal"
                   icon="mdi-cog-outline"
                   color="blue"
                   @click="openNotificationsModal(email)"
@@ -38,37 +41,37 @@
                 />
                 <v-btn
                   size="x-small"
-                  variant="text"
+                  variant="tonal"
                   icon="mdi-delete-outline"
-                  color="red-lighten-2"
+                  color="error"
                   @click="confirmDeleteEmail(email)"
                 />
               </div>
             </td>
             <td>
-              <span class="font-medium">{{ email.email }}</span>
+              <div class="d-flex align-center gap-1">
+                <v-icon size="x-small" color="medium-emphasis">mdi-at</v-icon>
+                <span class="text-body-2 font-weight-medium">{{ email.email }}</span>
+              </div>
             </td>
             <td>
-              <div class="flex flex-wrap gap-1 max-w-md">
+              <div v-if="!email.mail_notifications?.length" class="text-caption text-medium-emphasis">—</div>
+              <div v-else class="notif-chips-row">
                 <v-chip
-                  v-for="(noty, nIndex) in email.mail_notifications?.slice(0, 3)"
+                  v-for="(noty, nIndex) in email.mail_notifications"
                   :key="`noty-${nIndex}`"
                   size="x-small"
-                  :color="noty.pivot?.type === 'TO' ? 'primary' : 'amber'"
+                  :color="noty.pivot?.type === 'TO' ? 'primary' : 'amber-darken-2'"
+                  variant="tonal"
+                  class="notif-chip"
                 >
-                  {{ noty.pivot?.type }}: {{ noty.short_name }}
-                </v-chip>
-                <v-chip
-                  v-if="email.mail_notifications?.length > 3"
-                  size="x-small"
-                  color="grey"
-                >
-                  +{{ email.mail_notifications.length - 3 }} more
+                  <span class="notif-type-badge">{{ noty.pivot?.type }}</span>
+                  {{ formatNotificationName(noty.short_name) }}
                 </v-chip>
               </div>
             </td>
             <td>
-              <span class="text-sm text-gray-600">{{ email.notes || '-' }}</span>
+              <span class="text-caption text-medium-emphasis">{{ email.notes || '—' }}</span>
             </td>
           </tr>
         </tbody>
@@ -170,7 +173,7 @@
                 class="flex items-center justify-between py-2 border-b last:border-b-0"
               >
                 <div class="flex-1">
-                  <span class="font-medium">{{ notification.short_name }}</span>
+                  <span class="font-medium">{{ formatNotificationName(notification.short_name) }}</span>
                   <p class="text-xs text-gray-500">{{ notification.description }}</p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -247,7 +250,7 @@
               class="flex items-center justify-between py-2 border-b last:border-b-0"
             >
               <div class="flex-1">
-                <span class="font-medium">{{ notification.short_name }}</span>
+                <span class="font-medium">{{ formatNotificationName(notification.short_name) }}</span>
               </div>
               <v-btn-toggle
                 v-model="editNotifications[notification.id]"
@@ -274,6 +277,7 @@
 
 <script setup lang="ts">
 import { mailNotifications as allMailNotifications } from '~/utils/data/systemData'
+import { formatNotificationName } from '~/utils/mailNotifications'
 
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -567,3 +571,41 @@ const confirmDeleteEmail = async (email: any) => {
   }
 }
 </script>
+
+<style scoped>
+.emails-table :deep(thead th) {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.emails-table :deep(tbody tr:hover td) {
+  background: rgba(var(--v-theme-primary), 0.03);
+}
+
+.emails-table :deep(td) {
+  vertical-align: top;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.notif-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+  max-width: 600px;
+}
+
+.notif-chip {
+  font-size: 0.72rem !important;
+}
+
+.notif-type-badge {
+  font-weight: 700;
+  margin-right: 3px;
+  opacity: 0.8;
+}
+</style>

@@ -24,3 +24,12 @@ export const PORT_FILTERABLE_NOTIFICATIONS = [
 export function isPortFilterableNotification(shortName: string): boolean {
   return PORT_FILTERABLE_NOTIFICATIONS.includes(shortName as any)
 }
+
+/**
+ * Converts a camelCase notification name into a human-readable string
+ * e.g. "AirExportRevalidation" → "Air Export Revalidation"
+ */
+export function formatNotificationName(name: string): string {
+  if (!name) return name
+  return name.replace(/([a-z])([A-Z])/g, '$1 $2')
+}
