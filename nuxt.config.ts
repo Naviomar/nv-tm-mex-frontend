@@ -121,7 +121,7 @@ export default defineNuxtConfig({
       logout: '/logout',
       user: '/user',
     },
-    redirectIfUnauthenticated: false,
+    redirectIfUnauthenticated: true,
     redirect: {
       keepRequestedRoute: true,
       onLogin: '/', // Custom route after successful login
