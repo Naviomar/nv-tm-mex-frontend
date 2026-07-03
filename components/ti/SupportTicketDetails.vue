@@ -142,7 +142,7 @@ const loadingStore = useLoadingStore()
 const router = useRouter()
 const route = useRoute()
 const snackbar = useSnackbar()
-const user = useSanctumUser<any>()
+const { isSuperAdminRole } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -157,9 +157,7 @@ const form = reactive({
 })
 const newFiles = ref<any>([])
 
-const isAdmin = computed(() => {
-  return user.value?.id === 1
-})
+const isAdmin = computed(() => isSuperAdminRole())
 
 const priorityColor = computed(() => {
   switch (supportTicket.value.priority) {

@@ -494,12 +494,10 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
-const { user: currentUser } = useCheckUser()
+const { isSuperAdminRole } = useCheckUser()
 
 // Only Super Admin can edit or delete Consignee-party notes
-const canEditConsigneeNote = computed(() => {
-  return currentUser.value?.roles?.some((role: any) => role.name === 'Super Admin') ?? false
-})
+const canEditConsigneeNote = computed(() => isSuperAdminRole())
 
 const props = defineProps({
   referenciaId: {

@@ -325,7 +325,7 @@ const confirm = $notifications.useConfirm()
 const router = useRouter()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
-const user = useSanctumUser<any>()
+const { isSuperAdminRole } = useCheckUser()
 
 const filters = ref({
   name: '',
@@ -341,7 +341,7 @@ const charges = ref({
   last_page: 1,
 })
 
-const isAdmin = user.value?.id === 1
+const isAdmin = computed(() => isSuperAdminRole())
 
 const getServiceColor = (serviceName: string) => {
   if (!serviceName || typeof serviceName !== 'string') return 'grey'
