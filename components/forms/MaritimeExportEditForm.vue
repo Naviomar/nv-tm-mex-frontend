@@ -584,10 +584,12 @@
         </div>
 
         <FfNotesForm
+          ref="ffNotesFormRef"
           :referenciaId="values.id!"
           serviceType="sea"
           :charges="catalogs.charges"
           :freights="catalogs.freights"
+          :containers="containers"
           @refresh="getData"
           @request-sell-charges="getSellCharges"
         />
@@ -736,12 +738,14 @@ const onAgentChange = async (agentId: number | null) => {
   }
 }
 
+const ffNotesFormRef = ref<any>(null)
 const transhipments = ref([] as any)
 const masterBls = ref([] as any)
 const houseBls = ref([] as any)
 const containers = ref([] as any)
 const booking_containers = ref<any>([])
 const charges = ref([] as any)
+// TODO: Unused variable
 const notes = ref([] as any)
 
 const formRebate = ref({
@@ -1092,6 +1096,7 @@ const getData = async () => {
 
     charges.value = response.charges
     initCreditDebitNotes.value = response.ff_notes
+    ffNotesFormRef.value?.fetchServiceFfNotes()
   } catch (e) {
     console.error(e)
   } finally {

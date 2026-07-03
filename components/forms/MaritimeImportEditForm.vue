@@ -616,10 +616,12 @@
           />
 
           <FfNotesForm
+            ref="ffNotesFormRef"
             :referenciaId="values.id!"
             serviceType="sea"
             :charges="catalogs.charges"
             :freights="catalogs.freights"
+            :containers="containers"
             @refresh="getData"
             @request-sell-charges="getSellCharges"
           />
@@ -778,6 +780,7 @@ const onAgentChange = async (agentId: number | null) => {
   }
 }
 
+const ffNotesFormRef = ref<any>(null)
 const referencia = ref<any>({})
 const transhipments = ref([] as any)
 const masterBls = ref([] as any)
@@ -1208,6 +1211,7 @@ const getData = async () => {
     charges.value = response.charges
 
     await profitOverviewRef.value?.getSeaImportProfit()
+    ffNotesFormRef.value?.fetchServiceFfNotes()
   } catch (e) {
     console.error(e)
   } finally {
