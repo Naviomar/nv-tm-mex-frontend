@@ -1,61 +1,49 @@
 <template>
-  <div class="perspective-distant">
-    <div class="pt-0 flex flex-col">
-      <div class="flex flex-col justify-around gap-2 mb-0">
-        <!-- No request yet: show request button -->
-        <div
-          v-if="!hasPendingRequest && !hasGrantedRequest"
-          class="transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving"
-        >
-          <div
-            class="font-bold text-center text-xs p-1 rounded-lg chip-sand cursor-pointer"
-            @click="confirmRequestAuthorization"
-          >
-            <v-icon>mdi-shield-lock-outline</v-icon>
-            <br />
-            <span class="italic">{{ label }}</span>
-          </div>
-        </div>
+  <div class="paw-root">
+    <!-- No request yet -->
+    <v-btn
+      v-if="!hasPendingRequest && !hasGrantedRequest"
+      variant="tonal"
+      color="amber-darken-2"
+      size="small"
+      class="paw-btn"
+      @click="confirmRequestAuthorization"
+    >
+      <v-icon start size="16">mdi-shield-lock-outline</v-icon>
+      {{ label }}
+    </v-btn>
 
-        <!-- Pending: show cancel + pending indicator -->
-        <div
-          v-if="hasPendingRequest && !hasGrantedRequest"
-          class="cursor-pointer transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving"
-        >
-          <div
-            class="font-bold text-center text-xs p-1 rounded-lg cursor-pointer bg-red-100 text-red-700"
-            @click="confirmDeleteRequestAuthorization"
-          >
-            <v-icon>mdi-shield-remove-outline</v-icon>
-            <br />
-            <span class="italic">Cancel Authorization</span>
-          </div>
-        </div>
-        <div
-          v-if="hasPendingRequest && !hasGrantedRequest"
-          class="transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving"
-        >
-          <div class="text-center text-xs leading-none p-1 rounded-lg chip-peach">
-            <v-icon>mdi-shield-lock-outline</v-icon>
-            <span class="italic">Authorization Pending</span>
-            <v-progress-circular v-if="isPolling" indeterminate size="10" width="1" class="ml-1" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Granted -->
-      <div
-        v-if="hasGrantedRequest"
-        class="transform-3d relative border-2 border-yellow-500 border-dashed p-1 rounded-lg shadow shadow-yellow-500 hover:animate-dash-moving"
+    <!-- Pending -->
+    <div v-else-if="hasPendingRequest && !hasGrantedRequest" class="paw-pending">
+      <v-chip
+        color="amber-darken-2"
+        variant="tonal"
+        size="small"
+        class="paw-chip-pending"
       >
-        <div class="text-center text-xs leading-none">
-          <slot name="auth"></slot>
-          <div class="italic mt-1">
-            <v-icon size="small">mdi-shield-check</v-icon> Authorized until
-            {{ formatDateString(activeAuthorization?.expires_at) }}
-          </div>
-        </div>
-      </div>
+        <v-icon start size="14">mdi-clock-outline</v-icon>
+        Pending approval
+        <v-progress-circular v-if="isPolling" indeterminate size="10" width="1" class="ml-1" />
+      </v-chip>
+      <v-btn
+        variant="text"
+        color="error"
+        size="x-small"
+        class="ml-1"
+        @click="confirmDeleteRequestAuthorization"
+      >
+        <v-icon size="14">mdi-close</v-icon>
+        Cancel
+      </v-btn>
+    </div>
+
+    <!-- Granted -->
+    <div v-else-if="hasGrantedRequest" class="paw-granted">
+      <slot name="auth"></slot>
+      <v-chip color="success" variant="tonal" size="small" class="paw-chip-granted">
+        <v-icon start size="14">mdi-shield-check</v-icon>
+        Authorized until {{ formatDateString(activeAuthorization?.expires_at) }}
+      </v-chip>
     </div>
 
     <!-- Request dialog -->
@@ -209,10 +197,16 @@ const chargesData = ref<Record<string, any[]>>({})
 const processNameKey = computed(() =>
   props.requestKey == null ? props.processName : `${props.processName}:${props.requestKey}`
 )
-const hasPendingRequest = computed(() => requestForProcess.value.length > 0)
+const hasPendingRequest = computed(() =>
+  requestForProcess.value.some((r: any) => r.status === 'pending')
+)
 const hasGrantedRequest = computed(() =>
   userRequests.value.some(
-    (req: any) => req.process_name_key === processNameKey.value && req.status === 'granted' && req.is_granted
+    (req: any) =>
+      req.process_name_key === processNameKey.value &&
+      req.status === 'granted' &&
+      req.is_granted &&
+      !req.used_at
   )
 )
 const activeAuthorization = computed(() =>
@@ -269,6 +263,8 @@ async function fetchUserRequests() {
 // ── Actions ───────────────────────────────────────────────────────────────────
 
 const confirmRequestAuthorization = () => {
+  // Refresh the template catalog so recent template edits are reflected
+  loadCatalog(true)
   showConfirmDialog.value = true
 }
 
@@ -361,3 +357,35 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style scoped>
+.paw-root {
+  display: inline-flex;
+  align-items: center;
+}
+
+.paw-btn {
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.paw-pending {
+  display: inline-flex;
+  align-items: center;
+}
+
+.paw-chip-pending {
+  font-size: 11px;
+}
+
+.paw-granted {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.paw-chip-granted {
+  font-size: 11px;
+}
+</style>

@@ -14,14 +14,14 @@ export function useRequestTypeCatalog() {
   const catalog = useState<IAuthRequestType[] | null>('auth-request-type-catalog', () => null)
   const loading = useState<boolean>('auth-request-type-catalog-loading', () => false)
 
-  async function loadCatalog(): Promise<void> {
-    if (catalog.value !== null || loading.value) return
+  async function loadCatalog(force = false): Promise<void> {
+    if ((catalog.value !== null && !force) || loading.value) return
     loading.value = true
     try {
       const data = await $api.authRequestTypes.getTypes()
       catalog.value = data as IAuthRequestType[]
     } catch {
-      catalog.value = []
+      if (catalog.value === null) catalog.value = []
     } finally {
       loading.value = false
     }

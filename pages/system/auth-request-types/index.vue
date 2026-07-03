@@ -447,7 +447,7 @@ const editingType = ref<IAuthRequestType | null>(null)
 // Template editor
 const showTemplateEditor = ref(false)
 const templateEditorType = ref<IAuthRequestType | null>(null)
-const { invalidate: invalidateCatalog } = useRequestTypeCatalog()
+const { invalidate: invalidateCatalog, loadCatalog: reloadCatalog } = useRequestTypeCatalog()
 
 function openTemplateEditor(type: IAuthRequestType) {
   templateEditorType.value = type
@@ -460,6 +460,7 @@ function onTemplateSaved(template: IRequestTemplate) {
     if (idx !== -1) types.value[idx]!.template = template
   }
   invalidateCatalog()
+  reloadCatalog()
 }
 const deletingType = ref<IAuthRequestType | null>(null)
 const saving = ref(false)

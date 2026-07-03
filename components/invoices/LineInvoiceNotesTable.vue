@@ -119,17 +119,7 @@
                     
                     <ViewButton :item="item" @click="viewLineInvoice(item)" />
 
-                    <ProcessAuthorizationWrapper
-                      v-if="!isPaid(item)"
-                      processName="invoices.lines.update"
-                      :requestKey="item.id"
-                      label="Edit Line Invoice"
-                      :displayName="item.serie_folio || `Line Invoice #${item.id}`"
-                    >
-                      <template #auth>
-                        <EditButton :item="item" @click="editLineInvoice(item)" />
-                      </template>
-                    </ProcessAuthorizationWrapper>
+                    <EditButton v-if="!isPaid(item)" :item="item" @click="editLineInvoice(item)" />
 
                     <ProcessAuthorizationWrapper
                       v-if="!isPaid(item)"
