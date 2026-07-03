@@ -86,10 +86,14 @@
                   <AGlobalSearch
                     :key="`party-search-${form.party_type}`"
                     ref="partySearchRef"
-                    :onSearch="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? searchFfs : searchCustomers"
+                    :onSearch="
+                      form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? searchFfs : searchCustomers
+                    "
                     :set-id="values.party_id || undefined"
                     validate-key="party_id"
-                    :label="form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'F.F. Agent *' : 'Consignee *'"
+                    :label="
+                      form.party_type === 'App\\Models\\Mexico\\FreightForwarder' ? 'F.F. Agent *' : 'Consignee *'
+                    "
                   />
                 </div>
                 <div>
@@ -142,26 +146,34 @@
                   </div>
                   <div class="col-span-3" v-if="props.serviceType === 'sea'">
                     <label htmlfor="capture_option">
-
-                    <select
-                      v-model="charge.capture_option"
-                      id="capture_option"
-                      class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
-                      @change="(e: any) => {
-                        const val = e?.target?.value;
-                        charge.capture_option = val;
-                        if (val === 'container') {
-                          charge.amount_per_container = charge.amount || 0;
-                          charge.amount = charge.amount_per_container * containerCount;
-                        } else {
-                          charge.amount_per_container = null;
-                        }
-                      }"
-                    >
-                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="bl">BL</option>
-                      <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="container">Container</option>
-                    </select>
-                   </label>
+                      <select
+                        v-model="charge.capture_option"
+                        id="capture_option"
+                        class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
+                        @change="
+                          (e: any) => {
+                            const val = e?.target?.value
+                            charge.capture_option = val
+                            if (val === 'container') {
+                              charge.amount_per_container = charge.amount || 0
+                              charge.amount = charge.amount_per_container * containerCount
+                            } else {
+                              charge.amount_per_container = null
+                            }
+                          }
+                        "
+                      >
+                        <option class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100" value="bl">
+                          BL
+                        </option>
+                        <option
+                          class="bg-[#f5f5f5] text-gray-900 dark:bg-[#2f2f2f] dark:text-neutral-100"
+                          value="container"
+                        >
+                          Container
+                        </option>
+                      </select>
+                    </label>
                   </div>
                   <div class="col-span-3">
                     <v-text-field
@@ -172,9 +184,11 @@
                       density="compact"
                       variant="solo-filled"
                       prepend-inner-icon="mdi-currency-usd"
-                      @update:model-value="(val: any) => {
-                        charge.amount = (parseFloat(val) || 0) * containerCount;
-                      }"
+                      @update:model-value="
+                        (val: any) => {
+                          charge.amount = (parseFloat(val) || 0) * containerCount
+                        }
+                      "
                     />
                     <v-text-field
                       v-else
@@ -197,15 +211,56 @@
                     </v-btn>
                   </div>
                 </div>
-                <div v-if="charge.capture_option === 'container'" class="text-xs text-grey ml-2 mb-2 font-medium">
-                  Total: {{ formatToCurrency(charge.amount_per_container || 0) }} × {{ containerCount }} cntrs = {{ formatToCurrency(charge.amount || 0) }}
+
+                <!-- Calculation of total charge -->
+                <div class="flex justify-end">
+                  <div
+                    v-if="charge.capture_option === 'container'"
+                    class="mt-2 mb-4 p-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 max-w-sm"
+                    :aria-label="`Arithmetic operation: Rate per container of ${formatToCurrency(charge.amount_per_container || 0)} multiplied by ${containerCount} containers equals a total of ${formatToCurrency(charge.amount || 0)}`"
+                  >
+                    <div class="text-md font-semibold mb-3 text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                      <v-icon size="small" class="text-slate-600 dark:text-zinc-400">mdi-calculator</v-icon>
+                      Total Charge Calculation:
+                    </div>
+                    <div class="inline-flex flex-col font-mono text-sm leading-relaxed text-right min-w-[280px]">
+                      <!-- Rate line -->
+                      <div class="flex justify-between items-center py-1">
+                        <span class="text-md font-sans text-slate-600 dark:text-zinc-400 text-left"
+                          >Rate per container</span
+                        >
+                        <span class="font-bold text-slate-900 dark:text-white">{{
+                          formatToCurrency(charge.amount_per_container || 0)
+                        }}</span>
+                      </div>
+                      <!-- Containers line -->
+                      <div
+                        class="flex justify-between items-center py-1 border-b border-slate-400 dark:border-zinc-500"
+                      >
+                        <span class="text-md font-sans text-slate-600 dark:text-zinc-400 text-left flex items-center">
+                          <span class="font-bold text-base mr-1.5">×</span> Containers
+                        </span>
+                        <span class="font-bold text-slate-900 dark:text-white">{{ containerCount }}</span>
+                      </div>
+                      <!-- Total line -->
+                      <div class="flex justify-between items-center pt-2 pb-1 font-bold text-base">
+                        <span class="text-md font-sans text-slate-700 dark:text-zinc-300 text-left font-semibold"
+                          >Total</span
+                        >
+                        <span
+                          class="text-primary dark:text-blue-400 bg-slate-200/60 dark:bg-zinc-700 px-2 py-0.5 rounded"
+                          >{{ formatToCurrency(charge.amount || 0) }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="flex justify-end gap-4">
-                <v-btn color="red" @click="cancelForm"> Cancel </v-btn>
-                <v-btn color="primary" @click="upsertFfNote">
-                  {{ form.id ? `Update note #${form.id}` : 'Add note' }}
-                </v-btn>
+                <div class="flex justify-end gap-4">
+                  <v-btn color="red" @click="cancelForm"> Cancel </v-btn>
+                  <v-btn color="primary" @click="upsertFfNote">
+                    {{ form.id ? `Update note #${form.id}` : 'Add note' }}
+                  </v-btn>
+                </div>
               </div>
             </div>
           </div>
@@ -236,7 +291,12 @@
               <td>
                 <div v-if="creditDebit.deleted_at == null && !creditDebit.note_payment" class="flex items-center gap-2">
                   <!-- Consignee notes: edit restricted to Super Admin -->
-                  <div v-if="!creditDebit.checked_at && (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)">
+                  <div
+                    v-if="
+                      !creditDebit.checked_at &&
+                      (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
+                    "
+                  >
                     <EditButton :item="creditDebit" @click="editFfNote(creditDebit)" />
                   </div>
                   <div v-if="creditDebit.checked_at">
@@ -318,7 +378,13 @@
               </td>
               <td class="whitespace-nowrap">
                 <!-- Consignee notes: delete restricted to Super Admin -->
-                <div v-if="!creditDebit.deleted_at && !creditDebit.checked_at && (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)">
+                <div
+                  v-if="
+                    !creditDebit.deleted_at &&
+                    !creditDebit.checked_at &&
+                    (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
+                  "
+                >
                   <v-btn icon color="red" @click="confirmDelete(creditDebit)" size="x-small">
                     <v-icon>mdi-delete-outline</v-icon>
                   </v-btn>
@@ -397,7 +463,8 @@
                 <td>
                   {{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }} {{ formatToCurrency(charge.amount) }}
                   <span v-if="charge.capture_option === 'container'" class="text-grey text-xs">
-                    ({{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }} {{ formatToCurrency(charge.amount_per_container) }}/cntr)
+                    ({{ getCurrencyName(ffNoteDetails.ffNote.currency_id) }}
+                    {{ formatToCurrency(charge.amount_per_container) }}/cntr)
                   </span>
                 </td>
               </tr>
@@ -476,7 +543,9 @@ const emits = defineEmits(['requestSellCharges', 'refresh'])
 
 const showForm = ref(false)
 const toggleForm = () => (showForm.value = !showForm.value)
-const openForm = () => { if (!showForm.value) showForm.value = true }
+const openForm = () => {
+  if (!showForm.value) showForm.value = true
+}
 const pdfServerViewer = ref<any>(null)
 const showPdfDialog = ref(false)
 const ffNoteDetails = ref<any>({
@@ -534,11 +603,15 @@ const { handleSubmit, values, errors, meta, handleReset, validate, setValues } =
 })
 
 // Sync vee-validate format with form.format for isFromAgent computed
-watch(() => values.format, (newFormat) => {
-  if (form.value) {
-    form.value.format = newFormat
-  }
-}, { immediate: true })
+watch(
+  () => values.format,
+  (newFormat) => {
+    if (form.value) {
+      form.value.format = newFormat
+    }
+  },
+  { immediate: true },
+)
 
 const hasPendingToSave = computed(() => creditDebitNotes.value.length > 0)
 
