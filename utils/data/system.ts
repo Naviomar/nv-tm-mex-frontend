@@ -340,6 +340,36 @@ const processResources = {
     description: 'Apply Container Delay Rate Changes',
     keyLabel: 'Line',
   },
+  /** Authorize deleting a charge from a sea import proforma */
+  InvoiceSeaDeleteChargeProforma: {
+    processName: 'invoice-sea.delete-charge-proforma',
+    description: 'Delete Proforma Charge (Sea Import)',
+    keyLabel: 'Charge',
+  },
+  /** Authorize adding a charge to a locked sea import reference */
+  SeaImportAddChargeLocked: {
+    processName: 'sea-import.add-charge-locked',
+    description: 'Add Charge to Locked Sea Import Reference',
+    keyLabel: 'Reference',
+  },
+  /** Authorize adding a charge to a credit note */
+  CreditNoteAddCharge: {
+    processName: 'credit-note.add-charge',
+    description: 'Add Charge to Credit Note',
+    keyLabel: 'Credit Note',
+  },
+  /** Authorize updating folio/comments on a credit note */
+  CreditNoteUpdateMeta: {
+    processName: 'credit-note.update-meta',
+    description: 'Update Folio / Comments on Credit Note',
+    keyLabel: 'Credit Note',
+  },
+  /** Authorize adding similar invoice names to a charge */
+  ChargeSimilarNames: {
+    processName: 'charge-similar-names',
+    description: 'Add Similar Invoice Names to Charge',
+    keyLabel: 'Charge',
+  },
 }
 
 const systemLayouts = {

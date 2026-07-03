@@ -3,16 +3,30 @@
     <v-card rounded="xl">
       <v-toolbar color="warning" density="comfortable">
         <v-icon class="ml-4">mdi-shield-lock-outline</v-icon>
-        <v-toolbar-title>Request approval for rate changes</v-toolbar-title>
+        <v-toolbar-title>{{ tpl.title || 'Request approval for rate changes' }}</v-toolbar-title>
         <v-spacer />
         <v-btn icon="mdi-close" variant="text" @click="close" />
       </v-toolbar>
 
       <v-card-text class="pt-4 space-y-4">
         <v-alert type="info" variant="tonal" density="compact">
-          You don't have permission to apply these changes directly. Submit them for approval — once granted, they are
-          applied automatically. You can send as many requests as you need.
+          {{ tpl.subtitle || "You don't have permission to apply these changes directly. Submit them for approval — once granted, they are applied automatically. You can send as many requests as you need." }}
         </v-alert>
+
+        <!-- Template elements -->
+        <template v-for="el in tpl.elements" :key="el.id">
+          <v-alert
+            v-if="el.type === 'alert_block'"
+            :type="(el as any).alert_type"
+            variant="tonal"
+            density="compact"
+          >
+            {{ (el as any).alert_text }}
+          </v-alert>
+          <p v-else-if="el.type === 'text_block'" class="text-sm text-medium-emphasis">
+            {{ (el as any).text }}
+          </p>
+        </template>
 
         <div>
           <div class="text-sm font-semibold mb-1">{{ lineName || `Line ${lineId}` }}</div>
@@ -33,20 +47,21 @@
         </div>
 
         <v-textarea
+          v-if="tpl.reason.show"
           v-model="reason"
-          label="Reason for this request"
+          :label="tpl.reason.label"
           variant="outlined"
-          rows="3"
+          :rows="tpl.reason.rows ?? 3"
           counter
           clearable
-          :rules="[(v) => !!(v && v.trim()) || 'Reason is required']"
+          :rules="tpl.reason.required ? [(v: any) => !!(v && v.trim()) || 'Reason is required'] : []"
         />
       </v-card-text>
 
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
         <v-btn variant="text" :disabled="submitting" @click="close">Cancel</v-btn>
-        <v-btn color="warning" :loading="submitting" :disabled="!ops.length" @click="submit">Send request</v-btn>
+        <v-btn color="warning" :loading="submitting" :disabled="!ops.length" @click="submit">{{ tpl.buttons.submit }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -76,6 +91,15 @@ const emit = defineEmits<{
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { submitAsRequest } = useContainerDelayRateActions()
+const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+
+const tpl = computed(() => getTemplate('container-delay-rates.apply-changes'))
+
+// Refresh the catalog when the dialog opens so template edits are reflected
+watch(
+  () => props.modelValue,
+  (open) => { if (open) loadCatalog(true) }
+)
 
 const reason = ref('')
 const submitting = ref(false)
@@ -108,7 +132,7 @@ function close() {
 }
 
 async function submit() {
-  if (!reason.value.trim()) {
+  if (tpl.value.reason.show && tpl.value.reason.required && !reason.value.trim()) {
     snackbar.add({ type: 'error', text: 'Please provide a reason for the request.' })
     return
   }

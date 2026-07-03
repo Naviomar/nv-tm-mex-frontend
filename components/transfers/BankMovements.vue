@@ -290,12 +290,28 @@
       <v-card>
         <v-card-title class="bg-orange-darken-1 text-white">
           <v-icon class="mr-2">mdi-delete-alert</v-icon>
-          Request Bank Movement Cancellation
+          {{ cancelTpl.title || 'Request Bank Movement Cancellation' }}
         </v-card-title>
         <v-card-text class="pt-4">
           <v-alert type="warning" variant="tonal" class="mb-4">
-            This will create an authorization request to cancel the bank movement. The movement can only be cancelled if it has no payment applications.
+            {{ cancelTpl.subtitle || 'This will create an authorization request to cancel the bank movement. The movement can only be cancelled if it has no payment applications.' }}
           </v-alert>
+
+          <!-- Template elements -->
+          <template v-for="el in cancelTpl.elements" :key="el.id">
+            <v-alert
+              v-if="el.type === 'alert_block'"
+              :type="(el as any).alert_type"
+              variant="tonal"
+              density="compact"
+              class="mb-3"
+            >
+              {{ (el as any).alert_text }}
+            </v-alert>
+            <p v-else-if="el.type === 'text_block'" class="text-sm text-medium-emphasis mb-3">
+              {{ (el as any).text }}
+            </p>
+          </template>
           
           <div class="mb-4">
             <div class="text-subtitle-2 font-weight-bold mb-2">Bank Movement Details:</div>
@@ -320,12 +336,13 @@
           </div>
 
           <v-textarea
+            v-if="cancelTpl.reason.show"
             v-model="cancelDialog.reason"
-            label="Reason for cancellation *"
+            :label="cancelTpl.reason.label"
             density="compact"
-            rows="3"
+            :rows="cancelTpl.reason.rows ?? 3"
             variant="outlined"
-            :rules="[v => !!v || 'Reason is required']"
+            :rules="cancelTpl.reason.required ? [(v: any) => !!v || 'Reason is required'] : []"
           />
 
           <div class="mb-2">
@@ -355,10 +372,10 @@
             color="orange-darken-2" 
             variant="elevated"
             @click="requestCancellation"
-            :disabled="!cancelDialog.reason"
+            :disabled="cancelTpl.reason.show && cancelTpl.reason.required && !cancelDialog.reason"
           >
             <v-icon class="mr-1">mdi-send</v-icon>
-            Send Request
+            {{ cancelTpl.buttons.submit }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -371,6 +388,9 @@ const clipboard = useCopyToClipboard()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+
+const cancelTpl = computed(() => getTemplate('cancel-bank-movement'))
 const route = useRoute()
 const router = useRouter()
 
@@ -618,6 +638,7 @@ const canRequestCancellation = (bankMovement: any) => {
 }
 
 const showCancelDialog = (bankMovement: any) => {
+  loadCatalog(true)
   cancelDialog.value = {
     show: true,
     bankMovement,

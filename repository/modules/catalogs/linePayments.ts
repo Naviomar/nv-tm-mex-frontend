@@ -97,12 +97,21 @@ class LinePaymentsModule extends FetchFactory<any> {
   }
 
   async updateLineInvoice(data: any, fetchOptions?: FetchOptions) {
-    const body = objectToFormData(data)
+    const body = data instanceof FormData ? data : objectToFormData(data)
     fetchOptions = {
       body: body,
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/invoices/update`, fetchOptions)
+  }
+
+  async updateLineInvoiceAuthorized(data: any, fetchOptions?: FetchOptions) {
+    const body = data instanceof FormData ? data : objectToFormData(data)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/invoices/update-authorized`, fetchOptions)
   }
 
   async removeLineInvoiceRef(data: any, fetchOptions?: FetchOptions) {

@@ -125,46 +125,8 @@
     </v-card>
   </div>
 
-  <v-dialog v-model="showConfirmDialog" max-width="400">
-      <v-card class="">
-        <v-card-title class="text-h6">
-          <v-icon>mdi-shield-lock-outline</v-icon> Request Process Authorization
-        </v-card-title>
-        <v-card-text>
-          <div class="leading-none">Are you sure you want to request authorization to execute this process?</div>
-          <div class="text-sm font-semibold mt-1">{{ friendlyDisplayName }}</div>
-          <v-textarea v-model="form.reason" label="Reason" counter rows="3" clearable />
-        </v-card-text>
-        <v-card-actions>
-          <div class="w-full flex justify-around">
-            <v-btn color="error" @click="showConfirmDialog = false">Cancel</v-btn>
-            <v-btn color="success" @click="onRequestAuthorizationClick">Request</v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="showConfirmDelReqDialog" max-width="400">
-      <v-card class="chip-velvet">
-        <v-card-title class="text-h6">
-          <v-icon>mdi-shield-lock-outline</v-icon> Cancel Process Auth
-        </v-card-title>
-        <v-card-text class="bg-surface-light pt-2">
-          <div class="leading-none">Are you sure you want to cancel request authorization to execute this process?</div>
-          <div class="text-sm font-semibold mt-1"></div>
-          <v-textarea label="Reason" v-model="form.reason_deleted" counter rows="3" clearable />
-        </v-card-text>
-        <v-card-actions>
-          <div class="w-full flex justify-around">
-            <v-btn color="error" @click="showConfirmDelReqDialog = false">Close</v-btn>
-            <v-btn color="success" @click="onRequestCancelAuthorizationClick">Cancel</v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 </template>
 <script setup lang="ts">
-import { getProcessDisplayName } from '~/utils/data/system'
 import { currencies } from '@/utils/data/systemData'
 import { cargoTypes } from '@/utils/data/seaData'
 import { schemaEdit } from '~~/forms/maritimeReferenceForm'
@@ -212,11 +174,6 @@ const showForm = ref(false)
 const containers = ref<any[]>([])
 const hasPendingChanges = ref(false)
 const containerToEdit = ref<any>(null)
-const userRequests = ref<any>([])
-const requestForProcess = ref<any>([])
-const showConfirmDialog = ref<any>(false)
-const showConfirmDelReqDialog = ref<any>(false)
-const form = ref({ reason: '', reason_deleted: '' })
 
 const toggleForm = () => {
   showForm.value = !showForm.value
@@ -258,122 +215,6 @@ const customContainerTypes = computed(() => {
 const hasCargoType = computed(() => {
   return props.cargoType != null || props.cargoType !== ''
 })
-
-const processNameKey = computed(() => {
-  if (props.requestKey == null) {
-    return props.processName
-  }
-  return `${props.processName}:${props.requestKey}`
-})
-const hasPendingRequest = computed(() => requestForProcess.value.length > 0)
-const hasGrantedRequest = computed(() =>
-  userRequests.value.some(
-    (req: any) => req.process_name_key === processNameKey.value && req.status === 'granted' && req.is_granted
-  )
-)
-// Fetch Authorization Data
-const fetchUserRequests = async () => {
-  try {
-    loadingStore.loading = true
-
-    const response = await $api.authProcessRequests.getUserRequests()
-    const responseByResource = await $api.authProcessRequests.getRequestsByResource({
-      process_name: props.processName,
-      request_key: props.requestKey,
-    })
-    
-    userRequests.value = response
-    requestForProcess.value = responseByResource
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loadingStore.stop()
-  }
-}
-// Resolve a human-readable name: combine label + displayName, or fall back to processResources map
-const friendlyDisplayName = computed(() => {
-  // If displayName is provided, combine with label for a complete description
-  if (props.displayName) {
-    return `${props.label} — ${props.displayName}`
-  }
-  // Otherwise use the utility function which resolves from processResources
-  return getProcessDisplayName(props.processName, props.requestKey, null)
-})
-///Del Request
-const confirmDeleteRequestAuthorization = () => {
-  showConfirmDelReqDialog.value = true
-}
-// Request Authorization
-const confirmRequestAuthorization = () => {
-  showConfirmDialog.value = true
-}
-
-const activeAuthorization = computed(() =>
-  userRequests.value.find(
-    (req: any) => req.process_name_key === processNameKey.value && req.status === 'granted' && req.is_granted
-  )
-)
-
-const onRequestCancelAuthorizationClick = async () => {
-  try {
-    if (!form.value.reason_deleted.trim()) {
-      snackbar.add({ type: 'error', text: 'Please provide a reason for the cancelation authorization request' })
-      return
-    }
-
-    loadingStore.loading = true
-
-    const body = {
-      process_name: props.processName,
-      request_key: props.requestKey,
-      display_name: friendlyDisplayName.value,
-      reason: form.value.reason_deleted,
-    }
-    const reason_deleted = {reason_deleted: form.value.reason_deleted.trim()}
-    
-    if(requestForProcess.value){
-        for(var i = 0; i<requestForProcess.value.length; i++){
-          await $api.authProcessRequests.cancelAuth(requestForProcess.value[i].id, reason_deleted)
-        }
-    }
-    
-    snackbar.add({ type: 'success', text: 'Authorization request was canceled' })
-    showConfirmDelReqDialog.value = false
-    form.value.reason = ''
-    loadingStore.stop()
-    await fetchUserRequests()
-  } catch (e) {
-    console.error(e)
-    loadingStore.stop()
-  }
-}
-
-const onRequestAuthorizationClick = async () => {
-  try {
-    if (!form.value.reason.trim()) {
-      snackbar.add({ type: 'error', text: 'Please provide a reason for the authorization request' })
-      return
-    }
-
-    loadingStore.loading = true
-
-    const body = {
-      process_name: props.processName,
-      request_key: props.requestKey,
-      display_name: friendlyDisplayName.value,
-      reason: form.value.reason,
-    }
-    await $api.authProcessRequests.requestAuthorization(body)
-
-    snackbar.add({ type: 'success', text: 'Authorization request sent' })
-    showConfirmDialog.value = false
-    await fetchUserRequests()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loadingStore.stop()
-  }
-}
 
 // watch
 let _updatingFromProp = false

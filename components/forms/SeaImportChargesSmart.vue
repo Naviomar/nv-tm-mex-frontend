@@ -13,6 +13,16 @@
               <v-icon v-if="!showForm">mdi-plus</v-icon>
             </v-btn>
           </div>
+          <div v-else-if="canRequestLockedLocalCharge">
+            <ProcessAuthorizationWrapper
+              process-name="sea-import.add-charge-locked"
+              :request-key="String(props.referencia.id)"
+              label="Request charge"
+              :process-data="{ referencia_id: props.referencia.id }"
+              :field-catalogs="lockedChargeFieldCatalogs"
+              @refresh="emit('refresh')"
+            />
+          </div>
           <div v-if="hasAnyInvoice || !canEditCharges">
             <v-alert density="compact" size="small" variant="tonal">
               <div class="flex items-center gap-2">
@@ -391,6 +401,13 @@ const canEditCharges = computed(() => {
 const hasAnyInvoice = computed(() => {
   return props.referencia?.invoice_tms?.length > 0 || props.referencia?.invoice_wms?.length > 0
 })
+
+const canRequestLockedLocalCharge = computed(() => !hasAnyInvoice.value && !canEditCharges.value)
+
+const lockedChargeFieldCatalogs = computed(() => ({
+  charges: (props.catalogs.charges as any[]).map((c: any) => ({ label: c.name, value: c.id, code: c.code })),
+  currencies: (props.currencies as any[]).map((c: any) => ({ label: c.name, value: c.id })),
+}))
 
 const linkedChargeToInvoice = (charge: any) => {
   if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
