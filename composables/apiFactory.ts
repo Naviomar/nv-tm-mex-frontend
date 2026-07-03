@@ -93,12 +93,15 @@ import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
 import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 import ImportRepoModule from '~/repository/modules/reports/importRepo'
+import ProfitsGralModule from '~/repository/modules/reports/profitsGral'
+import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 
 interface IApiInstance {
   audit: AuditModule
   dashboard: DashboardModule
   reports: ReportsModule
   importRepo: ImportRepoModule
+  profitsGral: ProfitsGralModule
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
@@ -188,6 +191,7 @@ interface IApiInstance {
   statistics: StatisticsModule
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
+  userDataRestrictions: UserDataRestrictionsModule
 }
 
 export function useApiFactory() {
@@ -199,6 +203,7 @@ export function useApiFactory() {
     dashboard: new DashboardModule(client),
     reports: new ReportsModule(client), // Assuming reports is part of the dashboard module
     importRepo: new ImportRepoModule(client),
+    profitsGral: new ProfitsGralModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     shippers: new ShippersModule(client),
@@ -288,6 +293,7 @@ export function useApiFactory() {
     ticketMessages: new TicketMessagesModule(client),
     authRequestTypes: new AuthRequestTypesModule(client),
     requestCcUsers: new RequestCcUsersModule(client),
+    userDataRestrictions: new UserDataRestrictionsModule(client),
   }
 
   return modules

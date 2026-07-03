@@ -76,6 +76,7 @@
 import {
   SeaImportReports,
   ImportRepoReport,
+  ProfitsGralReport,
   CobranzaReport,
   PaymentsHistoryReport,
   MovementPaymentsReport,
@@ -108,6 +109,7 @@ const visibleReportsForDept = (dept: ReportDept) =>
 const componentMap: Record<string, any> = {
   SeaImportReports,
   ImportRepoReport,
+  ProfitsGralReport,
   CobranzaReport,
   PaymentsHistoryReport,
   MovementPaymentsReport,

@@ -30,6 +30,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     reports: [
       { key: 'comparative', title: 'Comparative Analytics', icon: 'mdi-chart-line', component: 'SeaImportReports', permission: 'reports-maritime-import-comparative-view' },
       { key: 'import-repo', title: 'Import Repo', icon: 'mdi-table-large', component: 'ImportRepoReport', permission: 'reports-maritime-import-repo-view' },
+      { key: 'profits-gral', title: 'Profits Gral', icon: 'mdi-chart-donut-variant', component: 'ProfitsGralReport', permission: 'reports-profits-gral-view' },
     ],
   },
   {
