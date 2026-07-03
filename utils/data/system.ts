@@ -26,6 +26,20 @@ const permissions = {
   CustomerInvoicesCreate: 'customer-invoices-create',
   CustomerInvoicesEdit: 'customer-invoices-edit',
 
+  // Sea import reference charges - elevated permission required once the
+  // voyage is locked (phase 2). Unlocked (phase 1) uses CustomerInvoicesEdit.
+  SeaImportAddChargeToReferenciaWithPermission: 'invoice-sea-add-charge-to-referencia-with-permission',
+  SeaImportUpdateChargeWithPermission: 'sea-import-update-charge-with-permission',
+  SeaImportDeleteChargeWithPermission: 'sea-import-delete-charge-with-permission',
+  SeaImportUpdateSellChargeWithPermission: 'sea-import-update-sell-charge-with-permission',
+  SeaImportDeleteSellChargeWithPermission: 'sea-import-delete-sell-charge-with-permission',
+
+  // Sea import proforma charges - elevated permission required once the
+  // voyage is locked (phase 2). Unlocked (phase 1) uses CustomerInvoicesEdit.
+  InvoiceSeaAddChargeToProformaWithPermission: 'invoice-sea-add-charge-to-proforma-with-permission',
+  InvoiceSeaUpdateChargeProformaWithPermission: 'invoice-sea-update-charge-proforma-with-permission',
+  InvoiceSeaDeleteChargeProformaWithPermission: 'invoice-sea-delete-charge-proforma-with-permission',
+
   // TM Invoices
   TmInvoicesIndex: 'tm-invoices-index',
   TmInvoicesView: 'tm-invoices-view',

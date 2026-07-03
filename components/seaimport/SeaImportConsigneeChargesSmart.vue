@@ -77,7 +77,7 @@
                     label="TM / WM"
                     :items="['tm', 'wm']"
                     variant="solo-filled"
-                    :readonly="isChargeReadOnly(charge)"
+                    :readonly="isSellChargeReadOnly(charge)"
                     @update:model-value="charge.unsaved = true"
                   />
                 </div>
@@ -91,7 +91,7 @@
                   item-title="name"
                   item-value="id"
                   variant="solo-filled"
-                  :readonly="isChargeReadOnly(charge)"
+                  :readonly="isSellChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
                 />
               </div>
@@ -102,7 +102,7 @@
                   variant="solo-filled"
                   label="Amount"
                   prepend-inner-icon="mdi-currency-usd"
-                  :readonly="isChargeReadOnly(charge)"
+                  :readonly="isSellChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
                 />
               </div>
@@ -115,7 +115,7 @@
                   item-title="name"
                   item-value="id"
                   variant="solo-filled"
-                  :readonly="isChargeReadOnly(charge)"
+                  :readonly="isSellChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
                 />
               </div>
@@ -126,11 +126,11 @@
                   variant="solo-filled"
                   label="+ IVA"
                   :value="1"
-                  :readonly="isChargeReadOnly(charge)"
+                  :readonly="isSellChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
                   hide-details
                 />
-                
+
               </div>
               <div class="flex flex-col gap-1 items-center">
                 <v-checkbox
@@ -139,18 +139,18 @@
                   variant="solo-filled"
                   label="Breakdown?"
                   :value="1"
-                  :readonly="isChargeReadOnly(charge)"
+                  :readonly="isSellChargeReadOnly(charge)"
                   @update:model-value="charge.unsaved = true"
                   hide-details
                 />
                 <v-chip v-if="isChargeLinkedToInvoice(charge)" size="small" color="primary">Read only</v-chip>
               </div>
               <div v-if="!isChargeLinkedToInvoice(charge)" class="flex flex-col justify-center items-center gap-2">
-                <v-btn density="compact" variant="outlined" color="red" @click="deleteRefSellCharge(charge)"
+                <v-btn v-if="canDeleteSellCharge" density="compact" variant="outlined" color="red" @click="deleteRefSellCharge(charge)"
                   >Delete</v-btn
                 >
                 <v-btn
-                  v-if="unsavedChanged(charge)"
+                  v-if="unsavedChanged(charge) && canUpdateSellCharge"
                   density="compact"
                   variant="outlined"
                   color="green"
@@ -246,9 +246,9 @@
                 <v-chip v-if="isChargeLinkedToInvoice(charge)" size="small" color="primary">Read only</v-chip>
               </div>
               <div v-if="!isChargeLinkedToInvoice(charge)" class="flex flex-col justify-center items-center gap-2">
-                <v-btn density="compact" variant="outlined" color="red" @click="deleteRefCharge(charge)">Delete</v-btn>
+                <v-btn v-if="canDeleteCharge" density="compact" variant="outlined" color="red" @click="deleteRefCharge(charge)">Delete</v-btn>
                 <v-btn
-                  v-if="unsavedChanged(charge)"
+                  v-if="unsavedChanged(charge) && canUpdateCharge"
                   density="compact"
                   variant="outlined"
                   color="green"
@@ -262,9 +262,9 @@
 
         <div class="py-4">
           <div class="py-2">
-            <v-btn v-if="canEditCharges" color="primary" size="small" @click="toggleChargeAddForm">Add charge to reference</v-btn>
+            <v-btn v-if="canAddCharge" color="primary" size="small" @click="toggleChargeAddForm">Add charge to reference</v-btn>
             <ProcessAuthorizationWrapper
-              v-else
+              v-else-if="!canEditCharges"
               process-name="sea-import.add-charge-locked"
               :request-key="String(props.id)"
               label="Request charge addition"
@@ -273,7 +273,7 @@
               @refresh="getData"
             />
           </div>
-          <div v-if="chargeForm.show && canEditCharges">
+          <div v-if="chargeForm.show && canAddCharge">
             <div class="grid grid-cols-9 gap-1">
               <div class="col-span-1">
                 <v-autocomplete
@@ -385,9 +385,11 @@
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
+import { permissions } from '@/utils/data/system'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -452,6 +454,38 @@ const canEditCharges = computed(() => {
   return referencia.value.voyage_discharge.locked_at == null
 })
 
+// Fase 1 (barco no bloqueado): permiso general de facturación.
+// Fase 2 (barco bloqueado): permiso específico elevado por acción.
+const canAddCharge = computed(() =>
+  canEditCharges.value
+    ? hasPermission(permissions.CustomerInvoicesEdit)
+    : hasPermission(permissions.SeaImportAddChargeToReferenciaWithPermission)
+)
+
+const canUpdateCharge = computed(() =>
+  canEditCharges.value
+    ? hasPermission(permissions.CustomerInvoicesEdit)
+    : hasPermission(permissions.SeaImportUpdateChargeWithPermission)
+)
+
+const canDeleteCharge = computed(() =>
+  canEditCharges.value
+    ? hasPermission(permissions.CustomerInvoicesEdit)
+    : hasPermission(permissions.SeaImportDeleteChargeWithPermission)
+)
+
+const canUpdateSellCharge = computed(() =>
+  canEditCharges.value
+    ? hasPermission(permissions.CustomerInvoicesEdit)
+    : hasPermission(permissions.SeaImportUpdateSellChargeWithPermission)
+)
+
+const canDeleteSellCharge = computed(() =>
+  canEditCharges.value
+    ? hasPermission(permissions.CustomerInvoicesEdit)
+    : hasPermission(permissions.SeaImportDeleteSellChargeWithPermission)
+)
+
 const tm_invoices = computed(() => {
   if (!referencia.value) return []
   return referencia.value.invoice_tms
@@ -467,7 +501,11 @@ const isChargeLinkedToInvoice = (charge: any) => {
 }
 
 const isChargeReadOnly = (charge: any) => {
-  return isChargeLinkedToInvoice(charge)
+  return isChargeLinkedToInvoice(charge) || !canUpdateCharge.value
+}
+
+const isSellChargeReadOnly = (charge: any) => {
+  return isChargeLinkedToInvoice(charge) || !canUpdateSellCharge.value
 }
 
 const linkedChargeIcon = (charge: any) => {
