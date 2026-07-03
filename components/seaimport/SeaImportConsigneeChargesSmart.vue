@@ -146,11 +146,11 @@
                 <v-chip v-if="isChargeLinkedToInvoice(charge)" size="small" color="primary">Read only</v-chip>
               </div>
               <div v-if="!isChargeLinkedToInvoice(charge)" class="flex flex-col justify-center items-center gap-2">
-                <v-btn v-if="canDeleteSellCharge" density="compact" variant="outlined" color="red" @click="deleteRefSellCharge(charge)"
+                <v-btn v-if="canDeleteSellCharge(charge)" density="compact" variant="outlined" color="red" @click="deleteRefSellCharge(charge)"
                   >Delete</v-btn
                 >
                 <v-btn
-                  v-if="unsavedChanged(charge) && canUpdateSellCharge"
+                  v-if="unsavedChanged(charge) && canUpdateSellCharge(charge)"
                   density="compact"
                   variant="outlined"
                   color="green"
@@ -246,9 +246,9 @@
                 <v-chip v-if="isChargeLinkedToInvoice(charge)" size="small" color="primary">Read only</v-chip>
               </div>
               <div v-if="!isChargeLinkedToInvoice(charge)" class="flex flex-col justify-center items-center gap-2">
-                <v-btn v-if="canDeleteCharge" density="compact" variant="outlined" color="red" @click="deleteRefCharge(charge)">Delete</v-btn>
+                <v-btn v-if="canDeleteCharge(charge)" density="compact" variant="outlined" color="red" @click="deleteRefCharge(charge)">Delete</v-btn>
                 <v-btn
-                  v-if="unsavedChanged(charge) && canUpdateCharge"
+                  v-if="unsavedChanged(charge) && canUpdateCharge(charge)"
                   density="compact"
                   variant="outlined"
                   color="green"
@@ -454,37 +454,33 @@ const canEditCharges = computed(() => {
   return referencia.value.voyage_discharge.locked_at == null
 })
 
-// Fase 1 (barco no bloqueado): permiso general de facturación.
+// Fase 1 (barco no bloqueado): permiso específico por tipo de factura del
+// cargo (proforma-tm-edit / proforma-wm-edit), no un permiso genérico.
 // Fase 2 (barco bloqueado): permiso específico elevado por acción.
+const canEditByType = (invType: any) =>
+  hasPermission(String(invType).toLowerCase() === 'wm' ? permissions.ProformaWmEdit : permissions.ProformaTmEdit)
+
 const canAddCharge = computed(() =>
   canEditCharges.value
-    ? hasPermission(permissions.CustomerInvoicesEdit)
+    ? hasPermission(permissions.ProformaTmEdit) || hasPermission(permissions.ProformaWmEdit)
     : hasPermission(permissions.SeaImportAddChargeToReferenciaWithPermission)
 )
 
-const canUpdateCharge = computed(() =>
-  canEditCharges.value
-    ? hasPermission(permissions.CustomerInvoicesEdit)
-    : hasPermission(permissions.SeaImportUpdateChargeWithPermission)
-)
+const canUpdateCharge = (charge: any) =>
+  canEditCharges.value ? canEditByType(charge.inv_type) : hasPermission(permissions.SeaImportUpdateChargeWithPermission)
 
-const canDeleteCharge = computed(() =>
-  canEditCharges.value
-    ? hasPermission(permissions.CustomerInvoicesEdit)
-    : hasPermission(permissions.SeaImportDeleteChargeWithPermission)
-)
+const canDeleteCharge = (charge: any) =>
+  canEditCharges.value ? canEditByType(charge.inv_type) : hasPermission(permissions.SeaImportDeleteChargeWithPermission)
 
-const canUpdateSellCharge = computed(() =>
+const canUpdateSellCharge = (charge: any) =>
   canEditCharges.value
-    ? hasPermission(permissions.CustomerInvoicesEdit)
+    ? canEditByType(charge.inv_type)
     : hasPermission(permissions.SeaImportUpdateSellChargeWithPermission)
-)
 
-const canDeleteSellCharge = computed(() =>
+const canDeleteSellCharge = (charge: any) =>
   canEditCharges.value
-    ? hasPermission(permissions.CustomerInvoicesEdit)
+    ? canEditByType(charge.inv_type)
     : hasPermission(permissions.SeaImportDeleteSellChargeWithPermission)
-)
 
 const tm_invoices = computed(() => {
   if (!referencia.value) return []
@@ -501,11 +497,11 @@ const isChargeLinkedToInvoice = (charge: any) => {
 }
 
 const isChargeReadOnly = (charge: any) => {
-  return isChargeLinkedToInvoice(charge) || !canUpdateCharge.value
+  return isChargeLinkedToInvoice(charge) || !canUpdateCharge(charge)
 }
 
 const isSellChargeReadOnly = (charge: any) => {
-  return isChargeLinkedToInvoice(charge) || !canUpdateSellCharge.value
+  return isChargeLinkedToInvoice(charge) || !canUpdateSellCharge(charge)
 }
 
 const linkedChargeIcon = (charge: any) => {

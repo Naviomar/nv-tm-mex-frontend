@@ -401,24 +401,29 @@ const unsavedChanged = (charge: any) => {
   return charge.unsaved === true
 }
 
-// Fase 1 (barco no bloqueado, isAssisted=false): permiso general de facturación.
+// Fase 1 (barco no bloqueado, isAssisted=false): permiso específico por tipo
+// de factura (proforma-tm-edit / proforma-wm-edit), no un permiso genérico.
 // Fase 2 (barco bloqueado, isAssisted=true): permiso específico elevado por acción.
+const canEditProformaByType = computed(() =>
+  hasPermission(props.invoiceType === 'wm' ? permissions.ProformaWmEdit : permissions.ProformaTmEdit)
+)
+
 const canAddProformaCharge = computed(() =>
   props.isAssisted
     ? hasPermission(permissions.InvoiceSeaAddChargeToProformaWithPermission)
-    : hasPermission(permissions.CustomerInvoicesEdit)
+    : canEditProformaByType.value
 )
 
 const canUpdateProformaCharge = computed(() =>
   props.isAssisted
     ? hasPermission(permissions.InvoiceSeaUpdateChargeProformaWithPermission)
-    : hasPermission(permissions.CustomerInvoicesEdit)
+    : canEditProformaByType.value
 )
 
 const canDeleteProformaCharge = computed(() =>
   props.isAssisted
     ? hasPermission(permissions.InvoiceSeaDeleteChargeProformaWithPermission)
-    : hasPermission(permissions.CustomerInvoicesEdit)
+    : canEditProformaByType.value
 )
 
 function buildDeleteProcessData(charge: any) {
