@@ -119,6 +119,9 @@
                 <v-switch v-model="charge.is_local" color="green" density="compact" label="is local?" />
               </div>
               <div>
+                <v-switch v-model="charge.is_buy" color="green" density="compact" label="is buy?" />
+              </div>
+              <div>
                 <v-switch
                   v-model="charge.is_warranty_deposit"
                   color="green"
@@ -579,6 +582,7 @@ const getData = async () => {
       charge.value.is_local = seaService?.pivot?.is_local === 1
       charge.value.is_warranty_deposit = seaService?.pivot?.is_warranty_deposit === 1
       charge.value.is_ocean_freight = seaService?.pivot?.is_ocean_freight === 1
+      charge.value.is_buy = seaService?.pivot?.is_buy === 1
       charge.value.is_air_freight = airService?.pivot?.is_air_freight === 1
 
       const freeFormat = charge.value.services.find((item: any) => item.id === 4)
