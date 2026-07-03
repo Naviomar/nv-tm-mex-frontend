@@ -98,7 +98,7 @@
             </td>
             <td class="whitespace-nowrap">
               <UserInfoBadge :item="servInvoice">
-                {{ formatDateString(servInvoice.created_at) }}
+                {{ formatDateString(servInvoice.issue_date || servInvoice.created_at) }}
               </UserInfoBadge>
             </td>
             <td class="whitespace-nowrap">{{ servInvoice.invoice?.invoice_number }}</td>
