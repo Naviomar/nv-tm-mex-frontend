@@ -40,9 +40,30 @@
             </v-alert>
 
             <!-- No permission, no auth -->
-            <v-alert v-else-if="!hasDirectPermission" type="info" variant="tonal" class="mb-4">
-              You need authorization to transfer BLs between voyages. Select the references and target voyage, then provide a reason.
-            </v-alert>
+            <template v-else-if="!hasDirectPermission">
+              <v-alert type="info" variant="tonal" class="mb-4">
+                {{ tpl.subtitle || 'You need authorization to transfer BLs between voyages. Select the references and target voyage, then provide a reason.' }}
+              </v-alert>
+
+              <!-- Template elements -->
+              <template v-for="el in tpl.elements" :key="el.id">
+                <v-alert
+                  v-if="el.type === 'alert_block'"
+                  :type="(el as any).alert_type"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-3"
+                >
+                  {{ (el as any).alert_text }}
+                </v-alert>
+                <p v-else-if="el.type === 'text_block'" class="text-sm text-medium-emphasis mb-3">
+                  {{ (el as any).text }}
+                </p>
+                <div v-else-if="el.type === 'section'" class="text-caption text-uppercase font-weight-bold text-disabled mb-1 mt-2">
+                  {{ (el as any).title }}
+                </div>
+              </template>
+            </template>
 
             <!-- Source voyage info -->
             <div class="mb-4 p-3 bg-grey-lighten-4 rounded">
@@ -146,12 +167,12 @@
               </div>
 
               <!-- Reason (only when requesting auth) -->
-              <div v-if="!hasDirectPermission && !approvedAuthRequest" class="mb-4">
+              <div v-if="!hasDirectPermission && !approvedAuthRequest && tpl.reason.show" class="mb-4">
                 <v-textarea
                   v-model="reason"
-                  label="Reason for transfer *"
+                  :label="tpl.reason.label"
                   placeholder="Explain why this BL transfer is needed..."
-                  rows="3"
+                  :rows="tpl.reason.rows ?? 3"
                   variant="outlined"
                   density="compact"
                 />
@@ -203,7 +224,7 @@
             :disabled="selectedReferenceIds.length === 0 || !targetVoyage"
             @click="requestAuthorization"
           >
-            Submit Request
+            {{ tpl.buttons.submit }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -215,6 +236,9 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { hasPermission } = useCheckUser()
+const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+
+const tpl = computed(() => getTemplate('voyage-transfer-references'))
 
 const props = defineProps({
   voyageDest: {
@@ -316,6 +340,7 @@ const loadReferencias = async () => {
 }
 
 const showDialog = async () => {
+  loadCatalog(true)
   dialog.value = true
   targetVoyage.value = null
   reason.value = ''
@@ -381,7 +406,7 @@ const requestAuthorization = async () => {
     snackbar.add({ type: 'warning', text: 'Please select a target voyage.' })
     return
   }
-  if (!reason.value || reason.value.trim() === '') {
+  if (tpl.value.reason.show && tpl.value.reason.required && (!reason.value || reason.value.trim() === '')) {
     snackbar.add({ type: 'warning', text: 'Please provide a reason for the transfer.' })
     return
   }

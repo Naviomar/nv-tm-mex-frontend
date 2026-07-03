@@ -26,13 +26,35 @@
         <v-card-title class="bg-primary text-white">
           <div class="flex items-center gap-2">
             <v-icon>mdi-ship-wheel</v-icon>
-            <span>{{ hasDirectPermission ? 'Update Arrival Voyage' : 'Request Voyage Change Authorization' }}</span>
+            <span>{{ hasDirectPermission ? 'Update Arrival Voyage' : (tpl.title || 'Request Voyage Change Authorization') }}</span>
           </div>
         </v-card-title>
         <v-card-text class="pt-4">
-          <v-alert v-if="!hasDirectPermission" type="info" variant="tonal" class="mb-4">
-            You need authorization to change locked voyages. Select the new voyage and provide a reason for the change.
-          </v-alert>
+          <template v-if="!hasDirectPermission">
+            <p v-if="tpl.subtitle" class="text-sm text-medium-emphasis mb-3">{{ tpl.subtitle }}</p>
+            <v-alert v-else type="info" variant="tonal" class="mb-4">
+              You need authorization to change locked voyages. Select the new voyage and provide a reason for the change.
+            </v-alert>
+
+            <!-- Template elements -->
+            <template v-for="el in tpl.elements" :key="el.id">
+              <v-alert
+                v-if="el.type === 'alert_block'"
+                :type="(el as any).alert_type"
+                variant="tonal"
+                density="compact"
+                class="mb-3"
+              >
+                {{ (el as any).alert_text }}
+              </v-alert>
+              <p v-else-if="el.type === 'text_block'" class="text-sm text-medium-emphasis mb-3">
+                {{ (el as any).text }}
+              </p>
+              <div v-else-if="el.type === 'section'" class="text-caption text-uppercase font-weight-bold text-disabled mb-1 mt-2">
+                {{ (el as any).title }}
+              </div>
+            </template>
+          </template>
 
           <div v-if="props.referencia?.voyage_discharge" class="mb-4 p-3 bg-grey-lighten-4 rounded">
             <div class="text-caption text-grey-darken-1 mb-1">Current Voyage</div>
@@ -55,15 +77,15 @@
             />
           </div>
 
-          <div v-if="!hasDirectPermission" class="mb-4">
+          <div v-if="!hasDirectPermission && tpl.reason.show" class="mb-4">
             <v-textarea
               v-model="reason"
-              label="Reason for change *"
+              :label="tpl.reason.label"
               placeholder="Explain why this voyage change is needed..."
-              rows="3"
+              :rows="tpl.reason.rows ?? 3"
               variant="outlined"
               density="compact"
-              :rules="[v => !!v || 'Reason is required']"
+              :rules="tpl.reason.required ? [(v: any) => !!v || 'Reason is required'] : []"
             />
           </div>
         </v-card-text>
@@ -84,7 +106,7 @@
             variant="flat"
             @click="requestAuthorization"
           >
-            Submit Request
+            {{ tpl.buttons.submit }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -96,6 +118,9 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { hasPermission } = useCheckUser()
+const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+
+const tpl = computed(() => getTemplate('sea-import-update-locked-voyage'))
 
 const props = defineProps({
   referencia: {
@@ -113,6 +138,7 @@ const reason = ref('')
 const hasDirectPermission = computed(() => hasPermission('sea-import-update-locked-arrival-voyage'))
 
 const showDialog = () => {
+  loadCatalog(true)
   dialog.value = true
   newVoyage.value = null
   reason.value = ''
@@ -185,7 +211,7 @@ const requestAuthorization = async () => {
       return
     }
 
-    if (!reason.value || reason.value.trim() === '') {
+    if (tpl.value.reason.show && tpl.value.reason.required && (!reason.value || reason.value.trim() === '')) {
       snackbar.add({
         type: 'warning',
         text: 'Please provide a reason for the voyage change.',
