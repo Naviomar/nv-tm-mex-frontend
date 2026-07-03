@@ -72,6 +72,19 @@
           </div>
         </div>
 
+        <!-- file_upload: code-driven drag & drop zone mockup -->
+        <div v-else-if="el.type === 'file_upload'" class="preview-charge-builder" style="border-color: rgba(63,81,181,0.5)">
+          <div class="preview-charge-builder-label" style="color: rgb(63,81,181); background: rgba(63,81,181,0.08)">
+            <v-icon size="12" color="indigo">mdi-cloud-upload-outline</v-icon>
+            {{ (el as any).label ?? 'Supporting documents' }}
+            <v-chip size="x-small" color="indigo" variant="tonal" class="ml-1" style="font-size:9px">code-driven</v-chip>
+          </div>
+          <div class="preview-charge-builder-body text-center py-2" style="border:1.5px dashed rgba(63,81,181,0.4); border-radius:6px">
+            <v-icon size="16" color="indigo">mdi-cloud-upload-outline</v-icon>
+            <div class="text-caption text-disabled" style="font-size:9px">Drag &amp; drop files here or browse</div>
+          </div>
+        </div>
+
         <!-- form_field -->
         <div v-else-if="el.type === 'form_field'" class="preview-field">
           <label class="text-caption text-medium-emphasis d-block mb-1">

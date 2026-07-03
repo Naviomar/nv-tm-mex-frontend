@@ -115,6 +115,7 @@
                   <v-list-subheader>Code-driven</v-list-subheader>
                   <v-list-item prepend-icon="mdi-layers-plus" title="Charge builder" @click="addElement('charge_builder')" />
                   <v-list-item prepend-icon="mdi-receipt-text-plus-outline" title="Invoice charge builder" @click="addElement('invoice_charge_builder')" />
+                  <v-list-item prepend-icon="mdi-cloud-upload-outline" title="File upload" @click="addElement('file_upload')" />
                 </v-list>
               </v-menu>
             </div>
@@ -151,7 +152,7 @@
                 </span>
 
                 <!-- Edit button (disabled for code-driven elements) -->
-                <v-tooltip v-if="el.type === 'charge_builder' || el.type === 'invoice_charge_builder'" text="Code-driven — not configurable" location="top">
+                <v-tooltip v-if="el.type === 'charge_builder' || el.type === 'invoice_charge_builder' || el.type === 'file_upload'" text="Code-driven — not configurable" location="top">
                   <template #activator="{ props: tp }">
                     <v-btn v-bind="tp" icon size="x-small" variant="text" disabled>
                       <v-icon size="14">mdi-lock-outline</v-icon>
@@ -449,6 +450,10 @@ function addElement(type: ITemplateElementType) {
     el = { ...base, type, credit_note_id_key: 'credit_note_id' } as ITemplateElementInvoiceChargeBuilder
     draft.value.elements.push(el)
     return
+  } else if (type === 'file_upload') {
+    el = { ...base, type, label: 'Supporting documents' } as any
+    draft.value.elements.push(el)
+    return
   } else {
     el = {
       ...base,
@@ -502,7 +507,7 @@ const editingElement = ref<ITemplateElement | null>(null)
 
 function openEditDialog(idx: number) {
   const el = draft.value.elements[idx]
-  if (!el || el.type === 'charge_builder' || el.type === 'invoice_charge_builder') return
+  if (!el || el.type === 'charge_builder' || el.type === 'invoice_charge_builder' || el.type === 'file_upload') return
   editingIndex.value = idx
   editingElement.value = JSON.parse(JSON.stringify(el))
   editDialog.value = true
@@ -532,11 +537,11 @@ function removeFieldOption(idx: number) {
 // ── Display helpers ──────────────────────────────────────────────────────────
 
 function elementLabel(type: string): string {
-  return { form_field: 'Field', section: 'Section', text_block: 'Text', alert_block: 'Alert', charge_builder: 'Charge builder', invoice_charge_builder: 'Invoice charge builder' }[type] ?? type
+  return { form_field: 'Field', section: 'Section', text_block: 'Text', alert_block: 'Alert', charge_builder: 'Charge builder', invoice_charge_builder: 'Invoice charge builder', file_upload: 'File upload' }[type] ?? type
 }
 
 function elementColor(type: string): string {
-  return { form_field: 'primary', section: 'purple', text_block: 'grey', alert_block: 'orange', charge_builder: 'teal', invoice_charge_builder: 'cyan' }[type] ?? 'grey'
+  return { form_field: 'primary', section: 'purple', text_block: 'grey', alert_block: 'orange', charge_builder: 'teal', invoice_charge_builder: 'cyan', file_upload: 'indigo' }[type] ?? 'grey'
 }
 
 function elementSummary(el: ITemplateElement): string {
@@ -546,6 +551,7 @@ function elementSummary(el: ITemplateElement): string {
   if (el.type === 'form_field') return (el as ITemplateElementFormField).field.label
   if (el.type === 'charge_builder') return `catalog: ${(el as ITemplateElementChargeBuilder).charges_catalog_key}`
   if (el.type === 'invoice_charge_builder') return `id key: ${(el as ITemplateElementInvoiceChargeBuilder).credit_note_id_key}`
+  if (el.type === 'file_upload') return (el as any).label ?? 'Supporting documents'
   return ''
 }
 </script>
