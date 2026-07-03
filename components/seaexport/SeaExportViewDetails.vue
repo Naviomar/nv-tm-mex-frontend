@@ -426,6 +426,10 @@
       </v-card>
     </div>
 
+    <div class="col-span-2">
+      <SeaExportProfitOverview :referencia-id="referencia.id!" />
+    </div>
+
   </div>
 </template>
 <script setup lang="ts">
