@@ -121,8 +121,6 @@
               color="deep-purple"
               @click="openTemplateEditor(type)"
             >Template</v-btn>
-            <v-spacer />
-            <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="confirmDelete(type)" />
           </v-card-actions>
           <v-expand-transition>
             <div v-if="showFlowForId.has(type.id)" class="px-3 pb-3">
@@ -399,22 +397,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- Delete Confirmation -->
-    <v-dialog v-model="showDeleteDialog" max-width="420">
-      <v-card>
-        <v-card-title class="d-flex align-center gap-2 pt-4 px-6">
-          <v-icon color="error">mdi-alert-circle-outline</v-icon>
-          Confirm Delete
-        </v-card-title>
-        <v-card-text class="px-6">
-          Are you sure you want to delete the type <strong>"{{ deletingType?.description }}"</strong>?
-        </v-card-text>
-        <v-card-actions class="justify-end px-6 pb-4">
-          <v-btn variant="text" @click="showDeleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" :loading="deleting" @click="deleteType">Delete</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -440,7 +422,6 @@ definePageMeta({
 const types = ref<IAuthRequestType[]>([])
 const loading = ref(false)
 const showDialog = ref(false)
-const showDeleteDialog = ref(false)
 const showCreationGuide = ref(false)
 const editingType = ref<IAuthRequestType | null>(null)
 
@@ -462,9 +443,7 @@ function onTemplateSaved(template: IRequestTemplate) {
   invalidateCatalog()
   reloadCatalog()
 }
-const deletingType = ref<IAuthRequestType | null>(null)
 const saving = ref(false)
-const deleting = ref(false)
 const formRef = ref()
 
 // Filters
@@ -589,26 +568,6 @@ const save = async () => {
     snackbar.add({ type: 'error', text: 'Error saving type' })
   } finally {
     saving.value = false
-  }
-}
-
-const confirmDelete = (type: IAuthRequestType) => {
-  deletingType.value = type
-  showDeleteDialog.value = true
-}
-
-const deleteType = async () => {
-  if (!deletingType.value) return
-  deleting.value = true
-  try {
-    await $api.authRequestTypes.deleteType(deletingType.value.id)
-    snackbar.add({ type: 'success', text: 'Type deleted' })
-    showDeleteDialog.value = false
-    await loadTypes()
-  } catch {
-    snackbar.add({ type: 'error', text: 'Error deleting type' })
-  } finally {
-    deleting.value = false
   }
 }
 

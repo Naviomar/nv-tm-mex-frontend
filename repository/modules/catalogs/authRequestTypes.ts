@@ -151,10 +151,6 @@ class AuthRequestTypesModule extends FetchFactory<IAuthRequestType[]> {
     })
   }
 
-  async deleteType(id: number, fetchOptions?: FetchOptions) {
-    return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
-  }
-
   async getDefaultCcUsers(id: number): Promise<IDefaultCcUser[]> {
     return this.call('GET', `${this.RESOURCE}/${id}/default-cc-users`)
   }
