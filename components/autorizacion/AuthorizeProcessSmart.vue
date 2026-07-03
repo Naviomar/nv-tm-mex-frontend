@@ -43,19 +43,43 @@
         </div>
       </div>
     </div>
-    <v-dialog v-model="showConfirmDialog" max-width="400">
-      <v-card color="red-lighten-5">
-        <v-card-title class="text-h6">
-          <v-icon>mdi-shield-lock-outline</v-icon><span class="italic">Request Authorization</span>
+    <v-dialog v-model="showConfirmDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6 gap-2 d-flex align-center">
+          <v-icon>mdi-shield-lock-outline</v-icon>
+          {{ tpl.title || 'Request Authorization' }}
         </v-card-title>
         <v-card-text>
-          <p class="text-h6">Are you sure you want to request authorization for this resource?</p>
+          <p v-if="tpl.subtitle" class="text-sm text-medium-emphasis mb-3">{{ tpl.subtitle }}</p>
+          <p v-else class="text-sm mb-2">Are you sure you want to request authorization for this resource?</p>
+
+          <!-- Template elements in order -->
+          <template v-for="el in tpl.elements" :key="el.id">
+            <v-alert
+              v-if="el.type === 'alert_block'"
+              :type="(el as any).alert_type"
+              variant="tonal"
+              density="compact"
+              class="mb-3"
+            >
+              {{ (el as any).alert_text }}
+            </v-alert>
+
+            <p v-else-if="el.type === 'text_block'" class="text-sm text-medium-emphasis mb-3">
+              {{ (el as any).text }}
+            </p>
+
+            <div v-else-if="el.type === 'section'" class="text-caption text-uppercase font-weight-bold text-disabled mb-1 mt-2">
+              {{ (el as any).title }}
+            </div>
+          </template>
+
           <v-textarea
+            v-if="tpl.reason.show"
             v-model="form.request_reason"
-            label="Reason"
-            hint="Please provide a reason for the authorization request"
+            :label="tpl.reason.label"
+            :rows="tpl.reason.rows ?? 3"
             counter
-            rows="3"
             clearable
           ></v-textarea>
 
@@ -63,8 +87,8 @@
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
-            <v-btn color="error" @click="showConfirmDialog = false">Cancel</v-btn>
-            <v-btn color="success" @click="requestAuthorization">Request</v-btn>
+            <v-btn color="error" @click="showConfirmDialog = false">{{ tpl.buttons.cancel }}</v-btn>
+            <v-btn color="success" @click="requestAuthorization">{{ tpl.buttons.submit }}</v-btn>
           </div>
         </v-card-actions>
       </v-card>
@@ -95,6 +119,7 @@ import { authorizeResources } from '~/utils/data/system'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { getTemplate, loadCatalog } = useRequestTypeCatalog()
 const showConfirmDelReqDialog = ref<any>(false)
 
 const props = defineProps({
@@ -121,6 +146,8 @@ const props = defineProps({
 })
 
 const showConfirmDialog = ref(false)
+// The resource code matches the auth_request_types code, so templates apply here too
+const tpl = computed(() => getTemplate(props.resource))
 const userAuthRequests = ref<any>([])
 const requestsByResource = ref<any>([])
 const form = ref<any>({ request_reason: '', files: [] , reason_deleted: ''})
@@ -151,6 +178,8 @@ defineExpose({
 })
 
 const confirmRequestAuthorization = () => {
+  // Refresh the template catalog so recent template edits are reflected
+  loadCatalog(true)
   showConfirmDialog.value = true
 }
 
@@ -195,7 +224,7 @@ const requestCancelAuthorization = async () => {
 
 const requestAuthorization = async () => {
   try {
-    if (form.value.request_reason == null || form.value.request_reason === '') {
+    if (tpl.value.reason.show && tpl.value.reason.required && (form.value.request_reason == null || form.value.request_reason.trim() === '')) {
       snackbar.add({ type: 'error', text: 'Please provide a reason for the authorization request' })
       return
     }
@@ -242,6 +271,7 @@ const getUserAuthRequests = async () => {
 }
 
 await getUserAuthRequests()
+loadCatalog()
 
 watch(
   () => props.refresh,
