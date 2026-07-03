@@ -14,7 +14,7 @@
               ><div class="font-bold">{{ invoiceType }} TM #{{ invoiceTm.invoice.invoice_number }}</div></v-card-title
             >
             <v-card-subtitle>
-              <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceTm.created_at) }}</div>
+              <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceTm.issue_date || invoiceTm.created_at) }}</div>
             </v-card-subtitle>
             <v-card-text>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -98,7 +98,7 @@
 
               <div class="font-bold">Invoice date</div>
               <v-text-field
-                v-model="invoiceTm.new_created_at"
+                v-model="invoiceTm.new_issue_date"
                 type="date"
                 density="compact"
                 label="Change Invoice date"

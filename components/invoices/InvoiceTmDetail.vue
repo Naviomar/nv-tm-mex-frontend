@@ -44,7 +44,7 @@
           </div>
         </v-card-title>
         <v-card-subtitle>
-          <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceTm.created_at) }}</div>
+          <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceTm.issue_date || invoiceTm.created_at) }}</div>
         </v-card-subtitle>
         <v-card-text>
           <div v-if="isFreeFormat" class="mb-4">

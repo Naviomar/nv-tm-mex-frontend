@@ -31,6 +31,9 @@
             </div>
           </div>
         </v-card-title>
+        <v-card-subtitle>
+          <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceWm.issue_date || invoiceWm.created_at) }}</div>
+        </v-card-subtitle>
         <v-card-text>
           <!-- Customer & Amount Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
