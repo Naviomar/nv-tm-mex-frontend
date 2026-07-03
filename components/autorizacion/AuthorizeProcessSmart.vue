@@ -83,7 +83,12 @@
             clearable
           ></v-textarea>
 
-          <v-file-input v-model="form.files" label="Add supporting documents" multiple clearable />
+          <!-- File upload from template (footer), fallback when template has none -->
+          <FileDropZone
+            :model-value="form.files"
+            :label="fileUploadElement?.label || 'Supporting documents'"
+            @update:model-value="form.files = $event"
+          />
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
@@ -148,6 +153,7 @@ const props = defineProps({
 const showConfirmDialog = ref(false)
 // The resource code matches the auth_request_types code, so templates apply here too
 const tpl = computed(() => getTemplate(props.resource))
+const fileUploadElement = computed(() => tpl.value.elements.find((el: any) => el.type === 'file_upload') as any)
 const userAuthRequests = ref<any>([])
 const requestsByResource = ref<any>([])
 const form = ref<any>({ request_reason: '', files: [] , reason_deleted: ''})

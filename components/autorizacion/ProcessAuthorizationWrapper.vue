@@ -104,6 +104,14 @@
               :credit-note-id="props.processData?.[(el as any).credit_note_id_key]"
               @update:model-value="chargesData[el.id] = $event"
             />
+
+            <!-- file_upload: drag & drop supporting documents -->
+            <FileDropZone
+              v-else-if="el.type === 'file_upload'"
+              :model-value="filesData"
+              :label="(el as any).label"
+              @update:model-value="filesData = $event"
+            />
           </template>
 
           <!-- Dynamic form fields from prop (legacy / extra fields) -->
@@ -193,6 +201,8 @@ const form = ref({ reason: '', reason_deleted: '' })
 const formData = ref<Record<string, any>>({})
 // Accumulated charges from charge_builder elements (keyed by element id)
 const chargesData = ref<Record<string, any[]>>({})
+// Supporting documents from file_upload elements
+const filesData = ref<File[]>([])
 
 const processNameKey = computed(() =>
   props.requestKey == null ? props.processName : `${props.processName}:${props.requestKey}`
@@ -301,6 +311,11 @@ const onRequestAuthorizationClick = async () => {
       body.process_data = { ...(body.process_data ?? {}), charges: allCharges }
     }
 
+    // Attach supporting documents from file_upload elements
+    if (filesData.value.length > 0) {
+      body.files = filesData.value
+    }
+
     await ($api as any).authProcessRequests.requestAuthorization(body)
 
     snackbar.add({ type: 'success', text: 'Authorization request sent' })
@@ -308,6 +323,7 @@ const onRequestAuthorizationClick = async () => {
     form.value.reason = ''
     formData.value = {}
     chargesData.value = {}
+    filesData.value = []
 
     await fetchUserRequests()
     startPolling()

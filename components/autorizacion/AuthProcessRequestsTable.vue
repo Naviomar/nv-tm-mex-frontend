@@ -148,6 +148,14 @@
                   <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
                 </div>
               </template>
+              <!-- Supporting documents -->
+              <div v-if="authRequest.files?.length" class="mt-1 d-flex flex-wrap ga-1">
+                <ButtonDownloadS3Object
+                  v-for="(file, fi) in authRequest.files"
+                  :key="`file-${fi}`"
+                  :s3Path="file.attachment"
+                />
+              </div>
             </td>
 
             <td>

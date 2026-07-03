@@ -5,7 +5,9 @@ const DEFAULT_TEMPLATE: IRequestTemplate = {
   subtitle: 'Please provide a reason for this request.',
   reason: { show: true, label: 'Reason', required: true, rows: 3 },
   buttons: { submit: 'Submit request', cancel: 'Cancel' },
-  elements: [],
+  elements: [
+    { id: 'el-file-upload', type: 'file_upload', label: 'Supporting documents' } as any,
+  ],
 }
 
 export function useRequestTypeCatalog() {

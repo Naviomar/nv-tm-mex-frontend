@@ -32,8 +32,21 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
   }
 
   async requestAuthorization(data: any, fetchOptions?: FetchOptions) {
+    // Use multipart when files are attached; JSON otherwise
+    let body: any
+    if (data.files?.length > 0) {
+      const { files, process_data, ...rest } = data
+      const formData = objectToFormData(rest)
+      // Nested objects survive better as a JSON string field (backend json_decodes)
+      if (process_data) formData.append('process_data', JSON.stringify(process_data))
+      for (const file of files) formData.append('files[]', file)
+      body = formData
+    } else {
+      const { files, ...rest } = data
+      body = JSON.stringify(rest)
+    }
     fetchOptions = {
-      body: JSON.stringify(data),
+      body,
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/request`, fetchOptions)

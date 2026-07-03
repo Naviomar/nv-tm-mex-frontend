@@ -28,7 +28,7 @@ export interface IFormField {
 
 // ── Template interfaces ────────────────────────────────────────────────────
 
-export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder' | 'invoice_charge_builder'
+export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder' | 'invoice_charge_builder' | 'file_upload'
 export type IAlertBlockType = 'info' | 'warning' | 'error' | 'success'
 
 export interface ITemplateElementBase {
@@ -76,6 +76,15 @@ export interface ITemplateElementInvoiceChargeBuilder extends ITemplateElementBa
   credit_note_id_key: string
 }
 
+/**
+ * Code-driven element: renders a drag & drop file upload zone.
+ * Files are submitted with the request and stored as ProcessRequestFile.
+ */
+export interface ITemplateElementFileUpload extends ITemplateElementBase {
+  type: 'file_upload'
+  label?: string
+}
+
 export type ITemplateElement =
   | ITemplateElementFormField
   | ITemplateElementSection
@@ -83,6 +92,7 @@ export type ITemplateElement =
   | ITemplateElementAlertBlock
   | ITemplateElementChargeBuilder
   | ITemplateElementInvoiceChargeBuilder
+  | ITemplateElementFileUpload
 
 export interface ITemplateReasonField {
   show: boolean
