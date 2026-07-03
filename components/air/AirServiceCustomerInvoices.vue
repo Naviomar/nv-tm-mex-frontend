@@ -61,7 +61,7 @@
           </td>
           <td class="p-2">
             <UserInfoBadge :item="airInvoice">
-              {{ formatDateOnlyString(airInvoice.created_at) }}
+              {{ formatDateOnlyString(airInvoice.issue_date || airInvoice.created_at) }}
             </UserInfoBadge>
           </td>
         </tr>

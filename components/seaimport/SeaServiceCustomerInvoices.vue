@@ -70,7 +70,7 @@
           </td>
           <td class="p-2">
             <UserInfoBadge :item="seaInvoice">
-              {{ formatDateOnlyString(seaInvoice.created_at) }}
+              {{ formatDateOnlyString(seaInvoice.issue_date || seaInvoice.created_at) }}
             </UserInfoBadge>
           </td>
         </tr>

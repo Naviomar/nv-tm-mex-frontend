@@ -21,7 +21,7 @@
             <div class="text-sm!">
               <div class="font-bold!">Deleted Invoice Details</div>
               <div>Invoice # {{ form.deletedInvoice.id }}</div>
-              <div>Invoice Date: {{ formatDateString(form.deletedInvoice.created_at) }}</div>
+              <div>Invoice Date: {{ formatDateString(form.deletedInvoice.issue_date || form.deletedInvoice.created_at) }}</div>
               <div>Invoice Status: Cancelled @ {{ formatDateString(form.deletedInvoice.deleted_at) }}</div>
               <v-btn color="secondary" size="small" @click="linkInvoice">Link Invoice</v-btn>
             </div>

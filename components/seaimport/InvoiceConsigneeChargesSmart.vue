@@ -5,7 +5,7 @@
         {{ props.invoiceType?.toUpperCase() }} - {{ invoiceTypeLabel }} #{{ invoice.invoice.invoice_number }}
       </v-card-title>
       <v-card-text>
-        <v-btn v-if="isProfroma" color="primary" size="small" @click="showAvailableCharges"
+        <v-btn v-if="isProfroma && canAddProformaCharge" color="primary" size="small" @click="showAvailableCharges"
           >Add charge to {{ invoiceTypeLabel }}</v-btn
         >
         <div v-if="chargeForm.show" class="py-4">
@@ -52,7 +52,7 @@
                 item-title="name"
                 item-value="id"
                 variant="solo-filled"
-                :readonly="!isProfroma"
+                :readonly="!isProfroma || !canUpdateProformaCharge"
                 @update:model-value="charge.unsaved = true"
               />
             </div>
@@ -63,7 +63,7 @@
                 variant="solo-filled"
                 label="Amount"
                 prepend-inner-icon="mdi-currency-usd"
-                :readonly="!isProfroma"
+                :readonly="!isProfroma || !canUpdateProformaCharge"
                 @update:model-value="charge.unsaved = true"
               />
             </div>
@@ -86,7 +86,7 @@
                 density="compact"
                 variant="solo-filled"
                 label="+ IVA"
-                :readonly="!isProfroma"
+                :readonly="!isProfroma || !canUpdateProformaCharge"
                 @update:model-value="charge.unsaved = true"
               />
             </div>
@@ -106,7 +106,7 @@
                   />
                 </template>
                 <v-btn
-                  v-if="unsavedChanged(charge)"
+                  v-if="unsavedChanged(charge) && canUpdateProformaCharge"
                   density="compact"
                   variant="outlined"
                   color="green"
@@ -140,6 +140,7 @@
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
+import { permissions } from '@/utils/data/system'
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
@@ -400,7 +401,30 @@ const unsavedChanged = (charge: any) => {
   return charge.unsaved === true
 }
 
-const canDeleteProformaCharge = computed(() => hasPermission('customer-invoices-edit'))
+// Fase 1 (barco no bloqueado, isAssisted=false): permiso específico por tipo
+// de factura (proforma-tm-edit / proforma-wm-edit), no un permiso genérico.
+// Fase 2 (barco bloqueado, isAssisted=true): permiso específico elevado por acción.
+const canEditProformaByType = computed(() =>
+  hasPermission(props.invoiceType === 'wm' ? permissions.ProformaWmEdit : permissions.ProformaTmEdit)
+)
+
+const canAddProformaCharge = computed(() =>
+  props.isAssisted
+    ? hasPermission(permissions.InvoiceSeaAddChargeToProformaWithPermission)
+    : canEditProformaByType.value
+)
+
+const canUpdateProformaCharge = computed(() =>
+  props.isAssisted
+    ? hasPermission(permissions.InvoiceSeaUpdateChargeProformaWithPermission)
+    : canEditProformaByType.value
+)
+
+const canDeleteProformaCharge = computed(() =>
+  props.isAssisted
+    ? hasPermission(permissions.InvoiceSeaDeleteChargeProformaWithPermission)
+    : canEditProformaByType.value
+)
 
 function buildDeleteProcessData(charge: any) {
   return {

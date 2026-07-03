@@ -14,6 +14,9 @@
             <v-card-title
               ><div class="font-bold">{{ invoiceType }} WM #{{ invoiceWm.invoice.invoice_number }}</div></v-card-title
             >
+            <v-card-subtitle>
+              <div class="font-bold">Invoice date {{ formatDateOnlyString(invoiceWm.issue_date || invoiceWm.created_at) }}</div>
+            </v-card-subtitle>
             <v-card-text>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div class="font-bold">Reference(s)</div>
@@ -70,6 +73,14 @@
                 </div>
               </div>
               <v-textarea v-model="invoiceWm.notes" density="compact" label="Additional notes" />
+
+              <div class="font-bold">Invoice date</div>
+              <v-text-field
+                v-model="invoiceWm.new_issue_date"
+                type="date"
+                density="compact"
+                label="Change Invoice date"
+              />
 
               <div class="grid grid-cols-1 py-2">
                 <v-alert v-if="!currentConsignee.address" type="warning" variant="outlined" density="compact">

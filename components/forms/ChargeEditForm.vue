@@ -325,7 +325,7 @@ const route = useRoute()
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const user = useSanctumUser<any>()
+const { isSuperAdminRole } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -349,9 +349,7 @@ const authState = ref({
 })
 
 // Check if current user is Super Admin - Super Admins bypass all authorization
-const isSuperAdmin = computed(() => {
-  return user.value?.roles?.some((role: any) => role.name === 'Super Admin') || false
-})
+const isSuperAdmin = computed(() => isSuperAdminRole())
 
 const showAuthDialog = ref(false)
 const authReason = ref('')
