@@ -28,7 +28,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="executiveGroup" @click="viewExecutiveGroup(executiveGroup)" />
-                  <TrashButton :item="executiveGroup" @click="showConfirmDelete(executiveGroup)" />
+                  <TrashButton :item="executiveGroup" permission="executive-groups-delete" @click="showConfirmDelete(executiveGroup)" />
                 </div>
               </td>
               <td>{{ executiveGroup.name }}</td>

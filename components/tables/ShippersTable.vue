@@ -50,9 +50,10 @@
                   />
                   <EditButton
                     :item="shipper"
+                    permission="shippers-edit"
                     @click="() => $router.push(`/configuration/shippers/edit/${shipper.id}`)"
                   />
-                  <TrashButton :item="shipper" @click="showConfirmDelete" />
+                  <TrashButton :item="shipper" permission="shippers-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td class="whitespace-nowrap">{{ shipper.name }}</td>

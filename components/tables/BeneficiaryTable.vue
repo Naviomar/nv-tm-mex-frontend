@@ -50,8 +50,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="item" @click="viewBeneficiary(item)" />
-                  <EditButton :item="item" @click="editBeneficiary(item)" />
-                  <TrashButton :item="item" @click="showConfirmDelete" />
+                  <EditButton :item="item" permission="refunds-edit" @click="editBeneficiary(item)" />
+                  <TrashButton :item="item" permission="refunds-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ item.name }}</td>

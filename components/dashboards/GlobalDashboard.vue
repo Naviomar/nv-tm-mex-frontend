@@ -145,7 +145,7 @@ const canViewAirDashboard = computed(() => {
 })
 
 const canViewBilling = computed(() => {
-  return isSuperAdminRole() || hasPermission('billing-dashboard-view')
+  return isSuperAdminRole() || hasPermission('dashboard-billing-view')
 })
 
 // Check if user has ANY dashboard access at all

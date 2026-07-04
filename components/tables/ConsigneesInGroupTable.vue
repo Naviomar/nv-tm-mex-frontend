@@ -45,7 +45,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="consignee" @click="viewConsignee(consignee)" />
-                  <TrashButton :item="consignee" @click="showConfirmDelete(consignee)" />
+                  <TrashButton :item="consignee" permission="consignee-groups-edit" @click="showConfirmDelete(consignee)" />
                 </div>
               </td>
               <td>{{ consignee.name }}</td>

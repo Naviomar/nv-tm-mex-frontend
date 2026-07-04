@@ -47,7 +47,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <TrashButton :item="vessel" @click="showConfirmDelete" />
+                  <TrashButton :item="vessel" permission="vessel-names-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ vessel.name }}</td>

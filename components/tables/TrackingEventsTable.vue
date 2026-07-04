@@ -33,8 +33,8 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <EditButton :item="trackingEvent" @click="editBank(trackingEvent)" />
-                  <TrashButton :item="trackingEvent" @click="showConfirmDelete" />
+                  <EditButton :item="trackingEvent" permission="tracking-events-edit" @click="editBank(trackingEvent)" />
+                  <TrashButton :item="trackingEvent" permission="tracking-events-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ trackingEvent.type }}</td>

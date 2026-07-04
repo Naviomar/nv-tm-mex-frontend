@@ -29,7 +29,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="cg" @click="viewConsigneeGroup" />
-                  <TrashButton :item="cg" @click="showConfirmDelete" />
+                  <TrashButton :item="cg" permission="consignee-groups-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ cg.name }}</td>

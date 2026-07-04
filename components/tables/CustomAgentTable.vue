@@ -46,8 +46,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="item" @click="viewCustomAgent(item)" />
-                  <EditButton :item="item" @click="editCustomAgent(item)" />
-                  <TrashButton :item="item" @click="showConfirmDelete" />
+                  <EditButton :item="item" permission="customs-agents-edit" @click="editCustomAgent(item)" />
+                  <TrashButton :item="item" permission="customs-agents-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ item.name }}</td>

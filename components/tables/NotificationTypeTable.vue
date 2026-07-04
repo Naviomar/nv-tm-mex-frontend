@@ -33,7 +33,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="notificationType" @click="viewNotificationTypeForm(notificationType)" />
-                  <EditButton :item="notificationType" @click="editNotificationType(notificationType)" />
+                  <EditButton :item="notificationType" permission="notifications-types-edit" @click="editNotificationType(notificationType)" />
                 </div>
               </td>
               <td>{{ notificationType.name }}</td>

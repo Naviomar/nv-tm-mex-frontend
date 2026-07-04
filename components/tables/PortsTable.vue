@@ -57,8 +57,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="port" @click="viewPort(port)" />
-                  <EditButton :item="port" @click="editPort(port)" />
-                  <TrashButton :item="port" @click="showConfirmDelete" />
+                  <EditButton :item="port" permission="ports-edit" @click="editPort(port)" />
+                  <TrashButton :item="port" permission="ports-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ port.country?.name }}</td>

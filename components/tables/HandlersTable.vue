@@ -51,8 +51,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="handler" @click="viewHandler(handler)" />
-                  <EditButton :item="handler" @click="editHandler(handler)" />
-                  <TrashButton :item="handler" @click="showConfirmDelete" />
+                  <EditButton :item="handler" permission="handlers-edit" @click="editHandler(handler)" />
+                  <TrashButton :item="handler" permission="handlers-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ handler.name }}</td>

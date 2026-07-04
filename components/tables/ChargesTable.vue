@@ -145,7 +145,7 @@
                         />
                       </template>
                     </v-tooltip>
-                    <v-tooltip text="Edit charge" location="top">
+                    <v-tooltip v-if="hasPermission('charges-edit')" text="Edit charge" location="top">
                       <template v-slot:activator="{ props }">
                         <v-btn
                           v-bind="props"
@@ -157,7 +157,7 @@
                         />
                       </template>
                     </v-tooltip>
-                    <v-tooltip :text="charge.deleted_at ? 'Restore' : 'Delete'" location="top">
+                    <v-tooltip v-if="hasPermission('charges-delete')" :text="charge.deleted_at ? 'Restore' : 'Delete'" location="top">
                       <template v-slot:activator="{ props }">
                         <v-btn
                           v-bind="props"
@@ -325,7 +325,7 @@ const confirm = $notifications.useConfirm()
 const router = useRouter()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
-const { isSuperAdminRole } = useCheckUser()
+const { isSuperAdminRole, hasPermission } = useCheckUser()
 
 const filters = ref({
   name: '',
