@@ -6,7 +6,7 @@
         <v-card class="mb-4">
           <v-card-title>
             <div class="flex gap-2">
-              <EditButton :item="voyage" @click="editVoyageForm" />
+              <EditButton :item="voyage" permission="voyages-edit" @click="editVoyageForm" />
               <div class="font-bold">Voyage {{ voyage.name }}</div>
             </div>
           </v-card-title>
@@ -63,7 +63,7 @@
             <tbody>
               <tr v-for="(destination, index) in voyage.destinations" :key="`destination-${index}`">
                 <td>
-                  <EditButton :item="destination" @click="goToVoyageDestination" />
+                  <EditButton :item="destination" permission="voyage-destinations-edit" @click="goToVoyageDestination" />
                 </td>
                 <td>{{ destination.pod?.name }}</td>
                 <td>{{ destination.eta_date }}</td>

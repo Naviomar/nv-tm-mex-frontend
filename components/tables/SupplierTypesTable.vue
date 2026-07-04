@@ -47,8 +47,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="supplier" @click="view(supplier)" />
-                  <EditButton :item="supplier" @click="edit(supplier)" />
-                  <TrashButton :item="supplier" @click="showConfirmDelete" />
+                  <EditButton :item="supplier" permission="supplier-types-edit" @click="edit(supplier)" />
+                  <TrashButton :item="supplier" permission="supplier-types-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ supplier.name }}</td>

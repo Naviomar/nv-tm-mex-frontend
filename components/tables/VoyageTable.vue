@@ -119,7 +119,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <EditButton :item="voyageDest" @click="editVoyageDestination(voyageDest)" />
+                  <EditButton :item="voyageDest" permission="voyage-destinations-edit" @click="editVoyageDestination(voyageDest)" />
                   <ProcessAuthorizationWrapper
                     :processName="voyageDest.deleted_at ? 'voyage-restore' : 'voyage-delete'"
                     :requestKey="`${voyageDest.id}`"
@@ -127,7 +127,7 @@
                     :displayName="voyageDest.serie_folio || `${voyageDest.name}`"
                   >
                     <template #auth>
-                      <TrashButton :item="voyageDest" @click="showConfirmDelete" />
+                      <TrashButton :item="voyageDest" permission="voyage-destinations-delete" @click="showConfirmDelete" />
                     </template>
                   </ProcessAuthorizationWrapper>
                   <VoyageTransferReferencesDialog

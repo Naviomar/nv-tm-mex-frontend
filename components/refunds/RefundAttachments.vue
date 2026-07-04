@@ -28,6 +28,7 @@
                 <td>
                   <TrashButton
                     :item="attach"
+                    permission="refunds-edit"
                     @click="checkUserAndExecute(attach.created_by, () => showConfirmDelete)"
                   />
                 </td>

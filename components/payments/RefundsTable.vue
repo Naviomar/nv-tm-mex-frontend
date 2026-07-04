@@ -55,11 +55,12 @@
                 <div class="flex gap-2">
                   <ViewButton :item="refund" @click="viewItem(refund)" />
                   <div>
-                    <EditButton :item="refund" @click="checkUserAndExecute(refund.created_by, () => editItem(refund));" />
+                    <EditButton :item="refund" permission="refunds-edit" @click="checkUserAndExecute(refund.created_by, () => editItem(refund));" />
                   </div>
                   <div v-if="refund.deleted_at == null">
                     <TrashButton
                       :item="refund"
+                      permission="refunds-delete"
                       @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
                     />
                   </div>

@@ -43,7 +43,7 @@
               :key="`ref-note-${index}`"
             >
               <td>
-                <TrashButton :item="note" @click="showConfirmDelete" />
+                <TrashButton :item="note" permission="executives-edit" @click="showConfirmDelete" />
               </td>
               <td class="p-2">{{ note.creator?.name }}</td>
               <td>{{ note.note }}</td>

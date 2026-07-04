@@ -71,10 +71,10 @@
             </v-chip>
             <div class="d-flex gap-2">
               <div v-if="whoRolEdit(department.name) === 'true'">
-                <EditButton :item="department" @click="editDepartments(department)" />
+                <EditButton :item="department" permission="departments-edit" @click="editDepartments(department)" />
               </div>
               <div v-if="whoRolDelete(department.name) === 'true'">
-                <TrashButton :item="department" @click="showConfirmDelete" />
+                <TrashButton :item="department" permission="departments-delete" @click="showConfirmDelete" />
               </div>
             </div>
           </div>

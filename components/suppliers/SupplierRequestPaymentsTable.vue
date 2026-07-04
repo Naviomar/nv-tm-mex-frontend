@@ -49,7 +49,7 @@
               <div class="flex gap-2">
                 <ViewButton :id="supReqPayment.id" @click="viewItem(supReqPayment)" />
                 <div v-if="supReqPayment.deleted_at == null">
-                  <TrashButton :item="supReqPayment" @click="showFormDelete(supReqPayment)" />
+                  <TrashButton :item="supReqPayment" permission="supplier-req-payments-delete" @click="showFormDelete(supReqPayment)" />
                 </div>
               </div>
             </td>

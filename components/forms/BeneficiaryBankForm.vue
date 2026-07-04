@@ -110,8 +110,8 @@
           <tr v-for="(item, index) in bankAccounts" :key="`beneficiary-bank-${index}`">
             <td>
               <div class="flex items-center gap-2">
-                <EditButton :item="item" @click="editItem(item)" />
-                <TrashButton :item="item" @click="showConfirmDelete" />
+                <EditButton :item="item" permission="refunds-create" @click="editItem(item)" />
+                <TrashButton :item="item" permission="refunds-create" @click="showConfirmDelete" />
               </div>
             </td>
             <td>
