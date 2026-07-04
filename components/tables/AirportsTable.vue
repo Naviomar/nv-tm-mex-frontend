@@ -56,8 +56,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="airport" @click="viewAirport(airport)" />
-                  <EditButton :item="airport" @click="editAirport(airport)" />
-                  <TrashButton :item="airport" @click="showConfirmDelete" />
+                  <EditButton :item="airport" permission="airports-edit" @click="editAirport(airport)" />
+                  <TrashButton :item="airport" permission="airports-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ airport.country?.name }}</td>

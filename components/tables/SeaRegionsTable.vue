@@ -44,8 +44,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="seaRegion" @click="viewSeaRegion(seaRegion)" />
-                  <EditButton :item="seaRegion" @click="editSeaRegion(seaRegion)" />
-                  <TrashButton :item="seaRegion" @click="showConfirmDelete" />
+                  <EditButton :item="seaRegion" permission="sea-regions-edit" @click="editSeaRegion(seaRegion)" />
+                  <TrashButton :item="seaRegion" permission="sea-regions-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ seaRegion.name }}</td>

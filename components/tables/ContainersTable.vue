@@ -59,8 +59,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="container" @click="viewContainer(container)" />
-                  <EditButton :item="container" @click="editContainer(container)" />
-                  <TrashButton :item="container" @click="showConfirmDelete" />
+                  <EditButton :item="container" permission="containers-edit" @click="editContainer(container)" />
+                  <TrashButton :item="container" permission="containers-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ container.name }}</td>

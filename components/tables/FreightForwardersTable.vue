@@ -67,8 +67,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="ff" @click="viewFf(ff)" />
-                  <EditButton :item="ff" @click="editFf(ff)" />
-                  <TrashButton :item="ff" @click="showConfirmDelete" />
+                  <EditButton :item="ff" permission="freight-forwarders-edit" @click="editFf(ff)" />
+                  <TrashButton :item="ff" permission="freight-forwarders-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td class="whitespace-nowrap">

@@ -45,8 +45,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="executive" @click="viewExecutive(executive)" />
-                  <EditButton :item="executive" @click="editExecutive(executive)" />
-                  <TrashButton :item="executive" @click="showConfirmDelete" />
+                  <EditButton :item="executive" permission="executives-edit" @click="editExecutive(executive)" />
+                  <TrashButton :item="executive" permission="executives-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ executive.name }}</td>

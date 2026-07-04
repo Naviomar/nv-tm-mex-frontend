@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-tooltip v-if="item.deleted_at == null" text="Edit">
+    <v-tooltip v-if="item.deleted_at == null && canEdit" text="Edit">
       <template v-slot:activator="{ props }">
         <v-btn
           color="blue"
@@ -15,13 +15,21 @@
   </div>
 </template>
 <script setup lang="ts">
+const { hasPermission } = useCheckUser()
+
 const props = defineProps({
   item: Object,
   required: true,
   default: () => ({}),
+  permission: {
+    type: String as PropType<string | null>,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['click'])
+
+const canEdit = computed(() => !props.permission || hasPermission(props.permission))
 
 function onClick(item: any) {
   emit('click', item)

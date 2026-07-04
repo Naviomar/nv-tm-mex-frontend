@@ -76,8 +76,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="line" @click="viewLine(line)" />
-                  <EditButton :item="line" @click="editLine(line)" />
-                  <TrashButton :item="line" @click="showConfirmDelete" />
+                  <EditButton :item="line" permission="lines-edit" @click="editLine(line)" />
+                  <TrashButton :item="line" permission="lines-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td class="whitespace-nowrap">

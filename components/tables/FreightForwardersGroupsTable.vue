@@ -37,7 +37,7 @@
                 <div class="flex gap-2">
                   <ViewButton :item="ffg" @click="viewFreightForwardersGroups(ffg)" />
                   <EditButton :item="ffg" @click="editFreightForwardersGroups(ffg)" />
-                  <TrashButton :item="ffg" @click="showConfirmDelete(ffg)" />
+                  <TrashButton :item="ffg" permission="freight-groups-delete" @click="showConfirmDelete(ffg)" />
                 </div>
               </td>
               <td>{{ ffg.name }}</td>

@@ -31,7 +31,7 @@
               :class="{ 'bg-red-100! dark:bg-red-900!': bankAccountType.deleted_at }"
             >
               <td>
-                <TrashButton :item="bankAccountType" @click="showConfirmDelete" />
+                <TrashButton :item="bankAccountType" permission="banks-accounts-types-delete" @click="showConfirmDelete" />
               </td>
               <td>{{ bankAccountType.name }}</td>
               <td>{{ bankAccountType.currency?.name }}</td>

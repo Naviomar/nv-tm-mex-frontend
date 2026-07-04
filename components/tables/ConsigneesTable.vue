@@ -115,8 +115,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="consignee" @click="viewCustomer(consignee)" />
-                  <EditButton :item="consignee" @click="editCustomer(consignee)" />
-                  <TrashButton :item="consignee" @click="showConfirmDelete" />
+                  <EditButton :item="consignee" permission="customers-edit" @click="editCustomer(consignee)" />
+                  <TrashButton :item="consignee" permission="customers-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ consignee.code }}</td>

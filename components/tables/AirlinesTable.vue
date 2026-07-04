@@ -45,8 +45,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="airline" @click="viewAirline(airline)" />
-                  <EditButton :item="airline" @click="editAirline(airline)" />
-                  <TrashButton :item="airline" @click="showConfirmDelete" />
+                  <EditButton :item="airline" permission="airlines-edit" @click="editAirline(airline)" />
+                  <TrashButton :item="airline" permission="airlines-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>

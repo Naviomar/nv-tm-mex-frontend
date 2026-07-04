@@ -50,8 +50,8 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="vessel" @click="viewVessel(vessel)" />
-                  <EditButton :item="vessel" @click="showWarningVesselEdit(vessel)" />
-                  <TrashButton :item="vessel" @click="showConfirmDelete" />
+                  <EditButton :item="vessel" permission="vessel-lines-edit" @click="showWarningVesselEdit(vessel)" />
+                  <TrashButton :item="vessel" permission="vessel-lines-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ vessel.line?.commercial_name }}</td>

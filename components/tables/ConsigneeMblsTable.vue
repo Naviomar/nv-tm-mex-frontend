@@ -32,8 +32,8 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <EditButton :item="consigneeMbl" @click="editItem(consigneeMbl)" />
-                  <TrashButton :item="consigneeMbl" @click="showConfirmDelete" />
+                  <EditButton :item="consigneeMbl" permission="consignee-mbl-edit" @click="editItem(consigneeMbl)" />
+                  <TrashButton :item="consigneeMbl" permission="consignee-mbl-delete" @click="showConfirmDelete" />
                 </div>
               </td>
               <td>{{ consigneeMbl.name }}</td>
