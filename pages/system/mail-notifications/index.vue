@@ -70,7 +70,7 @@
               <td class="px-4 py-3 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ formatDateString(mailNoty.created_at) }}</td>
               <td class="px-4 py-3">
                 <div class="flex gap-2">
-                  <EditButton :item="mailNoty" @click="editMailNoty(mailNoty)" />
+                  <EditButton :item="mailNoty" permission="mail-notifications-edit" @click="editMailNoty(mailNoty)" />
                 </div>
               </td>
             </tr>

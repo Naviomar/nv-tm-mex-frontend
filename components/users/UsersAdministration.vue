@@ -61,7 +61,7 @@
                   <div class="flex items-center gap-2">
                     <ViewButton :item="user" @click="onClickUserView(user)" />
 
-                    <EditButton :item="user" @click="editUserClick(user)" />
+                    <EditButton :item="user" permission="users-edit" @click="editUserClick(user)" />
 
                     <div v-if="user.is_active === 0">
                       <v-chip color="red" text-color="white" size="small" @click="onClickDeleteUser(user)"
