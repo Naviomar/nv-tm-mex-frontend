@@ -42,23 +42,48 @@
               </template>
             </v-select>
           </v-col>
-          <v-col cols="6" md="2">
-            <v-checkbox v-if="canSeeProfit" v-model="includeProfit" label="Include Profit" color="primary" density="comfortable" hide-details :disabled="loading" />
-          </v-col>
           <v-col cols="6" md="3">
             <div class="d-flex align-center gap-2">
+              <v-checkbox v-if="canSeeProfit" v-model="includeProfit" label="Include Profit" color="primary" density="comfortable" hide-details :disabled="loading" />
               <v-checkbox v-model="includeEnTransito" label="En Transito" color="warning" density="comfortable" hide-details :disabled="loading" />
-              <v-btn
-                color="primary"
-                variant="elevated"
-                :loading="loading"
-                :disabled="selectedYears.length === 0"
-                @click="loadAll()"
-              >
-                <v-icon start>mdi-chart-line</v-icon>
-                Generate
-              </v-btn>
             </div>
+          </v-col>
+          <v-col cols="6" md="2" class="text-right">
+            <v-btn
+              color="primary"
+              variant="elevated"
+              :loading="loading"
+              :disabled="selectedYears.length === 0 || (!useLegacyData && !useNewData)"
+              @click="loadAll()"
+            >
+              <v-icon start>mdi-chart-line</v-icon>
+              Generate
+            </v-btn>
+          </v-col>
+        </v-row>
+        <v-row align="center" class="mt-2">
+          <v-col cols="12" class="d-flex align-center gap-3">
+            <span class="text-subtitle-2 text-medium-emphasis">Data Source:</span>
+            <v-chip
+              :color="useLegacyData ? 'primary' : 'default'"
+              :variant="useLegacyData ? 'flat' : 'outlined'"
+              size="small"
+              filter
+              @click="useLegacyData = !useLegacyData"
+            >
+              <v-icon start size="small">mdi-database</v-icon>
+              Legacy
+            </v-chip>
+            <v-chip
+              :color="useNewData ? 'success' : 'default'"
+              :variant="useNewData ? 'flat' : 'outlined'"
+              size="small"
+              filter
+              @click="useNewData = !useNewData"
+            >
+              <v-icon start size="small">mdi-server</v-icon>
+              New
+            </v-chip>
           </v-col>
         </v-row>
       </v-card-text>
@@ -208,6 +233,8 @@ const selectedYears = ref<number[]>([])
 const selectedEjecutivo = ref<number | null>(null)
 const includeProfit = ref(true)
 const includeEnTransito = ref(false)
+const useLegacyData = ref(true)
+const useNewData = ref(true)
 
 watch(canSeeProfit, (val) => {
   if (!val) includeProfit.value = false
@@ -243,7 +270,11 @@ const availableYears = computed(() => {
 })
 
 const baseParams = () => {
-  const params: any = { years: selectedYears.value }
+  const params: any = {
+    years: selectedYears.value,
+    useLegacy: useLegacyData.value,
+    useNew: useNewData.value,
+  }
   if (selectedEjecutivo.value) params.ejecutivo_id = selectedEjecutivo.value
   return params
 }

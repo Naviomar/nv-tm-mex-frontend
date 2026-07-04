@@ -26,29 +26,26 @@
 
           <div class="d-flex align-center gap-4 mb-4">
             <div class="data-source-selector">
-              <span class="data-label">Data:</span>
-              <v-chip-group>
-                <v-chip
-                  :color="useLegacyData ? 'primary' : 'grey-lighten-1'"
-                  :variant="useLegacyData ? 'elevated' : 'outlined'"
-                  @click="useLegacyData = !useLegacyData"
-                  class="cursor-pointer data-chip"
-                  :class="{ 'chip-active': useLegacyData }"
-                >
-                  <v-icon start size="small">mdi-database</v-icon>
-                  Legacy
-                </v-chip>
-                <v-chip
-                  :color="useNewData ? 'success' : 'grey-lighten-1'"
-                  :variant="useNewData ? 'elevated' : 'outlined'"
-                  @click="useNewData = !useNewData"
-                  class="cursor-pointer data-chip"
-                  :class="{ 'chip-active': useNewData }"
-                >
-                  <v-icon start size="small">mdi-server</v-icon>
-                  New
-                </v-chip>
-              </v-chip-group>
+              <v-chip
+                :color="useLegacyData ? 'primary' : 'default'"
+                :variant="useLegacyData ? 'flat' : 'outlined'"
+                size="small"
+                filter
+                @click="useLegacyData = !useLegacyData"
+              >
+                <v-icon start size="small">mdi-database</v-icon>
+                Legacy
+              </v-chip>
+              <v-chip
+                :color="useNewData ? 'success' : 'default'"
+                :variant="useNewData ? 'flat' : 'outlined'"
+                size="small"
+                filter
+                @click="useNewData = !useNewData"
+              >
+                <v-icon start size="small">mdi-server</v-icon>
+                New
+              </v-chip>
             </div>
           </div>
           
@@ -307,7 +304,7 @@ const toDate = new Date(today)
 
 // Data source checkboxes
 const useLegacyData = ref(true)
-const useNewData = ref(false)
+const useNewData = ref(true)
 
 // Release status options
 const releaseOptions = [
@@ -544,24 +541,5 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.data-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.data-chip {
-  transition: all 0.2s ease;
-}
-
-.data-chip.chip-active {
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.data-chip:hover {
-  transform: scale(1.02);
 }
 </style>
