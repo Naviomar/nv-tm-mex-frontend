@@ -90,7 +90,7 @@
                   <v-icon v-else>mdi-message-text-outline</v-icon>
                 </v-btn>
                 <v-btn
-                  v-if="isPendingToGrant(reqAssist) && hasPermission('support_request.manage')"
+                  v-if="isPendingToGrant(reqAssist) && hasPermission('support-requests-manage')"
                   icon size="small" variant="text" color="primary"
                   title="Respond"
                   @click="showFormGrant(reqAssist)"
@@ -199,7 +199,7 @@
             </span>
             <v-spacer />
             <v-btn
-              v-if="isPendingToGrant(activeChatTicket) && hasPermission('support_request.manage')"
+              v-if="isPendingToGrant(activeChatTicket) && hasPermission('support-requests-manage')"
               color="primary" variant="flat" size="small"
               @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
             >Respond</v-btn>
@@ -345,7 +345,7 @@ const assistSaveReq = async () => {
 
 const canDelete = (reqAssist: any) => {
   if (!reqAssist) return false
-  return hasPermission('support_request.manage')
+  return hasPermission('support-requests-manage')
 }
 
 const cancelReqAssistance = async () => {

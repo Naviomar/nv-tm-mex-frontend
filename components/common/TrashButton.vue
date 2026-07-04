@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="canDelete">
     <!-- Blocking modal when reference has committed charges -->
     <v-dialog v-model="showBlockingModal" max-width="520" persistent>
       <v-card>
@@ -103,6 +103,25 @@ const props = defineProps({
     type: String as PropType<'sea-import' | 'sea-export' | 'air-import' | 'air-export' | null>,
     default: null,
   },
+  permission: {
+    type: String as PropType<string | null>,
+    default: null,
+  },
+})
+
+const { hasPermission } = useCheckUser()
+
+const deletePermissionByServiceType: Record<string, string> = {
+  'sea-import': 'sea-import-references-delete',
+  'sea-export': 'sea-export-references-delete',
+  'air-import': 'air-import-references-delete',
+  'air-export': 'air-export-references-delete',
+}
+
+const canDelete = computed(() => {
+  if (props.permission) return hasPermission(props.permission)
+  if (props.serviceType) return hasPermission(deletePermissionByServiceType[props.serviceType])
+  return true
 })
 
 const emit = defineEmits(['click'])
