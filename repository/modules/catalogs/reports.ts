@@ -50,7 +50,7 @@ class ReportsModule extends FetchFactory<any> {
     })
   }
 
-  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, includeWithoutEta?: boolean, ejecutivo_id?: number }) {
+  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, includeWithoutEta?: boolean, ejecutivo_id?: number, useLegacy?: boolean, useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
       body: params
     })
@@ -60,25 +60,25 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/ejecutivos`)
   }
 
-  async getReferencesByClient(params: { years: number[], ejecutivo_id?: number }) {
+  async getReferencesByClient(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-client`, {
       body: params
     })
   }
 
-  async getReferencesByLine(params: { years: number[], ejecutivo_id?: number }) {
+  async getReferencesByLine(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-line`, {
       body: params
     })
   }
 
-  async getReferencesByLoadingPort(params: { years: number[], ejecutivo_id?: number }) {
+  async getReferencesByLoadingPort(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-loading-port`, {
       body: params
     })
   }
 
-  async getReferencesByDischargePort(params: { years: number[], ejecutivo_id?: number }) {
+  async getReferencesByDischargePort(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-discharge-port`, {
       body: params
     })

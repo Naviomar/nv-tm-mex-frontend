@@ -28,27 +28,31 @@
             <div class="flex flex-col items-center gap-1 mb-2">
               <v-chip v-if="airInvoice.deleted_at != null" color="red" size="small"> Cancelada </v-chip>
               <v-chip v-else-if="airInvoice.invoice?.is_paid === 0" color="warning" size="small"> Pending </v-chip>
+              <v-chip v-else-if="!airInvoice.invoice" color="grey" size="small"> No Invoice </v-chip>
               <v-chip v-else color="success" size="small"> Paid </v-chip>
 
-              <InvoiceChargePaymentsView size="x-small" :invoice="airInvoice.invoice" />
+              <InvoiceChargePaymentsView v-if="airInvoice.invoice" size="x-small" :invoice="airInvoice.invoice" />
             </div>
           </td>
           <td class="p-2">
             <div class="flex flex-col items-center gap-0 mb-2">
-              {{ airInvoice.invoice.invoice_number }} <br />
-              <div v-if="isInvoiceTm(airInvoice.invoice)">
-                <PreviewTmInvoice service="air" :invoice="airInvoice" size="small" />
-              </div>
-              <div v-if="isInvoiceWm(airInvoice.invoice)">
-                <PreviewWmInvoice service="air" :invoice="airInvoice" size="small" />
-              </div>
+              <template v-if="airInvoice.invoice">
+                {{ airInvoice.invoice.invoice_number }} <br />
+                <div v-if="isInvoiceTm(airInvoice.invoice)">
+                  <PreviewTmInvoice service="air" :invoice="airInvoice" size="small" />
+                </div>
+                <div v-if="isInvoiceWm(airInvoice.invoice)">
+                  <PreviewWmInvoice service="air" :invoice="airInvoice" size="small" />
+                </div>
+              </template>
+              <span v-else class="text-grey">—</span>
             </div>
           </td>
           <td class="p-2">
-            <div v-if="airInvoice.credit_notes.length <= 0">
+            <div v-if="!airInvoice.credit_notes || airInvoice.credit_notes.length <= 0">
               <v-chip color="grey" size="x-small">None</v-chip>
             </div>
-            <div v-for="(creditNote, key) in airInvoice.credit_notes" :key="`credit-note-${key}`">
+            <div v-for="(creditNote, cnKey) in airInvoice.credit_notes" :key="`credit-note-${cnKey}`">
               <v-chip color="red" size="x-small">
                 <UserInfoBadge :item="creditNote"> Credit Note #{{ creditNote.id }} </UserInfoBadge>
               </v-chip>
@@ -56,8 +60,11 @@
           </td>
           <td class="p-2">{{ airInvoice.consignee_name }}</td>
           <td class="p-2">
-            {{ formatToCurrency(getTotalInvoice(airInvoice.invoice)) }}
-            {{ getCurrencyName(airInvoice.invoice.currency_id) }}
+            <template v-if="airInvoice.invoice">
+              {{ formatToCurrency(getTotalInvoice(airInvoice.invoice)) }}
+              {{ getCurrencyName(airInvoice.invoice.currency_id) }}
+            </template>
+            <span v-else>—</span>
           </td>
           <td class="p-2">
             <UserInfoBadge :item="airInvoice">
@@ -118,14 +125,15 @@ const customerAirInfo = ref<any>({
 })
 
 const isInvoiceTm = (invoice: any) => {
-  return invoice.invoiceable_type.includes('InvoiceAirTm')
+  return invoice?.invoiceable_type?.includes('InvoiceAirTm') ?? false
 }
 
 const isInvoiceWm = (invoice: any) => {
-  return invoice.invoiceable_type.includes('InvoiceAirWm')
+  return invoice?.invoiceable_type?.includes('InvoiceAirWm') ?? false
 }
 
 const getTotalInvoice = (invoice: any) => {
+  if (!invoice) return 0
   if (invoice.deleted_at !== null) {
     return (invoice.charges_cancelled || []).reduce((acc: number, curr: any) => {
       return acc + (parseFloat(curr.amount) + parseFloat(curr.amount_iva))

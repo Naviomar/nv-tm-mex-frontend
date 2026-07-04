@@ -1,97 +1,112 @@
 <template>
-  <div>
+  <div class="user-edit-form">
     <form @submit="onSubmit">
-      <InputText name="name" type="text" label="Name" />
-      <InputText name="email" type="email" label="Email" />
-      <InputText name="password" type="text" label="Password" />
-      <InputText name="password_confirmation" type="text" label="Password confirmation" />
-      <v-card class="mt-4">
-        <v-card-title class="bg-primary text-white d-flex align-center">
-          <v-icon class="mr-2">mdi-shield-account</v-icon>
-          Roles and Permissions
-        </v-card-title>
-        <v-card-text class="pa-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <InputAutocomplete
-                name="roles"
-                :items="catalogs.roles"
-                item-title="name"
-                item-value="id"
-                label="Assign Role(s)"
-                multiple
-                return-object
-                chips
-                closable-chips
-                variant="outlined"
-                prepend-inner-icon="mdi-shield"
-              />
-            </div>
-            <div>
-              <InputAutocomplete
-                name="permissions"
-                :items="catalogs.permissions"
-                item-title="name"
-                item-value="id"
-                label="Direct Permission(s)"
-                multiple
-                chips
-                closable-chips
-                return-object
-                variant="outlined"
-                prepend-inner-icon="mdi-key-variant"
-              />
-            </div>
-          </div>
+      <!-- Basic Info Section -->
+      <div class="form-section mb-6">
+        <div class="section-header mb-4">
+          <v-icon color="primary" size="20" class="mr-2">mdi-account-outline</v-icon>
+          <span class="section-title">User Information</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InputText name="name" type="text" label="Name" />
+          <InputText name="email" type="email" label="Email" />
+          <InputText name="password" type="text" label="Password" />
+          <InputText name="password_confirmation" type="text" label="Password confirmation" />
+        </div>
+      </div>
 
-          <!-- Role Permissions Details -->
-          <div v-if="values.roles && values.roles.length > 0" class="mt-4">
-            <v-divider class="mb-4" />
-            <div class="text-subtitle-2 font-weight-bold mb-3 d-flex align-center">
-              <v-icon size="small" class="mr-2">mdi-information</v-icon>
-              Selected Role(s) Permissions
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <v-card
-                v-for="role in values.roles"
-                :key="`role-${role.id}`"
-                variant="outlined"
-                class="pa-3"
-              >
-                <div class="d-flex align-center mb-2">
-                  <v-icon size="small" color="primary" class="mr-2">mdi-shield</v-icon>
-                  <span class="font-weight-medium">{{ role.name }}</span>
-                  <v-chip size="x-small" color="success" class="ml-2">
-                    {{ role.permissions?.length || 0 }} permissions
-                  </v-chip>
-                </div>
-                <v-divider class="my-2" />
-                <div v-if="!role.permissions || role.permissions.length === 0" class="text-caption text-grey">
-                  No permissions attached to this role
-                </div>
-                <div v-else class="d-flex flex-wrap gap-1">
-                  <v-chip
-                    v-for="permission in role.permissions"
-                    :key="permission.id"
-                    size="x-small"
-                    variant="outlined"
-                    color="primary"
-                  >
-                    <v-icon start size="x-small">mdi-key-variant</v-icon>
-                    {{ permission.name }}
-                  </v-chip>
-                </div>
-              </v-card>
-            </div>
+      <!-- Roles & Permissions Section -->
+      <div class="form-section mb-6">
+        <div class="section-header mb-4">
+          <v-icon color="primary" size="20" class="mr-2">mdi-shield-account-outline</v-icon>
+          <span class="section-title">Roles and Permissions</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <InputAutocomplete
+              name="roles"
+              :items="catalogs.roles"
+              item-title="name"
+              item-value="id"
+              label="Assign Role(s)"
+              multiple
+              return-object
+              chips
+              closable-chips
+              variant="outlined"
+              prepend-inner-icon="mdi-shield"
+            />
           </div>
+          <div>
+            <InputAutocomplete
+              name="permissions"
+              :items="catalogs.permissions"
+              item-title="name"
+              item-value="id"
+              label="Direct Permission(s)"
+              multiple
+              chips
+              closable-chips
+              return-object
+              variant="outlined"
+              prepend-inner-icon="mdi-key-variant"
+            />
+          </div>
+        </div>
 
-          <div class="text-right mt-4">
-            <v-btn color="primary" size="large" @click="onSubmit" prepend-icon="mdi-content-save">
-              Update User
-            </v-btn>
+        <!-- Role Permissions Details -->
+        <div v-if="values.roles && values.roles.length > 0" class="mt-5">
+          <div class="text-subtitle-2 font-weight-medium mb-3 d-flex align-center text-grey-darken-1">
+            <v-icon size="small" class="mr-2">mdi-information-outline</v-icon>
+            Selected Role(s) Permissions
           </div>
-        </v-card-text>
-      </v-card>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              v-for="role in values.roles"
+              :key="`role-${role.id}`"
+              class="role-card pa-3"
+            >
+              <div class="d-flex align-center mb-2">
+                <v-icon size="small" color="primary" class="mr-2">mdi-shield</v-icon>
+                <span class="font-weight-medium text-body-2">{{ role.name }}</span>
+                <v-chip size="x-small" color="primary" variant="tonal" class="ml-2">
+                  {{ role.permissions?.length || 0 }} perms
+                </v-chip>
+              </div>
+              <div v-if="!role.permissions || role.permissions.length === 0" class="text-caption text-grey">
+                No permissions attached to this role
+              </div>
+              <div v-else class="d-flex flex-wrap gap-1">
+                <v-chip
+                  v-for="permission in role.permissions"
+                  :key="permission.id"
+                  size="x-small"
+                  variant="tonal"
+                  color="primary"
+                >
+                  {{ permission.name }}
+                </v-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Access Restrictions Section -->
+      <div class="form-section">
+        <div class="section-header mb-4">
+          <v-icon color="deep-purple" size="20" class="mr-2">mdi-shield-lock-outline</v-icon>
+          <span class="section-title">Data Access Restrictions</span>
+        </div>
+        <UserDataRestrictionsPanel :user-id="props.id" />
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-right mt-6">
+        <v-btn color="primary" size="large" @click="onSubmit" prepend-icon="mdi-content-save">
+          Update User
+        </v-btn>
+      </div>
     </form>
   </div>
 </template>
@@ -188,3 +203,51 @@ onMounted(async () => {
   await getUserToEdit()
 })
 </script>
+
+<style scoped>
+.user-edit-form {
+  max-width: 100%;
+}
+
+.form-section {
+  padding: 20px 24px;
+  border-radius: 12px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(var(--v-theme-on-surface), 0.85);
+  letter-spacing: 0.3px;
+}
+
+.role-card {
+  border-radius: 8px;
+  background: rgba(var(--v-theme-primary), 0.04);
+  border: 1px solid rgba(var(--v-border-color), 0.08);
+  transition: border-color 0.2s ease;
+}
+
+.role-card:hover {
+  border-color: rgba(var(--v-theme-primary), 0.2);
+}
+
+.gap-1 {
+  gap: 4px;
+}
+.gap-3 {
+  gap: 12px;
+}
+.gap-4 {
+  gap: 16px;
+}
+</style>

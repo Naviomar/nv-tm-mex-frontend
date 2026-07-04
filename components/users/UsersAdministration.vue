@@ -43,6 +43,7 @@
                 <th class="text-left">Name</th>
                 <th class="text-left">Email</th>
                 <th class="text-left">Role(s)</th>
+                <th class="text-left">Access</th>
                 <th class="text-left">Departments</th>
                 <th class="text-left">Date</th>
               </tr>
@@ -86,6 +87,26 @@
                 <td>
                   <v-chip v-for="(role, index) in user.roles" :key="`role-${index}`" color="primary" size="small">
                     {{ role.name }}
+                  </v-chip>
+                </td>
+                <td>
+                  <v-chip
+                    v-if="user.is_data_restricted"
+                    color="warning"
+                    size="small"
+                    variant="outlined"
+                  >
+                    <v-icon start size="x-small">mdi-shield-lock</v-icon>
+                    Restricted
+                  </v-chip>
+                  <v-chip
+                    v-else
+                    color="success"
+                    size="small"
+                    variant="outlined"
+                  >
+                    <v-icon start size="x-small">mdi-shield-check</v-icon>
+                    Full
                   </v-chip>
                 </td>
                 <td>

@@ -25,24 +25,28 @@
             <div class="flex flex-col items-center gap-1 mb-2">
               <v-chip v-if="seaInvoice.deleted_at != null" color="red" size="small"> Cancelada </v-chip>
               <v-chip v-else-if="seaInvoice.invoice?.is_paid === 0" color="warning" size="small"> Pending </v-chip>
+              <v-chip v-else-if="!seaInvoice.invoice" color="grey" size="small"> No Invoice </v-chip>
               <v-chip v-else color="success" size="small"> Paid </v-chip>
 
-              <InvoiceChargePaymentsView size="x-small" :invoice="seaInvoice.invoice" />
+              <InvoiceChargePaymentsView v-if="seaInvoice.invoice" size="x-small" :invoice="seaInvoice.invoice" />
             </div>
           </td>
           <td class="p-2">
             <div class="flex flex-col items-center gap-0 mb-2">
-              {{ seaInvoice.invoice.invoice_number }} <br />
-              <div v-if="isInvoiceTm(seaInvoice.invoice)">
-                <PreviewTmInvoice service="sea" :invoice="seaInvoice" size="small" />
-              </div>
-              <div v-if="isInvoiceWm(seaInvoice.invoice)">
-                <PreviewWmInvoice service="sea" :invoice="seaInvoice" size="small" />
-              </div>
+              <template v-if="seaInvoice.invoice">
+                {{ seaInvoice.invoice.invoice_number }} <br />
+                <div v-if="isInvoiceTm(seaInvoice.invoice)">
+                  <PreviewTmInvoice service="sea" :invoice="seaInvoice" size="small" />
+                </div>
+                <div v-if="isInvoiceWm(seaInvoice.invoice)">
+                  <PreviewWmInvoice service="sea" :invoice="seaInvoice" size="small" />
+                </div>
+              </template>
+              <span v-else class="text-grey">—</span>
             </div>
           </td>
           <td class="p-2">
-            <div v-if="seaInvoice.credit_notes.length <= 0">
+            <div v-if="!seaInvoice.credit_notes || seaInvoice.credit_notes.length <= 0">
               <v-chip color="grey-lighten-3" size="x-small" variant="flat">None</v-chip>
             </div>
             <div v-else class="flex flex-wrap gap-1">
@@ -63,9 +67,11 @@
           <td class="p-2">{{ seaInvoice.consignee_name }}</td>
           <td class="p-2">
             <div class="flex flex-col items-end gap-1 mb-2">
-              {{ formatToCurrency(getTotalInvoice(seaInvoice.invoice)) }}
-              {{ getCurrencyName(seaInvoice.invoice.currency_id) }}
-              
+              <template v-if="seaInvoice.invoice">
+                {{ formatToCurrency(getTotalInvoice(seaInvoice.invoice)) }}
+                {{ getCurrencyName(seaInvoice.invoice.currency_id) }}
+              </template>
+              <span v-else>—</span>
             </div>
           </td>
           <td class="p-2">
@@ -177,14 +183,15 @@ const toggleExpand = (key: number) => {
 }
 
 const isInvoiceTm = (invoice: any) => {
-  return invoice.invoiceable_type.includes('InvoiceSeaTm')
+  return invoice?.invoiceable_type?.includes('InvoiceSeaTm') ?? false
 }
 
 const isInvoiceWm = (invoice: any) => {
-  return invoice.invoiceable_type.includes('InvoiceSeaWm')
+  return invoice?.invoiceable_type?.includes('InvoiceSeaWm') ?? false
 }
 
 const getTotalInvoice = (invoice: any) => {
+  if (!invoice) return 0
   if (invoice.deleted_at !== null) {
     return (invoice.charges_cancelled || []).reduce((acc: number, curr: any) => {
       return acc + (parseFloat(curr.amount) + parseFloat(curr.amount_iva))

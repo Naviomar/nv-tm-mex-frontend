@@ -6,11 +6,11 @@
         <div class="header-content">
           <div class="header-left">
             <div class="icon-wrapper">
-              <v-icon color="white" size="28">mdi-ship</v-icon>
+              <v-icon color="white" size="28">mdi-chart-donut-variant</v-icon>
             </div>
             <div class="header-text">
-              <h2 class="report-title">Import Repo General</h2>
-              <p class="report-subtitle">General import report with financial data and TEUS calculation</p>
+              <h2 class="report-title">Profits General</h2>
+              <p class="report-subtitle">General profit report with demurrage, payment tracking, and line payment data</p>
             </div>
           </div>
         </div>
@@ -47,10 +47,21 @@
                 New
               </v-chip>
             </div>
+
+            <v-spacer />
+
+            <div class="data-source-selector">
+              <span class="data-label">Line Payments:</span>
+              <v-switch
+                v-model="pagoLinea"
+                color="primary"
+                hide-details
+                density="compact"
+                inset
+              />
+            </div>
           </div>
-          
-          <!-- All filters flow in a clean 2-column grid (md=6) so the layout never
-               leaves an orphaned blank column, regardless of filter count. -->
+
           <v-row>
             <v-col cols="12" md="6">
               <v-date-picker
@@ -245,16 +256,16 @@
 
           <v-row class="mt-4">
             <v-col cols="12" class="d-flex justify-end gap-2">
-              <v-btn 
-                variant="outlined" 
-                color="grey" 
+              <v-btn
+                variant="outlined"
+                color="grey"
                 @click="clearFilters"
                 prepend-icon="mdi-filter-off"
               >
                 Clear Filters
               </v-btn>
-              <v-btn 
-                color="primary" 
+              <v-btn
+                color="primary"
                 @click="applyFilters"
                 prepend-icon="mdi-download"
                 :loading="loadingStore.loading"
@@ -274,7 +285,7 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          This report generates an Excel file with import reference data including financial calculations, TEUS, and container information from legacy and/or new system databases.
+          This report generates an Excel file with profit calculations including general profit, cargo profit, demurrage profit, payment tracking, and line payment data from legacy and/or new system databases.
         </v-alert>
       </v-card-text>
     </v-card>
@@ -284,44 +295,33 @@
 <script setup lang="ts">
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
 
-// Helper to format date as YYYY-MM-DD (handles both Date objects and strings)
 function formatDate(date: Date | string) {
   if (typeof date === 'string') return date.slice(0, 10)
   return date.toISOString().slice(0, 10)
 }
 
-// Today
 const today = new Date()
-// From date: today - 1 month
 const fromDate = new Date(today)
 fromDate.setMonth(fromDate.getMonth() - 1)
-// To date: today
 const toDate = new Date(today)
 
-// Data source checkboxes
 const useLegacyData = ref(true)
 const useNewData = ref(true)
+const pagoLinea = ref(false)
 
-// Release status options
 const releaseOptions = [
   { title: 'Released', value: '1' },
   { title: 'Not Released', value: '0' },
 ]
 
-// Transport type options — matches the legacy report's "TRANSPORT MODE" select
-// (terr_tipo): RAIL, TRUCK, RAIL_TRUCK. Value 'RAILTRUCK' (no underscore) is the
-// exact stored value the backend filters on.
 const transportTypes = [
   { title: 'RAIL', value: 'RAIL' },
   { title: 'TRUCK', value: 'TRUCK' },
   { title: 'RAIL TRUCK', value: 'RAILTRUCK' },
 ]
 
-// Initialize the filters with the date range
 const filters = ref<any>({
   fromDate: fromDate,
   toDate: toDate,
@@ -338,18 +338,15 @@ const filters = ref<any>({
   destinationPort_id: null,
 })
 
-// Catalog data
 const voyages = ref<any[]>([])
 const lines = ref<any[]>([])
 const executives = ref<any[]>([])
 const ports = ref<any[]>([])
 
-// Function to apply filters and generate Excel report
 const applyFilters = async () => {
   try {
     loadingStore.loading = true
 
-    // Prepare the query filters
     const queryFilters = {
       useLegacy: useLegacyData.value,
       useNew: useNewData.value,
@@ -369,27 +366,25 @@ const applyFilters = async () => {
         loadingPort: filters.value.loadingPort_id,
         dischargePort: filters.value.dischargePort_id,
         destinationPort: filters.value.destinationPort_id,
+        pagoLinea: pagoLinea.value,
       },
     }
 
-    // Send request to the API
-    const response = await $api.importRepo.exportExcel(queryFilters)
+    const response = await $api.profitsGral.exportExcel(queryFilters)
 
-    // Download the Excel report
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `import_repo_general_${formatDate(new Date())}.xlsx`)
+    link.setAttribute('download', `profits_gral_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (e: any) {
     console.error(e)
-    // if status code 403 show snackbar about permissions
     if (e?.response?.status === 403) {
       snackbar.add({
         text: 'You do not have permission to generate this report.',
@@ -408,7 +403,6 @@ const applyFilters = async () => {
   }
 }
 
-// Clear the filters
 const clearFilters = () => {
   filters.value.fromDate = fromDate
   filters.value.toDate = toDate
@@ -425,20 +419,14 @@ const clearFilters = () => {
   filters.value.destinationPort_id = null
 }
 
-// Load catalog data on mount
 onMounted(async () => {
   try {
-    const [voyagesData, linesData, executivesData, portsData] = await Promise.all([
-      $api.importRepo.getVoyages(),
-      $api.importRepo.getLines(),
-      $api.importRepo.getExecutives(),
-      $api.importRepo.getPorts(),
-    ])
-
-    voyages.value = voyagesData.data || []
-    lines.value = linesData.data || []
-    executives.value = executivesData.data || []
-    ports.value = portsData.data || []
+    const catalogsData = await $api.profitsGral.getCatalogs()
+    const catalogs = catalogsData.data || catalogsData
+    voyages.value = catalogs.voyages || []
+    lines.value = catalogs.lines || []
+    executives.value = catalogs.executives || []
+    ports.value = catalogs.ports || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   }
@@ -457,7 +445,7 @@ onMounted(async () => {
 }
 
 .report-header {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
   position: relative;
   overflow: hidden;
 }
@@ -541,5 +529,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.data-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
 }
 </style>
