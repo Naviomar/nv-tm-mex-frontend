@@ -36,7 +36,7 @@
               <td>
                 <div class="flex gap-2">
                   <ViewButton :item="ffg" @click="viewFreightForwardersGroups(ffg)" />
-                  <EditButton :item="ffg" @click="editFreightForwardersGroups(ffg)" />
+                  <EditButton :item="ffg" permission="freight-groups-edit" @click="editFreightForwardersGroups(ffg)" />
                   <TrashButton :item="ffg" permission="freight-groups-delete" @click="showConfirmDelete(ffg)" />
                 </div>
               </td>
