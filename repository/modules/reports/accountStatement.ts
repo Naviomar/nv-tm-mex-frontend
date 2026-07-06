@@ -1,7 +1,7 @@
 import { type FetchOptions } from 'ofetch'
 import FetchFactory from '../../factory'
 
-export interface ProfitsGralFilters {
+export interface AccountStatementFilters {
   dateRange?: string[]
   voyage?: number | null
   line?: number | null
@@ -17,13 +17,13 @@ export interface ProfitsGralFilters {
   pagoLinea?: boolean
 }
 
-export interface ProfitsGralRequest {
+export interface AccountStatementRequest {
   useLegacy: boolean
   useNew: boolean
-  filters: ProfitsGralFilters
+  filters: AccountStatementFilters
 }
 
-export interface ProfitsGralReportItem {
+export interface AccountStatementReportItem {
   id: number
   vessel: string
   voyage: string
@@ -47,17 +47,8 @@ export interface ProfitsGralReportItem {
   kgs: number
   teus: number
   sell_rate: number
-  buy_rate: number
-  cargos_usd: number
-  total_dem: number
   acobrar: number
-  pagado_usd: number
   pendiente: number
-  profit_gral: number
-  cargo_profit: number
-  demurrage_profit: number
-  real_profit: number
-  profit_mxp: number
   executive: string
   destination: string
   pp_cc: string
@@ -67,14 +58,24 @@ export interface ProfitsGralReportItem {
   discharge: string
   destination_port: string
   consignee_master_bl: string
+  /** Cost/profit fields below are only present when the user has the sea-import-profit permission. */
+  buy_rate?: number
+  cargos_usd?: number
+  total_dem?: number
+  pagado_usd?: number
+  profit_gral?: number
+  cargo_profit?: number
+  demurrage_profit?: number
+  real_profit?: number
+  profit_mxp?: number
   programado?: number
   pagado_linea?: number
 }
 
-class ProfitsGralModule extends FetchFactory<any> {
-  private RESOURCE = '/reports/profits-gral'
+class AccountStatementModule extends FetchFactory<any> {
+  private RESOURCE = '/reports/account-statement'
 
-  async getReport(data: ProfitsGralRequest, fetchOptions?: FetchOptions) {
+  async getReport(data: AccountStatementRequest, fetchOptions?: FetchOptions) {
     fetchOptions = {
       method: 'POST',
       body: data,
@@ -83,7 +84,7 @@ class ProfitsGralModule extends FetchFactory<any> {
     return this.call('POST', this.RESOURCE, fetchOptions)
   }
 
-  async exportExcel(data: ProfitsGralRequest, fetchOptions?: FetchOptions) {
+  async exportExcel(data: AccountStatementRequest, fetchOptions?: FetchOptions) {
     fetchOptions = {
       method: 'POST',
       body: data,
@@ -102,4 +103,4 @@ class ProfitsGralModule extends FetchFactory<any> {
   }
 }
 
-export default ProfitsGralModule
+export default AccountStatementModule
