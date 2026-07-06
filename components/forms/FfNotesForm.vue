@@ -144,7 +144,7 @@
                       variant="solo-filled"
                     />
                   </div>
-                  <div class="col-span-3" v-if="props.serviceType === 'sea'">
+                  <div class="col-span-3" v-if="false">
                     <label htmlfor="capture_option">
                       <select
                         v-model="charge.capture_option"
@@ -594,7 +594,15 @@ const onPartyTypeChange = () => {
   partyItem.value = null
 }
 
-const concepts = ref<any>([])
+interface Concept {
+  id?: number
+  charge_id: number | null
+  amount: number | null
+  capture_option?: string | null
+  amount_per_container?: number | null
+}
+
+const concepts = ref<Concept[]>([])
 
 const { handleSubmit, values, errors, meta, handleReset, validate, setValues } = useForm({
   validationSchema: schemaCreditDebitNotes,
@@ -629,7 +637,7 @@ const addCharge = () => {
   concepts.value.push({
     charge_id: null,
     amount: 0,
-    capture_option: 'bl',
+    capture_option: null,
     amount_per_container: 0,
   })
 }
@@ -655,6 +663,8 @@ const populateSellCharges = () => {
     concepts.value = (charges ?? []).map((charge: any) => ({
       charge_id: charge.charge_id,
       amount: charge.amount_total,
+      capture_option: null,
+      amount_per_container: 0,
     }))
   })
 }
@@ -730,7 +740,7 @@ const initForms = async () => {
     {
       charge_id: null,
       amount: 0,
-      capture_option: 'bl',
+      capture_option: null,
       amount_per_container: 0,
     },
   ]
@@ -758,7 +768,7 @@ const validateForm = async () => {
   }
   // for each charge validate if all fields are filled
   let validCharges = true
-  concepts.value.forEach((charge: any) => {
+  concepts.value.forEach((charge) => {
     const isContainer = charge.capture_option === 'container'
     if (!charge.charge_id || (isContainer ? !charge.amount_per_container : !charge.amount)) {
       snackbar.add({
@@ -817,7 +827,10 @@ const upsertFfNote = async () => {
     party_type: partyType,
     party_id: partyId,
     agente_ff_id: partyType === 'App\\Models\\Mexico\\FreightForwarder' ? partyId : null,
-    concepts: concepts.value,
+    concepts: concepts.value.map((concept) => ({
+      ...concept,
+      capture_option: concept.capture_option,
+    })),
   })
   setValues({ format: undefined })
   concepts.value = []
@@ -861,7 +874,10 @@ const editFfNote = async (creditDebit: any) => {
     attachment: creditDebit.attachment,
   }
 
-  concepts.value = creditDebit.concepts
+  concepts.value = (creditDebit.concepts ?? []).map((c: any) => ({
+    ...c,
+    capture_option: c.capture_option ?? null,
+  }))
 
   deleteNote.value = {
     show: false,
