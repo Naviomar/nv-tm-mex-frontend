@@ -10,7 +10,6 @@
             </div>
             <div class="header-text">
               <h2 class="report-title">Account Statement</h2>
-              <p class="report-subtitle">Sales and outstanding balance report, with profit and cost figures for authorized users</p>
             </div>
           </div>
         </div>
@@ -275,18 +274,6 @@
             </v-col>
           </v-row>
         </div>
-
-        <v-alert
-          type="info"
-          variant="tonal"
-          class="mt-6"
-          density="compact"
-        >
-          <template #prepend>
-            <v-icon>mdi-information-outline</v-icon>
-          </template>
-          This report generates an Excel file with sales (sell rate), amount to collect and outstanding balance for every reference. Cost and profit columns (buy rate, charges, profit, demurrage profit, payment tracking, line payments) are only included if you have permission to view profit data.
-        </v-alert>
       </v-card-text>
     </v-card>
   </div>
