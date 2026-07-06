@@ -9,8 +9,8 @@
               <v-icon color="white" size="28">mdi-chart-donut-variant</v-icon>
             </div>
             <div class="header-text">
-              <h2 class="report-title">Profits General</h2>
-              <p class="report-subtitle">General profit report with demurrage, payment tracking, and line payment data</p>
+              <h2 class="report-title">Account Statement</h2>
+              <p class="report-subtitle">Sales and outstanding balance report, with profit and cost figures for authorized users</p>
             </div>
           </div>
         </div>
@@ -285,7 +285,7 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          This report generates an Excel file with profit calculations including general profit, cargo profit, demurrage profit, payment tracking, and line payment data from legacy and/or new system databases.
+          This report generates an Excel file with sales (sell rate), amount to collect and outstanding balance for every reference. Cost and profit columns (buy rate, charges, profit, demurrage profit, payment tracking, line payments) are only included if you have permission to view profit data.
         </v-alert>
       </v-card-text>
     </v-card>
@@ -370,7 +370,7 @@ const applyFilters = async () => {
       },
     }
 
-    const response = await $api.profitsGral.exportExcel(queryFilters)
+    const response = await $api.accountStatement.exportExcel(queryFilters)
 
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -378,7 +378,7 @@ const applyFilters = async () => {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `profits_gral_${formatDate(new Date())}.xlsx`)
+    link.setAttribute('download', `account_statement_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -421,7 +421,7 @@ const clearFilters = () => {
 
 onMounted(async () => {
   try {
-    const catalogsData = await $api.profitsGral.getCatalogs()
+    const catalogsData = await $api.accountStatement.getCatalogs()
     const catalogs = catalogsData.data || catalogsData
     voyages.value = catalogs.voyages || []
     lines.value = catalogs.lines || []
