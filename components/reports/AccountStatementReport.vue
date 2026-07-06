@@ -67,7 +67,7 @@
             density="compact"
             hide-details
             class="mb-4"
-            label="Incluir refs. sin ETA (usa fecha de registro como base cuando no hay ETA)"
+            label="Include refs. without ETA (uses registration date as base when there is no ETA)"
           />
 
           <v-row>

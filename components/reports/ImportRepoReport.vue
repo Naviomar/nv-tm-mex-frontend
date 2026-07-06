@@ -55,7 +55,7 @@
             density="compact"
             hide-details
             class="mb-4"
-            label="Incluir refs. sin ETA (usa fecha de registro como base cuando no hay ETA)"
+            label="Include refs. without ETA (uses registration date as base when there is no ETA)"
           />
           
           <!-- All filters flow in a clean 2-column grid (md=6) so the layout never
