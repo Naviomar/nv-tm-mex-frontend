@@ -48,6 +48,15 @@
               </v-chip>
             </div>
           </div>
+
+          <v-switch
+            v-model="filters.baseEtaSinEta"
+            color="primary"
+            density="compact"
+            hide-details
+            class="mb-4"
+            label="Incluir refs. sin ETA (usa fecha de registro como base cuando no hay ETA)"
+          />
           
           <!-- All filters flow in a clean 2-column grid (md=6) so the layout never
                leaves an orphaned blank column, regardless of filter count. -->
@@ -336,6 +345,7 @@ const filters = ref<any>({
   loadingPort_id: null,
   dischargePort_id: null,
   destinationPort_id: null,
+  baseEtaSinEta: false,
 })
 
 // Catalog data
@@ -369,6 +379,7 @@ const applyFilters = async () => {
         loadingPort: filters.value.loadingPort_id,
         dischargePort: filters.value.dischargePort_id,
         destinationPort: filters.value.destinationPort_id,
+        baseEtaSinEta: filters.value.baseEtaSinEta,
       },
     }
 
@@ -423,6 +434,7 @@ const clearFilters = () => {
   filters.value.loadingPort_id = null
   filters.value.dischargePort_id = null
   filters.value.destinationPort_id = null
+  filters.value.baseEtaSinEta = false
 }
 
 // Load catalog data on mount
