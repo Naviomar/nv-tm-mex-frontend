@@ -53,7 +53,7 @@
               </td>
               <td>{{ supplier.name }}</td>
               <td>{{ supplier.has_cap_limit ? 'Yes' : 'No' }}</td>
-              <td>{{ supplier.has_cap_limit === 0 ? formatToCurrency(supplier.cap_limit) : '-' }}</td>
+              <td>{{ supplier.has_cap_limit === 1 ? formatToCurrency(supplier.cap_limit) : '-' }}</td>
               <td>{{ supplier.suppliers_count }}</td>
               <td>{{ formatDateString(supplier.created_at) }}</td>
             </tr>
