@@ -9,7 +9,7 @@
           <div>
             <InputCheckbox density="compact" name="has_cap_limit" label="Cap limit" />
           </div>
-          <div v-if="!hasCapLimit">
+          <div v-if="hasCapLimit">
             <InputText density="compact" type="number" name="cap_limit" label="Cap limit" />
           </div>
         </div>
