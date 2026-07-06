@@ -61,6 +61,15 @@
             </div>
           </div>
 
+          <v-switch
+            v-model="filters.baseEtaSinEta"
+            color="primary"
+            density="compact"
+            hide-details
+            class="mb-4"
+            label="Include refs. without ETA (uses registration date as base when there is no ETA)"
+          />
+
           <v-row>
             <v-col cols="12" md="6">
               <v-date-picker
@@ -323,6 +332,7 @@ const filters = ref<any>({
   loadingPort_id: null,
   dischargePort_id: null,
   destinationPort_id: null,
+  baseEtaSinEta: false,
 })
 
 const voyages = ref<any[]>([])
@@ -353,6 +363,7 @@ const applyFilters = async () => {
         loadingPort: filters.value.loadingPort_id,
         dischargePort: filters.value.dischargePort_id,
         destinationPort: filters.value.destinationPort_id,
+        baseEtaSinEta: filters.value.baseEtaSinEta,
         pagoLinea: pagoLinea.value,
       },
     }
@@ -404,6 +415,7 @@ const clearFilters = () => {
   filters.value.loadingPort_id = null
   filters.value.dischargePort_id = null
   filters.value.destinationPort_id = null
+  filters.value.baseEtaSinEta = false
 }
 
 onMounted(async () => {
