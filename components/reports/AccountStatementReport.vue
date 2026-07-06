@@ -10,7 +10,6 @@
             </div>
             <div class="header-text">
               <h2 class="report-title">Account Statement</h2>
-              <p class="report-subtitle">Sales and outstanding balance report, with profit and cost figures for authorized users</p>
             </div>
           </div>
         </div>
@@ -61,6 +60,15 @@
               />
             </div>
           </div>
+
+          <v-switch
+            v-model="filters.baseEtaSinEta"
+            color="primary"
+            density="compact"
+            hide-details
+            class="mb-4"
+            label="Include refs. without ETA (uses registration date as base when there is no ETA)"
+          />
 
           <v-row>
             <v-col cols="12" md="6">
@@ -275,18 +283,6 @@
             </v-col>
           </v-row>
         </div>
-
-        <v-alert
-          type="info"
-          variant="tonal"
-          class="mt-6"
-          density="compact"
-        >
-          <template #prepend>
-            <v-icon>mdi-information-outline</v-icon>
-          </template>
-          This report generates an Excel file with sales (sell rate), amount to collect and outstanding balance for every reference. Cost and profit columns (buy rate, charges, profit, demurrage profit, payment tracking, line payments) are only included if you have permission to view profit data.
-        </v-alert>
       </v-card-text>
     </v-card>
   </div>
@@ -336,6 +332,7 @@ const filters = ref<any>({
   loadingPort_id: null,
   dischargePort_id: null,
   destinationPort_id: null,
+  baseEtaSinEta: false,
 })
 
 const voyages = ref<any[]>([])
@@ -366,6 +363,7 @@ const applyFilters = async () => {
         loadingPort: filters.value.loadingPort_id,
         dischargePort: filters.value.dischargePort_id,
         destinationPort: filters.value.destinationPort_id,
+        baseEtaSinEta: filters.value.baseEtaSinEta,
         pagoLinea: pagoLinea.value,
       },
     }
@@ -417,6 +415,7 @@ const clearFilters = () => {
   filters.value.loadingPort_id = null
   filters.value.dischargePort_id = null
   filters.value.destinationPort_id = null
+  filters.value.baseEtaSinEta = false
 }
 
 onMounted(async () => {
