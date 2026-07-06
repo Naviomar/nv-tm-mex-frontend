@@ -637,7 +637,7 @@ const addCharge = () => {
   concepts.value.push({
     charge_id: null,
     amount: 0,
-    capture_option: 'bl',
+    capture_option: null,
     amount_per_container: 0,
   })
 }
@@ -663,7 +663,7 @@ const populateSellCharges = () => {
     concepts.value = (charges ?? []).map((charge: any) => ({
       charge_id: charge.charge_id,
       amount: charge.amount_total,
-      capture_option: 'bl',
+      capture_option: null,
       amount_per_container: 0,
     }))
   })
@@ -740,7 +740,7 @@ const initForms = async () => {
     {
       charge_id: null,
       amount: 0,
-      capture_option: 'bl',
+      capture_option: null,
       amount_per_container: 0,
     },
   ]
@@ -829,7 +829,7 @@ const upsertFfNote = async () => {
     agente_ff_id: partyType === 'App\\Models\\Mexico\\FreightForwarder' ? partyId : null,
     concepts: concepts.value.map((concept) => ({
       ...concept,
-      capture_option: concept.capture_option === 'bl' ? '' : concept.capture_option,
+      capture_option: concept.capture_option,
     })),
   })
   setValues({ format: undefined })
@@ -876,7 +876,7 @@ const editFfNote = async (creditDebit: any) => {
 
   concepts.value = (creditDebit.concepts ?? []).map((c: any) => ({
     ...c,
-    capture_option: c.capture_option || 'bl',
+    capture_option: c.capture_option ?? null,
   }))
 
   deleteNote.value = {
