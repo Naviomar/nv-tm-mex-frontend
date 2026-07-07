@@ -149,7 +149,7 @@
                       <select
                         v-model="charge.capture_option"
                         id="capture_option"
-                        class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! text-gray-900! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
+                        class="block w-full h-[40px] rounded border-0 py-1.5 px-3 text-gray-900 bg-[#f5f5f5]! dark:bg-[#2f2f2f]! dark:text-neutral-100! focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 shadow-[0_3px_1px_-2px_rgba(0,0,0,0.2),0_2px_2px_0_rgba(0,0,0,0.14),0_1px_5px_0_rgba(0,0,0,0.12)]"
                         @change="
                           (e: any) => {
                             const val = e?.target?.value
@@ -525,14 +525,24 @@ const props = defineProps({
     required: false,
     default: () => [],
   },
+  containerCount: {
+    type: Number,
+    required: false,
+    default: null,
+  },
 })
 
-const containerCount = computed(() => props.containers?.length ?? 0)
+const containerCount = computed(() => {
+  if (props.containerCount !== null) {
+    return props.containerCount
+  }
+  return props.containers?.length ?? 0
+})
 
 watch(containerCount, (newCount) => {
-  concepts.value.forEach((charge: any) => {
+  concepts.value.forEach((charge) => {
     if (charge.capture_option === 'container') {
-      charge.amount = (parseFloat(charge.amount_per_container) || 0) * newCount
+      charge.amount = (Number.parseFloat(String(charge.amount_per_container)) || 0) * newCount
     }
   })
 })
@@ -552,7 +562,8 @@ const ffNoteDetails = ref<any>({
 })
 
 const creditDebitNotes = ref<any>([])
-const referenciaCreditDebitNotes = ref<any>([])
+const referenciaCreditDebitNotes = ref<ReferenciaCreditDebitNote[]>([])
+// TODO: Unused variables
 const ffItems = ref<any>([])
 const ffItem = ref<any>(null)
 const ffSearchRef = ref<any>(null)
@@ -600,6 +611,57 @@ interface Concept {
   amount: number | null
   capture_option?: string | null
   amount_per_container?: number | null
+}
+
+type ReferenciaCreditDebitConcept = Concept & Record<string, unknown>
+
+interface FfNotePayment {
+  ff_payment_id?: number
+  payment?: {
+    invoice?: {
+      is_paid?: number
+    }
+  }
+}
+
+interface ReferenciaCreditDebitNote {
+  id: number
+  checked_at?: string | null
+  deleted_at?: string | null
+  format: string
+  type: string
+  folio?: string | null
+  as_invoice?: number | null
+  party_type?: string | null
+  party_id?: number | null
+  forwarder_id?: number | null
+  contact_name?: string | null
+  amount?: number | null
+  currency_id?: number | null
+  attachment?: string
+  concepts?: ReferenciaCreditDebitConcept[]
+  inbound?: number
+  service_folio?: string
+  party?: { name?: string }
+  forwarder?: { name?: string }
+  note_payment?: FfNotePayment | null
+  cancelled_reason?: string | null
+}
+
+interface FfNoteUpsertPayload {
+  id: number
+  format: string
+  type: 'D' | 'C'
+  folio?: string | null
+  as_invoice?: number | null
+  party_type: string
+  party_id?: number | null
+  agente_ff_id?: number | null
+  contacto_ff?: string | null
+  amount?: number | null
+  currency_id?: number | null
+  attachment?: string | null
+  concepts: ReferenciaCreditDebitConcept[]
 }
 
 const concepts = ref<Concept[]>([])
@@ -692,7 +754,7 @@ const getFormatName = (format: string) => {
 const getTotalAmount = (creditDebit: any) => {
   let total = 0
   creditDebit.concepts.forEach((charge: any) => {
-    total += parseFloat(charge.amount)
+    total += Number.parseFloat(charge.amount)
   })
   return total
 }
@@ -826,7 +888,7 @@ const upsertFfNote = async () => {
     ...form.value,
     party_type: partyType,
     party_id: partyId,
-    agente_ff_id: partyType === 'App\\Models\\Mexico\\FreightForwarder' ? partyId : null,
+    agente_ff_id: partyType === String.raw`App\Models\Mexico\FreightForwarder` ? partyId : null,
     concepts: concepts.value.map((concept) => ({
       ...concept,
       capture_option: concept.capture_option,
@@ -874,10 +936,16 @@ const editFfNote = async (creditDebit: any) => {
     attachment: creditDebit.attachment,
   }
 
-  concepts.value = (creditDebit.concepts ?? []).map((c: any) => ({
-    ...c,
-    capture_option: c.capture_option ?? null,
-  }))
+  concepts.value = (creditDebit.concepts ?? []).map((c: any) => {
+    const concept = {
+      ...c,
+      capture_option: c.capture_option ?? null,
+    }
+    if (concept.capture_option === 'container') {
+      concept.amount = (Number.parseFloat(String(concept.amount_per_container)) || 0) * containerCount.value
+    }
+    return concept
+  })
 
   deleteNote.value = {
     show: false,
@@ -1031,7 +1099,7 @@ const fetchServiceFfNotes = async () => {
     const response = await $api.ffNotes.getFfNoteByService(body)
     referenciaCreditDebitNotes.value = response
 
-    referenciaCreditDebitNotes.value = referenciaCreditDebitNotes.value.map((item: any) => ({
+    referenciaCreditDebitNotes.value = (response as ReferenciaCreditDebitNote[]).map((item) => ({
       ...item,
       format: item.inbound === 0 ? '0' : '1',
       type: item.type === 'D' ? 'Debit' : 'Credit',
@@ -1045,11 +1113,74 @@ const fetchServiceFfNotes = async () => {
   }
 }
 
+const autoRecalculateUnlockedNotes = async (newContainerCount: number) => {
+  const updatedNotes: FfNoteUpsertPayload[] = []
+
+  referenciaCreditDebitNotes.value.forEach((note) => {
+    if (note.checked_at || note.deleted_at) return
+
+    let noteChanged = false
+    const newConcepts = (note.concepts ?? []).map((concept) => {
+      const updatedConcept: ReferenciaCreditDebitConcept = {
+        ...concept,
+        capture_option: concept.capture_option ?? null,
+      }
+      if (updatedConcept.capture_option === 'container' && updatedConcept.amount_per_container != null) {
+        const newAmount = (Number.parseFloat(String(updatedConcept.amount_per_container)) || 0) * newContainerCount
+        if (updatedConcept.amount !== newAmount) {
+          updatedConcept.amount = newAmount
+          noteChanged = true
+        }
+      }
+      return updatedConcept
+    })
+
+    if (noteChanged) {
+      updatedNotes.push({
+        id: note.id,
+        format: note.format,
+        type: note.type === 'Debit' ? 'D' : 'C',
+        folio: note.folio,
+        as_invoice: note.as_invoice,
+        party_type: note.party_type ?? String.raw`App\Models\Mexico\FreightForwarder`,
+        party_id: note.party_id ?? note.forwarder_id,
+        agente_ff_id: note.forwarder_id,
+        contacto_ff: note.contact_name,
+        amount: note.amount,
+        currency_id: note.currency_id,
+        attachment: note.attachment,
+        concepts: newConcepts,
+      })
+    }
+  })
+
+  if (updatedNotes.length > 0) {
+    try {
+      loadingStore.start()
+      const body = {
+        credit_debit_notes: updatedNotes,
+        service_id: props.referenciaId,
+        service_type: props.serviceType,
+        containers: props.containers,
+      }
+      await $api.ffNotes.saveFfNotes(body)
+      await fetchServiceFfNotes()
+    } catch (e) {
+      console.error('Failed to auto-recalculate unlocked notes:', e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+  }
+}
+
 onMounted(async () => {
   await fetchServiceFfNotes()
 })
 
 defineExpose({
   fetchServiceFfNotes,
+  autoRecalculateUnlockedNotes,
 })
 </script>
