@@ -154,7 +154,7 @@
           <div class="grid grid-cols-4 gap-2">
             <div>
               <AGlobalSearch
-                :onSearch="(params : SearchParams) => searchDestinations(params, 'origin')"
+                :onSearch="(params: SearchParams) => searchDestinations(params, 'origin')"
                 validate-key="origin_id"
                 append-inner-icon="mdi-ray-start-arrow"
                 label="Origin"
@@ -166,7 +166,7 @@
                 :onSearch="searchPolPorts"
                 validate-key="pol_id"
                 prepend-inner-icon="mdi-ferry"
-                :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row: any) => `[${row.country?.code2}] ${row.name}`"
                 label="POL *"
                 :set-id="values.pol_id"
               />
@@ -176,14 +176,14 @@
                 :onSearch="searchPodPorts"
                 validate-key="pod_id"
                 append-inner-icon="mdi-ferry"
-                :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row: any) => `[${row.country?.code2}] ${row.name}`"
                 label="POD *"
                 :set-id="values.pod_id"
               />
             </div>
             <div>
               <AGlobalSearch
-                :onSearch="(params : SearchParams) => searchDestinations(params, 'destination')"
+                :onSearch="(params: SearchParams) => searchDestinations(params, 'destination')"
                 validate-key="destination_id"
                 append-inner-icon="mdi-ray-start-arrow"
                 label="Destination"
@@ -275,7 +275,13 @@
                     <div class="font-bold">{{ customerCurrentExecutive }}</div>
                   </div>
                   <div v-if="canUpdateExecutive" class="flex flex-col">
-                    <v-btn color="primary" size="x-small" @click="updateServiceExecutive" :disabled="!hasPermission('sea-import-update-executive')">Update executive</v-btn>
+                    <v-btn
+                      color="primary"
+                      size="x-small"
+                      @click="updateServiceExecutive"
+                      :disabled="!hasPermission('sea-import-update-executive')"
+                      >Update executive</v-btn
+                    >
                   </div>
                 </div>
                 <div class="col-span-2">
@@ -737,9 +743,9 @@ const selectedAgentId = ref<number | null>(null)
 
 const availableAgents = computed(() => {
   if (!consigneeInfo.value) return []
-  
+
   const allAgents: any[] = []
-  
+
   // Get agents from warranty letters for the current POD
   if (consigneeInfo.value.warranty_letters_current) {
     consigneeInfo.value.warranty_letters_current.forEach((wl: any) => {
@@ -748,7 +754,7 @@ const availableAgents = computed(() => {
       }
     })
   }
-  
+
   // Get agents from entrust letters for the current POD
   if (consigneeInfo.value.entrust_letters_current) {
     consigneeInfo.value.entrust_letters_current.forEach((el: any) => {
@@ -757,12 +763,10 @@ const availableAgents = computed(() => {
       }
     })
   }
-  
+
   // Remove duplicates by id
-  const uniqueAgents = allAgents.filter((agent, index, self) =>
-    index === self.findIndex((a) => a.id === agent.id)
-  )
-  
+  const uniqueAgents = allAgents.filter((agent, index, self) => index === self.findIndex((a) => a.id === agent.id))
+
   return uniqueAgents
 })
 
@@ -805,7 +809,7 @@ const isFormInitialized = ref(false)
 
 const lineResponsableVessels = computed(() => {
   const filtered = catalogs.value.vessels.filter((vessel: any) => vessel.line_id === values.line_id)
-  
+
   // Si hay un vessel seleccionado y no está en la lista filtrada, agregarlo
   if (values.vessel_departure_id) {
     const isInFiltered = filtered.some((v: any) => v.id === values.vessel_departure_id)
@@ -816,7 +820,7 @@ const lineResponsableVessels = computed(() => {
       }
     }
   }
-  
+
   return filtered
 })
 
@@ -824,7 +828,7 @@ const refreshVessels = async (newLineId: any) => {
   if (!isFormInitialized.value) return
   if (values.vessel_departure_id && catalogs.value.vessels.length > 0) {
     const vesselBelongsToNewLine = catalogs.value.vessels.some(
-      (v: any) => String(v.id) === String(values.vessel_departure_id) && String(v.line_id) === String(newLineId)
+      (v: any) => String(v.id) === String(values.vessel_departure_id) && String(v.line_id) === String(newLineId),
     )
     if (vesselBelongsToNewLine) return
   }
@@ -1143,20 +1147,22 @@ const searchPodPorts = async (search: SearchParams) => {
 }
 
 const getSeaImportCatalogs = async () => {
-  const consigneeMblIds = masterBls.value
-    .map((mbl: any) => mbl.consignee_mbl_id)
-    .filter((id: any) => id != null)
-  
+  const consigneeMblIds = masterBls.value.map((mbl: any) => mbl.consignee_mbl_id).filter((id: any) => id != null)
+
   const response = await $api.referencias.getSeaImportFormCatalogs({
-    query: { consignee_mbl_ids: consigneeMblIds }
+    query: { consignee_mbl_ids: consigneeMblIds },
   })
   catalogs.value = response as any
 }
 
 // Reload catalogs when masterBls change to include deleted consignee_mbls
-watch(masterBls, () => {
-  getSeaImportCatalogs()
-}, { deep: true })
+watch(
+  masterBls,
+  () => {
+    getSeaImportCatalogs()
+  },
+  { deep: true },
+)
 
 const updateRefRebate = async () => {
   try {
