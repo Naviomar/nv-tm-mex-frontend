@@ -53,7 +53,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         key: 'comparative-teus',
         title: 'Comparative TUs',
         icon: 'mdi-chart-donut-variant',
-        component: 'ComparativeTeusReport',
+        component: 'ComparativeTeusImportReport',
         permission: 'reports-maritime-import-comparative-view',
       },
     ],
@@ -63,7 +63,15 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     title: 'Maritime Export',
     icon: 'mdi-ferry',
     color: 'cyan',
-    reports: [],
+    reports: [
+      {
+        key: 'comparative-teus-export',
+        title: 'Comparative TUs Export',
+        icon: 'mdi-chart-donut-variant',
+        component: 'ComparativeTeusExportReport',
+        permission: 'reports-maritime-import-comparative-view',
+      },
+    ],
   },
   {
     key: 'air-import',

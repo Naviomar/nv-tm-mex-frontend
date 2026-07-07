@@ -9,8 +9,8 @@
               <v-icon color="white" size="28">mdi-chart-timeline-variant-shimmer</v-icon>
             </div>
             <div class="header-text">
-              <h2 class="report-title">Comparative TEUs Import Report</h2>
-              <p class="report-subtitle">Compare Import TEUs by Client and Destination across years or monthly breakdowns</p>
+              <h2 class="report-title">Comparative TEUs Export Report</h2>
+              <p class="report-subtitle">Compare Export TEUs by Client and Origin across years or monthly breakdowns</p>
             </div>
           </div>
         </div>
@@ -152,17 +152,16 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          Comparative TEUs Report will download an Excel workbook containing:
+          Comparative TEUs Export Report will download an Excel workbook containing:
           <ul class="pl-4 mt-1">
             <li v-if="filters.report_type === 'yearly'">
               <strong>Clientes:</strong> Annual TEU summary per client/executive.
             </li>
             <li v-if="filters.report_type === 'yearly'">
-              <strong>OFFICE (Destinos):</strong> Destination and discharge port annual TEU statistics.
+              <strong>OFFICE (Origen):</strong> Origin and loading port annual TEU statistics.
             </li>
             <li v-if="filters.report_type === 'monthly'">
-              <strong>Monthly Distribution:</strong> Client and Destination TEUs distributed across months by Capture
-              Date, ETD (Departure), and ETA (Arrival).
+              <strong>Monthly Distribution:</strong> Client and Origin TEUs distributed across months by Capture Date and ETD (Departure).
             </li>
           </ul>
         </v-alert>
@@ -215,7 +214,7 @@ const applyFilters = async () => {
       },
     }
 
-    const response = await $api.reports.exportComparativeTeusImportExcel(queryFilters)
+    const response = await $api.reports.exportComparativeTeusExportExcel(queryFilters)
 
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -226,8 +225,8 @@ const applyFilters = async () => {
 
     const downloadName =
       filters.value.report_type === 'yearly'
-        ? `TM_TEUS_yearly_${filters.value.start_year}_${filters.value.end_year}.xlsx`
-        : `TM_TEUS_monthly_${filters.value.year}.xlsx`
+        ? `TM_TEUS_yearly_export_${filters.value.start_year}_${filters.value.end_year}.xlsx`
+        : `TM_TEUS_monthly_export_${filters.value.year}.xlsx`
 
     link.setAttribute('download', downloadName)
     document.body.appendChild(link)
@@ -289,7 +288,7 @@ onMounted(async () => {
 }
 
 .report-header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%);
   position: relative;
   overflow: hidden;
 }
