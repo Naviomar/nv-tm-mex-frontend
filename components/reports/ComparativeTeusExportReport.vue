@@ -158,10 +158,11 @@
               <strong>Clientes:</strong> Annual TEU summary per client/executive.
             </li>
             <li v-if="filters.report_type === 'yearly'">
-              <strong>OFFICE (Origen):</strong> Origin and loading port annual TEU statistics.
+              <strong>OFFICE:</strong> Origin and loading port annual TEU statistics.
             </li>
             <li v-if="filters.report_type === 'monthly'">
-              <strong>Monthly Distribution:</strong> Client and Origin TEUs distributed across months by Capture Date and ETD (Departure).
+              <strong>Monthly Distribution:</strong> Client and Origin TEUs distributed across months by Capture Date
+              and ETD (Departure).
             </li>
           </ul>
         </v-alert>

@@ -10,7 +10,9 @@
             </div>
             <div class="header-text">
               <h2 class="report-title">Comparative TEUs Import Report</h2>
-              <p class="report-subtitle">Compare Import TEUs by Client and Destination across years or monthly breakdowns</p>
+              <p class="report-subtitle">
+                Compare Import TEUs by Client and Destination across years or monthly breakdowns
+              </p>
             </div>
           </div>
         </div>
@@ -128,6 +130,16 @@
                 />
               </v-col>
             </template>
+            <!-- Include Offices Checkbox -->
+            <v-col cols="12" md="12" class="py-0 mt-3">
+              <v-checkbox
+                v-model="filters.include_offices"
+                label="Include Office Comparison sheet"
+                color="primary"
+                hide-details
+                density="compact"
+              />
+            </v-col>
           </v-row>
 
           <v-row class="mt-6">
@@ -158,11 +170,15 @@
               <strong>Clientes:</strong> Annual TEU summary per client/executive.
             </li>
             <li v-if="filters.report_type === 'yearly'">
-              <strong>OFFICE (Destinos):</strong> Destination and discharge port annual TEU statistics.
+              <strong>OFFICE:</strong> Destination and discharge port annual TEU statistics.
             </li>
             <li v-if="filters.report_type === 'monthly'">
               <strong>Monthly Distribution:</strong> Client and Destination TEUs distributed across months by Capture
               Date, ETD (Departure), and ETA (Arrival).
+            </li>
+            <li v-if="filters.include_offices">
+              <strong>Comparativo Oficinas:</strong> TEU distribution comparison by office (Mexico, Guadalajara,
+              Monterrey).
             </li>
           </ul>
         </v-alert>
@@ -187,6 +203,7 @@ const filters = ref({
   end_year: currentYear,
   year: currentYear,
   ejecutivo_id: null as number | null,
+  include_offices: false,
 })
 
 const executives = ref<any[]>([])
@@ -212,6 +229,7 @@ const applyFilters = async () => {
         end_year: filters.value.end_year,
         year: filters.value.year,
         ejecutivo_id: filters.value.ejecutivo_id,
+        include_offices: filters.value.include_offices,
       },
     }
 
@@ -263,6 +281,7 @@ const clearFilters = () => {
   filters.value.end_year = currentYear
   filters.value.year = currentYear
   filters.value.ejecutivo_id = null
+  filters.value.include_offices = false
   useLegacyData.value = true
   useNewData.value = true
 }

@@ -69,7 +69,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         title: 'Comparative TUs Export',
         icon: 'mdi-chart-donut-variant',
         component: 'ComparativeTeusExportReport',
-        permission: 'reports-maritime-import-comparative-view',
+        permission: 'reports-maritime-export-comparative-view',
       },
     ],
   },
