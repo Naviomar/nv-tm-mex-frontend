@@ -91,6 +91,16 @@ class ReportsModule extends FetchFactory<any> {
     }
     return this.call('GET', `${this.RESOURCE}/executives-report`, fetchOptions)
   }
+
+  async exportComparativeTeusExcel(data: { filters: any, useLegacy: boolean, useNew: boolean }, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      method: 'POST',
+      body: data,
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/comparative-teus/export-excel`, fetchOptions)
+  }
 }
 
 export default ReportsModule

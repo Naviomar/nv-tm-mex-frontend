@@ -18,12 +18,9 @@
             </template>
             <v-list-item-title>{{ dept.title }}</v-list-item-title>
             <template #append>
-              <v-chip
-                v-if="visibleReportsForDept(dept).length"
-                size="x-small"
-                :color="dept.color"
-                variant="flat"
-              >{{ visibleReportsForDept(dept).length }}</v-chip>
+              <v-chip v-if="visibleReportsForDept(dept).length" size="x-small" :color="dept.color" variant="flat">{{
+                visibleReportsForDept(dept).length
+              }}</v-chip>
               <v-chip v-else size="x-small" color="grey" variant="tonal">soon</v-chip>
             </template>
           </v-list-item>
@@ -35,18 +32,8 @@
         <Transition name="dept-swap" mode="out-in">
           <div v-if="activeDept" :key="activeDept.key">
             <div v-if="visibleReports.length" class="content-inner">
-              <v-tabs
-                v-model="activeReportKey"
-                :color="activeDept.color"
-                show-arrows
-                class="report-tabs mb-4"
-              >
-                <v-tab
-                  v-for="report in visibleReports"
-                  :key="report.key"
-                  :value="report.key"
-                  class="text-none"
-                >
+              <v-tabs v-model="activeReportKey" :color="activeDept.color" show-arrows class="report-tabs mb-4">
+                <v-tab v-for="report in visibleReports" :key="report.key" :value="report.key" class="text-none">
                   <v-icon start size="18">{{ report.icon }}</v-icon>
                   {{ report.title }}
                 </v-tab>
@@ -59,12 +46,7 @@
               </div>
             </div>
 
-            <ComingSoon
-              v-else
-              :title="activeDept.title"
-              :icon="activeDept.icon"
-              :color="activeDept.color"
-            />
+            <ComingSoon v-else :title="activeDept.title" :icon="activeDept.icon" :color="activeDept.color" />
           </div>
         </Transition>
       </div>
@@ -77,6 +59,7 @@ import {
   SeaImportReports,
   ImportRepoReport,
   AccountStatementReport,
+  ComparativeTeusReport,
   CobranzaReport,
   PaymentsHistoryReport,
   MovementPaymentsReport,
@@ -90,18 +73,18 @@ import { useCheckUser } from '~/composables/useCheckUser'
 const { hasPermission } = useCheckUser()
 
 const departments = computed(() =>
-  REPORT_DEPARTMENTS.filter(dept => {
+  REPORT_DEPARTMENTS.filter((dept) => {
     if (dept.reports.length === 0) return true
-    return dept.reports.some(r => !r.permission || hasPermission(r.permission))
-  })
+    return dept.reports.some((r) => !r.permission || hasPermission(r.permission))
+  }),
 )
 
-const visibleReports = computed(() =>
-  activeDept.value?.reports.filter(r => !r.permission || hasPermission(r.permission)) ?? []
+const visibleReports = computed(
+  () => activeDept.value?.reports.filter((r) => !r.permission || hasPermission(r.permission)) ?? [],
 )
 
 const visibleReportsForDept = (dept: ReportDept) =>
-  dept.reports.filter(r => !r.permission || hasPermission(r.permission))
+  dept.reports.filter((r) => !r.permission || hasPermission(r.permission))
 
 // Explicit map from the component name used in departments.ts to the actual
 // component. Importing from '#components' is the Nuxt-supported way to reference
@@ -110,6 +93,7 @@ const componentMap: Record<string, any> = {
   SeaImportReports,
   ImportRepoReport,
   AccountStatementReport,
+  ComparativeTeusReport,
   CobranzaReport,
   PaymentsHistoryReport,
   MovementPaymentsReport,
@@ -121,21 +105,21 @@ const componentMap: Record<string, any> = {
 const activeDeptKey = ref<string>(departments.value[0]?.key ?? '')
 const activeReportKey = ref<string>(departments.value[0]?.reports[0]?.key ?? '')
 
-const activeDept = computed(() => departments.value.find(d => d.key === activeDeptKey.value) ?? null)
-const activeReport = computed(() =>
-  visibleReports.value.find(r => r.key === activeReportKey.value) ?? visibleReports.value[0] ?? null
+const activeDept = computed(() => departments.value.find((d) => d.key === activeDeptKey.value) ?? null)
+const activeReport = computed(
+  () => visibleReports.value.find((r) => r.key === activeReportKey.value) ?? visibleReports.value[0] ?? null,
 )
 
 // Nuxt auto-imported components don't resolve from a plain string in <component :is>,
 // so resolve the name to the actual component definition.
 const resolvedComponent = computed(() => {
   const name = activeReport.value?.component
-  return name ? componentMap[name] ?? null : null
+  return name ? (componentMap[name] ?? null) : null
 })
 
 const selectDept = (key: string) => {
   activeDeptKey.value = key
-  const dept = departments.value.find(d => d.key === key)
+  const dept = departments.value.find((d) => d.key === key)
   activeReportKey.value = dept?.reports[0]?.key ?? ''
 }
 </script>
@@ -172,7 +156,8 @@ const selectDept = (key: string) => {
 .dept-list :deep(.v-list-item) {
   position: relative;
   margin-bottom: 4px;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     background-color 0.25s ease;
   overflow: visible;
 }
@@ -213,7 +198,9 @@ const selectDept = (key: string) => {
 /* Department swap transition */
 .dept-swap-enter-active,
 .dept-swap-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 .dept-swap-enter-from {
   opacity: 0;
@@ -226,10 +213,14 @@ const selectDept = (key: string) => {
 
 /* Report panel swap transition */
 .panel-fade-enter-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 .panel-fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 .panel-fade-enter-from {
   opacity: 0;
