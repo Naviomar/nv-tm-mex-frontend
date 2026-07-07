@@ -138,7 +138,7 @@
         <div class="grid grid-cols-4 gap-2">
           <div>
             <AGlobalSearch
-              :onSearch="(params : SearchParams) => searchDestinations(params, 'origin')"
+              :onSearch="(params: SearchParams) => searchDestinations(params, 'origin')"
               validate-key="origin_id"
               append-inner-icon="mdi-ray-start-arrow"
               label="Origin"
@@ -150,7 +150,7 @@
               :onSearch="searchPolPorts"
               validate-key="pol_id"
               prepend-inner-icon="mdi-ferry"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row: any) => `[${row.country?.code2}] ${row.name}`"
               label="POL *"
               :set-id="values.pol_id"
             />
@@ -160,14 +160,14 @@
               :onSearch="searchPodPorts"
               validate-key="pod_id"
               append-inner-icon="mdi-ferry"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row: any) => `[${row.country?.code2}] ${row.name}`"
               label="POD *"
               :set-id="values.pod_id"
             />
           </div>
           <div>
             <AGlobalSearch
-              :onSearch="(params : SearchParams) => searchDestinations(params, 'destination')"
+              :onSearch="(params: SearchParams) => searchDestinations(params, 'destination')"
               validate-key="destination_id"
               append-inner-icon="mdi-ray-start-arrow"
               label="Destination"
@@ -278,7 +278,13 @@
                   <div class="font-bold">{{ customerCurrentExecutive }}</div>
                 </div>
                 <div v-if="canUpdateExecutive" class="flex flex-col">
-                  <v-btn color="primary" size="x-small" @click="updateServiceExecutive" :disabled="!hasPermission('sea-export-update-executive')">Update executive</v-btn>
+                  <v-btn
+                    color="primary"
+                    size="x-small"
+                    @click="updateServiceExecutive"
+                    :disabled="!hasPermission('sea-export-update-executive')"
+                    >Update executive</v-btn
+                  >
                 </div>
               </div>
               <div>
@@ -590,10 +596,10 @@
           :charges="catalogs.charges"
           :freights="catalogs.freights"
           :containers="containers"
+          :containerCount="computedContainerCount"
           @refresh="getData"
           @request-sell-charges="getSellCharges"
         />
-
       </v-card-text>
     </v-card>
 
@@ -695,9 +701,9 @@ const selectedAgentId = ref<number | null>(null)
 
 const availableAgents = computed(() => {
   if (!consigneeInfo.value) return []
-  
+
   const allAgents: any[] = []
-  
+
   // Get agents from warranty letters for the current POD
   if (consigneeInfo.value.warranty_letters_current) {
     consigneeInfo.value.warranty_letters_current.forEach((wl: any) => {
@@ -706,7 +712,7 @@ const availableAgents = computed(() => {
       }
     })
   }
-  
+
   // Get agents from entrust letters for the current POD
   if (consigneeInfo.value.entrust_letters_current) {
     consigneeInfo.value.entrust_letters_current.forEach((el: any) => {
@@ -715,12 +721,10 @@ const availableAgents = computed(() => {
       }
     })
   }
-  
+
   // Remove duplicates by id
-  const uniqueAgents = allAgents.filter((agent, index, self) =>
-    index === self.findIndex((a) => a.id === agent.id)
-  )
-  
+  const uniqueAgents = allAgents.filter((agent, index, self) => index === self.findIndex((a) => a.id === agent.id))
+
   return uniqueAgents
 })
 
@@ -744,6 +748,17 @@ const masterBls = ref([] as any)
 const houseBls = ref([] as any)
 const containers = ref([] as any)
 const booking_containers = ref<any>([])
+
+const computedContainerCount = computed(() => {
+  if (containers.value && containers.value.length > 0) {
+    return containers.value.length
+  }
+  if (booking_containers.value && booking_containers.value.length > 0) {
+    return booking_containers.value.reduce((acc: number, item: any) => acc + (Number.parseFloat(item.total) || 0), 0)
+  }
+  return 0
+})
+
 const charges = ref([] as any)
 // TODO: Unused variable
 const notes = ref([] as any)
@@ -831,7 +846,7 @@ const getSellCharges = (callback: Function) => {
       .map((charge: any) => ({
         ...charge,
         amount_total: charge.sell_total ?? 0, // Ensure amount_total exists
-      }))
+      })),
   )
 }
 
@@ -1200,6 +1215,11 @@ const onSuccess = async () => {
     }
     // DEMO
     const response = await $api.referenciasExport.updateReference(values.id!, body)
+
+    // Auto-recalculate any unlocked credit/debit notes based on current container counts
+    if (ffNotesFormRef.value) {
+      await ffNotesFormRef.value.autoRecalculateUnlockedNotes(computedContainerCount.value)
+    }
 
     snackbar.add({ type: 'success', text: 'Sea export reference updated' })
     await getData()
