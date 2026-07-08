@@ -94,6 +94,7 @@ import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTyp
 import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 import ImportRepoModule from '~/repository/modules/reports/importRepo'
 import AccountStatementModule from '~/repository/modules/reports/accountStatement'
+import ControlOperacionesModule from '~/repository/modules/reports/controlOperaciones'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 
 interface IApiInstance {
@@ -102,6 +103,7 @@ interface IApiInstance {
   reports: ReportsModule
   importRepo: ImportRepoModule
   accountStatement: AccountStatementModule
+  controlOperaciones: ControlOperacionesModule
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
@@ -204,6 +206,7 @@ export function useApiFactory() {
     reports: new ReportsModule(client), // Assuming reports is part of the dashboard module
     importRepo: new ImportRepoModule(client),
     accountStatement: new AccountStatementModule(client),
+    controlOperaciones: new ControlOperacionesModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     shippers: new ShippersModule(client),

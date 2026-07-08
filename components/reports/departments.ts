@@ -43,6 +43,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         permission: 'reports-maritime-import-repo-view',
       },
       {
+        key: 'control-operaciones',
+        title: 'Operations Control',
+        icon: 'mdi-table-large',
+        component: 'ControlOperacionesReport',
+        permission: 'reports-maritime-import-repo-view',
+      },
+      {
         key: 'account-statement',
         title: 'Estado de Cuenta',
         icon: 'mdi-chart-donut-variant',
@@ -51,7 +58,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
       },
       {
         key: 'comparative-teus',
-        title: 'Comparative TUs',
+        title: 'Comparative TEUs',
         icon: 'mdi-chart-donut-variant',
         component: 'ComparativeTeusImportReport',
         permission: 'reports-maritime-import-comparative-view',
@@ -66,7 +73,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     reports: [
       {
         key: 'comparative-teus-export',
-        title: 'Comparative TUs Export',
+        title: 'Comparative TEUs Export',
         icon: 'mdi-chart-donut-variant',
         component: 'ComparativeTeusExportReport',
         permission: 'reports-maritime-export-comparative-view',
