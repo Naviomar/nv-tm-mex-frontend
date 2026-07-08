@@ -84,6 +84,19 @@
             </v-card-text>
           </v-card>
 
+          <!-- Notes -->
+          <v-card v-if="invoiceWm.notes" variant="tonal" color="purple" class="mb-4">
+            <v-card-text>
+              <div class="flex items-start gap-3">
+                <v-icon color="purple-darken-2">mdi-note-text-outline</v-icon>
+                <div class="flex-1">
+                  <div class="text-xs text-purple-darken-1 font-semibold mb-1">NOTAS</div>
+                  <div class="font-medium">{{ invoiceWm.notes }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
           <v-divider class="my-4"></v-divider>
           <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
             <PreviewWmInvoice service="sea" :invoice="invoiceWm" />

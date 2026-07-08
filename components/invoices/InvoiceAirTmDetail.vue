@@ -108,6 +108,10 @@
                   <div class="text-xs text-grey-darken-1 mb-1">Forma de pago</div>
                   <div class="font-semibold">{{ invoiceTm.forma_pago }}</div>
                 </div>
+                <div v-if="invoiceTm.notes" class="sm:col-span-2 lg:col-span-3">
+                  <div class="text-xs text-grey-darken-1 mb-1">Notas</div>
+                  <div class="font-semibold">{{ invoiceTm.notes }}</div>
+                </div>
               </div>
             </v-card-text>
           </v-card>

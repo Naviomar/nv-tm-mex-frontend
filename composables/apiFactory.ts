@@ -88,6 +88,7 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import ExportLogsModule from '~/repository/modules/exportLogs'
 import StatisticsModule from '~/repository/modules/statistics'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
@@ -190,6 +191,7 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  exportLogs: ExportLogsModule
   statistics: StatisticsModule
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
@@ -292,6 +294,7 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    exportLogs: new ExportLogsModule(client),
     statistics: new StatisticsModule(client),
     ticketMessages: new TicketMessagesModule(client),
     authRequestTypes: new AuthRequestTypesModule(client),

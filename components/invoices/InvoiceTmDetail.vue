@@ -114,6 +114,10 @@
                   <div class="font-semibold" v-if="invoiceTm.forma_pago">{{ invoiceTm.forma_pago }}</div>
                   <div class="font-semibold" v-if="!invoiceTm.forma_pago"><v-chip color="red" size="x-small">NO METHOD OF PAYMENT FINDED</v-chip></div>
                 </div>
+                <div v-if="invoiceTm.notes" class="sm:col-span-2 lg:col-span-3">
+                  <div class="text-xs text-grey-darken-1 mb-1">Notas</div>
+                  <div class="font-semibold">{{ invoiceTm.notes }}</div>
+                </div>
               </div>
             </v-card-text>
           </v-card>
