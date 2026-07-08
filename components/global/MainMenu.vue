@@ -666,7 +666,6 @@
         <v-list-item v-if="canAccess(menuPermissions.SystemEmailTemplates)" title="Email templates" prepend-icon="mdi-email-edit-outline" to="/system/email-templates" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAlertTypes)" title="Alert types" prepend-icon="mdi-bell-cog" to="/system/alert-types" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAuthRequestTypes)" title="Auth Request Types" prepend-icon="mdi-key-variant" to="/system/auth-request-types" rounded="xl" class="mb-1"></v-list-item>
-        <v-list-item v-if="canAccess(menuPermissions.SystemSupportTickets)" title="Support tickets" prepend-icon="mdi-ticket-outline" to="/system/support-tickets" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="System Logs" prepend-icon="mdi-console" to="/system/system-logs" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAudit)" title="Audit" prepend-icon="mdi-history" to="/system/audit-log" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemWiki)" title="Wiki" prepend-icon="mdi-book-outline" to="/wiki" rounded="xl" class="mb-1"></v-list-item>
@@ -813,7 +812,6 @@ const systemPermissions = [
   menuPermissions.SystemEmailTemplates,
   menuPermissions.SystemAlertTypes,
   menuPermissions.SystemAuthRequestTypes,
-  menuPermissions.SystemSupportTickets,
   menuPermissions.SystemLogs,
   menuPermissions.SystemAudit,
   menuPermissions.SystemWiki,

@@ -862,7 +862,6 @@ const ticketCatalogs = {
     { name: 'System - Users', value: 'system-users' },
     { name: 'System - Roles and Permissions', value: 'system-roles-permissions' },
     { name: 'System - Bank Accounts', value: 'system-bank-accounts' },
-    { name: 'System - Support Tickets', value: 'system-support-tickets' },
 
     { name: 'Tracker - Sea', value: 'tracker-sea' },
     { name: 'Tracker - Air', value: 'tracker-air' },

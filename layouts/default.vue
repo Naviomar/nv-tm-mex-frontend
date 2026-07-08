@@ -68,7 +68,6 @@
               title="Recentrar panel flotante"
               @click="repositionDraggable"
             />
-            <SupportDial />
           </div>
         </v-footer>
         <SnackbarApiErrors />

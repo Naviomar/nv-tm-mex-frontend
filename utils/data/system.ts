@@ -205,7 +205,6 @@ const menuPermissions = {
   SystemEmailTemplates: 'menu-system-email-templates',
   SystemAlertTypes: 'menu-system-alert-types',
   SystemAuthRequestTypes: 'menu-system-auth-request-types',
-  SystemSupportTickets: 'menu-system-support-tickets',
   SystemLogs: 'menu-system-logs',
   SystemAudit: 'menu-system-audit',
   SystemWiki: 'menu-system-wiki',
