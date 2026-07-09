@@ -43,7 +43,7 @@
               :key="`ref-note-${index}`"
             >
               <td class="p-2">
-                <TrashButton :item="note" @click="confirmDeleteNote(note)" />
+                <TrashButton v-if="hasPermission('sea-import-references-edit')" :item="note" @click="confirmDeleteNote(note)" />
               </td>
 
               <td class="p-2">{{ note.created_by?.name }}</td>
@@ -60,7 +60,9 @@
 </template>
 <script setup lang="ts">
 import { schema } from '~~/forms/seaImportNotesReferenceForm'
+import { permissions } from '@/utils/data/system'
 const { $api, $notifications } = useNuxtApp()
+const { hasPermission } = useCheckUser()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
