@@ -327,14 +327,18 @@
     <div class="col-span-2">
       <SeaImportProfitOverview :referencia-id="referencia.id!" />
     </div>
-
+    <div class="col-span-2">
+      <SeaImportNotesForm :reference="referencia" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
+import { permissions } from '@/utils/data/system'
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
