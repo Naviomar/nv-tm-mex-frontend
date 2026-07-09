@@ -1,4 +1,4 @@
-import { type FetchOptions, type $Fetch } from 'ofetch'
+import { type FetchOptions } from 'ofetch'
 import FetchFactory from '../../factory'
 
 class ReportsModule extends FetchFactory<any> {
@@ -46,13 +46,21 @@ class ReportsModule extends FetchFactory<any> {
 
   async getComparativeChart(years: number[]) {
     return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
-      body: { years }
+      body: { years },
     })
   }
 
-  async getYearlyComparative(params: { years: number[], refresh?: boolean, includeProfit?: boolean, includeWithoutEta?: boolean, ejecutivo_id?: number, useLegacy?: boolean, useNew?: boolean }) {
+  async getYearlyComparative(params: {
+    years: number[]
+    refresh?: boolean
+    includeProfit?: boolean
+    includeWithoutEta?: boolean
+    ejecutivo_id?: number
+    useLegacy?: boolean
+    useNew?: boolean
+  }) {
     return this.call('POST', `${this.RESOURCE}/comparative-chart`, {
-      body: params
+      body: params,
     })
   }
 
@@ -60,27 +68,27 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/ejecutivos`)
   }
 
-  async getReferencesByClient(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
+  async getReferencesByClient(params: { years: number[]; ejecutivo_id?: number; useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-client`, {
-      body: params
+      body: params,
     })
   }
 
-  async getReferencesByLine(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
+  async getReferencesByLine(params: { years: number[]; ejecutivo_id?: number; useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-line`, {
-      body: params
+      body: params,
     })
   }
 
-  async getReferencesByLoadingPort(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
+  async getReferencesByLoadingPort(params: { years: number[]; ejecutivo_id?: number; useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-loading-port`, {
-      body: params
+      body: params,
     })
   }
 
-  async getReferencesByDischargePort(params: { years: number[], ejecutivo_id?: number, useNew?: boolean }) {
+  async getReferencesByDischargePort(params: { years: number[]; ejecutivo_id?: number; useNew?: boolean }) {
     return this.call('POST', `${this.RESOURCE}/references-by-discharge-port`, {
-      body: params
+      body: params,
     })
   }
 
@@ -90,6 +98,32 @@ class ReportsModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('GET', `${this.RESOURCE}/executives-report`, fetchOptions)
+  }
+
+  async exportComparativeTeusImportExcel(
+    data: { filters: any; useLegacy: boolean; useNew: boolean },
+    fetchOptions?: FetchOptions,
+  ) {
+    fetchOptions = {
+      method: 'POST',
+      body: data,
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/comparative-teus/export-excel`, fetchOptions)
+  }
+
+  async exportComparativeTeusExportExcel(
+    data: { filters: any; useLegacy: boolean; useNew: boolean },
+    fetchOptions?: FetchOptions,
+  ) {
+    fetchOptions = {
+      method: 'POST',
+      body: data,
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/comparative-teus-export/export-excel`, fetchOptions)
   }
 }
 
