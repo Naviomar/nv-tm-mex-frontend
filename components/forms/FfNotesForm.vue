@@ -294,6 +294,7 @@
                   <div
                     v-if="
                       !creditDebit.checked_at &&
+                      creditDebit.is_deletable !== false &&
                       (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                     "
                   >
@@ -382,6 +383,7 @@
                   v-if="
                     !creditDebit.deleted_at &&
                     !creditDebit.checked_at &&
+                    creditDebit.is_deletable !== false &&
                     (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                   "
                 >
@@ -646,6 +648,7 @@ interface ReferenciaCreditDebitNote {
   forwarder?: { name?: string }
   note_payment?: FfNotePayment | null
   cancelled_reason?: string | null
+  is_deletable?: boolean
 }
 
 interface FfNoteUpsertPayload {
