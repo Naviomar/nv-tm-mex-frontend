@@ -257,6 +257,11 @@
         <AirProfitOverview :airReferenceId="airReference.id" />
       </v-card-text>
     </v-card>
+
+    <div class="col-span-2">
+      <AirServiceNotesForm :serviceId="airReference.id" />
+    </div>
+    
   </div>
 </template>
 <script setup lang="ts">

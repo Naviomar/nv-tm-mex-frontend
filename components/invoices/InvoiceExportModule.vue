@@ -253,7 +253,9 @@ const exportDataXlsx = async () => {
     })
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
-    link.download = 'invoicesTm.xlsx'
+    const date = new Date()
+    const now = date.toLocaleDateString("es-ES");
+    link.download = 'invoices_tm_'+now+'.xlsx'
     link.click()
   } catch (e) {
     console.error(e)

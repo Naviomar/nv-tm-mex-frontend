@@ -430,6 +430,9 @@
       <SeaExportProfitOverview :referencia-id="referencia.id!" />
     </div>
 
+    <div class="col-span-2">
+      <SeaImportNotesForm :reference="referencia" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
