@@ -362,7 +362,7 @@
                 <template v-if="defaultNotes.items.value.length > 0">
                   <tr v-for="item in defaultNotes.items.value" :key="item.id">
                     <td>
-                      <v-btn v-if="item.is_deletable !== false" color="red" icon="mdi-delete-outline" size="x-small" variant="outlined" @click="defaultNotes.remove(item)" />
+                      <v-btn color="red" icon="mdi-delete-outline" size="x-small" variant="outlined" @click="defaultNotes.remove(item)" />
                     </td>
                     <td>
                       <v-chip size="x-small" :color="item.impoExpo === 'I' ? 'blue' : 'orange'">{{ item.impoExpo === 'I' ? 'Import' : 'Export' }}</v-chip>
