@@ -266,6 +266,14 @@
                     :set-item="defaultNotes.partyItem.value"
                   />
                 </div>
+                <div>
+                  <v-switch
+                    v-model="defaultNotes.form.value.is_deletable"
+                    color="green"
+                    density="compact"
+                    label="Deletable"
+                  />
+                </div>
               </div>
 
               <div class="mt-2">
@@ -336,17 +344,18 @@
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th>Actions</th>
-                  <th>I/E</th>
-                  <th>C/D</th>
-                  <th>Format</th>
-                  <th>Party</th>
-                  <th>Consignee filter</th>
-                  <th>Currency</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Notes</th>
-                  <th>Concepts</th>
+                  <th id="actions">Actions</th>
+                  <th id="i-e">I/E</th>
+                  <th id="c-d">C/D</th>
+                  <th id="format">Format</th>
+                  <th id="party">Party</th>
+                  <th id="consignee-filter">Consignee filter</th>
+                  <th id="currency">Currency</th>
+                  <th id="from">From</th>
+                  <th id="to">To</th>
+                  <th id="deletable">Deletable</th>
+                  <th id="notes">Notes</th>
+                  <th id="concepts">Concepts</th>
                 </tr>
               </thead>
               <tbody>
@@ -377,6 +386,11 @@
                     <td class="text-xs">{{ item.currency?.code ?? item.currency?.name }}</td>
                     <td class="whitespace-nowrap text-xs">{{ item.from_date }}</td>
                     <td class="whitespace-nowrap text-xs">{{ item.to_date ?? '∞' }}</td>
+                    <td>
+                      <v-chip size="x-small" :color="item.is_deletable !== false ? 'green' : 'red'">
+                        {{ item.is_deletable !== false ? 'Yes' : 'No' }}
+                      </v-chip>
+                    </td>
                     <td class="text-xs whitespace-nowrap">{{ item.notes ?? '—' }}</td>
                     <td class="text-xs">
                       <div v-for="(c, ci) in item.concepts" :key="`dn-c-${ci}`">
@@ -557,6 +571,7 @@ const useDefaultFfNotes = () => {
     party_id: null,
     consignee_id: null,
     notes: null,
+    is_deletable: true,
     concepts: [{ charge_id: null, amount: null, capture_option: 'bl' }],
   })
 
