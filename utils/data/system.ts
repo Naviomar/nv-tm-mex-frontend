@@ -290,6 +290,12 @@ const authorizeResources = {
     description: 'Transfer BLs between Voyage Destinations',
     redirect: null,
   },
+  /** Cancel (revert) a bank movement */
+  CancelBankMovement: {
+    resource: 'cancel-bank-movement',
+    description: 'Cancel Bank Movement',
+    redirect: null,
+  },
 }
 
 /**
@@ -388,6 +394,18 @@ const processResources = {
     processName: 'charge-similar-names',
     description: 'Add Similar Invoice Names to Charge',
     keyLabel: 'Charge',
+  },
+  /** Authorize editing a sea import container after it's restricted */
+  ContainerEdit: {
+    processName: 'container-edit',
+    description: 'Edit Sea Import Container (restricted)',
+    keyLabel: null,
+  },
+  /** Authorize deleting a sea import container after it's restricted */
+  ContainerDelete: {
+    processName: 'container-delete',
+    description: 'Delete Sea Import Container (restricted)',
+    keyLabel: null,
   },
 }
 

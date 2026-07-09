@@ -110,7 +110,7 @@ class ReportsModule extends FetchFactory<any> {
       responseType: 'blob',
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/comparative-teus/export-excel`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/comparative-teus-import/export-excel`, fetchOptions)
   }
 
   async exportComparativeTeusExportExcel(
