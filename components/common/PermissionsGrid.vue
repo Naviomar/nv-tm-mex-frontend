@@ -35,6 +35,7 @@
             {{ group.label }}
           </span>
           <v-chip
+            v-if="!guide"
             size="x-small"
             :color="countSelected(group) > 0 ? 'white' : 'rgba(255,255,255,0.3)'"
             variant="flat"
@@ -42,9 +43,12 @@
           >
             {{ countSelected(group) }}/{{ countTotal(group) }}
           </v-chip>
+          <v-chip v-else size="x-small" color="rgba(255,255,255,0.3)" variant="flat" class="text-white">
+            {{ countTotal(group) }}
+          </v-chip>
         </div>
         <v-checkbox
-          v-if="!readonly"
+          v-if="!readonly && !guide"
           :model-value="isGroupAllSelected(group)"
           :indeterminate="isGroupPartiallySelected(group)"
           color="white"
@@ -70,7 +74,7 @@
               </span>
             </div>
             <v-checkbox
-              v-if="!readonly"
+              v-if="!readonly && !guide"
               :model-value="isSubGroupAllSelected(sub)"
               :indeterminate="isSubGroupPartiallySelected(sub)"
               color="primary"
@@ -82,7 +86,24 @@
             />
           </div>
 
-          <div class="d-flex flex-wrap gap-2">
+          <!-- Guide mode: readable list with descriptions, no toggling -->
+          <div v-if="guide" class="d-flex flex-column gap-2">
+            <div
+              v-for="perm in sub.permissions"
+              :key="perm.id"
+              class="guide-row pa-3 rounded-lg"
+            >
+              <div class="d-flex align-center gap-2">
+                <span class="font-weight-medium text-body-2">{{ perm.humanLabel }}</span>
+                <v-chip size="x-small" variant="text" class="text-grey px-0">{{ perm.name }}</v-chip>
+              </div>
+              <div class="text-caption text-grey-darken-1 mt-1">
+                {{ perm.description || 'Sin descripción todavía.' }}
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="d-flex flex-wrap gap-2">
             <div
               v-for="perm in sub.permissions"
               :key="perm.id"
@@ -121,6 +142,7 @@ interface PermissionNode {
   id: number
   name: string
   humanLabel: string
+  description?: string | null
 }
 
 interface SubGroup {
@@ -137,6 +159,8 @@ const props = defineProps<{
   permissions: RawPermission[]
   modelValue: number[]
   readonly?: boolean
+  /** Read-only reference mode: shows name + description instead of toggleable chips. */
+  guide?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -197,7 +221,7 @@ const grouped = computed((): Group[] => {
       .map(capitalize)
       .join(' ')
 
-    groupMap[groupLabel][subLabel].push({ id: p.id, name: p.name, humanLabel })
+    groupMap[groupLabel][subLabel].push({ id: p.id, name: p.name, humanLabel, description: p.description })
   }
 
   return Object.entries(groupMap)
@@ -223,7 +247,7 @@ const filteredGroups = computed((): Group[] => {
       subgroups: g.subgroups
         .map((s) => ({
           ...s,
-          permissions: s.permissions.filter((p) => p.name.toLowerCase().includes(q) || p.humanLabel.toLowerCase().includes(q)),
+          permissions: s.permissions.filter((p) => p.name.toLowerCase().includes(q) || p.humanLabel.toLowerCase().includes(q) || (p.description ?? '').toLowerCase().includes(q)),
         }))
         .filter((s) => s.permissions.length > 0),
     }))
@@ -377,5 +401,11 @@ function toggleSubGroup_selectAll(sub: SubGroup, checked: boolean | null) {
 
 .perm-chip--readonly {
   opacity: 0.75;
+}
+
+/* ── Guide mode rows ──────────────────────────── */
+.guide-row {
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
