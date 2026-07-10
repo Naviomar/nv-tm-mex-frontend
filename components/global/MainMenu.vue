@@ -753,14 +753,10 @@ const invoicesAdminPackPermissions = [
 ]
 
 const invoicesPermissions = [
-  menuPermissions.InvoicesCustomers,
   ...invoicesCustomersPermissions,
-  menuPermissions.InvoicesFreightLines,
   ...invoicesFreightLinesPermissions,
   menuPermissions.InvoicesFfAgents,
-  menuPermissions.InvoicesSuppliers,
   ...invoicesSuppliersPermissions,
-  menuPermissions.InvoicesAdminPack,
   ...invoicesAdminPackPermissions,
 ]
 
