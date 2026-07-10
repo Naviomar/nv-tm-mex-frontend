@@ -114,22 +114,34 @@
             </v-col>
 
             <v-col cols="12" md="6">
-              <ACustomerSearch
+              <v-autocomplete
                 v-model="filters.consignee_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="consignees"
+                item-title="name"
+                item-value="id"
                 label="Consignee"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                auto-select-first
               />
             </v-col>
 
             <v-col cols="12" md="6">
-              <AFreightForwarderSearch
+              <v-autocomplete
                 v-model="filters.ff_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="freightForwarders"
+                item-title="name"
+                item-value="id"
                 label="Freight Forwarder"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-truck-fast"
+                auto-select-first
               />
             </v-col>
 
@@ -339,6 +351,8 @@ const voyages = ref<any[]>([])
 const lines = ref<any[]>([])
 const executives = ref<any[]>([])
 const ports = ref<any[]>([])
+const consignees = ref<any[]>([])
+const freightForwarders = ref<any[]>([])
 
 const applyFilters = async () => {
   try {
@@ -426,6 +440,8 @@ onMounted(async () => {
     lines.value = catalogs.lines || []
     executives.value = catalogs.executives || []
     ports.value = catalogs.ports || []
+    consignees.value = catalogs.consignees || []
+    freightForwarders.value = catalogs.freightForwarders || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   }

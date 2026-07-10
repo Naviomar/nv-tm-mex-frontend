@@ -104,22 +104,34 @@
             </v-col>
 
             <v-col cols="12" md="6">
-              <ACustomerSearch
+              <v-autocomplete
                 v-model="filters.consignee_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="consignees"
+                item-title="name"
+                item-value="id"
                 label="Consignee"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                auto-select-first
               />
             </v-col>
 
             <v-col cols="12" md="6">
-              <AFreightForwarderSearch
+              <v-autocomplete
                 v-model="filters.ff_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="freightForwarders"
+                item-title="name"
+                item-value="id"
                 label="Freight Forwarder"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-truck-fast"
+                auto-select-first
               />
             </v-col>
 
@@ -353,6 +365,8 @@ const voyages = ref<any[]>([])
 const lines = ref<any[]>([])
 const executives = ref<any[]>([])
 const ports = ref<any[]>([])
+const consignees = ref<any[]>([])
+const freightForwarders = ref<any[]>([])
 
 // Function to apply filters and generate Excel report
 const applyFilters = async () => {
@@ -440,17 +454,21 @@ const clearFilters = () => {
 // Load catalog data on mount
 onMounted(async () => {
   try {
-    const [voyagesData, linesData, executivesData, portsData] = await Promise.all([
+    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData] = await Promise.all([
       $api.importRepo.getVoyages(),
       $api.importRepo.getLines(),
       $api.importRepo.getExecutives(),
       $api.importRepo.getPorts(),
+      $api.importRepo.getConsignees(),
+      $api.importRepo.getFreightForwarders(),
     ])
 
     voyages.value = voyagesData.data || []
     lines.value = linesData.data || []
     executives.value = executivesData.data || []
     ports.value = portsData.data || []
+    consignees.value = consigneesData.data || []
+    freightForwarders.value = freightForwardersData.data || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   }
