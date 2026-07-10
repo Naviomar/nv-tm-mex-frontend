@@ -217,6 +217,14 @@ class UsersModule extends FetchFactory<any> {
   }
 
   /**
+   * Mapa permiso -> rutas de API que lo exigen. Alimenta el drawer
+   * "Page permissions" del footer.
+   */
+  async getPermissionsRoutesMap(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/permissions-routes-map`, fetchOptions)
+  }
+
+  /**
    * Return a user
    * @param fetchOptions options for `useFetch`
    * @returns

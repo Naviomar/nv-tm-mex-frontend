@@ -177,7 +177,7 @@
           <v-col cols="12" md="5">
             <v-autocomplete
               v-model="assignForm.roleId"
-              :items="roles"
+              :items="assignFormRoleOptions"
               item-title="name"
               item-value="id"
               label="Select role"
@@ -303,7 +303,7 @@
         <v-card-text class="pt-4">
           <v-autocomplete
             v-model="assignDialog.userId"
-            :items="props.linkedUsers"
+            :items="assignDialogUserOptions"
             item-title="email"
             item-value="id"
             label="Select user"
@@ -388,6 +388,22 @@ const assignForm = ref({
   userId: null as number | null,
   roleId: null as number | null,
 })
+
+// Evita el bug de asignar el mismo rol dos veces al mismo usuario: se
+// excluyen del selector los roles/usuarios que ya tienen esa combinación.
+function userHasRole(userId: number | null, roleId: number | null): boolean {
+  if (!userId || !roleId) return false
+  const user = props.linkedUsers.find((u: any) => u.id === userId)
+  return user?.roles?.some((r: any) => r.id === roleId) ?? false
+}
+
+const assignFormRoleOptions = computed(() =>
+  roles.value.filter((r: any) => !userHasRole(assignForm.value.userId, r.id))
+)
+
+const assignDialogUserOptions = computed(() =>
+  props.linkedUsers.filter((u: any) => !userHasRole(u.id, assignDialog.value.role?.id ?? null))
+)
 
 function getInitials(name: string): string {
   return (name ?? '')
