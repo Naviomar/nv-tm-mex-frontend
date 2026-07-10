@@ -11,6 +11,35 @@
           {{ visibleMessages.length }} messages
         </div>
       </div>
+      <v-tooltip v-if="sigaStatus?.linked" location="bottom" text="Synced with SIGA">
+        <template v-slot:activator="{ props: tooltipProps }">
+          <v-chip
+            v-bind="tooltipProps"
+            color="info"
+            size="x-small"
+            variant="flat"
+            class="mr-2 font-weight-bold"
+          >
+            <v-icon start size="10">mdi-sync</v-icon>
+            SIGA
+          </v-chip>
+        </template>
+      </v-tooltip>
+      <v-tooltip location="bottom" text="Check for updates from SIGA">
+        <template v-slot:activator="{ props: tooltipProps }">
+          <v-btn
+            v-bind="tooltipProps"
+            icon
+            size="x-small"
+            variant="text"
+            class="mr-1"
+            :loading="isSyncingSiga"
+            @click="onSyncSiga"
+          >
+            <v-icon size="16">mdi-refresh</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
       <v-chip
         v-if="unreadCount > 0"
         color="error"
@@ -367,6 +396,7 @@ const emit = defineEmits<{
 }>()
 
 const { $auth } = useNuxtApp() as any
+const snackbar = useSnackbar()
 
 const panelStyle = computed(() => ({
   height: props.height ?? '100%',
@@ -377,12 +407,16 @@ const {
   isLoading,
   isSending,
   unreadCount,
+  sigaStatus,
+  isSyncingSiga,
   fetchMessages,
   sendMessage,
   editMessage,
   markRead,
   deleteMessage,
   connectChannel,
+  fetchSigaStatus,
+  syncWithSiga,
 } = useTicketChat(props.ticketType, props.ticketId)
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -444,6 +478,17 @@ function sanitizeHtml(html: string) {
   return html.replace(/<(?!\/?(b|i|u|strong|em|ul|ol|li|br|p|span)\b)[^>]+>/gi, '')
 }
 
+// contenteditable inserts a trailing/leading "&nbsp;" (literal entity, not the
+// unicode char) to preserve a space that plain HTML would otherwise collapse
+// — String.trim() doesn't touch that literal text, so it survived as visible
+// garbage in the sent message. Strip it (and any real whitespace) from both
+// ends before the HTML is persisted/sent.
+function normalizeEditorHtml(html: string): string {
+  return html
+    .replace(/^(?:\s|&nbsp;)+/i, '')
+    .replace(/(?:\s|&nbsp;)+$/i, '')
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
@@ -500,7 +545,7 @@ function formatFileSize(bytes: number | null) {
 }
 
 async function submitMessage() {
-  const body = editorRef.value?.innerHTML?.trim()
+  const body = editorRef.value?.innerHTML ? normalizeEditorHtml(editorRef.value.innerHTML) : ''
   const files = [...stagedFiles.value]
   if (!body && !files.length) return
 
@@ -539,7 +584,7 @@ function cancelEdit() {
 
 async function saveEdit() {
   if (!editDivRef.value || !editingMessageId.value) return
-  const newBody = editDivRef.value.innerHTML.trim()
+  const newBody = normalizeEditorHtml(editDivRef.value.innerHTML)
   if (!newBody) return
   isSavingEdit.value = true
   try {
@@ -551,6 +596,24 @@ async function saveEdit() {
     console.error(err);
   } finally {
     isSavingEdit.value = false
+  }
+}
+
+async function onSyncSiga() {
+  try {
+    const result = await syncWithSiga()
+    if (!result.linked) {
+      snackbar.add({ text: 'This request is not linked to a SIGA ticket yet', type: 'warning' })
+    } else if (result.error) {
+      snackbar.add({ text: result.error, type: 'error' })
+    } else if (result.new_messages) {
+      snackbar.add({ text: `${result.new_messages} new message(s) pulled from SIGA`, type: 'success' })
+    } else {
+      snackbar.add({ text: 'Already up to date with SIGA', type: 'success' })
+    }
+  } catch (err) {
+    snackbar.add({ text: 'Failed to sync with SIGA', type: 'error' })
+    console.error(err)
   }
 }
 
@@ -594,6 +657,7 @@ onMounted(async () => {
   await fetchMessages()
   await markRead()
   await scrollToBottom()
+  fetchSigaStatus()
 })
 </script>
 

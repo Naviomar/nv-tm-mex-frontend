@@ -53,7 +53,6 @@ import SupplierTypesModule from '~/repository/modules/catalogs/supplierTypes'
 import SupplierBanksModule from '~/repository/modules/catalogs/supplierBanks'
 import ConsigneeCreditNotesModule from '~/repository/modules/catalogs/consigneeCreditNotes'
 import FfNotesModule from '~/repository/modules/catalogs/ffNotes'
-import SupportTiModule from '~/repository/modules/catalogs/supportTi'
 import SystemServicesModule from '~/repository/modules/catalogs/systemServices'
 import AirExportModule from '~/repository/modules/catalogs/airExportReferences'
 import AirImportModule from '~/repository/modules/catalogs/airImportReferences'
@@ -160,7 +159,6 @@ interface IApiInstance {
   supplierBanks: SupplierBanksModule
   consigneeCreditNotes: ConsigneeCreditNotesModule
   ffNotes: FfNotesModule
-  supportTi: SupportTiModule
   systemServices: SystemServicesModule
   airReferences: AirReferenceModule
   airImport: AirImportModule
@@ -262,7 +260,6 @@ export function useApiFactory() {
     supplierBanks: new SupplierBanksModule(client),
     consigneeCreditNotes: new ConsigneeCreditNotesModule(client),
     ffNotes: new FfNotesModule(client),
-    supportTi: new SupportTiModule(client),
     systemServices: new SystemServicesModule(client),
     airImport: new AirImportModule(client),
     airExport: new AirExportModule(client),

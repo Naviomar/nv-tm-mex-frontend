@@ -36,6 +36,20 @@ export interface TicketMessage {
   deleted_at?: string | null
 }
 
+export interface SigaStatus {
+  linked: boolean
+  siga_ticket_id: string | null
+  sync_status: string | null
+  last_synced_at: string | null
+}
+
+export interface SigaSyncResult {
+  linked: boolean
+  new_messages?: number
+  siga_ticket_id?: string
+  error?: string
+}
+
 export interface LiveChat {
   ticket_type: TicketType
   ticket_id: number
@@ -83,6 +97,14 @@ class TicketMessagesModule extends FetchFactory<any> {
 
   async editMessage(messageId: number, body: string, fetchOptions?: FetchOptions) {
     return this.call('PATCH', `${this.RESOURCE}/message/${messageId}`, { body: { body }, ...fetchOptions })
+  }
+
+  async getSigaStatus(type: TicketType, id: number, fetchOptions?: FetchOptions): Promise<SigaStatus> {
+    return this.call('GET', `${this.RESOURCE}/${type}/${id}/siga-status`, fetchOptions)
+  }
+
+  async syncSiga(type: TicketType, id: number, fetchOptions?: FetchOptions): Promise<SigaSyncResult> {
+    return this.call('POST', `${this.RESOURCE}/${type}/${id}/siga-sync`, fetchOptions)
   }
 
   async deleteMessage(messageId: number, fetchOptions?: FetchOptions) {
