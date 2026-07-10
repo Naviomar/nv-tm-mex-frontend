@@ -24,6 +24,16 @@ class FetchFactory<T> {
     const sanctumOptions = useSanctumConfig();
     const apiErrorStore = useApiErrorStore();
 
+    // Registra la llamada para el drawer "Page permissions" (qué rutas de
+    // API usa realmente la vista activa).
+    if (import.meta.client) {
+      try {
+        usePageApiCallsStore().record(method, url, useRoute().path)
+      } catch (e) {
+        // no-op: nunca debe romper una llamada real por esto
+      }
+    }
+
     const options: FetchOptions = {
       async onResponseError(context) {
         console.error('🚀 on Response Error', context.response?._data)

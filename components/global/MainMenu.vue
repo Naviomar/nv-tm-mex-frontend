@@ -12,7 +12,7 @@
       ></v-list-item>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.Authorizations) && hasAnyPermission(authorizationsPermissions)"
+        v-if="hasAnyPermission(authorizationsPermissions)"
         value="authorizations"
       >
         <template v-slot:activator="{ props }">
@@ -54,7 +54,7 @@
       </v-list-group>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.BankingTransactions) && canAccess(menuPermissions.BankingTransactionsTransfers)"
+        v-if="canAccess(menuPermissions.BankingTransactionsTransfers)"
         value="banking-transactions"
       >
         <template v-slot:activator="{ props }">
@@ -80,7 +80,7 @@
       </v-list-group>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.Payments) && hasAnyPermission(paymentsPermissions)"
+        v-if="hasAnyPermission(paymentsPermissions)"
         value="payments"
       >
         <template v-slot:activator="{ props }">
@@ -99,7 +99,7 @@
         <v-list-item v-if="false" title="Credit notes" to="/credit-notes"></v-list-item>
 
         <v-list-group
-          v-if="canAccess(menuPermissions.PaymentsFfAgents) && hasAnyPermission(paymentsFfAgentsPermissions)"
+          v-if="hasAnyPermission(paymentsFfAgentsPermissions)"
           value="payments-ffagents"
           subgroup
         >
@@ -152,7 +152,7 @@
         </v-list-group>
 
         <v-list-group
-          v-if="canAccess(menuPermissions.PaymentsFreightLines)"
+          v-if="hasAnyPermission(paymentsFreightLinesPermissions)"
           value="payments-freight-lines"
           subgroup
         >
@@ -212,7 +212,7 @@
         ></v-list-item>
       </v-list-group>
 
-      <v-list-group v-if="canAccess(menuPermissions.Invoices) && hasAnyPermission(invoicesPermissions)" value="invoices">
+      <v-list-group v-if="hasAnyPermission(invoicesPermissions)" value="invoices">
         <template v-slot:activator="{ props }">
           <v-list-item
             v-bind="props"
@@ -226,7 +226,7 @@
         </template>
 
         <v-list-group
-          v-if="canAccess(menuPermissions.InvoicesCustomers) && hasAnyPermission(invoicesCustomersPermissions)"
+          v-if="hasAnyPermission(invoicesCustomersPermissions)"
           value="invoices-customers"
           subgroup
         >
@@ -308,7 +308,7 @@
         </v-list-group>
 
         <v-list-group
-          v-if="canAccess(menuPermissions.InvoicesFreightLines) && hasAnyPermission(invoicesFreightLinesPermissions)"
+          v-if="hasAnyPermission(invoicesFreightLinesPermissions)"
           value="invoices-freight-lines"
           subgroup
         >
@@ -359,7 +359,7 @@
           class="mb-1"
         ></v-list-item>
         <v-list-group
-          v-if="canAccess(menuPermissions.InvoicesSuppliers) && hasAnyPermission(invoicesSuppliersPermissions)"
+          v-if="hasAnyPermission(invoicesSuppliersPermissions)"
           value="invoices-suppliers"
           subgroup
         >
@@ -409,7 +409,7 @@
           ></v-list-item>
         </v-list-group>
         <v-list-group
-          v-if="canAccess(menuPermissions.InvoicesAdminPack) && hasAnyPermission(invoicesAdminPackPermissions)"
+          v-if="hasAnyPermission(invoicesAdminPackPermissions)"
           value="invoices-adminpack"
           subgroup
         >
@@ -453,7 +453,7 @@
       </v-list-group>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.Maritime) && hasAnyPermission(maritimePermissions)"
+        v-if="hasAnyPermission(maritimePermissions)"
         value="maritime"
       >
         <template v-slot:activator="{ props }">
@@ -486,7 +486,7 @@
         ></v-list-item>
       </v-list-group>
 
-      <v-list-group v-if="canAccess(menuPermissions.Air) && hasAnyPermission(airPermissions)" value="air">
+      <v-list-group v-if="hasAnyPermission(airPermissions)" value="air">
         <template v-slot:activator="{ props }">
           <v-list-item
             v-bind="props"
@@ -518,7 +518,7 @@
       </v-list-group>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.MaritimeImportDemurrages) && hasAnyPermission(maritimeImportDemurragesPermissions)"
+        v-if="hasAnyPermission(maritimeImportDemurragesPermissions)"
         value="demurrages"
       >
         <template v-slot:activator="{ props }">
@@ -596,7 +596,7 @@
       <v-divider class="my-3 border border-[#aaa]!"></v-divider>
 
       <v-list-group
-        v-if="canAccess(menuPermissions.Configuration) && hasAnyPermission(configurationPermissions)"
+        v-if="hasAnyPermission(configurationPermissions)"
         value="configuration"
       >
         <template v-slot:activator="{ props }">
@@ -644,7 +644,7 @@
         <v-list-item v-if="canAccess(menuPermissions.ConfigurationWarehouses)" title="Warehouses" to="/configuration/warehouses" rounded="xl" class="mb-1"></v-list-item>
       </v-list-group>
 
-      <v-list-group v-if="canAccess(menuPermissions.System) && hasAnyPermission(systemPermissions)" value="system">
+      <v-list-group v-if="hasAnyPermission(systemPermissions)" value="system">
         <template v-slot:activator="{ props }">
           <v-list-item
             v-bind="props"
@@ -666,7 +666,6 @@
         <v-list-item v-if="canAccess(menuPermissions.SystemEmailTemplates)" title="Email templates" prepend-icon="mdi-email-edit-outline" to="/system/email-templates" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAlertTypes)" title="Alert types" prepend-icon="mdi-bell-cog" to="/system/alert-types" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAuthRequestTypes)" title="Auth Request Types" prepend-icon="mdi-key-variant" to="/system/auth-request-types" rounded="xl" class="mb-1"></v-list-item>
-        <v-list-item v-if="canAccess(menuPermissions.SystemSupportTickets)" title="Support tickets" prepend-icon="mdi-ticket-outline" to="/system/support-tickets" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="System Logs" prepend-icon="mdi-console" to="/system/system-logs" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAudit)" title="Audit" prepend-icon="mdi-history" to="/system/audit-log" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemWiki)" title="Wiki" prepend-icon="mdi-book-outline" to="/wiki" rounded="xl" class="mb-1"></v-list-item>
@@ -710,11 +709,15 @@ const paymentsFfAgentsPermissions = [
   menuPermissions.PaymentsFfAgentsReports,
 ]
 
-const paymentsPermissions = [
-  menuPermissions.PaymentsFfAgents,
-  ...paymentsFfAgentsPermissions,
-  menuPermissions.PaymentsFreightLines,
+const paymentsFreightLinesPermissions = [
   menuPermissions.PaymentsFreightLinesSchedules,
+  menuPermissions.PaymentsFreightLinesReportBls,
+  menuPermissions.PaymentsFreightLinesSeaServices,
+]
+
+const paymentsPermissions = [
+  ...paymentsFfAgentsPermissions,
+  ...paymentsFreightLinesPermissions,
   menuPermissions.PaymentsSuppliers,
   menuPermissions.PaymentsRefunds,
 ]
@@ -750,14 +753,10 @@ const invoicesAdminPackPermissions = [
 ]
 
 const invoicesPermissions = [
-  menuPermissions.InvoicesCustomers,
   ...invoicesCustomersPermissions,
-  menuPermissions.InvoicesFreightLines,
   ...invoicesFreightLinesPermissions,
   menuPermissions.InvoicesFfAgents,
-  menuPermissions.InvoicesSuppliers,
   ...invoicesSuppliersPermissions,
-  menuPermissions.InvoicesAdminPack,
   ...invoicesAdminPackPermissions,
 ]
 
@@ -813,7 +812,6 @@ const systemPermissions = [
   menuPermissions.SystemEmailTemplates,
   menuPermissions.SystemAlertTypes,
   menuPermissions.SystemAuthRequestTypes,
-  menuPermissions.SystemSupportTickets,
   menuPermissions.SystemLogs,
   menuPermissions.SystemAudit,
   menuPermissions.SystemWiki,

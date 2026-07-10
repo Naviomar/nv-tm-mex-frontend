@@ -58,6 +58,7 @@
             <div class="flex gap-2 text-sm">
               <SystemVersion />
             </div>
+            <PagePermissionsDrawer />
             <SupportAssist />
             <v-btn
               v-if="showRepositionDraggable"
@@ -68,7 +69,6 @@
               title="Recentrar panel flotante"
               @click="repositionDraggable"
             />
-            <SupportDial />
           </div>
         </v-footer>
         <SnackbarApiErrors />
