@@ -1,16 +1,38 @@
 <template>
   <div>
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
-      <v-tab value="users">
-        <v-icon start>mdi-account-group</v-icon>
-        Members
-        <v-chip size="x-small" color="primary" variant="tonal" class="ml-2">{{ linkedUsers.length }}</v-chip>
-      </v-tab>
-      <v-tab value="roles">
-        <v-icon start>mdi-shield-account</v-icon>
-        Roles & Permissions
-      </v-tab>
-    </v-tabs>
+    <div class="d-flex align-center justify-space-between mb-4">
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="users">
+          <v-icon start>mdi-account-group</v-icon>
+          Members
+          <v-chip size="x-small" color="primary" variant="tonal" class="ml-2">{{ linkedUsers.length }}</v-chip>
+        </v-tab>
+        <v-tab value="roles">
+          <v-icon start>mdi-shield-account</v-icon>
+          Roles & Permissions
+        </v-tab>
+      </v-tabs>
+      <div class="d-flex gap-2">
+        <v-btn
+          variant="tonal"
+          color="deep-purple"
+          prepend-icon="mdi-sitemap-outline"
+          size="small"
+          @click="howItWorksModal.show = true"
+        >
+          How Roles & Permissions Work
+        </v-btn>
+        <v-btn
+          variant="tonal"
+          color="secondary"
+          prepend-icon="mdi-help-circle-outline"
+          size="small"
+          @click="openPermissionsGuide"
+        >
+          Permissions Guide
+        </v-btn>
+      </div>
+    </div>
     <v-divider class="mb-4" />
 
     <v-window v-model="activeTab">
@@ -273,7 +295,7 @@
               </v-chip>
             </div>
             <PermissionsGrid
-              :permissions="scopePermissions"
+              :permissions="directScopePermissions"
               v-model="editPermissionsModal.selectedIds"
             />
           </div>
@@ -281,6 +303,59 @@
         <div v-else class="text-center py-6 text-grey">
           No permissions available in admin scope.
         </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <!-- Modal: Permissions Guide (read-only reference, what each permission does) -->
+  <v-dialog v-model="permissionsGuideModal.show" max-width="1200" scrollable>
+    <v-card class="rounded-lg">
+      <v-toolbar color="secondary" density="comfortable" class="rounded-t-lg">
+        <v-toolbar-title>
+          <v-icon class="mr-2">mdi-help-circle-outline</v-icon>
+          Permissions Guide
+        </v-toolbar-title>
+        <v-spacer />
+        <v-btn icon @click="permissionsGuideModal.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4 rounded-b-lg">
+        <div class="text-caption text-grey-darken-1 mb-3">
+          What each permission available to this department lets a user do.
+        </div>
+        <div v-if="permissionsGuideModal.loading" class="text-center py-6">
+          <v-progress-circular indeterminate color="primary" />
+        </div>
+        <PermissionsGrid
+          v-else-if="scopePermissions.length > 0"
+          :permissions="scopePermissions"
+          :model-value="[]"
+          readonly
+          guide
+        />
+        <div v-else class="text-center py-6 text-grey">
+          No permissions available in admin scope.
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <!-- Modal: How Roles & Permissions Work (visual/interactive explainer) -->
+  <v-dialog v-model="howItWorksModal.show" max-width="1000" scrollable>
+    <v-card class="rounded-lg">
+      <v-toolbar color="deep-purple" density="comfortable" class="rounded-t-lg">
+        <v-toolbar-title>
+          <v-icon class="mr-2">mdi-sitemap-outline</v-icon>
+          How Roles & Permissions Work
+        </v-toolbar-title>
+        <v-spacer />
+        <v-btn icon @click="howItWorksModal.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text style="max-height: 80vh; overflow-y: auto" class="pa-4 rounded-b-lg">
+        <PermissionsExplainer :linked-users="linkedUsers" />
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -305,6 +380,13 @@ const allUsers = ref<any[]>([])
 const scopePermissions = ref<any[]>([])
 const updatingType = ref<number | null>(null)
 
+// Excluye del grid editable los permisos que el usuario ya tiene vía rol,
+// para que no se puedan otorgar dos veces por dos mecanismos distintos
+// (bug: contador "Direct" inflado con permisos ya cubiertos por el rol).
+const directScopePermissions = computed(() =>
+  scopePermissions.value.filter((p: any) => !editPermissionsModal.value.rolePermissionIds.includes(p.id))
+)
+
 const form = reactive({
   user: null as number | null,
   department_type: null as string | null,
@@ -324,6 +406,24 @@ const editPermissionsModal = ref({
   saving: false,
   saved: false,
 })
+
+const permissionsGuideModal = ref({
+  show: false,
+  loading: false,
+})
+
+const howItWorksModal = ref({
+  show: false,
+})
+
+async function openPermissionsGuide() {
+  permissionsGuideModal.value.show = true
+  if (scopePermissions.value.length === 0) {
+    permissionsGuideModal.value.loading = true
+    await loadScopePermissions()
+    permissionsGuideModal.value.loading = false
+  }
+}
 
 function totalPermCount(member: any): number {
   const directIds = new Set((member.permissions ?? []).map((p: any) => p.id))

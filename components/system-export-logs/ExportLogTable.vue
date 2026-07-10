@@ -27,10 +27,10 @@
         <td>{{ log.label }}</td>
         <td>{{ log.user?.name || 'N/A' }}</td>
         <td>
-          <tr><td><v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.from">From:{{ log.filters?.from || 'N/A' }}</v-chip></td></tr>
-          <tr><td><v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.to">To:{{ log.filters?.to || 'N/A' }}</v-chip></td></tr>
-          <tr><td><v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.cfdiOption">{{ log.filters?.cfdiOption }}</v-chip></td></tr>
-          <tr><td><v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.invoice_number"># Invoice:{{ log.filters?.invoice_number }}</v-chip></td></tr>
+          <v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.from">From:{{ log.filters?.from || 'N/A' }}</v-chip>
+          <v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.to">To:{{ log.filters?.to || 'N/A' }}</v-chip>
+          <v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.cfdiOption">{{ log.filters?.cfdiOption }}</v-chip>
+          <v-chip size="small" color="info" class="flex items-center gap-2 mb-2" v-if="log.filters?.invoice_number"># Invoice:{{ log.filters?.invoice_number }}</v-chip>
         </td>
         <td>{{ log.file_name }}</td>
         <td class="whitespace-nowrap">{{ formatSize(log.file_size) }}</td>
