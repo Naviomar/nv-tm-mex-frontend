@@ -1,5 +1,5 @@
 import { ref, computed, onUnmounted } from 'vue'
-import type { TicketType, TicketMessage } from '~/repository/modules/catalogs/ticketMessages'
+import type { TicketType, TicketMessage, SigaStatus } from '~/repository/modules/catalogs/ticketMessages'
 import type { TicketMessageFile } from '~/repository/modules/catalogs/ticketMessages'
 
 export function useTicketChat(ticketType: TicketType, ticketId: number) {
@@ -11,6 +11,9 @@ export function useTicketChat(ticketType: TicketType, ticketId: number) {
   const isSending = ref(false)
   const unreadCount = ref(0)
   const channelName = `ticket.${ticketType}.${ticketId}`
+
+  const sigaStatus = ref<SigaStatus | null>(null)
+  const isSyncingSiga = ref(false)
 
   // ── API calls ────────────────────────────────────────────────────────────
 
@@ -90,6 +93,35 @@ export function useTicketChat(ticketType: TicketType, ticketId: number) {
     }
   }
 
+  async function fetchSigaStatus() {
+    try {
+      sigaStatus.value = await $api.ticketMessages.getSigaStatus(ticketType, ticketId)
+    } catch (e) {
+      console.error('[useTicketChat] fetchSigaStatus error', e)
+      sigaStatus.value = null
+    }
+  }
+
+  // Reconciliación manual: le pide a Request que le pregunte a SIGA por
+  // comentarios/estado que el webhook no haya logrado entregar (red caída,
+  // proceso reiniciando, etc.) y los espeje localmente.
+  async function syncWithSiga() {
+    isSyncingSiga.value = true
+    try {
+      const result = await $api.ticketMessages.syncSiga(ticketType, ticketId)
+      if (result.new_messages) {
+        await fetchMessages()
+      }
+      await fetchSigaStatus()
+      return result
+    } catch (e) {
+      console.error('[useTicketChat] syncWithSiga error', e)
+      throw e
+    } finally {
+      isSyncingSiga.value = false
+    }
+  }
+
   // ── WebSocket ────────────────────────────────────────────────────────────
 
   function connectChannel() {
@@ -122,12 +154,16 @@ export function useTicketChat(ticketType: TicketType, ticketId: number) {
     isSending,
     unreadCount,
     hasUnread,
+    sigaStatus,
+    isSyncingSiga,
     fetchMessages,
     sendMessage,
     editMessage,
     markRead,
     deleteMessage,
     fetchUnreadCount,
+    fetchSigaStatus,
+    syncWithSiga,
     connectChannel,
     disconnectChannel,
   }
