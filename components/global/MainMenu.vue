@@ -717,7 +717,6 @@ const paymentsFreightLinesPermissions = [
 ]
 
 const paymentsPermissions = [
-  menuPermissions.PaymentsFfAgents,
   ...paymentsFfAgentsPermissions,
   ...paymentsFreightLinesPermissions,
   menuPermissions.PaymentsSuppliers,

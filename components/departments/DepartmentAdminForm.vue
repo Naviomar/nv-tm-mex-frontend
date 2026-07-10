@@ -12,15 +12,26 @@
           Roles & Permissions
         </v-tab>
       </v-tabs>
-      <v-btn
-        variant="tonal"
-        color="secondary"
-        prepend-icon="mdi-help-circle-outline"
-        size="small"
-        @click="openPermissionsGuide"
-      >
-        Permissions Guide
-      </v-btn>
+      <div class="d-flex gap-2">
+        <v-btn
+          variant="tonal"
+          color="deep-purple"
+          prepend-icon="mdi-sitemap-outline"
+          size="small"
+          @click="howItWorksModal.show = true"
+        >
+          How Roles & Permissions Work
+        </v-btn>
+        <v-btn
+          variant="tonal"
+          color="secondary"
+          prepend-icon="mdi-help-circle-outline"
+          size="small"
+          @click="openPermissionsGuide"
+        >
+          Permissions Guide
+        </v-btn>
+      </div>
     </div>
     <v-divider class="mb-4" />
 
@@ -329,6 +340,25 @@
       </v-card-text>
     </v-card>
   </v-dialog>
+
+  <!-- Modal: How Roles & Permissions Work (visual/interactive explainer) -->
+  <v-dialog v-model="howItWorksModal.show" max-width="1000" scrollable>
+    <v-card class="rounded-lg">
+      <v-toolbar color="deep-purple" density="comfortable" class="rounded-t-lg">
+        <v-toolbar-title>
+          <v-icon class="mr-2">mdi-sitemap-outline</v-icon>
+          How Roles & Permissions Work
+        </v-toolbar-title>
+        <v-spacer />
+        <v-btn icon @click="howItWorksModal.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text style="max-height: 80vh; overflow-y: auto" class="pa-4 rounded-b-lg">
+        <PermissionsExplainer :linked-users="linkedUsers" />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -380,6 +410,10 @@ const editPermissionsModal = ref({
 const permissionsGuideModal = ref({
   show: false,
   loading: false,
+})
+
+const howItWorksModal = ref({
+  show: false,
 })
 
 async function openPermissionsGuide() {

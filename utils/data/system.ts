@@ -114,7 +114,6 @@ const menuPermissions = {
   AuthorizationsProcessRequests: 'menu-authorizations-process-requests',
   AuthorizationsRequestAssistance: 'menu-authorizations-request-assistance',
   BankingTransactionsTransfers: 'menu-banking-transactions-transfers',
-  PaymentsFfAgents: 'menu-payments-ff-agents',
   PaymentsFfAgentsSoa: 'menu-payments-ff-agents-soa',
   PaymentsFfAgentsPending: 'menu-payments-ff-agents-pending-payments',
   PaymentsFfAgentsPaid: 'menu-payments-ff-agents-paid-payments',
