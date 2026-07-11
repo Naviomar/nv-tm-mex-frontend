@@ -160,7 +160,7 @@ const { hasAtLeastOneValidEmail } = useEmailListValidation()
 
 const sendRevalidationClick = async () => {
   if (!hasAtLeastOneValidEmail(formSend.value.consignee_emails)) {
-    snackbar.add({ type: 'warning', text: 'Ingresa al menos un correo válido en Consignee emails' })
+    snackbar.add({ type: 'warning', text: 'Enter at least one valid email in Consignee emails' })
 
     return
   }

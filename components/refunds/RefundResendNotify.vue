@@ -81,7 +81,7 @@ const { hasAtLeastOneValidEmail } = useEmailListValidation()
 const onSendClick = async () => {
   try {
     if (!hasAtLeastOneValidEmail(form.emails) || !form.body) {
-      snackbar.add({ type: 'error', text: 'Ingresa al menos un correo válido y el mensaje' })
+      snackbar.add({ type: 'error', text: 'Enter at least one valid email and the message' })
       return
     }
 
