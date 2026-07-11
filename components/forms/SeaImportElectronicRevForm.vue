@@ -156,9 +156,11 @@ const hasMblFiles = computed(() => {
   return form.value.current_mbls.length > 0
 })
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const sendRevalidationClick = async () => {
-  if (formSend.value.consignee_emails === '') {
-    snackbar.add({ type: 'warning', text: 'Consignee emails are required' })
+  if (!hasAtLeastOneValidEmail(formSend.value.consignee_emails)) {
+    snackbar.add({ type: 'warning', text: 'Ingresa al menos un correo válido en Consignee emails' })
 
     return
   }

@@ -249,8 +249,10 @@ const closeDialog = () => {
   emits('close')
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const isValidForm = () => {
-  return form.consignee_emails
+  return hasAtLeastOneValidEmail(form.consignee_emails)
 }
 
 const sendArrivalNotification = async () => {
