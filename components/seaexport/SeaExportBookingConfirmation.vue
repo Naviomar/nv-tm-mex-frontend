@@ -294,7 +294,7 @@ const { hasAtLeastOneValidEmail } = useEmailListValidation()
 
 const onClickSendBookingConfirmation = async () => {
   if (!hasAtLeastOneValidEmail(form.value.emails)) {
-    snackbar.add({ type: 'warning', text: 'Ingresa al menos un correo válido' })
+    snackbar.add({ type: 'warning', text: 'Enter at least one valid email' })
     return
   }
   try {

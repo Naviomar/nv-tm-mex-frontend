@@ -56,17 +56,17 @@
 
           <v-alert v-if="skippedNoToFiles.length" type="warning" variant="tonal" class="mt-4">
             <div class="font-semibold mb-2">
-              {{ skippedNoToFiles.length }} factura(s) no se enviaron por falta de correo TO configurado:
+              {{ skippedNoToFiles.length }} invoice(s) were not sent because the customer has no TO email configured:
             </div>
             <ul class="pl-4">
               <li v-for="f in skippedNoToFiles" :key="f.uuid">
-                Cliente: {{ f.consignee_name || 'N/A' }} — Factura {{ f.invoice_number || 'N/A' }}
+                Customer: {{ f.consignee_name || 'N/A' }} — Invoice {{ f.invoice_number || 'N/A' }}
                 <NuxtLink
                   v-if="f.consignee_id"
                   :to="`/configuration/consignees-mbl/edit-${f.consignee_id}`"
                   class="underline ml-2"
                 >
-                  Configurar correo →
+                  Configure email →
                 </NuxtLink>
               </li>
             </ul>

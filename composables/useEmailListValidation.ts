@@ -14,7 +14,7 @@ export function useEmailListValidation() {
   }
 
   function emailListRule(raw: string | null | undefined): true | string {
-    return hasAtLeastOneValidEmail(raw) || 'Ingresa al menos un correo válido, separado por comas'
+    return hasAtLeastOneValidEmail(raw) || 'Enter at least one valid email, separated by commas'
   }
 
   return { hasAtLeastOneValidEmail, emailListRule, parseEmailList }
