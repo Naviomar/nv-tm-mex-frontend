@@ -53,6 +53,24 @@
             </v-list-item>
           </v-list>
           <p v-else class="text-gray-500">No processed files available.</p>
+
+          <v-alert v-if="skippedNoToFiles.length" type="warning" variant="tonal" class="mt-4">
+            <div class="font-semibold mb-2">
+              {{ skippedNoToFiles.length }} factura(s) no se enviaron por falta de correo TO configurado:
+            </div>
+            <ul class="pl-4">
+              <li v-for="f in skippedNoToFiles" :key="f.uuid">
+                Cliente: {{ f.consignee_name || 'N/A' }} — Factura {{ f.invoice_number || 'N/A' }}
+                <NuxtLink
+                  v-if="f.consignee_id"
+                  :to="`/configuration/consignees-mbl/edit-${f.consignee_id}`"
+                  class="underline ml-2"
+                >
+                  Configurar correo →
+                </NuxtLink>
+              </li>
+            </ul>
+          </v-alert>
         </div>
       </v-card-text>
     </v-card>
@@ -148,6 +166,10 @@ interface ProcessedFile {
   id?: number
   reinvoice_link?: any
   error?: string
+  email_status?: string
+  consignee_id?: number
+  consignee_name?: string
+  invoice_number?: string
 }
 
 // Convert processed files into an array
@@ -163,6 +185,11 @@ const processedFilesArray = computed<ProcessedFile[]>(() => {
       model: typedData.model?.split('\\').pop() || '',
     }
   })
+})
+
+// Facturas cuyo correo no se envió por falta de correo TO configurado para el cliente.
+const skippedNoToFiles = computed<ProcessedFile[]>(() => {
+  return processedFilesArray.value.filter((f) => f.email_status === 'skipped_no_to')
 })
 
 const getData = async () => {

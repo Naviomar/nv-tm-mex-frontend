@@ -193,7 +193,13 @@ const openPreviewModal = async () => {
   }
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const sendEmail = async () => {
+  if (!hasAtLeastOneValidEmail(emailData.value.to)) {
+    snackbar.add({ type: 'warning', text: 'Ingresa al menos un correo válido en To' })
+    return
+  }
   try {
     loadingStore.start()
 
