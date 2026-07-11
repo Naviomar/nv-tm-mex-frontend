@@ -632,9 +632,28 @@ const splitPaymentDetail = (movement: any) => {
     .join('')
 }
 
+const pendingCancelIds = ref<Set<number>>(new Set())
+const approvedCancelIds = ref<Set<number>>(new Set())
+
+const loadActiveCancellationRequests = async () => {
+  try {
+    const result = (await $api.authRequests.getActiveResourceIds('cancel-bank-movement')) as any
+    pendingCancelIds.value = new Set((result.pending ?? []).map(Number))
+    approvedCancelIds.value = new Set((result.approved ?? []).map(Number))
+  } catch (e) {
+    // non-critical
+  }
+}
+
 const canRequestCancellation = (bankMovement: any) => {
-  // Can only request cancellation if movement has no payments and available amount equals total amount
-  return bankMovement.amount === bankMovement.amount_available && bankMovement.payments.length === 0
+  // Can only request cancellation if movement has no payments, available amount equals total amount,
+  // and there isn't already a pending/approved cancellation request for it.
+  return (
+    bankMovement.amount === bankMovement.amount_available &&
+    bankMovement.payments.length === 0 &&
+    !pendingCancelIds.value.has(Number(bankMovement.id)) &&
+    !approvedCancelIds.value.has(Number(bankMovement.id))
+  )
 }
 
 const showCancelDialog = (bankMovement: any) => {
@@ -694,6 +713,7 @@ const requestCancellation = async () => {
       
       closeCancelDialog()
       await getBankMovements()
+      await loadActiveCancellationRequests()
     }
   } catch (e: any) {
     console.error(e)
@@ -746,7 +766,7 @@ onMounted(async () => {
   // Set transaction type from prop, overriding any query parameter
   filters.value.type = props.transactionType ? 'withdrawal' : 'deposit'
 
-  await getBankMovements()
+  await Promise.all([getBankMovements(), loadActiveCancellationRequests()])
 })
 </script>
 

@@ -96,7 +96,7 @@
                    <ProcessAuthorizationWrapper
                         v-if="!item.deleted_at && isLocked"
                         processName="container-delete"
-                        :requestKey="`${item.id}:${item.id}`"
+                        :requestKey="`${item.id}`"
                         label="Delete"
                         :displayName="`Container. #${item.container_number}`"
                       >
