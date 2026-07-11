@@ -220,14 +220,7 @@
             <td v-show="false">{{ authRequest.resource }}</td>
             <td v-show="false">{{ authRequest.resource_id }}</td>
             <td>
-              <div v-if="authRequest.is_authorized == null">
-                <v-chip size="small" color="warning">Pending</v-chip>
-              </div>
-              <div v-else>
-                <v-chip size="small" color="success" v-if="authRequest.is_authorized == 1">Yes</v-chip>
-                <v-chip size="small" color="error" v-else>No</v-chip>
-                <div>{{ authRequest.authorized_reason }}</div>
-              </div>
+              <DecisionChip :decision="authRequest.decision" :reason="authRequest.authorized_reason" :siga-link="authRequest.siga_ticket_link" />
             </td>
             <td>
               <div v-if="authRequest.used_at">
@@ -261,76 +254,18 @@
         @update:model-value="onClickPagination"
       ></v-pagination>
 
-      <v-dialog v-model="showGrantDialog" max-width="560" persistent>
-        <v-card>
-          <v-card-title>Grant authorization</v-card-title>
-          <v-card-text>
-            <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Resource: {{ getResourceName(form.auth_request?.resource) }}</div>
-              <div class="text-base">Reference: #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</div>
-              <div class="text-base">Requested by: {{ form.auth_request?.requested?.name }}</div>
-              <div class="text-base">Comments: {{ form.auth_request?.request_reason }}</div>
-            </div>
-            <v-autocomplete
-              v-model="form.is_authorized"
-              :items="[
-                { text: '', value: null },
-                { text: 'Yes', value: 1 },
-                { text: 'No', value: 0 },
-              ]"
-              item-title="text"
-              item-value="value"
-              label="Grant or reject?"
-            />
-            <v-text-field
-              v-if="form.is_authorized == 1"
-              v-model="form.until_date"
-              type="date"
-              label="Until date granted"
-            />
-            <v-textarea v-model="form.authorized_reason" label="Comments" />
-
-            <!-- Temporary permission (opt-in, only when granting) -->
-            <template v-if="form.is_authorized == 1">
-              <v-divider class="my-3" />
-              <div class="d-flex align-center mb-2">
-                <v-switch
-                  v-model="form.temp_permission_enabled"
-                  hide-details
-                  density="compact"
-                  color="warning"
-                  class="mr-2"
-                />
-                <div>
-                  <div class="text-body-2 font-weight-medium">Temporary permission</div>
-                  <div class="text-caption text-medium-emphasis">Allow user to repeat this action on multiple entities without new requests</div>
-                </div>
-              </div>
-              <template v-if="form.temp_permission_enabled">
-                <div class="grid grid-cols-2 gap-3">
-                  <v-text-field
-                    v-model="form.temp_valid_from"
-                    type="datetime-local"
-                    label="Valid from"
-                    density="compact"
-                  />
-                  <v-text-field
-                    v-model="form.temp_valid_until"
-                    type="datetime-local"
-                    label="Valid until"
-                    density="compact"
-                  />
-                </div>
-              </template>
-            </template>
-          </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeGrantDialog">Cancel</v-btn>
-            <v-btn color="success" @click="preGrantAuth">Save response</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <GrantDenyDialog
+        v-model="showGrantDialog"
+        mode="authorization"
+        @submit="preGrantAuth"
+      >
+        <template #context>
+          <div class="text-base">Resource: {{ getResourceName(form.auth_request?.resource) }}</div>
+          <div class="text-base">Reference: #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</div>
+          <div class="text-base">Requested by: {{ form.auth_request?.requested?.name }}</div>
+          <div class="text-base">Comments: {{ form.auth_request?.request_reason }}</div>
+        </template>
+      </GrantDenyDialog>
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
@@ -386,6 +321,8 @@
 import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
+import GrantDenyDialog from './shared/GrantDenyDialog.vue'
+import DecisionChip from './shared/DecisionChip.vue'
 const { $api } = useNuxtApp()
 const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
@@ -418,12 +355,6 @@ const formCancel = ref<any>({
 
 const form = ref<any>({
   auth_request: null,
-  until_date: null,
-  is_authorized: null,
-  authorized_reason: '',
-  temp_permission_enabled: false,
-  temp_valid_from: null,
-  temp_valid_until: null,
 })
 
 const showChatDrawer = ref(false)
@@ -490,41 +421,36 @@ const getResourceName = (resource: string) => {
   return getAuthResourceByName(resource)?.description
 }
 
-const preGrantAuth = async () => {
-  if (form.value.is_authorized == null) {
-    snackbar.add({ type: 'error', text: 'Please provide a response for the authorization request' })
-    return
-  }
-
-  const isAuthorized = form.value.is_authorized == 1
+const preGrantAuth = async (payload: any) => {
+  const isAuthorized = payload.decision === 'granted'
   const resource = getAuthResourceByName(form.value.auth_request.resource)
   if (isAuthorized && resource?.redirect) {
-    // authRequestStore.setAuthRequest(form.value)
-
-    // const body = JSON.parse(JSON.stringify(form.value))
-    // console.log('body', body)
-    authRequestStore.setAuthRequest(form.value)
+    authRequestStore.setAuthRequest({
+      auth_request: form.value.auth_request,
+      is_authorized: 1,
+      until_date: payload.untilDate,
+      authorized_reason: payload.reason,
+      temp_permission_enabled: payload.tempPermissionEnabled ?? false,
+      temp_valid_from: payload.tempValidFrom ?? null,
+      temp_valid_until: payload.tempValidUntil ?? null,
+    })
     router.push(resource.redirect)
     return
   }
-  await grantAuthorization()
+  await grantAuthorization(payload)
 }
 
-const grantAuthorization = async () => {
+const grantAuthorization = async (payload: any) => {
   try {
-    if (form.value.is_authorized == null) {
-      snackbar.add({ type: 'error', text: 'Please provide a response for the authorization request' })
-      return
-    }
     loadingStore.loading = true
     const body = {
       id: form.value.auth_request.id,
-      is_authorized: form.value.is_authorized,
-      until_date: form.value.until_date,
-      authorized_reason: form.value.authorized_reason,
-      temp_permission_enabled: form.value.temp_permission_enabled ?? false,
-      temp_valid_from: form.value.temp_valid_from ?? null,
-      temp_valid_until: form.value.temp_valid_until ?? null,
+      is_authorized: payload.decision === 'granted' ? 1 : 0,
+      until_date: payload.untilDate,
+      authorized_reason: payload.reason,
+      temp_permission_enabled: payload.tempPermissionEnabled ?? false,
+      temp_valid_from: payload.tempValidFrom ?? null,
+      temp_valid_until: payload.tempValidUntil ?? null,
     }
     await $api.authRequests.respondRequest(form.value.auth_request.id, body)
 
@@ -582,15 +508,7 @@ const cancelAuthorization = async () => {
 
 const closeGrantDialog = () => {
   showGrantDialog.value = false
-  form.value = {
-    auth_request: null,
-    until_date: null,
-    is_authorized: null,
-    authorized_reason: '',
-    temp_permission_enabled: false,
-    temp_valid_from: null,
-    temp_valid_until: null,
-  }
+  form.value = { auth_request: null }
 }
 
 const closeCancelDialog = () => {

@@ -159,7 +159,7 @@
             </td>
 
             <td>
-              <v-chip size="x-small" color="amber">{{ authRequest.status }}</v-chip>
+              <DecisionChip :decision="authRequest.decision" :reason="authRequest.response" :siga-link="authRequest.siga_ticket_link" />
             </td>
             <td>{{ formatDateString(authRequest.expires_at) }}</td>
             <td class="whitespace-nowrap">{{ authRequest.grantor?.name }}</td>
@@ -179,71 +179,46 @@
         @update:model-value="onClickPagination"
       ></v-pagination>
 
-      <v-dialog v-model="showGrantDialog" max-width="500" persistent>
-        <v-card>
-          <v-card-title>Grant process authorization</v-card-title>
-          <v-card-text>
-            <div class="border-4 border-dotted border-gray-300 p-2 mb-4">
-              <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
-              <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
-              <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
-              <template v-if="form.auth_request?.process_data">
-                <v-divider class="my-2" />
-                <div class="text-sm font-semibold mb-1">Request details:</div>
-                <template v-if="form.auth_request.process_data.charges?.length">
-                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                    <div v-for="(c, ci) in form.auth_request.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
-                      <div class="flex-1 min-w-0">
-                        <div class="font-medium text-gray-900 truncate">{{ c.charge_name }}</div>
-                        <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
-                      </div>
-                      <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
-                    </div>
+      <GrantDenyDialog
+        v-model="showGrantDialog"
+        mode="process"
+        @submit="grantAuthorization"
+      >
+        <template #context>
+          <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
+          <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
+          <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
+          <template v-if="form.auth_request?.process_data">
+            <v-divider class="my-2" />
+            <div class="text-sm font-semibold mb-1">Request details:</div>
+            <template v-if="form.auth_request.process_data.charges?.length">
+              <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                <div v-for="(c, ci) in form.auth_request.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-gray-900 truncate">{{ c.charge_name }}</div>
+                    <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
                   </div>
-                </template>
-                <template v-else-if="form.auth_request.process_data.operations?.length">
-                  <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                    <div v-for="(op, oi) in form.auth_request.process_data.operations" :key="oi" class="px-2 py-1.5 text-sm bg-gray-50">
-                      <span class="font-medium capitalize">{{ op.action }}</span>
-                      <span class="ml-1">{{ describeOperation(op) }}</span>
-                    </div>
-                  </div>
-                </template>
-                <template v-else>
-                  <div v-for="(val, key) in form.auth_request.process_data" :key="key" class="text-sm">
-                    <span class="font-medium capitalize">{{ String(key).replace(/_/g, ' ') }}:</span>
-                    <span class="ml-1">{{ val }}</span>
-                  </div>
-                </template>
-              </template>
-            </div>
-            <v-autocomplete
-              v-model="form.status"
-              :items="[
-                { text: 'Pending', value: 'pending' },
-                { text: 'Grant', value: 'granted' },
-                { text: 'Deny', value: 'denied' },
-              ]"
-              item-title="text"
-              item-value="value"
-              label="Grant or deny?"
-            />
-            <v-text-field
-              v-if="form.status == 'granted'"
-              v-model="form.expires_at"
-              type="datetime-local"
-              label="Expires at"
-              hint="Please provide an expiration date for the authorization"
-            />
-            <v-textarea v-model="form.authorized_reason" label="Comments" :rows="3" />
-          </v-card-text>
-          <v-card-actions>
-            <div class="grow"></div>
-            <v-btn color="error" @click="closeGrantDialog">Cancel</v-btn>
-            <v-btn color="success" @click="preGrantAuth">Save response</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+                  <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
+                </div>
+              </div>
+            </template>
+            <template v-else-if="form.auth_request.process_data.operations?.length">
+              <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
+                <div v-for="(op, oi) in form.auth_request.process_data.operations" :key="oi" class="px-2 py-1.5 text-sm bg-gray-50">
+                  <span class="font-medium capitalize">{{ op.action }}</span>
+                  <span class="ml-1">{{ describeOperation(op) }}</span>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <div v-for="(val, key) in form.auth_request.process_data" :key="key" class="text-sm">
+                <span class="font-medium capitalize">{{ String(key).replace(/_/g, ' ') }}:</span>
+                <span class="ml-1">{{ val }}</span>
+              </div>
+            </template>
+          </template>
+        </template>
+      </GrantDenyDialog>
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
@@ -292,6 +267,8 @@
 <script setup lang="ts">
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
+import GrantDenyDialog from './shared/GrantDenyDialog.vue'
+import DecisionChip from './shared/DecisionChip.vue'
 const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
@@ -329,9 +306,6 @@ const formCancel = ref<any>({
 
 const form = ref<any>({
   auth_request: null,
-  expires_at: null,
-  is_authorized: null,
-  authorized_reason: '',
 })
 
 const authRequests = ref<any>({
@@ -381,26 +355,14 @@ const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
 
-const preGrantAuth = async () => {
-  if (form.value.status == null) {
-    snackbar.add({ type: 'error', text: 'Please provide a response for the authorization request' })
-    return
-  }
-  await grantAuthorization()
-}
-
-const grantAuthorization = async () => {
+const grantAuthorization = async (payload: any) => {
   try {
-    if (form.value.status == null) {
-      snackbar.add({ type: 'error', text: 'Please provide a response for the authorization request' })
-      return
-    }
     loadingStore.loading = true
     const body = {
       id: form.value.auth_request.id,
-      status: form.value.status,
-      expires_at: form.value.expires_at,
-      response: form.value.authorized_reason,
+      status: payload.decision,
+      expires_at: payload.expiresAt,
+      response: payload.reason,
     }
     await $api.authProcessRequests.respondRequest(form.value.auth_request.id, body)
 
@@ -458,12 +420,7 @@ const cancelAuthorization = async () => {
 
 const closeGrantDialog = () => {
   showGrantDialog.value = false
-  form.value = {
-    auth_request: null,
-    expires_at: null,
-    is_authorized: null,
-    authorized_reason: '',
-  }
+  form.value = { auth_request: null }
 }
 
 const closeCancelDialog = () => {
