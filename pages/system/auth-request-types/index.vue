@@ -73,6 +73,14 @@
                 <v-chip size="x-small" :color="type.is_active ? 'success' : 'grey'" variant="tonal">
                   {{ type.is_active ? 'Active' : 'Inactive' }}
                 </v-chip>
+                <v-chip
+                  v-if="type.automatable !== null"
+                  size="x-small"
+                  :color="type.automatable ? 'info' : 'warning'"
+                  variant="tonal"
+                >
+                  {{ type.automatable ? 'Automatable' : 'Manual only' }}
+                </v-chip>
               </div>
             </div>
 
@@ -195,8 +203,21 @@
               <v-col cols="12" md="6">
                 <v-text-field v-model="form.color" label="Color" hint="Vuetify color name (optional)" />
               </v-col>
-              <v-col cols="12">
+              <v-col cols="12" md="6">
                 <v-switch v-model="form.is_active" label="Active" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="form.automatable"
+                  :items="[
+                    { title: 'Automatable', value: true },
+                    { title: 'Manual only (never approve from ticket)', value: false },
+                    { title: 'Unclassified', value: null },
+                  ]"
+                  label="Post-approval action"
+                  hint="Can this request type's business action run automatically once granted?"
+                  persistent-hint
+                />
               </v-col>
             </v-row>
           </v-form>
@@ -528,7 +549,7 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, form_fields: [] }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, form_fields: [] }
   showDialog.value = true
 }
 
