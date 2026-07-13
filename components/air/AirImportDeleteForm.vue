@@ -24,6 +24,21 @@
               </td>
               <td>{{ check.label }} <span v-if="check.count > 0" class="text-red font-bold">({{ check.count }})</span></td>
             </tr>
+            <tr>
+              <td>
+                  
+                  
+              </td>
+              <td>
+                <v-textarea
+                    v-model="form.reason"
+                    name="reason"
+                    label="Reason"
+                    rows="5"
+                    auto-grow
+                  />
+              </td>
+            </tr>
           </tbody>
         </v-table>
         <div class="py-4">
@@ -40,6 +55,10 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+
+const form = ref<any>({
+  reason: null as string | null,
+})
 
 const props = defineProps({
   id: {
@@ -60,7 +79,7 @@ const validationChecks = ref<any[]>([])
 const deleteReference = async () => {
   try {
     loadingStore.start()
-    await $api.airImport.deleteReference(props.id.toString())
+    await $api.airImport.deleteReference(props.id.toString(), { body: { reason: form.value.reason, } })
     snackbar.add({ type: 'success', text: 'Reference deleted successfully' })
     router.push('/air/import')
   } catch (e) {
