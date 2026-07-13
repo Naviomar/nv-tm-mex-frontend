@@ -88,7 +88,8 @@
             <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.voyage_id"
-                :items="voyages"
+                :items="filteredVoyages"
+                @update:search="onVoyageSearch"
                 item-title="name"
                 item-value="id"
                 label="Vessel / Voyage"
@@ -98,23 +99,51 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-ferry"
                 auto-select-first
-              />
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreVoyages"
+                    v-intersect="onVoyageIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
-              <ACustomerSearch
+              <v-autocomplete
                 v-model="filters.consignee_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="filteredConsignees"
+                @update:search="onConsigneeSearch"
+                item-title="name"
+                item-value="id"
                 label="Consignee"
-              />
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                auto-select-first
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreConsignees"
+                    v-intersect="onConsigneeIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.consignee_group_id"
-                :items="consigneeGroups"
+                :items="filteredConsigneeGroups"
+                @update:search="onConsigneeGroupSearch"
                 item-title="name"
                 item-value="id"
                 label="Consignee Group"
@@ -124,13 +153,24 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-account-group"
                 auto-select-first
-              />
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreConsigneeGroups"
+                    v-intersect="onConsigneeGroupIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.line_id"
-                :items="lines"
+                :items="filteredLines"
+                @update:search="onLineSearch"
                 item-title="name"
                 item-value="id"
                 label="Shipping Line"
@@ -140,13 +180,24 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-ferry"
                 auto-select-first
-              />
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreLines"
+                    v-intersect="onLineIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.dischargePort_id"
-                :items="ports"
+                :items="filteredDischargePorts"
+                @update:search="onDischargePortSearch"
                 item-title="name"
                 item-value="id"
                 label="Port of Discharge"
@@ -156,13 +207,24 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-anchor"
                 auto-select-first
-              />
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreDischargePorts"
+                    v-intersect="onDischargePortIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-autocomplete
                 v-model="filters.destinationPort_id"
-                :items="ports"
+                :items="filteredDestinationPorts"
+                @update:search="onDestinationPortSearch"
                 item-title="name"
                 item-value="id"
                 label="Port of Destination"
@@ -172,17 +234,44 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-map-marker-outline"
                 auto-select-first
-              />
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreDestinationPorts"
+                    v-intersect="onDestinationPortIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <v-col cols="12" md="6">
-              <AFreightForwarderSearch
+              <v-autocomplete
                 v-model="filters.ff_id"
-                :hide-details="true"
-                density="compact"
-                variant="outlined"
+                :items="filteredFreightForwarders"
+                @update:search="onFfSearch"
+                item-title="name"
+                item-value="id"
                 label="Freight Forwarder (FF)"
-              />
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-truck-fast"
+                auto-select-first
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreFreightForwarders"
+                    v-intersect="onFfIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
           </v-row>
 
@@ -211,6 +300,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -249,7 +340,18 @@ const filters = ref<any>({
 const voyages = ref<any[]>([])
 const lines = ref<any[]>([])
 const ports = ref<any[]>([])
+const consignees = ref<any[]>([])
+const freightForwarders = ref<any[]>([])
 const consigneeGroups = ref<any[]>([])
+
+
+const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
+const { onSearch: onConsigneeSearch, filteredItems: filteredConsignees, hasMore: hasMoreConsignees, onIntersect: onConsigneeIntersect } = useAutocompleteFilter(consignees, () => filters.value.consignee_id)
+const { onSearch: onConsigneeGroupSearch, filteredItems: filteredConsigneeGroups, hasMore: hasMoreConsigneeGroups, onIntersect: onConsigneeGroupIntersect } = useAutocompleteFilter(consigneeGroups, () => filters.value.consignee_group_id)
+const { onSearch: onLineSearch, filteredItems: filteredLines, hasMore: hasMoreLines, onIntersect: onLineIntersect } = useAutocompleteFilter(lines, () => filters.value.line_id)
+const { onSearch: onDischargePortSearch, filteredItems: filteredDischargePorts, hasMore: hasMoreDischargePorts, onIntersect: onDischargePortIntersect } = useAutocompleteFilter(ports, () => filters.value.dischargePort_id)
+const { onSearch: onDestinationPortSearch, filteredItems: filteredDestinationPorts, hasMore: hasMoreDestinationPorts, onIntersect: onDestinationPortIntersect } = useAutocompleteFilter(ports, () => filters.value.destinationPort_id)
+const { onSearch: onFfSearch, filteredItems: filteredFreightForwarders, hasMore: hasMoreFreightForwarders, onIntersect: onFfIntersect } = useAutocompleteFilter(freightForwarders, () => filters.value.ff_id)
 
 // Clear filters handler
 const clearFilters = () => {
@@ -263,6 +365,8 @@ const clearFilters = () => {
   filters.value.destinationPort_id = null
   filters.value.ff_id = null
   filters.value.baseEtaSinEta = false
+  filters.value.fromDate = fromDate
+  filters.value.toDate = toDate
 }
 
 // Generate Excel Report handler
@@ -334,6 +438,8 @@ onMounted(async () => {
     voyages.value = data.voyages || []
     lines.value = data.lines || []
     ports.value = data.ports || []
+    consignees.value = data.consignees || []
+    freightForwarders.value = data.freightForwarders || []
     consigneeGroups.value = data.consigneeGroups || []
   } catch (error) {
     console.error('Error loading catalogs for Control Operaciones:', error)

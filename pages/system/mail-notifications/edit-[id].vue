@@ -125,7 +125,7 @@
                           <span class="text-caption">Default type:</span>
                           <v-select
                             v-model="defaultNotifyType"
-                            :items="['CC', 'BCC']"
+                            :items="['TO', 'CC', 'BCC']"
                             variant="outlined"
                             density="compact"
                             hide-details
@@ -144,7 +144,7 @@
                           }}</span>
                           <v-select
                             :model-value="getUserPendingType(u.id)"
-                            :items="['CC', 'BCC']"
+                            :items="['TO', 'CC', 'BCC']"
                             variant="outlined"
                             density="compact"
                             hide-details
@@ -391,7 +391,7 @@ const form = reactive({
   department: null as number | null,
 })
 const userSearch = ref('')
-const defaultNotifyType = ref<'CC' | 'BCC'>('CC')
+const defaultNotifyType = ref<'TO' | 'CC' | 'BCC'>('CC')
 const userPendingTypes = ref<Record<number, string>>({})
 
 const linkedEmails = ref<any>(null)
@@ -476,7 +476,7 @@ function setUserPendingType(userId: number, type: string) {
 }
 
 async function linkUserQuick(user: any) {
-  const type = getUserPendingType(user.id) as 'CC' | 'BCC'
+  const type = getUserPendingType(user.id) as 'TO' | 'CC' | 'BCC'
   await $api.mailNotifications.linkUser(id, { user_id: user.id, type })
   const copy = { ...user }
   if (!copy.pivot) copy.pivot = {}

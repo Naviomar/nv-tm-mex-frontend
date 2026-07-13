@@ -1170,7 +1170,13 @@ const saveLinePayment = async (container: any) => {
   }
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const sendEmailClick = async () => {
+  if (!hasAtLeastOneValidEmail(form.emails)) {
+    snackbar.add({ type: 'warning', text: 'Enter at least one valid email' })
+    return
+  }
   try {
     loadingStore.loading = true
     const body = {
