@@ -6,7 +6,7 @@
         <div class="header-content">
           <div class="header-left">
             <div class="icon-wrapper">
-              <v-icon color="white" size="28">mdi-chart-donut-variant</v-icon>
+              <v-icon color="white" size="28">mdi-card-account-details-outline</v-icon>
             </div>
             <div class="header-text">
               <h2 class="report-title">Account Statement</h2>
