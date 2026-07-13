@@ -1,5 +1,22 @@
 <template>
   <div class="sea-import-reports">
+    <!-- Header -->
+    <v-card elevation="0" class="report-card mb-6">
+      <div class="report-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="icon-wrapper">
+              <v-icon color="white" size="28">mdi-chart-line</v-icon>
+            </div>
+            <div class="header-text">
+              <h2 class="report-title">Comparative Analytics</h2>
+              <p class="report-subtitle">Compare import metrics across different years</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </v-card>
+
     <!-- Filters -->
     <v-card class="filters-card mb-6" elevation="0">
       <v-card-text class="pa-4">
@@ -335,6 +352,68 @@ onMounted(loadEjecutivos)
 </script>
 
 <style scoped>
+.report-card {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.report-header {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 40%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.05);
+  transform: rotate(-15deg);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrapper {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-text {
+  color: white;
+}
+
+.report-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.report-subtitle {
+  font-size: 0.875rem;
+  margin: 4px 0 0 0;
+  opacity: 0.9;
+}
+
 .filters-card {
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 14px;
