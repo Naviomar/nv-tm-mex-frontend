@@ -49,14 +49,7 @@
             </div>
           </div>
 
-          <v-switch
-            v-model="filters.baseEtaSinEta"
-            color="primary"
-            density="compact"
-            hide-details
-            class="mb-4"
-            label="Include refs. without ETA (uses registration date as base when there is no ETA)"
-          />
+          <EtaModeSelector v-model="filters.etaMode" />
 
           <v-row>
             <v-col cols="12" md="6">
@@ -333,7 +326,7 @@ const filters = ref<any>({
   dischargePort_id: null,
   destinationPort_id: null,
   ff_id: null,
-  baseEtaSinEta: false,
+  etaMode: 'ambos',
 })
 
 // Catalog reactive bindings
@@ -364,7 +357,7 @@ const clearFilters = () => {
   filters.value.dischargePort_id = null
   filters.value.destinationPort_id = null
   filters.value.ff_id = null
-  filters.value.baseEtaSinEta = false
+  filters.value.etaMode = 'ambos'
   filters.value.fromDate = fromDate
   filters.value.toDate = toDate
 }
@@ -394,7 +387,8 @@ const applyFilters = async () => {
         dischargePort: filters.value.dischargePort_id,
         destinationPort: filters.value.destinationPort_id,
         ff: filters.value.ff_id,
-        baseEtaSinEta: filters.value.baseEtaSinEta,
+        baseEtaSinEta: filters.value.etaMode === 'ambos',
+        onlyWithoutEta: filters.value.etaMode === 'sin_eta',
       },
     }
 
