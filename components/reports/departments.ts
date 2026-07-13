@@ -63,6 +63,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         component: 'ComparativeTeusImportReport',
         permission: 'reports-maritime-import-comparative-teus-view',
       },
+      {
+        key: 'releases',
+        title: 'Release & Revalidations',
+        icon: 'mdi-file-document-check',
+        component: 'ReleaseReportsReport',
+        permission: 'reports-maritime-import-releases-view',
+      },
     ],
   },
   {
