@@ -10,6 +10,11 @@
         <code>2TM-&lt;folio&gt;</code>). Its CFDI data (fiscal regimen, CFDI use, payment method &amp; payment type)
         is also completed from the XML when missing.
       </li>
+      <li>
+        If the invoice already has a linked CFDI and you upload a <strong>different</strong> one for the same folio
+        (e.g. a corrected re-issue), it will be <strong>replaced</strong>. The previous UUID, XML and PDF are kept in
+        the change history — nothing is deleted. Uploading the exact same CFDI again has no effect.
+      </li>
       <li>Upload the zip file with the XML and PDF files.</li>
       <li>
         The <strong>control</strong> excel is now optional and only used as a fallback when an invoice can't be matched

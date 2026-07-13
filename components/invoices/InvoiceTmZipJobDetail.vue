@@ -35,6 +35,13 @@
             <v-list-item v-for="(file, index) in processedFilesArray" :key="index" class="mb-2">
               <p><strong>UUID:</strong> {{ file.uuid }}</p>
               <p><strong>Linked:</strong> {{ file.linked ? '✅ Yes' : '❌ No' }}</p>
+              <p v-if="file.cfdi_action === 'replaced'" class="text-amber-600">
+                <strong>CFDI replaced:</strong> previous UUID {{ file.previous_uuid }} was replaced by {{ file.uuid }}
+                (kept in history).
+              </p>
+              <p v-else-if="file.cfdi_action === 'unchanged'" class="text-gray-500">
+                <strong>CFDI unchanged:</strong> this UUID was already linked, nothing was re-uploaded.
+              </p>
               <p v-if="file.model" class="flex gap-2 items-center">
                 <strong>Model:</strong> {{ file.model }}
                 <span v-if="file.linked">
@@ -170,6 +177,8 @@ interface ProcessedFile {
   consignee_id?: number
   consignee_name?: string
   invoice_number?: string
+  cfdi_action?: 'linked' | 'replaced' | 'unchanged' | null
+  previous_uuid?: string | null
 }
 
 // Convert processed files into an array
