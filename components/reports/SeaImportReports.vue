@@ -62,7 +62,7 @@
           <v-col cols="6" md="3">
             <div class="d-flex align-center gap-2">
               <v-checkbox v-if="canSeeProfit" v-model="includeProfit" label="Include Profit" color="primary" density="comfortable" hide-details :disabled="loading" />
-              <v-checkbox v-model="includeEnTransito" label="En Transito" color="warning" density="comfortable" hide-details :disabled="loading" />
+              <v-checkbox v-model="includeEnTransito" label="In Transit" color="warning" density="comfortable" hide-details :disabled="loading" />
             </div>
           </v-col>
           <v-col cols="6" md="2" class="text-right">
