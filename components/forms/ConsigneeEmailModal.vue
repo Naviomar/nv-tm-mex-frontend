@@ -325,6 +325,10 @@ const props = defineProps({
   lockedPort: {
     type: Object,
     default: null
+  },
+  preselectNotification: {
+    type: Object as () => { id: number; short_name: string } | null,
+    default: null
   }
 })
 
@@ -446,13 +450,16 @@ watch(() => props.show, (newVal) => {
         airports: props.emailData.airports?.map((a: any) => a.id) || [],
       })
     } else {
+      const preselected = props.preselectNotification
+        ? [{ id: props.preselectNotification.id, short_name: props.preselectNotification.short_name, type: 'TO' }]
+        : []
       resetForm({
         values: {
           id: null,
           email: '',
           notes: '',
-          mail_notifications: [],
-          mail_notification_ids: [],
+          mail_notifications: preselected,
+          mail_notification_ids: preselected.map((n) => n.id),
           ports: props.lockedPort ? [props.lockedPort.id] : [],
           airports: [],
         }

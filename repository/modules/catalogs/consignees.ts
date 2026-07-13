@@ -144,6 +144,10 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/search`, fetchOptions)
   }
 
+  async getMissingNotificationsSummary(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/missing-notifications-summary`, fetchOptions)
+  }
+
   /**
    * Return a shipper
    * @param fetchOptions options for `useFetch`
