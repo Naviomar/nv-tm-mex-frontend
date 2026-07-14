@@ -31,6 +31,9 @@
         <div class="flex gap-2 align-center">
           <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
           <v-btn color="primary" @click="onSearch"> Search </v-btn>
+          <v-btn color="success" variant="tonal" prepend-icon="mdi-file-excel-outline" :loading="exportingExcel" @click="exportExcel">
+            Download report
+          </v-btn>
           <v-select
             v-model="limit"
             :items="perPageOptions"
@@ -107,6 +110,7 @@ import ConsigneeNotificationsMatrix from '~/components/forms/ConsigneeNotificati
 const { $api } = useNuxtApp()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
+const snackbar = useSnackbar()
 
 const customerMailNotifications = [...mailNotifications]
   .filter((n: any) => n.is_for_consignee)
@@ -136,6 +140,7 @@ const selectedNotificationLabel = computed(() => {
 const catalogs = ref<any>(null)
 const showMatrix = ref(false)
 const selectedConsignee = ref<any>(null)
+const exportingExcel = ref(false)
 
 const getConsignees = async () => {
   try {
@@ -185,6 +190,45 @@ const clearFilters = async () => {
   filters.value = { name: '', mailNotificationId: null }
   consignees.value.current_page = 1
   await getConsignees()
+}
+
+const exportExcel = async () => {
+  try {
+    exportingExcel.value = true
+    const response: any = await $api.consignees.exportMissingNotificationsExcel({
+      query: {
+        name: filters.value.name,
+        mail_notification_ids: customerMailNotificationIds.join(','),
+      },
+    })
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const today = new Date()
+    const datePart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    link.setAttribute('download', `reporte_notificaciones_clientes_${datePart}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+
+    snackbar.add({
+      text: 'Report generated and downloaded successfully.',
+      type: 'success',
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({
+      text: 'Error exporting the report.',
+      type: 'error',
+    })
+  } finally {
+    exportingExcel.value = false
+  }
 }
 
 const openMatrix = async (consignee: any) => {
