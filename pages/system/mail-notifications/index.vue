@@ -1,121 +1,144 @@
 <template>
-  <div class="px-4 py-6 w-full max-w-7xl mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <Button variant="ghost" @click="$router.back()">Back</Button>
-      <h1 class="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-        Mail notifications
-      </h1>
-    </div>
-
-    <div class="space-y-6">
-      <div class="space-y-4">
-        <div class="grid grid-cols-6 gap-4">
-          <div class="col-span-2">
-            <Input v-model="filters.name" label="Name" placeholder="Filter by name" />
-          </div>
-          <div class="col-span-2">
-            <Select v-model="filters.departmentId" label="Department">
-              <option :value="null">All</option>
-              <option
-                v-for="dept in catalogs.departments"
-                :key="dept.id"
-                :value="dept.id"
-              >
-                {{ dept.name }}
-              </option>
-            </Select>
+  <v-container fluid>
+    <div class="d-flex align-center justify-space-between flex-wrap gap-4 mb-6">
+      <div class="d-flex align-center gap-3">
+        <v-btn color="slate" size="small" variant="outlined" icon="mdi-arrow-left" @click="$router.back()" />
+        <v-icon size="28" color="primary">mdi-email-multiple-outline</v-icon>
+        <div>
+          <h3 class="text-h6 font-weight-bold" style="line-height: 1.2">Mail notifications</h3>
+          <div class="text-caption text-medium-emphasis">
+            Manage who receives each system notification, by department, user and port.
           </div>
         </div>
-        <div class="flex gap-2">
-          <Button variant="secondary" @click="clearFilters">Clear</Button>
-          <Button variant="primary" @click="getMailNotifications">Search</Button>
-        </div>
       </div>
-
-      <Card>
-        <Table rounded="lg" scroll>
-          <thead>
-            <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50">
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Name</th>
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Departments</th>
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Description</th>
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Assigned users</th>
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Created At</th>
-              <th class="h-10 px-4 text-left font-medium text-zinc-600 dark:text-zinc-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(mailNoty, index) in mailNotys?.data ?? []"
-              :key="`mail-noty-${index}`"
-              :class="[
-                'border-b border-zinc-100 dark:border-zinc-800/80 transition-colors',
-                mailNoty.deleted_at ? 'bg-red-50/50 dark:bg-red-950/20' : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30'
-              ]"
-            >
-              <td class="px-4 py-3 text-zinc-900 dark:text-zinc-100">{{ mailNoty.short_name }}</td>
-              <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-1">
-                  <span
-                    v-for="(department, dIndex) in mailNoty.departments"
-                    :key="`department-${dIndex}`"
-                    class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                  >
-                    {{ department.name }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-4 py-3 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ mailNoty.description }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ mailNoty.users_count }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{{ formatDateString(mailNoty.created_at) }}</td>
-              <td class="px-4 py-3">
-                <div class="flex gap-2">
-                  <EditButton :item="mailNoty" permission="mail-notifications-edit" @click="editMailNoty(mailNoty)" />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      </Card>
-
-      <div v-if="mailNotys && mailNotys.last_page > 1" class="mt-6 flex justify-center">
-        <div class="inline-flex flex-nowrap items-center gap-1.5 w-max min-w-0 max-w-full overflow-x-auto py-1">
-          <button
-            type="button"
-            class="h-8 shrink-0 rounded-md text-sm font-medium px-3 whitespace-nowrap border border-[#000] bg-transparent text-[#000] hover:bg-[#000] hover:text-[#fff] disabled:opacity-30 disabled:pointer-events-none dark:border-[#fff] dark:text-[#fff] dark:hover:bg-[#fff] dark:hover:text-[#000] dark:disabled:opacity-30 transition-colors"
-            :disabled="mailNotys.current_page <= 1"
-            aria-label="Previous page"
-            @click="onClickPagination(mailNotys.current_page - 1)"
-          >
-            < Previous
-          </button>
-          <template v-for="(p, idx) in visiblePages" :key="p === '...' ? `ellipsis-${idx}` : p">
-            <button
-              v-if="p !== '...'"
-              type="button"
-              class="h-8 min-w-8 shrink-0 rounded-md text-sm font-medium px-0 inline-flex items-center justify-center whitespace-nowrap border transition-colors"
-              :class="p === mailNotys.current_page
-                ? 'border-[#000] bg-[#000] text-[#fff] dark:border-[#fff] dark:bg-[#fff] dark:text-[#000]'
-                : 'border-[#000] bg-transparent text-[#000] hover:bg-[#000] hover:text-[#fff] dark:border-[#fff] dark:text-[#fff] dark:hover:bg-[#fff] dark:hover:text-[#000]'"
-              @click="onClickPagination(p as number)"
-            >
-              {{ p }}
-            </button>
-            <span v-else class="shrink-0 px-0.5 text-[#000] dark:text-[#fff]">…</span>
-          </template>
-          <button
-            type="button"
-            class="h-8 shrink-0 rounded-md text-sm font-medium px-3 whitespace-nowrap border border-[#000] bg-transparent text-[#000] hover:bg-[#000] hover:text-[#fff] disabled:opacity-30 disabled:pointer-events-none dark:border-[#fff] dark:text-[#fff] dark:bg-transparent dark:hover:bg-[#fff] dark:hover:text-[#000] dark:disabled:opacity-30 transition-colors"
-            :disabled="mailNotys.current_page >= mailNotys.last_page"
-            aria-label="Next page"
-            @click="onClickPagination(mailNotys.current_page + 1)"
-          >
-            Next >
-          </button>
-        </div>
-      </div>
+      <v-btn color="primary" to="/system/mail-notifications/add">
+        <v-icon size="18" class="mr-1">mdi-plus</v-icon>
+        New notification
+      </v-btn>
     </div>
-  </div>
+
+    <v-card class="mb-4">
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="filters.name"
+              label="Name"
+              placeholder="Filter by name"
+              variant="outlined"
+              density="compact"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-select
+              v-model="filters.departmentId"
+              :items="catalogs.departments"
+              item-title="name"
+              item-value="id"
+              label="Department"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+            />
+          </v-col>
+        </v-row>
+        <div class="d-flex justify-end gap-2 mt-4">
+          <v-btn variant="outlined" color="slate" @click="clearFilters">
+            <v-icon size="16" class="mr-1">mdi-filter-remove-outline</v-icon>
+            Clear
+          </v-btn>
+          <v-btn color="primary" @click="getMailNotifications">
+            <v-icon size="16" class="mr-1">mdi-magnify</v-icon>
+            Search
+          </v-btn>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <p class="text-caption text-medium-emphasis mb-2 px-1">
+      {{ mailNotys?.total ?? 0 }} notification{{ (mailNotys?.total ?? 0) === 1 ? '' : 's' }} found
+    </p>
+
+    <v-card>
+      <v-table density="comfortable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Departments</th>
+            <th>Description</th>
+            <th>Recipients</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(mailNoty, index) in mailNotys?.data ?? []"
+            :key="`mail-noty-${index}`"
+            :class="{ 'deleted-row': mailNoty.deleted_at }"
+          >
+            <td>
+              <div class="d-flex align-center gap-2 font-weight-medium">
+                <v-icon size="16" color="medium-emphasis">mdi-email-outline</v-icon>
+                {{ mailNoty.short_name }}
+              </div>
+            </td>
+            <td>
+              <template v-if="mailNoty.departments?.length">
+                <v-chip
+                  v-for="(department, dIndex) in mailNoty.departments"
+                  :key="`department-${dIndex}`"
+                  size="x-small"
+                  variant="tonal"
+                  class="mr-1"
+                >
+                  {{ department.name }}
+                </v-chip>
+              </template>
+              <span v-else class="text-medium-emphasis">—</span>
+            </td>
+            <td class="text-truncate" style="max-width: 240px" :title="mailNoty.description">
+              {{ mailNoty.description || '—' }}
+            </td>
+            <td>
+              <v-chip size="small" color="primary" variant="tonal">
+                <v-icon size="13" class="mr-1">mdi-account-multiple-outline</v-icon>
+                {{ mailNoty.users_count }}
+              </v-chip>
+            </td>
+            <td>
+              <v-chip size="small" :color="mailNoty.deleted_at ? 'error' : 'success'" variant="tonal">
+                {{ mailNoty.deleted_at ? 'Inactive' : 'Active' }}
+              </v-chip>
+            </td>
+            <td class="text-medium-emphasis">{{ formatDateString(mailNoty.created_at) }}</td>
+            <td class="text-right">
+              <EditButton :item="mailNoty" permission="mail-notifications-edit" @click="editMailNoty(mailNoty)" />
+            </td>
+          </tr>
+          <tr v-if="!mailNotys?.data?.length">
+            <td colspan="7" class="text-center text-medium-emphasis pa-8">
+              <v-icon size="28" class="d-block mx-auto mb-2">mdi-email-off-outline</v-icon>
+              No mail notifications found
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+    </v-card>
+
+    <div v-if="mailNotys && mailNotys.last_page > 1" class="d-flex justify-center mt-6">
+      <v-pagination
+        :model-value="mailNotys.current_page"
+        :length="mailNotys.last_page"
+        :total-visible="7"
+        density="compact"
+        @update:model-value="onClickPagination"
+      />
+    </div>
+  </v-container>
 </template>
 <script setup lang="ts">
 definePageMeta({
@@ -204,28 +227,6 @@ const catalogs = ref<any>({
 
 const mailNotys = ref<ApiResponse | null>(null)
 
-const visiblePages = computed(() => {
-  const data = mailNotys.value
-  if (!data || data.last_page <= 1) return []
-  const current = data.current_page
-  const last = data.last_page
-  const delta = 2
-  const range: number[] = []
-  const rangeWithDots: (number | string)[] = []
-  let l: number | undefined
-  for (let i = 1; i <= last; i++) {
-    if (i === 1 || i === last || (i >= current - delta && i <= current + delta)) {
-      range.push(i)
-    }
-  }
-  for (const i of range) {
-    if (l !== undefined && i - l > 1) rangeWithDots.push('...')
-    rangeWithDots.push(i)
-    l = i
-  }
-  return rangeWithDots
-})
-
 const onClickPagination = async (page: number) => {
   if (mailNotys.value) {
     mailNotys.value.current_page = page
@@ -250,7 +251,6 @@ const getMailNotifications = async () => {
     })
 
     mailNotys.value = response as ApiResponse
-    console.log('mailNotys', mailNotys.value)
   } catch (e) {
     console.error(e)
   } finally {
