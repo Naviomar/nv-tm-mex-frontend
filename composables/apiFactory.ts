@@ -95,6 +95,7 @@ import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 import ImportRepoModule from '~/repository/modules/reports/importRepo'
 import AccountStatementModule from '~/repository/modules/reports/accountStatement'
 import ControlOperacionesModule from '~/repository/modules/reports/controlOperaciones'
+import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 
 interface IApiInstance {
@@ -104,6 +105,7 @@ interface IApiInstance {
   importRepo: ImportRepoModule
   accountStatement: AccountStatementModule
   controlOperaciones: ControlOperacionesModule
+  releaseReports: ReleaseReportsModule
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
@@ -207,6 +209,7 @@ export function useApiFactory() {
     importRepo: new ImportRepoModule(client),
     accountStatement: new AccountStatementModule(client),
     controlOperaciones: new ControlOperacionesModule(client),
+    releaseReports: new ReleaseReportsModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     shippers: new ShippersModule(client),

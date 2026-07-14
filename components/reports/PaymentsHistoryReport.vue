@@ -64,9 +64,6 @@
 
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
 
 // Helper to format date as YYYY-MM-DD
@@ -115,7 +112,7 @@ const applyFilters = async () => {
     link.setAttribute('download', `payments_history_report_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
     window.URL.revokeObjectURL(url)
   } catch (e) {
     console.error(e)
@@ -130,8 +127,6 @@ const clearFilters = () => {
   filters.value.fromDate = firstDayLastMonth
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
-  // Optionally, refetch the dashboard data without filters
-  applyFilters()
 }
 </script>
 

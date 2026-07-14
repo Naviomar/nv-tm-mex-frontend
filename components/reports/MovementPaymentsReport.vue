@@ -64,9 +64,6 @@
 
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
 
 // Helper to format date as YYYY-MM-DD
@@ -115,7 +112,7 @@ const applyFilters = async () => {
     link.setAttribute('download', `movement_payments_report_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
     window.URL.revokeObjectURL(url)
   } catch (e) {
     console.error(e)
@@ -129,7 +126,6 @@ const clearFilters = () => {
   filters.value.fromDate = firstDayLastMonth
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
-  applyFilters() // Optionally, refetch the report without filters
 }
 </script>
 
