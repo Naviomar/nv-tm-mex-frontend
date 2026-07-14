@@ -2,10 +2,10 @@
   <div>
     <div class="mb-4">
       <div class="grid grid-cols-6 gap-3">
-        <div class="col-span-3">
+        <div class="col-span-2">
           <v-text-field v-model="filters.name" density="compact" label="Name"></v-text-field>
         </div>
-        <div class="col-span-3">
+        <div class="col-span-2">
           <v-autocomplete
             v-model="filters.mailNotificationId"
             :items="customerMailNotifications"
@@ -25,6 +25,19 @@
               </v-list-item>
             </template>
           </v-autocomplete>
+        </div>
+        <div class="col-span-2">
+          <v-autocomplete
+            v-model="filters.executiveId"
+            :items="catalogs?.executives ?? []"
+            item-value="id"
+            item-title="name"
+            label="Executive"
+            density="compact"
+            clearable
+            hide-details
+            @update:model-value="onSearch"
+          ></v-autocomplete>
         </div>
       </div>
       <div class="grid grid-cols-1">
@@ -120,6 +133,7 @@ const customerMailNotificationIds = customerMailNotifications.map((n: any) => n.
 const filters = ref({
   name: '',
   mailNotificationId: null as number | null,
+  executiveId: null as number | null,
 })
 
 const perPageOptions = [10, 25, 50, 100]
@@ -153,6 +167,7 @@ const getConsignees = async () => {
         name: filters.value.name,
         mail_notification_ids: customerMailNotificationIds.join(','),
         mail_notification_id: filters.value.mailNotificationId ?? undefined,
+        executive_id: filters.value.executiveId ?? undefined,
       },
     })
     consignees.value = {
@@ -187,7 +202,7 @@ const onSearch = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = { name: '', mailNotificationId: null }
+  filters.value = { name: '', mailNotificationId: null, executiveId: null }
   consignees.value.current_page = 1
   await getConsignees()
 }
@@ -199,6 +214,7 @@ const exportExcel = async () => {
       query: {
         name: filters.value.name,
         mail_notification_ids: customerMailNotificationIds.join(','),
+        executive_id: filters.value.executiveId ?? undefined,
       },
     })
 
@@ -256,5 +272,6 @@ const onMatrixRefresh = async () => {
   await getConsignees()
 }
 
+catalogs.value = await $api.consignees.getCatalogs()
 await getConsignees()
 </script>
