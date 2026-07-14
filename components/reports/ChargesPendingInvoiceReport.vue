@@ -24,18 +24,38 @@
 
           <v-row>
             <v-col cols="12" md="4">
-              <v-date-picker v-model="filters.fromDate" label="From Date" density="compact" hide-details
-                :max="filters.toDate" :first-day-of-week="1" locale="es" variant="outlined" />
+              <v-date-picker
+                v-model="filters.fromDate"
+                label="From Date"
+                density="compact"
+                hide-details
+                :max="filters.toDate"
+                :first-day-of-week="1"
+                locale="es"
+                variant="outlined"
+              />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-date-picker v-model="filters.toDate" label="To Date" density="compact" hide-details
-                :min="filters.fromDate" :first-day-of-week="1" locale="es" variant="outlined" />
+              <v-date-picker
+                v-model="filters.toDate"
+                label="To Date"
+                density="compact"
+                hide-details
+                :min="filters.fromDate"
+                :first-day-of-week="1"
+                locale="es"
+                variant="outlined"
+              />
             </v-col>
 
             <v-col cols="12" md="4">
-              <ACustomerSearch v-model="filters.customer_id" :hide-details="true" density="compact"
-                variant="outlined" />
+              <ACustomerSearch
+                v-model="filters.customer_id"
+                :hide-details="true"
+                density="compact"
+                variant="outlined"
+              />
             </v-col>
           </v-row>
 
@@ -64,9 +84,6 @@
 
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
 
 // Helper to format date as YYYY-MM-DD
@@ -115,7 +132,7 @@ const applyFilters = async () => {
     link.setAttribute('download', `charges_pending_invoice_report_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
     window.URL.revokeObjectURL(url)
   } catch (e) {
     console.error(e)
@@ -129,7 +146,6 @@ const clearFilters = () => {
   filters.value.fromDate = firstDayLastMonth
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
-  applyFilters() // Optionally, refetch the report without filters
 }
 </script>
 
@@ -139,7 +155,7 @@ const clearFilters = () => {
 }
 
 .report-card {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 12px;
   overflow: hidden;
 }
