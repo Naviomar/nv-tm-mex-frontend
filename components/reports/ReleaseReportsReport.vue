@@ -42,13 +42,9 @@
                 <v-icon start>mdi-folder-text-outline</v-icon>
                 Document Types
               </v-btn>
-              <v-btn value="release_port" class="flex-grow-1 text-none py-2 h-auto">
+              <v-btn value="port" class="flex-grow-1 text-none py-2 h-auto">
                 <v-icon start>mdi-anchor</v-icon>
-                Report Release
-              </v-btn>
-              <v-btn value="no_release_port" class="flex-grow-1 text-none py-2 h-auto">
-                <v-icon start>mdi-alert-circle-outline</v-icon>
-                Report No Release
+                Containers at Port
               </v-btn>
             </v-btn-toggle>
           </div>
@@ -125,8 +121,29 @@
               />
             </v-col>
 
-            <!-- Conditional releaseToday check for Port reports -->
-            <v-col v-if="showReleaseTodayOption" cols="12">
+            <!-- Conditional Status for Port Report -->
+            <v-col v-if="reportType === 'port'" cols="12" md="6">
+              <v-select
+                v-model="filters.status"
+                :items="[
+                  { title: 'All', value: 'all' },
+                  { title: 'Released Only', value: 'released' },
+                  { title: 'No Release Only', value: 'no_release' },
+                ]"
+                item-title="title"
+                item-value="value"
+                label="Release Status"
+                density="compact"
+                hide-details
+                variant="outlined"
+                prepend-inner-icon="mdi-check-all"
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Conditional releaseToday check for Port reports -->
+          <v-row v-if="showReleaseTodayOption" class="mt-2">
+            <v-col cols="12">
               <v-switch
                 v-model="filters.releaseToday"
                 color="primary"
@@ -135,21 +152,23 @@
                 label="Filter by specific Release Date (ignores ETA date range)"
               />
             </v-col>
+          </v-row>
 
-            <!-- Conditional specific release date for Port reports -->
-            <v-col v-if="showReleaseTodayOption && filters.releaseToday" cols="12" md="6">
-              <v-date-picker
-                v-model="filters.releaseDateHoy"
-                label="Release Date"
-                density="compact"
-                hide-details
-                locale="en"
-                variant="outlined"
-              />
-            </v-col>
-
-            <!-- Standard date inputs (hidden if releaseToday is active) -->
-            <template v-if="!showReleaseTodayOption || !filters.releaseToday">
+          <!-- Conditional specific release date or standard date range -->
+          <v-row class="mt-2">
+            <template v-if="showReleaseTodayOption && filters.releaseToday">
+              <v-col cols="12" md="6">
+                <v-date-picker
+                  v-model="filters.releaseDateHoy"
+                  label="Release Date"
+                  density="compact"
+                  hide-details
+                  locale="en"
+                  variant="outlined"
+                />
+              </v-col>
+            </template>
+            <template v-else>
               <v-col cols="12" md="6">
                 <v-date-picker
                   v-model="filters.fromDate"
@@ -176,7 +195,9 @@
                 />
               </v-col>
             </template>
+          </v-row>
 
+          <v-row class="mt-2">
             <!-- Consignee Autocomplete (All reports) -->
             <v-col cols="12" md="6">
               <v-autocomplete
@@ -349,7 +370,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -367,7 +388,7 @@ const fromDate = new Date(today)
 fromDate.setMonth(fromDate.getMonth() - 1)
 const toDate = new Date(today)
 
-const reportType = ref<'general' | 'documents' | 'release_port' | 'no_release_port'>('general')
+const reportType = ref<'general' | 'documents' | 'port'>('general')
 const useLegacyData = ref(true)
 const useNewData = ref(true)
 
@@ -425,11 +446,15 @@ const {
 } = useAutocompleteFilter(ports, () => filters.value.port_id)
 
 // Dynamic Visibilities
-const showReleaseTodayOption = computed(() => ['release_port', 'no_release_port'].includes(reportType.value))
-const showConsigneeGroup = computed(() => ['general', 'release_port', 'no_release_port'].includes(reportType.value))
-const showExecutive = computed(() => ['documents', 'release_port', 'no_release_port'].includes(reportType.value))
-const showPort = computed(() => ['release_port', 'no_release_port'].includes(reportType.value))
-const showVoyage = computed(() => ['release_port', 'no_release_port'].includes(reportType.value))
+const showReleaseTodayOption = computed(() => reportType.value === 'port' && filters.value.status === 'released')
+const showConsigneeGroup = computed(() => ['general', 'port'].includes(reportType.value))
+const showExecutive = computed(() => ['documents', 'port'].includes(reportType.value))
+const showPort = computed(() => reportType.value === 'port')
+const showVoyage = computed(() => reportType.value === 'port')
+
+watch(reportType, () => {
+  filters.value.status = 'all'
+})
 
 const dateLabelFrom = computed(() => {
   if (reportType.value === 'general' && filters.value.dateType === 'release') {
