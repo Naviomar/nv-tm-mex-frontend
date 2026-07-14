@@ -24,18 +24,38 @@
 
           <v-row>
             <v-col cols="12" md="3">
-              <v-date-picker v-model="filters.fromDate" label="From Date" density="compact" hide-details
-                :max="filters.toDate" :first-day-of-week="1" locale="es" variant="outlined" />
+              <v-date-picker
+                v-model="filters.fromDate"
+                label="From Date"
+                density="compact"
+                hide-details
+                :max="filters.toDate"
+                :first-day-of-week="1"
+                locale="es"
+                variant="outlined"
+              />
             </v-col>
 
             <v-col cols="12" md="3">
-              <v-date-picker v-model="filters.toDate" label="To Date" density="compact" hide-details
-                :min="filters.fromDate" :first-day-of-week="1" locale="es" variant="outlined" />
+              <v-date-picker
+                v-model="filters.toDate"
+                label="To Date"
+                density="compact"
+                hide-details
+                :min="filters.fromDate"
+                :first-day-of-week="1"
+                locale="es"
+                variant="outlined"
+              />
             </v-col>
 
             <v-col cols="12" md="3">
-              <ACustomerSearch v-model="filters.customer_id" :hide-details="true" density="compact"
-                variant="outlined" />
+              <ACustomerSearch
+                v-model="filters.customer_id"
+                :hide-details="true"
+                density="compact"
+                variant="outlined"
+              />
             </v-col>
 
             <v-col cols="12" md="3">
@@ -79,13 +99,10 @@
 
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const snackbar = useSnackbar()
-const router = useRouter()
-const route = useRoute()
 const loadingStore = useLoadingStore()
 // Service type options
 const serviceTypeOptions = [
-  { label: 'Todos', value: null },
+  { label: 'All', value: null },
   { label: 'Impo Mar', value: 'I' },
   { label: 'Expo Mar', value: 'E' },
 ]
@@ -106,7 +123,7 @@ const filters = ref<any>({
   fromDate: firstDayLastMonth,
   toDate: lastDayCurrentMonth,
   customer_id: null,
-  service_type: null
+  service_type: null,
 })
 
 // Function to apply filters and fetch data
@@ -116,7 +133,7 @@ const applyFilters = async () => {
 
     // Prepare the query filters
     const queryFilters = {
-      service_type: filters.value.service_type, 
+      service_type: filters.value.service_type,
       customer_id: filters.value.customer_id,
       from: formatDate(filters.value.fromDate),
       to: formatDate(filters.value.toDate),
@@ -131,14 +148,14 @@ const applyFilters = async () => {
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
-    console.log("resp:",response)
+    console.log('resp:', response)
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', `executives_report_${formatDate(new Date())}.xlsx`)
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
     window.URL.revokeObjectURL(url)
   } catch (e) {
     console.error(e)
@@ -153,7 +170,6 @@ const clearFilters = () => {
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
   filters.value.service_type = null
-  applyFilters() // Optionally, refetch the report without filters
 }
 </script>
 
@@ -163,13 +179,13 @@ const clearFilters = () => {
 }
 
 .report-card {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 12px;
   overflow: hidden;
 }
 
 .report-header {
-  background: linear-gradient(135deg, #b147c4 0%, #9C27B0 100%);
+  background: linear-gradient(135deg, #b147c4 0%, #9c27b0 100%);
   position: relative;
   overflow: hidden;
 }
@@ -241,4 +257,3 @@ const clearFilters = () => {
   letter-spacing: 0.5px;
 }
 </style>
-
