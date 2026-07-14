@@ -102,7 +102,7 @@ const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 // Service type options
 const serviceTypeOptions = [
-  { label: 'Todos', value: null },
+  { label: 'All', value: null },
   { label: 'Impo Mar', value: 'I' },
   { label: 'Expo Mar', value: 'E' },
 ]
