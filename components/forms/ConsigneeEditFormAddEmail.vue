@@ -8,9 +8,14 @@
           {{ emails.length }}
         </v-chip>
       </div>
-      <v-btn size="small" color="success" variant="tonal" prepend-icon="mdi-plus" @click="openCreateModal">
-        Add email
-      </v-btn>
+      <div class="d-flex gap-2">
+        <v-btn size="small" color="secondary" variant="tonal" prepend-icon="mdi-bell-check-outline" @click="showMatrix = true">
+          Notification coverage
+        </v-btn>
+        <v-btn size="small" color="success" variant="tonal" prepend-icon="mdi-plus" @click="openCreateModal">
+          Add email
+        </v-btn>
+      </div>
     </v-card-title>
     <v-divider />
     <v-card-text class="pa-0">
@@ -133,11 +138,19 @@
       :customer-id="id"
       @refresh="emit('refresh')"
     />
+    <ConsigneeNotificationsMatrix
+      v-model:show="showMatrix"
+      :emails="emails"
+      :catalogs="catalogs"
+      :id="id"
+      @refresh="emit('refresh')"
+    />
   </v-card>
 </template>
 <script setup lang="ts">
 import { isPortFilterableNotification, formatNotificationName } from '~/utils/mailNotifications'
 import ConsigneeEmailModal from './ConsigneeEmailModal.vue'
+import ConsigneeNotificationsMatrix from './ConsigneeNotificationsMatrix.vue'
 
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -150,6 +163,7 @@ const emit = defineEmits(['refresh'])
 const showModal = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 const selectedEmail = ref<any>(null)
+const showMatrix = ref(false)
 
 const NOTY_PREVIEW = 3
 const expandedRows = ref<Set<number>>(new Set())
