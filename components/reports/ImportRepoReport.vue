@@ -9,7 +9,7 @@
               <v-icon color="white" size="28">mdi-sail-boat</v-icon>
             </div>
             <div class="header-text">
-              <h2 class="report-title">Import Repo General</h2>
+              <h2 class="report-title">General Import Report</h2>
               <p class="report-subtitle">General import report with financial data and TEUS calculation</p>
             </div>
           </div>
