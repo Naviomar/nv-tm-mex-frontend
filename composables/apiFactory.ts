@@ -88,7 +88,6 @@ import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
 import MailLogsModule from '~/repository/modules/mailLogs'
-import OperationalInfoModule from '~/repository/modules/operationalInfo'
 import ExportLogsModule from '~/repository/modules/exportLogs'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
@@ -193,7 +192,6 @@ interface IApiInstance {
   legacy: LegacyModule
   systemLogs: SystemLogsModule
   mailLogs: MailLogsModule
-  operationalInfo: OperationalInfoModule
   exportLogs: ExportLogsModule
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
@@ -297,7 +295,6 @@ export function useApiFactory() {
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
     mailLogs: new MailLogsModule(client),
-    operationalInfo: new OperationalInfoModule(client),
     exportLogs: new ExportLogsModule(client),
     ticketMessages: new TicketMessagesModule(client),
     authRequestTypes: new AuthRequestTypesModule(client),

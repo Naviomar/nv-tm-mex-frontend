@@ -117,7 +117,6 @@ export const pagePermissions: PagePermissionEntry[] = [
   { path: '/system/support-tickets', permissions: [menuPermissions.SystemSupportTickets] },
   { path: '/system/system-logs', permissions: [menuPermissions.SystemLogs] },
   { path: '/system/audit-log', permissions: [menuPermissions.SystemAudit] },
-  { path: '/system/operational-info', permissions: [menuPermissions.SystemOperationalInfo] },
 ]
 
 /** Permisos registrados para la ruta actual (match del prefijo más específico). */
