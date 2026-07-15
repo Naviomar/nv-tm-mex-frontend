@@ -37,7 +37,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
       },
       {
         key: 'import-repo',
-        title: 'Import Repo General',
+        title: 'General Import Report',
         icon: 'mdi-sail-boat',
         component: 'ImportRepoReport',
         permission: 'reports-maritime-import-repo-view',
@@ -51,7 +51,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
       },
       {
         key: 'account-statement',
-        title: 'Estado de Cuenta',
+        title: 'Account Statement',
         icon: 'mdi-card-account-details-outline',
         component: 'AccountStatementReport',
         permission: 'reports-maritime-import-account-statement-view',
@@ -62,6 +62,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         icon: 'mdi-chart-timeline-variant-shimmer',
         component: 'ComparativeTeusImportReport',
         permission: 'reports-maritime-import-comparative-teus-view',
+      },
+      {
+        key: 'releases',
+        title: 'Release & Revalidations',
+        icon: 'mdi-file-document-check',
+        component: 'ReleaseReportsReport',
+        permission: 'reports-maritime-import-releases-view',
       },
     ],
   },

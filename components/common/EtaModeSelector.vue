@@ -56,7 +56,7 @@
           />
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 12l4 4m0-4l-4 4" />
         </svg>
-        <span>No ETA</span>
+        <span>Only without ETA</span>
       </button>
 
       <!-- Option: ambos -->

@@ -242,6 +242,7 @@ const router = useRouter()
 const route = useRoute()
 
 const loadingStore = useLoadingStore()
+const currentUser = useSanctumUser<any>()
 
 const filters = ref<any>({
   startDate: '',
@@ -354,8 +355,11 @@ const showSendPaymentRequest = async (ffPayment: any) => {
       Teléfono beneficiario: ${bankData.beneficiary_phone || ''}
       Moneda: ${getCurrencyName(bankData.currency_id) || ''}
       `.trim()
-    sendPayment.value.to =
-      'cparrajr@naviomar.com,raul.espejo@naviomar.com,mos@tmultimod.com,aldo.campos@naviomar.com,pedro.aguirre@naviomar.com,liliana.meneses@naviomar.com'
+    // Los destinatarios TO ya no se hardcodean aquí: se administran desde el
+    // catálogo de notificaciones (Mail notifications) para esta clase de correo
+    // (App\Mail\Mexico\NotifyFfRequestPayment). Este campo queda disponible
+    // para agregar destinatarios adicionales puntuales si se requiere.
+    sendPayment.value.to = ''
     sendPayment.value.message = `Buen día ! \n
       Por favor programar el pago de ${formatToCurrency(Math.abs(ffPayment.amount))} ${getCurrencyName(
       ffPayment.currency_id
@@ -363,7 +367,8 @@ const showSendPaymentRequest = async (ffPayment: any) => {
       ${agente} \n
       Datos para pago: \n
       ${bank} \n
-      Saludos,`
+      Saludos,
+      ${currentUser.value?.name || ''}`
   }
 
   // Cuando es positivo es por que el agente nos paga a nosotros
@@ -386,7 +391,8 @@ const showSendPaymentRequest = async (ffPayment: any) => {
       ${formatToCurrency(ffPayment.amount)} ${getCurrencyName(ffPayment.currency_id)} \n
       Datos para realizar el pago: \n
       ${bankDetail} \n
-      Saludos,`
+      Saludos,
+      ${currentUser.value?.name || ''}`
   }
 }
 
@@ -401,11 +407,9 @@ const getForwarderableType = (ffpayment: any) => {
 
 const sendPaymentRequest = async () => {
   try {
-    // Validar que haya al menos un correo
-    if (!sendPayment.value.to || !sendPayment.value.to.trim()) {
-      snackbar.add({ type: 'error', text: 'Debes ingresar al menos un correo en el campo TO.' })
-      return
-    }
+    // El campo TO ya no es obligatorio: los destinatarios por defecto se
+    // administran en el catálogo de notificaciones (Mail notifications).
+    // Este campo solo permite agregar destinatarios adicionales puntuales.
 
     // Validar que el subject tenga valor si el campo es visible (cuando agentHasToPay es true)
     if (agentHasToPay.value && (!sendPayment.value.subject || !sendPayment.value.subject.trim())) {

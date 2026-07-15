@@ -2,10 +2,10 @@
   <div>
     <div class="mb-4">
       <div class="grid grid-cols-6 gap-3">
-        <div class="col-span-3">
+        <div class="col-span-2">
           <v-text-field v-model="filters.name" density="compact" label="Name"></v-text-field>
         </div>
-        <div class="col-span-3">
+        <div class="col-span-2">
           <v-autocomplete
             v-model="filters.mailNotificationId"
             :items="customerMailNotifications"
@@ -26,11 +26,27 @@
             </template>
           </v-autocomplete>
         </div>
+        <div class="col-span-2">
+          <v-autocomplete
+            v-model="filters.executiveId"
+            :items="catalogs?.executives ?? []"
+            item-value="id"
+            item-title="name"
+            label="Executive"
+            density="compact"
+            clearable
+            hide-details
+            @update:model-value="onSearch"
+          ></v-autocomplete>
+        </div>
       </div>
       <div class="grid grid-cols-1">
         <div class="flex gap-2 align-center">
           <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
           <v-btn color="primary" @click="onSearch"> Search </v-btn>
+          <v-btn color="success" variant="tonal" prepend-icon="mdi-file-excel-outline" :loading="exportingExcel" @click="exportExcel">
+            Download report
+          </v-btn>
           <v-select
             v-model="limit"
             :items="perPageOptions"
@@ -107,6 +123,7 @@ import ConsigneeNotificationsMatrix from '~/components/forms/ConsigneeNotificati
 const { $api } = useNuxtApp()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
+const snackbar = useSnackbar()
 
 const customerMailNotifications = [...mailNotifications]
   .filter((n: any) => n.is_for_consignee)
@@ -116,6 +133,7 @@ const customerMailNotificationIds = customerMailNotifications.map((n: any) => n.
 const filters = ref({
   name: '',
   mailNotificationId: null as number | null,
+  executiveId: null as number | null,
 })
 
 const perPageOptions = [10, 25, 50, 100]
@@ -136,6 +154,7 @@ const selectedNotificationLabel = computed(() => {
 const catalogs = ref<any>(null)
 const showMatrix = ref(false)
 const selectedConsignee = ref<any>(null)
+const exportingExcel = ref(false)
 
 const getConsignees = async () => {
   try {
@@ -148,6 +167,7 @@ const getConsignees = async () => {
         name: filters.value.name,
         mail_notification_ids: customerMailNotificationIds.join(','),
         mail_notification_id: filters.value.mailNotificationId ?? undefined,
+        executive_id: filters.value.executiveId ?? undefined,
       },
     })
     consignees.value = {
@@ -182,9 +202,49 @@ const onSearch = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = { name: '', mailNotificationId: null }
+  filters.value = { name: '', mailNotificationId: null, executiveId: null }
   consignees.value.current_page = 1
   await getConsignees()
+}
+
+const exportExcel = async () => {
+  try {
+    exportingExcel.value = true
+    const response: any = await $api.consignees.exportMissingNotificationsExcel({
+      query: {
+        name: filters.value.name,
+        mail_notification_ids: customerMailNotificationIds.join(','),
+        executive_id: filters.value.executiveId ?? undefined,
+      },
+    })
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const today = new Date()
+    const datePart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    link.setAttribute('download', `reporte_notificaciones_clientes_${datePart}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+
+    snackbar.add({
+      text: 'Report generated and downloaded successfully.',
+      type: 'success',
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({
+      text: 'Error exporting the report.',
+      type: 'error',
+    })
+  } finally {
+    exportingExcel.value = false
+  }
 }
 
 const openMatrix = async (consignee: any) => {
@@ -212,5 +272,6 @@ const onMatrixRefresh = async () => {
   await getConsignees()
 }
 
+catalogs.value = await $api.consignees.getCatalogs()
 await getConsignees()
 </script>
