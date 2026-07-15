@@ -14,6 +14,7 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+        <!-- Filters omitted for brevity, keeping original fields -->
         <div class="col-span-2">
           <v-autocomplete
             v-model="filters.countryCode"
@@ -203,7 +204,7 @@
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="50">Actions</th>
+              <th class="text-left" width="80">Actions</th>
               <th class="text-left"># Reference</th>
               <th class="text-left">Master BL(s)</th>
               <th class="text-left">House BL(s)</th>
@@ -239,7 +240,7 @@
               }"
             >
               <td>
-                <div class="flex gap-2">
+                <div class="flex gap-1">
                   <v-btn
                     v-if="!item.deleted_at && hasPermission('sea-import-references-edit')"
                     variant="text"
@@ -256,13 +257,36 @@
                     density="compact"
                     @click="viewDetails(item)"
                   ></v-btn>
+                  <!-- Premium Live Track Button -->
+                  <v-btn
+                    v-if="isLiveTrackable(item)"
+                    variant="text"
+                    icon="mdi-earth"
+                    :color="getLiveCarrierColor(item)"
+                    density="compact"
+                    class="animate-pulse"
+                    @click="openLiveTracking(item)"
+                    title="Live Carrier Tracking"
+                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
-                <UserInfoBadge :item="item">
-                  <ServiceNumberLabel :service="item" />
-                </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <div class="flex flex-col items-start gap-1">
+                  <UserInfoBadge :item="item">
+                    <ServiceNumberLabel :service="item" />
+                  </UserInfoBadge>
+                  <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                  <!-- Carrier Badge -->
+                  <v-chip 
+                    v-if="isLiveTrackable(item)" 
+                    size="x-small" 
+                    :color="getLiveCarrierColor(item)" 
+                    variant="elevated" 
+                    class="font-bold border border-white/20 shadow-sm"
+                  >
+                    {{ getLiveCarrierLabel(item) }}
+                  </v-chip>
+                </div>
               </td>
               <td>
                 <div class="flex flex-col gap-1">
@@ -371,6 +395,13 @@
         />
       </v-card-text>
     </v-card>
+
+    <!-- Real-time Tracking Modal Integration -->
+    <PremiumLiveTrackingModal
+      v-model="showLiveTrackingModal"
+      :referencia-id="selectedReferenciaForTracking?.id"
+      :referencia="selectedReferenciaForTracking"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -395,6 +426,10 @@ const catalogs = ref({
 })
 
 const containerViewer = ref(true)
+
+// Live Tracking Modal State
+const showLiveTrackingModal = ref(false)
+const selectedReferenciaForTracking = ref<any>(null)
 
 const FILTER_VISIBILITY_KEY = 'sea-import-filters-visible'
 const showFilters = ref(sessionStorage.getItem(FILTER_VISIBILITY_KEY) !== 'false')
@@ -426,7 +461,6 @@ const initialFilters = {
   statusHouseBl: null as string | null,
 }
 
-// Use the table filters composable for URL persistence
 const {
   filters,
   currentPage,
@@ -451,7 +485,6 @@ const references = ref({
   total: 1,
 })
 
-// Expose getFilteredUrl for child components and back navigation
 const backUrl = computed(() => getFilteredUrl('/maritime/import'))
 provide('catalogBackUrl', backUrl)
 
@@ -459,10 +492,37 @@ const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
 }
 
+// Tracking Utility Methods
+const isLiveTrackable = (item: any) => {
+  if (!item || !item.line) return false
+  const name = (item.line.name || '').toLowerCase()
+  const comm = (item.line.commercial_name || '').toLowerCase()
+  const code = (item.line.code || '').toUpperCase()
+
+  return (
+    name.includes('hapag') || comm.includes('hapag') || name.includes('lloyd') || code === 'HLCU' || code === 'HLAG'
+  )
+}
+
+const getLiveCarrierLabel = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'Live COSCO' : 'Live Hapag'
+}
+
+const getLiveCarrierColor = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'teal-darken-1' : 'deep-orange-darken-1'
+}
+
+const openLiveTracking = (item: any) => {
+  selectedReferenciaForTracking.value = item
+  showLiveTrackingModal.value = true
+}
+
 interface SearchParams {
   name?: string
   id?: number
-  [key: string]: any // Allow additional keys, but we will filter them
+  [key: string]: any 
 }
 
 const getDeliveredIcon = (item: any) => {
@@ -475,23 +535,16 @@ const showDetails = () => {
 
 const searchLines = async (search: SearchParams) => {
   try {
-    const response = await $api.lines.searchLines({
-      query: search,
-    })
+    const response = await $api.lines.searchLines({ query: search })
     return response
   } catch (error) {
-    snackbar.add({
-      type: 'error',
-      text: 'Error fetching freight lines',
-    })
+    snackbar.add({ type: 'error', text: 'Error fetching freight lines' })
     console.error(error)
   }
 }
 
 const onClickFilters = async () => {
-  // Add any pending reference before searching
   addReferencia()
-  // set current page to 1
   currentPage.value = 1
   references.value.current_page = 1
   await syncToUrl()
@@ -500,17 +553,13 @@ const onClickFilters = async () => {
 
 const addReferencia = () => {
   if (filters.value.referencia) {
-    // split by comma and remove empty spaces
     filters.value.referencia = filters.value.referencia.replace(/\s/g, '')
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
-    // remove duplicates in refs array using set
-
     refs.forEach((ref) => {
       filters.value.referencias.push(ref)
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
     filters.value.referencia = ''
-    // Sync to URL after adding references
     syncToUrl()
   }
 }
@@ -554,51 +603,37 @@ const getSeaImportReferences = async () => {
     references.value.current_page = currentPage.value
     
     if (references.value.data.length === 0) {
-      snackbar.add({
-        type: 'info',
-        text: 'No records found',
-      })
+      snackbar.add({ type: 'info', text: 'No records found' })
     }
   } catch (e) {
     console.error(e)
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => { loadingStore.stop() }, 250)
   }
 }
 
 const exportSeaImportRefsXlsx = async () => {
   try {
     loadingStore.start()
-
     const response = (await $api.referencias.exportImportXlsxReport({
-      query: {
-        ...flattenArraysToCommaSeparatedString(filters.value),
-      },
+      query: { ...flattenArraysToCommaSeparatedString(filters.value) },
     })) as any
 
-    const blob = new Blob([response], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    })
+    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
-    // agrega timestamp to filename
     const timestamp = new Date().toISOString().replace(/[-:.]/g, '')
     link.download = `sea-import-report-${timestamp}.xlsx`
     link.click()
   } catch (e) {
     console.error(e)
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => { loadingStore.stop() }, 250)
   }
 }
 
 const getSeaImportFilters = async () => {
   const response = await $api.referencias.getSeaImportFilters()
-
   catalogs.value = response as any
 }
 
@@ -667,15 +702,12 @@ const confirmDeletion = async (item: any) => {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error cancelling reference' })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => { loadingStore.stop() }, 250)
   }
 }
 
 onMounted(() => {
   getSeaImportFilters()
-  // Sync current page from composable after URL is loaded
   references.value.current_page = currentPage.value
   getSeaImportReferences()
 })
