@@ -1,23 +1,26 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import tailwindcss from '@tailwindcss/vite'
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  // SSR only in production builds — dev runs as SPA for drastically faster reloads
+  ssr: !isDev,
+
   future: {
     compatibilityVersion: 4,
   },
 
   devtools: {
-    enabled: process.env.NODE_ENV !== 'production',
-
-    timeline: {
-      enabled: true,
-    },
+    enabled: false,
   },
 
   experimental: {
     renderJsonPayloads: false,
-    checkOutdatedBuildInterval: 40000 * 10
+    checkOutdatedBuildInterval: 40000 * 10,
+    // Faster payload extraction in dev
+    payloadExtraction: false,
   },
 
   css: [
@@ -25,11 +28,9 @@ export default defineNuxtConfig({
     '@mdi/font/css/materialdesignicons.min.css',
     // 'vuetify/lib/styles/main.sass',
     '~/assets/scss/styles.scss',
-    '~/assets/css/wiki-prose.css',
   ],
 
   modules: [
-    '@nuxt/content',
     'nuxt-auth-sanctum',
     'nuxt-lodash',
     'nuxt-meilisearch',
@@ -86,6 +87,7 @@ export default defineNuxtConfig({
     port: process.env.LARAVEL_ECHO_PORT || 8080, // Your Laravel Echo port
     key: process.env.LARAVEL_ECHO_KEY, // Your Laravel Echo app key
     scheme: process.env.LARAVEL_ECHO_SCHEME || 'http',
+    forceTLS: false, // Disable forced TLS for local development
     transports: ['ws', 'wss'],
     authentication: {
       baseUrl: process.env.API_URL, // Your Laravel app URL
@@ -121,6 +123,13 @@ export default defineNuxtConfig({
       logout: '/logout',
       user: '/user',
     },
+    client: {
+      retry: false,
+    },
+    csrf: {
+      cookie: 'XSRF-TOKEN',
+      header: 'X-XSRF-TOKEN',
+    },
     redirectIfUnauthenticated: true,
     redirect: {
       keepRequestedRoute: true,
@@ -132,7 +141,7 @@ export default defineNuxtConfig({
     globalMiddleware: {
       enabled: true,
     },
-    logLevel: 0,
+    logLevel: 3,
   },
 
   imports: {
@@ -189,10 +198,26 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ['vuetify'],
+    transpile: ['vuetify', 'vue3-apexcharts'],
   },
 
   vite: {
+    server: {
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost',
+      },
+      // Pre-transform frequently used modules at startup
+      warmup: {
+        clientFiles: [
+          './plugins/00.vuetify.ts',
+          './plugins/00.colors.ts',
+          './plugins/02.api.ts',
+          './layouts/default.vue',
+          './app.vue',
+        ],
+      },
+    },
     ssr: {
       noExternal: ['moment-timezone']
     },
@@ -200,7 +225,27 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
     optimizeDeps: {
-      include: ['pusher-js'], // or ['nuxt-laravel-echo > pusher-js'] for newer Vite versions
+      // Pre-bundle heavy deps at startup instead of lazy-discovering them on navigation
+      include: [
+        'vuetify',
+        'vuetify/components',
+        'vuetify/directives',
+        'vuetify/labs/VDateInput',
+        'vuetify/util/colors',
+        'pusher-js',
+        'apexcharts',
+        'vue3-apexcharts',
+        'moment',
+        'moment-timezone',
+        '@wangeditor/editor',
+        '@wangeditor/editor-for-vue',
+        'canvas-confetti',
+        'nanoid',
+        'yup',
+        '@vee-validate/yup',
+        '@rive-app/canvas',
+        'pinia',
+      ],
     },
     vue: {
       template: {
@@ -209,9 +254,14 @@ export default defineNuxtConfig({
     },
     define: {
       'process.env.DEBUG': false,
-    }
+    },
   },
 
+  devServer: {
+    host: 'localhost',
+    port: 3004, // o el puerto que quieras
+    https: false,
+  },
 
   compatibilityDate: '2024-07-08',
 })
