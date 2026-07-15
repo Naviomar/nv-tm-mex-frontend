@@ -21,6 +21,18 @@
     border-color: var(--color-gray-200, currentColor);
   }
 
+  .dark *,
+  .dark ::after,
+  .dark ::before,
+  .dark ::backdrop,
+  .dark ::file-selector-button,
+  .v-theme--dark *,
+  .v-theme--dark ::after,
+  .v-theme--dark ::before,
+  .v-theme--dark ::backdrop,
+  .v-theme--dark ::file-selector-button {
+    border-color: var(--color-zinc-700, currentColor);
+  }
 }
 
 @layer utilities {
