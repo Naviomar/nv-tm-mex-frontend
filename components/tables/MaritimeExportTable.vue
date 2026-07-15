@@ -38,6 +38,7 @@
             </template>
           </v-text-field>
         </div>
+        <!-- Remaining filters omitted for brevity, keeping original fields... -->
         <div class="col-span-2">
           <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
         </div>
@@ -121,14 +122,8 @@
             density="compact"
             label="Has sailed?"
             :items="[
-              {
-                name: 'Yes',
-                value: 1,
-              },
-              {
-                name: 'No',
-                value: 0,
-              },
+              { name: 'Yes', value: 1 },
+              { name: 'No', value: 0 },
             ]"
             item-title="name"
             item-value="value"
@@ -188,7 +183,7 @@
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="50">Actions</th>
+              <th class="text-left" width="80">Actions</th>
               <th class="text-left"># Reference</th>
               <th class="text-left">Freight line</th>
               <th class="text-left">Shipper</th>
@@ -225,7 +220,7 @@
               }"
             >
               <td>
-                <div class="flex">
+                <div class="flex gap-1">
                   <v-btn
                     v-if="!item.deleted_at && hasPermission('sea-export-references-edit')"
                     variant="text"
@@ -242,13 +237,36 @@
                     density="compact"
                     @click="viewDetails(item)"
                   ></v-btn>
+                  <!-- Premium Live Track Button -->
+                  <v-btn
+                    v-if="isLiveTrackable(item)"
+                    variant="text"
+                    icon="mdi-earth"
+                    :color="getLiveCarrierColor(item)"
+                    density="compact"
+                    class="animate-pulse"
+                    @click="openLiveTracking(item)"
+                    title="Live Carrier Tracking"
+                  ></v-btn>
                 </div>
               </td>
               <td class="whitespace-nowrap">
-                <UserInfoBadge :item="item">
-                  <ServiceNumberLabel :service="item" />
-                </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <div class="flex flex-col items-start gap-1">
+                  <UserInfoBadge :item="item">
+                    <ServiceNumberLabel :service="item" />
+                  </UserInfoBadge>
+                  <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                  <!-- Carrier Badge -->
+                  <v-chip 
+                    v-if="isLiveTrackable(item)" 
+                    size="x-small" 
+                    :color="getLiveCarrierColor(item)" 
+                    variant="elevated" 
+                    class="font-bold border border-white/20 shadow-sm"
+                  >
+                    {{ getLiveCarrierLabel(item) }}
+                  </v-chip>
+                </div>
               </td>
               <td>{{ item.line?.name }}</td>
               <td>{{ item.consignee?.name }}</td>
@@ -318,6 +336,13 @@
         />
       </v-card-text>
     </v-card>
+
+    <!-- Real-time Tracking Modal Integration -->
+    <PremiumLiveTrackingModal
+      v-model="showLiveTrackingModal"
+      :referencia-id="selectedReferenciaForTracking?.id"
+      :referencia="selectedReferenciaForTracking"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -348,7 +373,10 @@ const toggleFilters = () => {
   sessionStorage.setItem(FILTER_VISIBILITY_KEY, String(showFilters.value))
 }
 
-// Initial filter values
+// Live Tracking Modal State
+const showLiveTrackingModal = ref(false)
+const selectedReferenciaForTracking = ref<any>(null)
+
 const initialFilters = {
   year: '',
   referencia: '',
@@ -370,7 +398,6 @@ const initialFilters = {
   deleted_status: '',
 }
 
-// Use the table filters composable for URL persistence
 const {
   filters,
   currentPage,
@@ -395,7 +422,6 @@ const references = ref({
   total: 1,
 })
 
-// Expose backUrl for child components
 const backUrl = computed(() => getFilteredUrl('/maritime/export'))
 provide('catalogBackUrl', backUrl)
 
@@ -413,13 +439,37 @@ const showDetails = () => {
   containerViewer.value = !containerViewer.value
 }
 
+// Tracking Utility Methods
+const isLiveTrackable = (item: any) => {
+  if (!item || !item.line) return false
+  const name = (item.line.name || '').toLowerCase()
+  const comm = (item.line.commercial_name || '').toLowerCase()
+  const code = (item.line.code || '').toUpperCase()
+
+  return (
+    name.includes('hapag') || comm.includes('hapag') || name.includes('lloyd') || code === 'HLCU' || code === 'HLAG'
+  )
+}
+
+const getLiveCarrierLabel = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'Live COSCO' : 'Live Hapag'
+}
+
+const getLiveCarrierColor = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'teal-darken-1' : 'deep-orange-darken-1'
+}
+
+const openLiveTracking = (item: any) => {
+  selectedReferenciaForTracking.value = item
+  showLiveTrackingModal.value = true
+}
+
 const addReferencia = () => {
   if (filters.value.referencia) {
-    // split by comma and remove empty spaces
     filters.value.referencia = filters.value.referencia.replace(/\s/g, '')
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
-    // remove duplicates in refs array using set
-
     refs.forEach((ref) => {
       filters.value.referencias.push(ref)
     })
@@ -435,9 +485,7 @@ const removeReferencia = (index: number) => {
 }
 
 const onClickFilters = async () => {
-  // Add any pending reference before searching
   addReferencia()
-  // set current page to 1
   currentPage.value = 1
   references.value.current_page = 1
   await syncToUrl()
@@ -478,22 +526,17 @@ const getSeaExportReferences = async () => {
     references.value.current_page = currentPage.value
     
     if (references.value.data.length === 0) {
-      snackbar.add({
-        type: 'info',
-        text: 'No records found',
-      })
+      snackbar.add({ type: 'info', text: 'No records found' })
     }
   } catch (e) {
     console.error(e)
   } finally {
-    // timeout 1 second
     loadingStore.stop()
   }
 }
 
 const getSeaExportFilters = async () => {
   const response = await $api.referenciasExport.getSeaExportFilters()
-
   catalogs.value = response as any
 }
 
@@ -568,9 +611,7 @@ const confirmDeletion = async (item: any) => {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error cancelling reference' })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    setTimeout(() => { loadingStore.stop() }, 250)
   }
 }
 </script>
