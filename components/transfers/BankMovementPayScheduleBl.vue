@@ -16,11 +16,11 @@
               <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line *" hide-details />
             </div>
             <div v-if="filters.line_id">
-              <span class="text-sm">Press ENTER to add the invoice number to search</span>
+              <span class="text-sm">Press ENTER to add the Schedule BL Payment ID to search</span>
               <v-text-field
                 v-model="filters.invoiceNumber"
                 density="compact"
-                label="Add Invoice numbers to search"
+                label="Add Schedule BL Payment ID(s) to search"
                 @keyup.enter="addInvoiceToSearch"
               />
             </div>
@@ -651,7 +651,7 @@ const searchLinePaySchedules = async () => {
     const response: any = await $api.bankMovements.searchBLScheduleInvoices(bankMovement.value.id, filters.value)
 
     if (response.length <= 0) {
-      snackbar.add({ type: 'info', text: 'No invoices found' })
+      snackbar.add({ type: 'info', text: 'No BL schedules found' })
     }
 
     // initialize selected in lineCreditNotes

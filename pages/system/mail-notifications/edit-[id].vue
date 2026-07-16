@@ -21,7 +21,7 @@
     </div>
 
     <!-- General info -->
-    <v-card class="mb-6">
+    <v-card class="mb-6 section-card" rounded="lg" elevation="0">
       <v-card-text>
         <v-row>
           <v-col cols="12" sm="4" md="3">
@@ -47,12 +47,33 @@
               @update:model-value="setDescription"
             />
           </v-col>
+          <v-col v-if="supportsCreatorFallback" cols="12">
+            <div class="d-flex align-center ga-1">
+              <v-switch
+                v-model="includeCreatorAsTo"
+                color="primary"
+                density="compact"
+                hide-details
+                label="Add invoice creator as TO"
+              />
+              <v-tooltip location="top" max-width="320">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" icon="mdi-information-outline" size="18" color="medium-emphasis" />
+                </template>
+                <span>
+                  When enabled, the user who created the invoice is always added as a TO
+                  recipient on this notification — so if the customer has no email configured,
+                  the invoice email still reaches someone instead of going undelivered.
+                </span>
+              </v-tooltip>
+            </div>
+          </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
     <!-- Departments -->
-    <v-card class="mb-6">
+    <v-card class="mb-6 section-card" rounded="lg" elevation="0">
       <v-card-text>
         <div class="d-flex align-center justify-space-between mb-1">
           <div class="d-flex align-center gap-2">
@@ -67,7 +88,7 @@
 
         <v-row>
           <v-col cols="12" lg="5">
-            <v-card variant="outlined" class="pa-4 h-100">
+            <v-card class="pa-4 h-100 panel-card" rounded="lg" elevation="0">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-3">ADD DEPARTMENT</div>
               <v-select
                 v-model="form.department"
@@ -102,56 +123,58 @@
             </v-card>
           </v-col>
           <v-col cols="12" lg="7">
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Ports</th>
-                  <th width="60">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(department, index) in linkedDepartments" :key="`department-${index}`">
-                  <td>{{ department.name }}</td>
-                  <td>
-                    <template v-if="department.pivot?.ports?.length">
-                      <v-chip
-                        v-for="port in department.pivot.ports"
-                        :key="port.id"
+            <v-card class="h-100 panel-card" rounded="lg" elevation="0">
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Ports</th>
+                    <th width="60">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(department, index) in linkedDepartments" :key="`department-${index}`">
+                    <td>{{ department.name }}</td>
+                    <td>
+                      <template v-if="department.pivot?.ports?.length">
+                        <v-chip
+                          v-for="port in department.pivot.ports"
+                          :key="port.id"
+                          size="x-small"
+                          color="blue"
+                          variant="tonal"
+                          class="mr-1"
+                        >
+                          {{ port.name }}
+                        </v-chip>
+                      </template>
+                      <span v-else class="text-caption text-medium-emphasis">General</span>
+                    </td>
+                    <td class="text-center">
+                      <v-btn
+                        icon="mdi-delete"
                         size="x-small"
-                        color="blue"
-                        variant="tonal"
-                        class="mr-1"
-                      >
-                        {{ port.name }}
-                      </v-chip>
-                    </template>
-                    <span v-else class="text-caption text-medium-emphasis">General</span>
-                  </td>
-                  <td class="text-center">
-                    <v-btn
-                      icon="mdi-delete"
-                      size="x-small"
-                      variant="text"
-                      color="error"
-                      @click="unlinkDepartment(department)"
-                    />
-                  </td>
-                </tr>
-                <tr v-if="linkedDepartments.length === 0">
-                  <td colspan="3" class="text-center text-medium-emphasis pa-4">
-                    No departments linked
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
+                        variant="text"
+                        color="error"
+                        @click="unlinkDepartment(department)"
+                      />
+                    </td>
+                  </tr>
+                  <tr v-if="linkedDepartments.length === 0">
+                    <td colspan="3" class="text-center text-medium-emphasis pa-4">
+                      No departments linked
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
     <!-- Recipients: system users + manually typed addresses, unified -->
-    <v-card class="mb-6">
+    <v-card class="mb-6 section-card" rounded="lg" elevation="0">
       <v-card-text>
         <div class="d-flex align-center justify-space-between mb-1">
           <div class="d-flex align-center gap-2">
@@ -166,7 +189,7 @@
 
         <v-row>
           <v-col cols="12" lg="5">
-            <v-card variant="outlined" class="pa-4 h-100">
+            <v-card class="pa-4 h-100 panel-card" rounded="lg" elevation="0">
               <v-btn-toggle v-model="recipientForm.mode" mandatory density="compact" variant="outlined" divided class="mb-3" style="width: 100%">
                 <v-btn value="user" size="small" class="flex-grow-1">
                   <v-icon size="16" class="mr-1">mdi-account-outline</v-icon>
@@ -247,74 +270,76 @@
             </v-card>
           </v-col>
           <v-col cols="12" lg="7">
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th>Recipient</th>
-                  <th>Type</th>
-                  <th>Source</th>
-                  <th>Ports</th>
-                  <th width="60">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in mergedRecipients" :key="row.key">
-                  <td>
-                    <div class="font-weight-medium">{{ row.label }}</div>
-                    <div v-if="row.source === 'user' && row.name" class="text-caption text-medium-emphasis">{{ row.email }}</div>
-                  </td>
-                  <td>
-                    <v-chip
-                      size="small"
-                      :color="row.type === 'TO' ? 'blue' : row.type === 'CC' ? 'green' : 'purple'"
-                    >
-                      {{ row.type }}
-                    </v-chip>
-                  </td>
-                  <td>
-                    <v-chip size="x-small" :color="row.source === 'user' ? 'indigo' : 'teal'" variant="tonal">
-                      {{ row.source === 'user' ? 'User' : 'Custom' }}
-                    </v-chip>
-                  </td>
-                  <td>
-                    <template v-if="row.ports?.length">
+            <v-card class="h-100 panel-card" rounded="lg" elevation="0">
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Type</th>
+                    <th>Source</th>
+                    <th>Ports</th>
+                    <th width="60">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in mergedRecipients" :key="row.key">
+                    <td>
+                      <div class="font-weight-medium">{{ row.label }}</div>
+                      <div v-if="row.source === 'user' && row.name" class="text-caption text-medium-emphasis">{{ row.email }}</div>
+                    </td>
+                    <td>
                       <v-chip
-                        v-for="port in row.ports"
-                        :key="port.id"
-                        size="x-small"
-                        color="blue"
-                        variant="tonal"
-                        class="mr-1"
+                        size="small"
+                        :color="row.type === 'TO' ? 'blue' : row.type === 'CC' ? 'green' : 'purple'"
                       >
-                        {{ port.name }}
+                        {{ row.type }}
                       </v-chip>
-                    </template>
-                    <span v-else class="text-caption text-medium-emphasis">General</span>
-                  </td>
-                  <td class="text-center">
-                    <v-btn
-                      icon="mdi-delete"
-                      size="x-small"
-                      variant="text"
-                      color="error"
-                      @click="deleteRecipient(row)"
-                    />
-                  </td>
-                </tr>
-                <tr v-if="mergedRecipients.length === 0">
-                  <td colspan="5" class="text-center text-medium-emphasis pa-4">
-                    No recipients linked
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
+                    </td>
+                    <td>
+                      <v-chip size="x-small" :color="row.source === 'user' ? 'indigo' : 'teal'" variant="tonal">
+                        {{ row.source === 'user' ? 'User' : 'Custom' }}
+                      </v-chip>
+                    </td>
+                    <td>
+                      <template v-if="row.ports?.length">
+                        <v-chip
+                          v-for="port in row.ports"
+                          :key="port.id"
+                          size="x-small"
+                          color="blue"
+                          variant="tonal"
+                          class="mr-1"
+                        >
+                          {{ port.name }}
+                        </v-chip>
+                      </template>
+                      <span v-else class="text-caption text-medium-emphasis">General</span>
+                    </td>
+                    <td class="text-center">
+                      <v-btn
+                        icon="mdi-delete"
+                        size="x-small"
+                        variant="text"
+                        color="error"
+                        @click="deleteRecipient(row)"
+                      />
+                    </td>
+                  </tr>
+                  <tr v-if="mergedRecipients.length === 0">
+                    <td colspan="5" class="text-center text-medium-emphasis pa-4">
+                      No recipients linked
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
     <!-- Consignee emails: catalog-driven customer addresses -->
-    <v-card class="mb-6">
+    <v-card class="mb-6 section-card" rounded="lg" elevation="0">
       <v-card-text>
         <div class="d-flex align-center justify-space-between mb-1">
           <div class="d-flex align-center gap-2">
@@ -329,7 +354,7 @@
 
         <v-row>
           <v-col cols="12" lg="5">
-            <v-card variant="outlined" class="pa-4 mb-4">
+            <v-card class="pa-4 mb-4 panel-card" rounded="lg" elevation="0">
               <div class="text-caption font-weight-medium text-medium-emphasis mb-3">SEARCH &amp; ADD</div>
               <v-text-field
                 v-model="emailSearch"
@@ -412,65 +437,67 @@
           </v-col>
 
           <v-col cols="12" lg="7">
-            <v-text-field
-              v-model="linkedEmailsSearch"
-              placeholder="Filter linked emails..."
-              variant="outlined"
-              density="compact"
-              hide-details
-              prepend-inner-icon="mdi-filter-variant"
-              class="mb-3"
-              @input="loadLinkedEmails"
-            />
-            <v-data-table
-              :headers="emailHeaders"
-              :items="linkedEmails?.data ?? []"
-              :items-per-page="-1"
-              density="compact"
-              hide-default-footer
-            >
-              <template #item.email="{ item }">
-                {{ item.email }}
-              </template>
-              <template #item.customer="{ item }">
-                <div>
-                  <div class="text-body-2">{{ item.consignee?.name }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ item.consignee?.code }}</div>
-                </div>
-              </template>
-              <template #item.type="{ item }">
-                <v-chip
-                  size="small"
-                  :color="item.pivot?.type === 'TO' ? 'blue' : item.pivot?.type === 'CC' ? 'green' : 'purple'"
-                >
-                  {{ item.pivot?.type }}
-                </v-chip>
-              </template>
-              <template #item.actions="{ item }">
-                <v-btn
-                  icon="mdi-delete"
-                  size="x-small"
-                  variant="text"
-                  color="error"
-                  @click="unlinkEmail(item)"
-                />
-              </template>
-              <template #no-data>
-                <div class="text-center pa-4 text-medium-emphasis">
-                  No consignee emails assigned yet
-                </div>
-              </template>
-            </v-data-table>
-
-            <div v-if="linkedEmails && linkedEmails.last_page > 1" class="d-flex justify-center mt-4">
-              <v-pagination
-                :model-value="linkedEmails.current_page"
-                :length="linkedEmails.last_page"
-                :total-visible="5"
+            <v-card class="pa-4 panel-card" rounded="lg" elevation="0">
+              <v-text-field
+                v-model="linkedEmailsSearch"
+                placeholder="Filter linked emails..."
+                variant="outlined"
                 density="compact"
-                @update:model-value="onEmailsPaginationClick"
+                hide-details
+                prepend-inner-icon="mdi-filter-variant"
+                class="mb-3"
+                @input="loadLinkedEmails"
               />
-            </div>
+              <v-data-table
+                :headers="emailHeaders"
+                :items="linkedEmails?.data ?? []"
+                :items-per-page="-1"
+                density="compact"
+                hide-default-footer
+              >
+                <template #item.email="{ item }">
+                  {{ item.email }}
+                </template>
+                <template #item.customer="{ item }">
+                  <div>
+                    <div class="text-body-2">{{ item.consignee?.name }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ item.consignee?.code }}</div>
+                  </div>
+                </template>
+                <template #item.type="{ item }">
+                  <v-chip
+                    size="small"
+                    :color="item.pivot?.type === 'TO' ? 'blue' : item.pivot?.type === 'CC' ? 'green' : 'purple'"
+                  >
+                    {{ item.pivot?.type }}
+                  </v-chip>
+                </template>
+                <template #item.actions="{ item }">
+                  <v-btn
+                    icon="mdi-delete"
+                    size="x-small"
+                    variant="text"
+                    color="error"
+                    @click="unlinkEmail(item)"
+                  />
+                </template>
+                <template #no-data>
+                  <div class="text-center pa-4 text-medium-emphasis">
+                    No consignee emails assigned yet
+                  </div>
+                </template>
+              </v-data-table>
+
+              <div v-if="linkedEmails && linkedEmails.last_page > 1" class="d-flex justify-center mt-4">
+                <v-pagination
+                  :model-value="linkedEmails.current_page"
+                  :length="linkedEmails.last_page"
+                  :total-visible="5"
+                  density="compact"
+                  @update:model-value="onEmailsPaginationClick"
+                />
+              </div>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
@@ -538,16 +565,30 @@ const { setValues, handleSubmit } = useForm({
 
 const { value: shortName } = useField<string>('short_name')
 const { value: description, errorMessage: descriptionError, setValue: setDescription } = useField<string>('description')
+const { value: includeCreatorAsTo } = useField<boolean>('include_creator_as_to')
+
+// El fallback "creador como TO" solo está implementado en el backend para
+// estos 3 mailables de factura — el switch no debe verse en el resto,
+// porque ahí no haría nada.
+const CREATOR_FALLBACK_MAILABLES = [
+  'App\\Mail\\Mexico\\ConsigneeInvoiceTm',
+  'App\\Mail\\Mexico\\ConsigneeInvoiceWm',
+  'App\\Mail\\Mexico\\ConsigneeInvoiceTmCfdi',
+]
+const mailNotificationName = ref('')
+const supportsCreatorFallback = computed(() => CREATOR_FALLBACK_MAILABLES.includes(mailNotificationName.value))
 
 watch(
   () => id,
   async (currentId) => {
     if (currentId) {
       const response = (await $api.mailNotifications.getById(currentId)) as any
+      mailNotificationName.value = response.name ?? ''
       setValues({
         ...response,
         short_name: response.short_name ?? response.name ?? '',
         description: response.description ?? '',
+        include_creator_as_to: response.include_creator_as_to ?? true,
       })
       linkedUsers.value = response.users ?? []
       linkedDepartments.value = response.departments ?? []
@@ -816,3 +857,28 @@ onMounted(async () => {
   await loadLinkedEmails()
 })
 </script>
+
+<style scoped>
+/* Bordes suaves y modernos en vez del contorno duro de variant="outlined" —
+   una sola línea de separación por nivel, sin doble-borde entre la sección
+   y los paneles que contiene. */
+.section-card {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.panel-card {
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(0, 0, 0, 0.012);
+}
+
+.v-theme--dark .section-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+.v-theme--dark .panel-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+</style>
