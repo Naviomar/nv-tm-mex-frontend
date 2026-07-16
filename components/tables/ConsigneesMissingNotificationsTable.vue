@@ -7,17 +7,20 @@
         </div>
         <div class="col-span-2">
           <v-autocomplete
-            v-model="filters.mailNotificationId"
+            v-model="filters.mailNotificationIds"
             :items="customerMailNotifications"
             item-value="id"
             label="Pending notification type"
             density="compact"
+            multiple
             clearable
+            chips
+            closable-chips
             hide-details
             @update:model-value="onSearch"
           >
-            <template v-slot:selection="{ item }">
-              {{ formatNotificationName(item.raw.short_name) }}
+            <template v-slot:chip="{ props, item }">
+              <v-chip v-bind="props" :text="formatNotificationName(item.raw.short_name)"></v-chip>
             </template>
             <template v-slot:item="{ props, item }">
               <v-list-item v-bind="props" :title="formatNotificationName(item.raw.short_name)">
@@ -68,6 +71,7 @@
               <th class="text-left" width="50">Actions</th>
               <th class="text-left">Name</th>
               <th class="text-left">Code</th>
+              <th class="text-left">Executive</th>
               <th class="text-left">Missing notifications</th>
             </tr>
           </thead>
@@ -78,9 +82,17 @@
               </td>
               <td>{{ c.name }}</td>
               <td>{{ c.code }}</td>
+              <td>{{ c.executive_name }}</td>
               <td>
-                <v-chip v-if="selectedNotificationLabel" size="small" color="error" variant="tonal" class="mr-1">
-                  Missing: {{ selectedNotificationLabel }}
+                <v-chip
+                  v-for="label in selectedNotificationLabels"
+                  :key="label"
+                  size="small"
+                  color="error"
+                  variant="tonal"
+                  class="mr-1"
+                >
+                  Missing: {{ label }}
                 </v-chip>
                 <v-chip v-if="c.missing_count > 0" size="small" color="error" variant="tonal">
                   {{ c.missing_count }} / {{ c.total_tracked }} missing (overall)
@@ -132,7 +144,7 @@ const customerMailNotificationIds = customerMailNotifications.map((n: any) => n.
 
 const filters = ref({
   name: '',
-  mailNotificationId: null as number | null,
+  mailNotificationIds: [] as number[],
   executiveId: null as number | null,
 })
 
@@ -146,10 +158,11 @@ const consignees = ref({
   total: 0,
 })
 
-const selectedNotificationLabel = computed(() => {
-  const noty = customerMailNotifications.find((n: any) => n.id === filters.value.mailNotificationId)
-  return noty ? formatNotificationName(noty.short_name) : null
-})
+const selectedNotificationLabels = computed(() =>
+  customerMailNotifications
+    .filter((n: any) => filters.value.mailNotificationIds.includes(n.id))
+    .map((n: any) => formatNotificationName(n.short_name))
+)
 
 const catalogs = ref<any>(null)
 const showMatrix = ref(false)
@@ -166,7 +179,7 @@ const getConsignees = async () => {
         limit: limit.value,
         name: filters.value.name,
         mail_notification_ids: customerMailNotificationIds.join(','),
-        mail_notification_id: filters.value.mailNotificationId ?? undefined,
+        mail_notification_id: filters.value.mailNotificationIds.join(',') || undefined,
         executive_id: filters.value.executiveId ?? undefined,
       },
     })
@@ -202,7 +215,7 @@ const onSearch = async () => {
 }
 
 const clearFilters = async () => {
-  filters.value = { name: '', mailNotificationId: null, executiveId: null }
+  filters.value = { name: '', mailNotificationIds: [], executiveId: null }
   consignees.value.current_page = 1
   await getConsignees()
 }

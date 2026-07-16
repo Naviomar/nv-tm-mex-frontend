@@ -25,11 +25,9 @@ export default defineNuxtConfig({
     '@mdi/font/css/materialdesignicons.min.css',
     // 'vuetify/lib/styles/main.sass',
     '~/assets/scss/styles.scss',
-    '~/assets/css/wiki-prose.css',
   ],
 
   modules: [
-    '@nuxt/content',
     'nuxt-auth-sanctum',
     'nuxt-lodash',
     'nuxt-meilisearch',
