@@ -6,7 +6,7 @@
     <v-card v-else class="py-4">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
         <div class="col-span-1 md:col-span-3">
-          <h1 class="text-xl font-bold mx-2">Pay invoices using</h1>
+          <h1 class="text-xl font-bold mx-2">{{ payScreenTitle }}</h1>
           <div class="max-w-xs mx-auto bg-white rounded-lg shadow-md overflow-hidden mt-2">
             <div class="bg-gray-100 px-4 py-2">
               <h2 class="text-lg font-medium text-gray-800">Bank movement #{{ bankMovement.id }}</h2>
@@ -97,7 +97,7 @@
                 <thead>
                   <tr>
                     <th class="w-20">Actions</th>
-                    <th class="font-bold!">Invoice #</th>
+                    <th class="font-bold!">{{ existingPaymentsColumnLabel }}</th>
                     <th class="font-bold!">Reference</th>
                     <th class="font-bold!">Concept</th>
                     <th class="font-bold!">Amount</th>
@@ -315,7 +315,7 @@
               <div class="flex justify-between">
                 <div class="flex items-center gap-2">
                   <v-icon size="x-small">mdi-receipt-text-plus-outline</v-icon>
-                  <div>Search & pay service invoice(s)</div>
+                  <div>{{ sectionTitle }}</div>
                 </div>
               </div>
             </v-card-title>
@@ -346,8 +346,8 @@
                     density="compact"
                     item-title="name"
                     item-value="class_name"
-                    :label="movementType === 'withdrawal' ? 'Invoice type (required)' : 'Invoice type (optional)'"
-                    :rules="movementType === 'withdrawal' ? [(v: any) => !!v || 'Invoice type is required for withdrawals'] : []"
+                    :label="typeSelectorLabel"
+                    :rules="movementType === 'withdrawal' ? [(v: any) => !!v || 'Request type is required for withdrawals'] : []"
                     @update:model-value="clearSearchInvoices"
                     :clearable="movementType === 'deposit'"
                     :placeholder="movementType === 'deposit' ? 'All types will be searched if not selected' : ''"
@@ -400,17 +400,17 @@
                 type="info"
                 dense
               >
-                Add invoice(s) to pay it using the bank movement
+                Add {{ entityTermPlural }} to pay using the bank movement
               </v-alert>
               <div v-if="invoicesFound.length > 0" class="py-4">
                 <div class="my-2 flex items-center gap-4">
-                  📌 Found invoice(s)
+                  📌 Found {{ entityTermPlural }}
                   <v-btn
                     color="secondary"
                     size="small"
                     :loading="loadingStore.loading"
                     @click="addInvoiceToPayBulk(invoicesFound)"
-                    >Add all unpaid invoices to pay</v-btn
+                    >Add all unpaid {{ entityTermPlural }} to pay</v-btn
                   >
                 </div>
                 <v-chip
@@ -425,13 +425,13 @@
                 </v-chip>
               </div>
               <div v-if="invoicesFoundSelected.length > 0" class="py-4">
-                <div class="font-bold text-lg">Invoice(s) added to pay</div>
+                <div class="font-bold text-lg">{{ entityTermPluralCap }} added to pay</div>
                 <div v-for="(invoiceToPay, index) in invoicesFoundSelected" :key="`inv-selected-${index}`" class="my-2">
                   <v-table density="compact" fixed-header>
                     <thead>
                       <tr>
                         <th class="font-bold! w-4">Actions</th>
-                        <th class="font-bold!">Invoice #</th>
+                        <th class="font-bold!">{{ entityTermSingularCap }} #</th>
                         <th class="font-bold!">Charge</th>
                         <th class="font-bold!">Amount</th>
                         <th class="font-bold!">Pending balance</th>
@@ -473,7 +473,7 @@
                   </v-table>
                 </div>
                 <v-btn color="primary" :loading="loadingStore.loading" @click="payInvoices"
-                  >Set payment to invoice(s) {{ formatToCurrency(amountToPayTotal) }}</v-btn
+                  >Set payment to {{ entityTermPlural }} {{ formatToCurrency(amountToPayTotal) }}</v-btn
                 >
               </div>
 
@@ -593,6 +593,41 @@ const isRequestBasedType = computed(() => {
   return requestTypes.includes(filters.value.typeInvoice)
 })
 
+// A "request" (SupplierReqPayment, ReqAdvancePayment, etc.) groups several invoices/charges
+// under one payable folio, so it must not be labeled "invoice" in the UI - that only fits
+// the deposit side, where the client is literally paying an invoice.
+const entityTermPlural = computed(() => {
+  if (isRequestBasedType.value) return 'request(s)'
+  if (isInvoiceBasedType.value) return 'invoice(s)'
+  return 'invoice(s) / request(s)'
+})
+
+const entityTermPluralCap = computed(() => {
+  if (isRequestBasedType.value) return 'Request(s)'
+  if (isInvoiceBasedType.value) return 'Invoice(s)'
+  return 'Invoice(s) / Request(s)'
+})
+
+const entityTermSingularCap = computed(() => {
+  if (isRequestBasedType.value) return 'Request'
+  if (isInvoiceBasedType.value) return 'Invoice'
+  return 'Invoice / Request'
+})
+
+const typeSelectorLabel = computed(() => {
+  return movementType.value === 'withdrawal' ? 'Request type (required)' : 'Invoice / Request type (optional)'
+})
+
+const payScreenTitle = computed(() => {
+  return movementType.value === 'withdrawal' ? 'Pay invoice(s) / request(s) using' : 'Pay invoices using'
+})
+
+const existingPaymentsColumnLabel = computed(() => {
+  return movementType.value === 'withdrawal' ? 'Request #' : 'Invoice #'
+})
+
+const sectionTitle = computed(() => `Search & pay service ${entityTermPlural.value}`)
+
 const searchFieldLabel = computed(() => {
   if (!filters.value.typeInvoice && movementType.value === 'deposit') {
     return 'Add invoice/request numbers to search (all types)'
@@ -667,17 +702,23 @@ const addInvoiceToSearch = () => {
       )
     )
     // remove duplicates in refs array using set
-    if(bankMovement.value.bank_account.inv_type === 'tm' && filters.value.invoiceNumber.includes('TM')){
-        refs.forEach((ref) => {
-          filters.value.invoices.push(ref)
-        })
+    if (isInvoiceBasedType.value) {
+      if(bankMovement.value.bank_account.inv_type === 'tm' && filters.value.invoiceNumber.includes('TM')){
+          refs.forEach((ref) => {
+            filters.value.invoices.push(ref)
+          })
+      }
+      if(bankMovement.value.bank_account.inv_type === 'wm' && filters.value.invoiceNumber.includes('WM')){
+          refs.forEach((ref) => {
+            filters.value.invoices.push(ref)
+          })
+      }
+    } else {
+      refs.forEach((ref) => {
+        filters.value.invoices.push(ref)
+      })
     }
-    if(bankMovement.value.bank_account.inv_type === 'wm' && filters.value.invoiceNumber.includes('WM')){
-        refs.forEach((ref) => {
-          filters.value.invoices.push(ref)
-        })
-    }
-    
+
     filters.value.invoices = [...new Set(filters.value.invoices)]
     filters.value.invoiceNumber = ''
   }
@@ -695,7 +736,7 @@ const clearSearchInvoices = () => {
 
 const addInvoiceToPay = (invoice: any) => {
   if (invoice.is_paid === 1) {
-    snackbar.add({ type: 'warning', text: 'Invoice already paid' })
+    snackbar.add({ type: 'warning', text: `${getInvoiceableName(invoice)} already paid` })
     return
   }
   // if invoice is already in the list, do not add it
@@ -950,7 +991,7 @@ const payInvoices = async () => {
     }
     const response = await $api.bankMovements.payInvoices(bankMovement.value.id, body)
 
-    snackbar.add({ type: 'success', text: 'Invoices paid successfully' })
+    snackbar.add({ type: 'success', text: 'Payment applied successfully' })
     await getBankMovement()
     // clear all
     invoicesFound.value = []
@@ -973,7 +1014,7 @@ const searchInvoices = async () => {
     const response: any = await $api.bankMovements.searchInvoices(bankMovement.value.id, filters.value)
 
     if (response.length <= 0) {
-      snackbar.add({ type: 'info', text: 'No invoices found' })
+      snackbar.add({ type: 'info', text: `No ${entityTermPlural.value} found` })
     }
 
     invoicesFound.value = response
@@ -1058,6 +1099,6 @@ const viewInvoice = (payment: any) => {
     router.push(`/refunds/view-${payment.chargeable?.invoice?.invoiceable_id}`)
     return
   }
-  snackbar.add({ type: 'error', text: 'Unknown invoice type' })
+  snackbar.add({ type: 'error', text: 'Unknown document type' })
 }
 </script>

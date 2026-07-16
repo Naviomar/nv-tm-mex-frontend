@@ -11,10 +11,6 @@
           </div>
         </div>
       </div>
-      <v-btn color="primary" to="/system/mail-notifications/add">
-        <v-icon size="18" class="mr-1">mdi-plus</v-icon>
-        New notification
-      </v-btn>
     </div>
 
     <v-card class="mb-4">

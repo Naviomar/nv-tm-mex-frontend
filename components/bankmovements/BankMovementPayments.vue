@@ -12,7 +12,7 @@
               <tr>
                 <th>Service / Module</th>
                 <th>Concept</th>
-                <th>Invoice</th>
+                <th>{{ invoiceColumnLabel }}</th>
                 <th>Payment ID</th>
                 <th>Amount</th>
                 <th>Payment Date</th>
@@ -78,6 +78,8 @@ const paymentsDialog = ref(false)
 const hasData = computed(() => !!props.bankMovement)
 const hasPayments = computed(() => !!props.bankMovement?.payments)
 const getTotalPayments = computed(() => props.bankMovement?.payments?.length || 0)
+// Withdrawals pay supplier/agent "requests" (which group several invoices), not invoices directly.
+const invoiceColumnLabel = computed(() => (props.bankMovement?.type === 'withdrawal' ? 'Invoice / Request' : 'Invoice'))
 
 const getPaymentService = (payment: any) => {
   if (!payment.chargeable) {
