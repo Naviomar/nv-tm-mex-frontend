@@ -136,6 +136,16 @@
             <span class="text-body-2">{{ rest.consignee?.name || `Customer #${rest.consignee_id}` }}</span>
           </div>
           <div class="d-flex align-center gap-2">
+            <v-switch
+              :model-value="hasCreateInvoiceScope(rest)"
+              label="Create Invoice"
+              color="teal"
+              density="compact"
+              hide-details
+              :loading="togglingScope === rest.id"
+              :disabled="togglingScope === rest.id"
+              @update:model-value="toggleCreateInvoiceScope(rest)"
+            />
             <v-chip
               :color="rest.is_active ? 'success' : 'grey'"
               size="x-small"
@@ -153,6 +163,14 @@
           </div>
         </div>
       </div>
+      <p v-if="hasAnyCreateInvoiceScope" class="text-caption text-grey-darken-1 mt-2">
+        <v-icon size="x-small" color="teal">mdi-information-outline</v-icon>
+        With "Create Invoice" enabled on at least one customer, this user's invoice-creation customer picker is
+        limited to <strong>only</strong> the customer(s) marked below — regardless of any other executive or
+        customer access they have. Note: adding any restriction here (including just for "Create Invoice") still
+        marks this user as restricted, which also hides the reference catalogs' "view" action and the invoicing
+        search menu for them — same as any other assigned customer or executive.
+      </p>
     </div>
 
     <!-- Section 3: Access Summary -->
@@ -221,9 +239,13 @@ interface RestrictionItem {
   executive_id: number | null
   consignee_id: number | null
   is_active: boolean
+  scopes?: string[] | null
   executive?: { id: number; name: string }
   consignee?: { id: number; name: string }
 }
+
+const CREATE_INVOICE_SCOPE = 'create-invoice'
+const togglingScope = ref<number | null>(null)
 
 interface SummaryData {
   is_restricted: boolean
@@ -247,6 +269,30 @@ const executiveRestrictions = computed(() =>
 const customerRestrictions = computed(() =>
   restrictions.value.filter(r => r.restriction_type === 'customer')
 )
+
+const hasCreateInvoiceScope = (rest: RestrictionItem) => !!rest.scopes?.includes(CREATE_INVOICE_SCOPE)
+
+const hasAnyCreateInvoiceScope = computed(() =>
+  customerRestrictions.value.some(hasCreateInvoiceScope)
+)
+
+const toggleCreateInvoiceScope = async (rest: RestrictionItem) => {
+  const enabled = !hasCreateInvoiceScope(rest)
+  const newScopes = enabled
+    ? [...(rest.scopes || []), CREATE_INVOICE_SCOPE]
+    : (rest.scopes || []).filter(s => s !== CREATE_INVOICE_SCOPE)
+
+  togglingScope.value = rest.id
+  try {
+    await $api.userDataRestrictions.update(props.userId, rest.id, { scopes: newScopes } as any)
+    rest.scopes = newScopes
+    snackbar.add({ type: 'success', text: enabled ? 'Customer marked as invoiceable' : 'Invoice restriction removed' })
+  } catch (e) {
+    snackbar.add({ type: 'error', text: 'Error updating restriction' })
+  } finally {
+    togglingScope.value = null
+  }
+}
 
 const onCustomerSelect = (val: any) => {
   if (val && typeof val === 'object') {

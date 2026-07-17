@@ -218,6 +218,7 @@
               <th class="text-left">Vessel - voyage</th>
               <th class="text-left">Consignee</th>
               <th class="text-left">Freight line</th>
+              <th class="text-left">Booking</th>
 
               <th class="text-left">Arrival notification</th>
               <th class="text-left">Revalidation</th>
@@ -249,7 +250,7 @@
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
                   <v-btn
-                    v-if="hasPermission('sea-import-references-view')"
+                    v-if="hasPermission('sea-import-references-view') && !isRestricted"
                     variant="text"
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
@@ -313,6 +314,7 @@
                 {{ item.consignee?.name }}
               </td>
               <td>{{ item.line?.name }}</td>
+              <td>{{ item.booking_number }}</td>
 
               <td>
                 <div v-if="item.arrival_notys?.length <= 0">
@@ -383,7 +385,8 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const { hasPermission } = useCheckUser()
+const { hasPermission, isRestricted, fetchIsRestricted } = useCheckUser()
+fetchIsRestricted()
 
 const catalogs = ref({
   consignees: [] as any,
