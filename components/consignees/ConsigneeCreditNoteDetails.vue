@@ -752,6 +752,14 @@ const viewInvoice = (payment: any) => {
     router.push(`/invoices/search/wm-view-${payment.chargeable?.invoice?.invoiceable_id}`)
     return
   }
+  if (invoiceableType.includes('InvoiceAirTm')) {
+    router.push(`/invoices/search/tm-air-view-${payment.chargeable?.invoice?.invoiceable_id}`)
+    return
+  }
+  if (invoiceableType.includes('InvoiceAirWm')) {
+    router.push(`/invoices/search/wm-air-view-${payment.chargeable?.invoice?.invoiceable_id}`)
+    return
+  }
   // snackbar show error
   snackbar.add({ type: 'error', text: 'Unknown invoice type' })
 }
