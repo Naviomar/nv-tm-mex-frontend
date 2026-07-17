@@ -115,7 +115,7 @@ const createdBy = computed(() => {
   if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
     return keyVal
   }
-  if (props.item?.creator && typeof props.item.creator === 'object' && 'name' in props.item.creator) {
+  if (props.item && 'creator' in props.item) {
     return props.item.creator
   }
   return usersStore.getUserById(keyVal)
@@ -126,7 +126,7 @@ const updatedBy = computed(() => {
   if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
     return keyVal
   }
-  if (props.item?.updator && typeof props.item.updator === 'object' && 'name' in props.item.updator) {
+  if (props.item && 'updator' in props.item) {
     return props.item.updator
   }
   return usersStore.getUserById(keyVal)
@@ -137,7 +137,7 @@ const deletedBy = computed(() => {
   if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
     return keyVal
   }
-  if (props.item?.deletor && typeof props.item.deletor === 'object' && 'name' in props.item.deletor) {
+  if (props.item && 'deletor' in props.item) {
     return props.item.deletor
   }
   return usersStore.getUserById(keyVal)

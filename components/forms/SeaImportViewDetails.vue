@@ -100,11 +100,11 @@
           <v-table density="compact">
             <thead>
               <tr>
-                <th class="text-left">Master BL #</th>
-                <th class="text-left">Consignee MBL</th>
-                <th class="text-left">Type</th>
-                <th class="text-left">Attachment</th>
-                <th class="text-left">Created by</th>
+                <th class="text-left" id="master-bl-number">Master BL #</th>
+                <th class="text-left" id="master-bl-consignee">Consignee MBL</th>
+                <th class="text-left" id="master-bl-type">Type</th>
+                <th class="text-left" id="master-bl-attachment">Attachment</th>
+                <th class="text-left" id="master-bl-created-by">Created by</th>
               </tr>
             </thead>
             <tbody>
@@ -128,11 +128,11 @@
           <v-table density="compact">
             <thead>
               <tr>
-                <th class="text-left">House BL #</th>
-                <th class="text-left">Consignee</th>
-                <th class="text-left">Type</th>
-                <th class="text-left">Attachment</th>
-                <th class="text-left">Created by</th>
+                <th class="text-left" id="house-bl-number">House BL #</th>
+                <th class="text-left" id="house-bl-consignee">Consignee</th>
+                <th class="text-left" id="house-bl-type">Type</th>
+                <th class="text-left" id="house-bl-attachment">Attachment</th>
+                <th class="text-left" id="house-bl-created-by">Created by</th>
               </tr>
             </thead>
             <tbody>
@@ -165,13 +165,13 @@
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th class="text-left">#</th>
-                  <th class="text-left">Master BL</th>
-                  <th class="text-left">Concept</th>
-                  <th class="text-left">Amount</th>
+                  <th class="text-left" id="buy-charge-number">#</th>
+                  <th class="text-left" id="buy-charge-master-bl">Master BL</th>
+                  <th class="text-left" id="buy-charge-concept">Concept</th>
+                  <th class="text-left" id="buy-charge-amount">Amount</th>
 
-                  <th class="text-left">Currency</th>
-                  <th class="text-left">Created by</th>
+                  <th class="text-left" id="buy-charge-currency">Currency</th>
+                  <th class="text-left" id="buy-charge-created-by">Created by</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,14 +195,14 @@
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th class="text-left">#</th>
-                  <th class="text-left">Master BL</th>
-                  <th class="text-left">Concept</th>
-                  <th class="text-left">Amount</th>
-                  <th class="text-left">Currency</th>
-                  <th class="text-left">+ IVA</th>
-                  <th class="text-left">TM/WM</th>
-                  <th class="text-left">Created by</th>
+                  <th class="text-left" id="sell-charge-number">#</th>
+                  <th class="text-left" id="sell-charge-master-bl">Master BL</th>
+                  <th class="text-left" id="sell-charge-concept">Concept</th>
+                  <th class="text-left" id="sell-charge-amount">Amount</th>
+                  <th class="text-left" id="sell-charge-currency">Currency</th>
+                  <th class="text-left" id="sell-charge-iva">+ IVA</th>
+                  <th class="text-left" id="sell-charge-tm-wm">TM/WM</th>
+                  <th class="text-left" id="sell-charge-created-by">Created by</th>
                 </tr>
               </thead>
               <tbody>
@@ -234,14 +234,14 @@
             <v-table density="compact">
               <thead>
                 <tr>
-                  <th class="text-left">#</th>
-                  <th class="text-left">Concept</th>
-                  <th class="text-left">Amount</th>
-                  <th class="text-left">Currency</th>
-                  <th class="text-left">Fuera / Dentro BL</th>
-                  <th class="text-left">+ IVA</th>
-                  <th class="text-left">TM/WM</th>
-                  <th class="text-left">Created at</th>
+                  <th class="text-left" id="charge-number">#</th>
+                  <th class="text-left" id="charge-concept">Concept</th>
+                  <th class="text-left" id="charge-amount">Amount</th>
+                  <th class="text-left" id="charge-currency">Currency</th>
+                  <th class="text-left" id="charge-fuera-dentro">Fuera / Dentro BL</th>
+                  <th class="text-left" id="charge-iva">+ IVA</th>
+                  <th class="text-left" id="charge-tm-wm">TM/WM</th>
+                  <th class="text-left" id="charge-created-at">Created at</th>
                 </tr>
               </thead>
               <tbody>
@@ -334,11 +334,9 @@
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
-import { permissions } from '@/utils/data/system'
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const router = useRouter()
-const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -412,13 +410,13 @@ const hasTmInvoices = computed(() => {
 
 const invoiceWmTotal = (invoiceWm: any) => {
   return invoiceWm.concepts.reduce((acc: number, concept: any) => {
-    return acc + parseFloat(concept.amount)
+    return acc + Number.parseFloat(concept.amount)
   }, 0)
 }
 
 const invoiceTmTotal = (invoiceTm: any) => {
   return invoiceTm.concepts.reduce((acc: number, concept: any) => {
-    return acc + parseFloat(concept.amount)
+    return acc + Number.parseFloat(concept.amount)
   }, 0)
 }
 
