@@ -50,6 +50,13 @@
           <v-btn color="success" variant="tonal" prepend-icon="mdi-file-excel-outline" :loading="exportingExcel" @click="exportExcel">
             Download report
           </v-btn>
+          <v-checkbox
+            v-model="includeCatalogCc"
+            label="Include notification admin CC's"
+            density="compact"
+            hide-details
+            class="flex-grow-0"
+          />
           <v-select
             v-model="limit"
             :items="perPageOptions"
@@ -168,6 +175,7 @@ const catalogs = ref<any>(null)
 const showMatrix = ref(false)
 const selectedConsignee = ref<any>(null)
 const exportingExcel = ref(false)
+const includeCatalogCc = ref(false)
 
 const getConsignees = async () => {
   try {
@@ -226,8 +234,12 @@ const exportExcel = async () => {
     const response: any = await $api.consignees.exportMissingNotificationsExcel({
       query: {
         name: filters.value.name,
-        mail_notification_ids: customerMailNotificationIds.join(','),
+        mail_notification_ids: (filters.value.mailNotificationIds.length
+          ? filters.value.mailNotificationIds
+          : customerMailNotificationIds
+        ).join(','),
         executive_id: filters.value.executiveId ?? undefined,
+        include_catalog_cc: includeCatalogCc.value ? 1 : 0,
       },
     })
 
