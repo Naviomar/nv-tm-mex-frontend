@@ -274,7 +274,7 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersSeaImport)"
+            v-if="canAccess(menuPermissions.InvoicesCustomersSeaImport) && !isRestricted"
             prepend-icon="mdi-ferry"
             title="Sea import references"
             to="/invoices/search/sea-import"
@@ -282,7 +282,7 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersSeaExport)"
+            v-if="canAccess(menuPermissions.InvoicesCustomersSeaExport) && !isRestricted"
             prepend-icon="mdi-ferry"
             title="Sea export references"
             to="/invoices/search/sea-export"
@@ -290,7 +290,7 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersAirImport)"
+            v-if="canAccess(menuPermissions.InvoicesCustomersAirImport) && !isRestricted"
             prepend-icon="mdi-airplane"
             title="Air import references"
             to="/invoices/search/air-import"
@@ -298,7 +298,7 @@
             class="mb-1"
           ></v-list-item>
           <v-list-item
-            v-if="canAccess(menuPermissions.InvoicesCustomersAirExport)"
+            v-if="canAccess(menuPermissions.InvoicesCustomersAirExport) && !isRestricted"
             prepend-icon="mdi-airplane"
             title="Air export references"
             to="/invoices/search/air-export"
@@ -690,9 +690,11 @@ import { ref, watch } from 'vue'
 import { menuPermissions } from '~/utils/data/system'
 
 const { logout } = useSanctumAuth()
-const { hasPermission } = useCheckUser()
+const { hasPermission, isRestricted, fetchIsRestricted, resetIsRestricted } = useCheckUser()
 const route = useRoute()
 const opened = ref<string[]>([])
+
+fetchIsRestricted()
 
 const authorizationsPermissions = [
   menuPermissions.AuthorizationsRequests,
@@ -902,6 +904,7 @@ watch(
 
 async function onClickLogout() {
   await logout()
+  resetIsRestricted()
   return navigateTo('/system/auth/login', { replace: true })
 }
 </script>

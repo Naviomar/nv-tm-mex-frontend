@@ -1,6 +1,8 @@
 import { type FetchOptions } from 'ofetch'
 import FetchFactory from '../factory'
 
+export const RESTRICTION_SCOPE_CREATE_INVOICE = 'create-invoice'
+
 export interface IUserDataRestriction {
   id: number
   user_id: number
@@ -8,6 +10,7 @@ export interface IUserDataRestriction {
   executive_id: number | null
   consignee_id: number | null
   is_active: boolean
+  scopes?: string[] | null
   executive?: { id: number; name: string }
   consignee?: { id: number; name: string }
   created_at: string
@@ -19,6 +22,7 @@ export interface IRestrictionSummary {
   executives: { id: number; name: string }[]
   direct_customers: { id: number; name: string }[]
   total_visible_customers: number | null
+  invoiceable_customers: { id: number; name: string }[]
 }
 
 export default class UserDataRestrictionsModule extends FetchFactory<any> {
@@ -48,6 +52,10 @@ export default class UserDataRestrictionsModule extends FetchFactory<any> {
 
   async getSummary(userId: number | string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${userId}/data-restrictions/summary`, fetchOptions)
+  }
+
+  async getMySummary(fetchOptions?: FetchOptions) {
+    return this.call('GET', '/me/data-restrictions-summary', fetchOptions)
   }
 
   async bulkSync(userId: number | string, restrictions: Partial<IUserDataRestriction>[], fetchOptions?: FetchOptions) {
