@@ -6,13 +6,47 @@ type User = {
     roles: []
 }
 
+// Module-scoped (not per-call) so concurrent mounts (e.g. MainMenu + a catalog
+// table on the same page) share one in-flight request instead of firing one each.
+let isRestrictedFetchPromise: Promise<void> | null = null
+
 export function useCheckUser() {
     const { isAuthenticated, refreshIdentity } = useSanctumAuth()
     const user = useSanctumUser<User>();
     const snackbar = useSnackbar();
+    const isRestricted = useState<boolean | null>('user-is-restricted', () => null)
 
     async function fetchUser() {
         await refreshIdentity()
+    }
+
+    function resetIsRestricted() {
+        isRestricted.value = null
+        isRestrictedFetchPromise = null
+    }
+
+    async function fetchIsRestricted() {
+        if (!isAuthenticated.value) {
+            resetIsRestricted()
+            return
+        }
+        if (isRestricted.value !== null) return
+        if (isRestrictedFetchPromise) return isRestrictedFetchPromise
+
+        isRestrictedFetchPromise = (async () => {
+            try {
+                const { $api } = useNuxtApp()
+                const response: any = await $api.userDataRestrictions.getMySummary()
+                isRestricted.value = !!response?.is_restricted
+            } catch (e) {
+                // Leave isRestricted null (rather than assuming unrestricted) so the
+                // next mount retries instead of failing open for the rest of the session.
+            } finally {
+                isRestrictedFetchPromise = null
+            }
+        })()
+
+        return isRestrictedFetchPromise
     }
 
     const isCurrentUser = (id: number | string): boolean => {
@@ -67,6 +101,7 @@ export function useCheckUser() {
         isCurrentUser,
         checkUserAndNotify,
         checkUserAndExecute,
-        user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole
+        user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole,
+        isRestricted, fetchIsRestricted, resetIsRestricted
     };
 }
