@@ -443,7 +443,7 @@ const fetchData = async () => {
       api.alerts.getTypes({ limit: 500 }),
       api.alerts.getAllCategories(),
       api.users.getRoles(),
-      api.users.getUsers(),
+      api.users.getAllUsers(),
     ])
     const typesPayload: any = (typesRes as any)?.data ?? typesRes
     alertTypes.value = typesPayload?.data ?? typesPayload
