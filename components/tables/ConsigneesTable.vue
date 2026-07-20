@@ -18,6 +18,9 @@
           <v-text-field v-model="filters.tax_number" clearable density="compact" label="RFC" hide-details />
         </div>
         <div class="col-span-1">
+          <v-text-field v-model="filters.executive"  clearable density="compact" label="Search by executive" hide-details />
+        </div>
+        <div class="col-span-1">
           <v-autocomplete
             v-model="filters.encomienda"
             density="compact"
@@ -193,6 +196,7 @@ const initialFilters = {
   deleted_status: '',
   tax_number: '',
   with_group: '',
+  executive: '',
 }
 
 // Use the table filters composable for URL persistence
