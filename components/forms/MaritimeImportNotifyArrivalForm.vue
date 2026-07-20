@@ -255,7 +255,17 @@ const closeDialog = () => {
 const { hasAtLeastOneValidEmail } = useEmailListValidation()
 
 const isValidForm = () => {
-  return hasAtLeastOneValidEmail(form.consignee_emails)
+  if (!hasAtLeastOneValidEmail(form.consignee_emails)) {
+    return false
+  }
+
+  if (isFromTracker.value) {
+    return (
+      hasAtLeastOneValidEmail(form.tracker_customer_emails) && hasAtLeastOneValidEmail(form.tracker_agent_emails)
+    )
+  }
+
+  return true
 }
 
 const sendArrivalNotification = async () => {
