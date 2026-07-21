@@ -249,6 +249,7 @@
                   <ServiceNumberLabel :service="item" />
                 </UserInfoBadge>
                 <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
               </td>
               <td>{{ item.line?.name }}</td>
               <td>{{ item.consignee?.name }}</td>
@@ -395,6 +396,19 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+function splitText(text){
+  const spliText = text.split(' ')
+  const num_words = 5
+  return spliText.reduce((txt, word, i, arr) => {
+    txt.push(word)
+    if((i + 1) % num_words === 0 && i < arr.length - 1){
+        txt.push('<br>')
+    }
+
+    return txt;
+  }, []).join(' ') 
+}
 
 // Expose backUrl for child components
 const backUrl = computed(() => getFilteredUrl('/maritime/export'))
