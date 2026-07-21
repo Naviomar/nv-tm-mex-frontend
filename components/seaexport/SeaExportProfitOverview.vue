@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="hasPermission(permissions.SeaExportProfit)">
     <v-card color="light-green-lighten-5" class="mb-4">
       <v-card-title>
         <div class="flex items-center justify-between">
@@ -10,12 +10,7 @@
         </div>
       </v-card-title>
       <v-card-text>
-        <div v-if="!hasPermission(permissions.SeaExportProfit)">
-          <v-alert density="compact" type="warning" icon="mdi-alert">
-            You lack permission to see this module ({{ permissions.SeaExportProfit }})
-          </v-alert>
-        </div>
-        <div v-if="hasPermission(permissions.SeaExportProfit)">
+        <div>
           <div class="grid grid-cols-2 gap-2">
             <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 border-slate-400">
               <div class="text-center text-base bg-slate-600 text-white font-bold">💰 - Sell</div>
