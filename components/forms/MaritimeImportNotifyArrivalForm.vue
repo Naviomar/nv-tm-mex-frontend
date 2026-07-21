@@ -24,9 +24,10 @@
               <v-textarea
                 v-model="form.consignee_emails"
                 rows="2"
-                placeholder="Enter emails separated by comma"
+                placeholder="Emails will be loaded automatically"
                 density="compact"
                 hide-details
+                readonly
               />
               <CustomerEmailsWidget
                 :customer-id="referencia.consignee_id"
@@ -49,8 +50,9 @@
               <v-textarea
                 v-model="form.tracker_customer_emails"
                 rows="2"
-                placeholder="Emails separated by comma"
+                placeholder="Emails will be loaded automatically"
                 density="compact"
+                readonly
               />
             </div>
             <div class="col-span-1">TO: Tracker agent emails *</div>
@@ -58,8 +60,9 @@
               <v-textarea
                 v-model="form.tracker_agent_emails"
                 rows="2"
-                placeholder="Emails separated by comma"
+                placeholder="Emails will be loaded automatically"
                 density="compact"
+                readonly
               />
             </div>
           </div>
@@ -252,7 +255,17 @@ const closeDialog = () => {
 const { hasAtLeastOneValidEmail } = useEmailListValidation()
 
 const isValidForm = () => {
-  return hasAtLeastOneValidEmail(form.consignee_emails)
+  if (!hasAtLeastOneValidEmail(form.consignee_emails)) {
+    return false
+  }
+
+  if (isFromTracker.value) {
+    return (
+      hasAtLeastOneValidEmail(form.tracker_customer_emails) && hasAtLeastOneValidEmail(form.tracker_agent_emails)
+    )
+  }
+
+  return true
 }
 
 const sendArrivalNotification = async () => {

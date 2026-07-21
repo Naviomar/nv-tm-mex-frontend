@@ -134,6 +134,22 @@
                 </v-card-text>
               </v-card>
 
+              <v-card density="compact" class="mb-4" color="blue-lighten-5">
+                <v-card-title>Invoice options</v-card-title>
+                <v-card-text>
+                  <InputSwitch
+                    v-if="hasPermission('customers-update-credit-legend')"
+                    name="show_credit_legend"
+                    label="Show credit legend on invoice PDFs"
+                    variant="solo-filled"
+                  />
+                  <div v-else>
+                    Credit legend on invoice PDFs:
+                    <strong>{{ consignee.show_credit_legend ? 'Enabled' : 'Disabled' }}</strong>
+                  </div>
+                </v-card-text>
+              </v-card>
+
               <div>
                 <InputAutocomplete
                   name="country_id"
@@ -452,6 +468,7 @@ const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
 
 const id = route.params.id!
 
