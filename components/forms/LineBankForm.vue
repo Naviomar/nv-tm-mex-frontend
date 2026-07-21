@@ -34,7 +34,7 @@
           <InputText name="account_number" density="compact" label="Account number *" />
         </div>
         <div class="">
-          <InputText name="clabe" density="compact" label="CLABE" type="number" />
+          <InputText name="clabe" density="compact" label="CLABE" type="text" />
         </div>
         <div class="">
           <InputAutocomplete
