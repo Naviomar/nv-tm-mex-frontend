@@ -235,7 +235,7 @@
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
                   <v-btn
-                    v-if="hasPermission('sea-export-references-view') && !isRestricted"
+                    v-if="hasPermission('sea-export-references-view') && canViewReference(item)"
                     variant="text"
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
@@ -331,7 +331,7 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const { hasPermission, isRestricted, fetchIsRestricted } = useCheckUser()
+const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
 fetchIsRestricted()
 
 const catalogs = ref({

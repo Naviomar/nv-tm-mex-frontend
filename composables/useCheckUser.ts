@@ -15,6 +15,7 @@ export function useCheckUser() {
     const user = useSanctumUser<User>();
     const snackbar = useSnackbar();
     const isRestricted = useState<boolean | null>('user-is-restricted', () => null)
+    const allowedConsigneeIds = useState<number[]>('user-allowed-consignee-ids', () => [])
 
     async function fetchUser() {
         await refreshIdentity()
@@ -22,6 +23,7 @@ export function useCheckUser() {
 
     function resetIsRestricted() {
         isRestricted.value = null
+        allowedConsigneeIds.value = []
         isRestrictedFetchPromise = null
     }
 
@@ -38,6 +40,7 @@ export function useCheckUser() {
                 const { $api } = useNuxtApp()
                 const response: any = await $api.userDataRestrictions.getMySummary()
                 isRestricted.value = !!response?.is_restricted
+                allowedConsigneeIds.value = (response?.direct_customers ?? []).map((c: any) => c.id)
             } catch (e) {
                 // Leave isRestricted null (rather than assuming unrestricted) so the
                 // next mount retries instead of failing open for the rest of the session.
@@ -47,6 +50,19 @@ export function useCheckUser() {
         })()
 
         return isRestrictedFetchPromise
+    }
+
+    // Per-row visibility check for reference tables: a restricted user can still view
+    // references belonging to a consignee assigned to their allowed executives/customers,
+    // and references sourced from Chile are always visible regardless of restriction.
+    function canViewReference(item: any): boolean {
+        if (!isRestricted.value) return true
+        if (item?.country_code === 'CL') return true
+
+        const consigneeId = item?.consignee_id ?? item?.consignee?.id
+        if (!consigneeId) return false
+
+        return allowedConsigneeIds.value.includes(consigneeId)
     }
 
     const isCurrentUser = (id: number | string): boolean => {
@@ -102,6 +118,6 @@ export function useCheckUser() {
         checkUserAndNotify,
         checkUserAndExecute,
         user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole,
-        isRestricted, fetchIsRestricted, resetIsRestricted
+        isRestricted, fetchIsRestricted, resetIsRestricted, canViewReference
     };
 }
