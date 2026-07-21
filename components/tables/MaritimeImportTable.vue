@@ -55,6 +55,9 @@
           <v-text-field v-model="filters.houseBl" density="compact" label="House BL" />
         </div>
         <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" />
+        </div>
+        <div class="col-span-2">
           <ACustomerSearch v-model="filters.consignee_id" />
         </div>
         <div class="col-span-2">
@@ -102,9 +105,6 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.containerNumber" density="compact" label="Container #" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" />
         </div>
         <div class="col-span-2">
           <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line" />
@@ -215,10 +215,10 @@
                   </v-icon>
                 </div>
               </th>
+              <th class="text-left">Booking</th>
               <th class="text-left">Vessel - voyage</th>
               <th class="text-left">Consignee</th>
               <th class="text-left">Freight line</th>
-              <th class="text-left">Booking</th>
 
               <th class="text-left">Arrival notification</th>
               <th class="text-left">Revalidation</th>
@@ -250,7 +250,7 @@
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
                   <v-btn
-                    v-if="hasPermission('sea-import-references-view') && !isRestricted"
+                    v-if="hasPermission('sea-import-references-view') && canViewReference(item)"
                     variant="text"
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
@@ -309,13 +309,15 @@
                   </div>
                 </div>
               </td>
+              <td>
+                <v-chip v-if="item.booking_number" size="small" color="teal">{{ item.booking_number }}</v-chip>
+              </td>
               <td>{{ item.voyage_discharge?.name }}</td>
               <td>
                 <v-icon v-if="isSystemTracker(item)" size="small" color="pink">mdi-storefront-outline</v-icon>
                 {{ item.consignee?.name }}
               </td>
               <td>{{ item.line?.name }}</td>
-              <td>{{ item.booking_number }}</td>
 
               <td>
                 <div v-if="item.arrival_notys?.length <= 0">
@@ -386,7 +388,7 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const { hasPermission, isRestricted, fetchIsRestricted } = useCheckUser()
+const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
 fetchIsRestricted()
 
 const catalogs = ref({
