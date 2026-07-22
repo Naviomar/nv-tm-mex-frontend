@@ -356,7 +356,7 @@
               </td>
               <td>{{ item.shipper?.name }}</td>
               <td>
-                <TrashButton :item="item" serviceType="sea-import" @click="confirmDeletion" />
+                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
               </td>
             </tr>
           </tbody>
@@ -390,7 +390,9 @@ const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
 fetchIsRestricted()
-
+const formDeletion = ref<any>({
+  reason: null as string | null,
+})
 const catalogs = ref({
   consignees: [] as any,
   freights: [] as any,
@@ -679,7 +681,7 @@ const viewDetails = (item: any) => {
 const confirmDeletion = async (item: any) => {
   try {
     loadingStore.start()
-    await $api.referencias.deleteReference(item.id.toString())
+    await $api.referencias.deleteReference(item.id.toString(), { body: { reason: formDeletion.value.reason, } })
     snackbar.add({ type: 'success', text: `Reference ${item.reference_number} cancelled successfully` })
     await getSeaImportReferences()
   } catch (e) {

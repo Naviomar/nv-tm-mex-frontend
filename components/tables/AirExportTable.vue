@@ -210,7 +210,7 @@
               <td>{{ getFirstRouteFlightNum(item) }}</td>
               <td>{{ getFirstRouteDeparture(item) }}</td>
               <td>
-                <TrashButton :item="item" serviceType="air-export" @click="confirmDeletion" />
+                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
               </td>
             </tr>
           </tbody>
@@ -244,6 +244,10 @@ const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
 fetchIsRestricted()
+
+const formDeletion = ref<any>({
+  reason: null as string | null,
+})
 
 const catalogs = ref<any>({
   consignees: [],
@@ -470,7 +474,7 @@ const viewDetails = (item: any) => {
 const confirmDeletion = async (item: any) => {
   try {
     loadingStore.start()
-    await $api.airExport.deleteReference(item.id.toString())
+    await $api.airExport.deleteReference(item.id.toString(), { body: { reason: formDeletion.value.reason, } })
     snackbar.add({ type: 'success', text: `Reference ${item.reference_number} cancelled successfully` })
     await getAirExportReferences()
   } catch (e) {
