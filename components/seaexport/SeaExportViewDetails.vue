@@ -101,7 +101,7 @@
                 <td>
                   <ButtonDownloadS3Object :s3Path="item.attachment" />
                 </td>
-                <td>{{ item.created_by?.name }}</td>
+                <td>{{ item.creator?.name }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -129,7 +129,7 @@
                 <td>
                   <ButtonDownloadS3Object :s3Path="item.attachment" />
                 </td>
-                <td>{{ item.created_by?.name }}</td>
+                <td>{{ item.creator?.name }}</td>
               </tr>
             </tbody>
           </v-table>
