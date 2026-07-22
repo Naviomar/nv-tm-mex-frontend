@@ -45,6 +45,14 @@
           <p>Are you sure you want to proceed with the cancellation of this reference?</p>
           <p class="text-red font-bold mt-2">This action cannot be easily undone.</p>
         </v-card-text>
+        <v-card-text class="pa-4">
+          <v-textarea
+              v-model="props.formDeletion.reason"
+              label="Reason"
+              rows="5"
+              auto-grow
+            />
+        </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn color="grey" variant="text" @click="showConfirmModal = false">No, go back</v-btn>
@@ -88,7 +96,6 @@
 </template>
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-
 const props = defineProps({
   item: {
     type: Object,
@@ -106,6 +113,10 @@ const props = defineProps({
   permission: {
     type: String as PropType<string | null>,
     default: null,
+  },
+  formDeletion: {
+    type: Object,
+    required: true,
   },
 })
 

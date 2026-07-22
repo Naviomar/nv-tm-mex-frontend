@@ -183,7 +183,8 @@
                 <UserInfoBadge :item="item">
                   {{ item.reference_number }}
                 </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
+                <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
               </td>
               <td>
                 <v-chip size="small" color="primary">
@@ -209,7 +210,7 @@
               <td>{{ getFirstRouteFlightNum(item) }}</td>
               <td>{{ getFirstRouteDeparture(item) }}</td>
               <td>
-                <TrashButton :item="item" serviceType="air-export" @click="confirmDeletion" />
+                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
               </td>
             </tr>
           </tbody>
@@ -243,6 +244,10 @@ const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
 fetchIsRestricted()
+
+const formDeletion = ref<any>({
+  reason: null as string | null,
+})
 
 const catalogs = ref<any>({
   consignees: [],
@@ -296,6 +301,19 @@ const references = ref<any>({
   to: 1,
   total: 1,
 })
+
+function splitText(text){
+  const spliText = text.split(' ')
+  const num_words = 5
+  return spliText.reduce((txt, word, i, arr) => {
+    txt.push(word)
+    if((i + 1) % num_words === 0 && i < arr.length - 1){
+        txt.push('<br>')
+    }
+
+    return txt;
+  }, []).join(' ') 
+}
 
 // Expose backUrl for child components
 const backUrl = computed(() => getFilteredUrl('/air/export'))
@@ -456,7 +474,7 @@ const viewDetails = (item: any) => {
 const confirmDeletion = async (item: any) => {
   try {
     loadingStore.start()
-    await $api.airExport.deleteReference(item.id.toString())
+    await $api.airExport.deleteReference(item.id.toString(), { body: { reason: formDeletion.value.reason, } })
     snackbar.add({ type: 'success', text: `Reference ${item.reference_number} cancelled successfully` })
     await getAirExportReferences()
   } catch (e) {
