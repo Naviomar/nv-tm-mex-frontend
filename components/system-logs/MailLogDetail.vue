@@ -61,7 +61,7 @@
           <v-col cols="12" v-if="log.payload && Object.keys(log.payload).length > 0">
             <div class="text-caption text-grey-darken-1 mb-1">Payload</div>
             <v-sheet color="grey-lighten-4" rounded="lg" class="pa-3" style="max-height: 300px; overflow-y: auto;">
-              <pre class="text-body-2" style="white-space: pre-wrap; font-size: 11px; font-family: 'Fira Code', monospace;">{{ JSON.stringify(log.payload, null, 2) }}</pre>
+              <pre class="text-body-2" style="white-space: pre-wrap; font-size: 11px; font-family: 'Fira Code', monospace;">{{ JSON.stringify(formattedPayload, null, 2) }}</pre>
             </v-sheet>
           </v-col>
         </v-row>
@@ -81,12 +81,15 @@
 
 <script setup lang="ts">
 import type { IMailLog, IMailLogAddress } from '~/repository/modules/mailLogs'
+import { convertPayloadDates } from '~/utils/date'
 
 const dialogVisible = defineModel<boolean>({ default: false })
 
-defineProps<{
+const props = defineProps<{
   log: IMailLog | null
 }>()
+
+const formattedPayload = computed(() => convertPayloadDates(props.log?.payload ?? {}))
 
 const formatAddresses = (addresses?: IMailLogAddress[]) => {
   if (!addresses || addresses.length === 0) return '—'

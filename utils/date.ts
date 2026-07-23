@@ -10,6 +10,41 @@ const addWorkingDays = (startDate: Date, days: number) => {
   return date
 }
 
+// Matches a MySQL DATETIME string with no timezone offset (e.g. "2026-07-23 16:46:35").
+// Plain DATE-only strings ("2026-07-23") are intentionally excluded: they represent a
+// calendar day with no instant to shift, so converting them would be wrong.
+const MYSQL_DATETIME_RE = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/
+
+// The audit trail (System Logs / Mail Logs) stores raw model attributes exactly as
+// persisted in the DB — i.e. in UTC (app.timezone) with no offset in the string. When
+// displaying those values to a user, convert them to the business timezone instead of
+// showing the raw UTC string as-is.
+const convertUtcDatetimeToLocal = (value: string, timeZone = 'America/Mexico_City'): string => {
+  if (!MYSQL_DATETIME_RE.test(value)) return value
+
+  const date = new Date(value.replace(' ', 'T') + 'Z')
+  if (Number.isNaN(date.getTime())) return value
+
+  return date.toLocaleString('es-MX', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
+// Recursively walks an arbitrary payload (System/Mail Log JSON attributes) converting
+// any raw UTC datetime leaf strings to the business timezone, for display purposes only.
+const convertPayloadDates = (value: unknown): unknown => {
+  if (typeof value === 'string') return convertUtcDatetimeToLocal(value)
+  if (Array.isArray(value)) return value.map(convertPayloadDates)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, val]) => [key, convertPayloadDates(val)])
+    )
+  }
+  return value
+}
+
 const initialYear = 2022
 const currentYear = new Date().getFullYear()
 const maxYear = currentYear + 1
@@ -21,4 +56,4 @@ for (let i = maxYear; i >= initialYear; i--) {
 }
 
 
-export { addWorkingDays, prefixYears }
+export { addWorkingDays, prefixYears, convertUtcDatetimeToLocal, convertPayloadDates }
