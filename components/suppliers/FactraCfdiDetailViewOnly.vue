@@ -42,7 +42,7 @@
                 <div>
                   <h3 class="font-bold">Available balance</h3>
                   <div>{{ formatToCurrency(availableBalance) }} {{ supplierCfdi.currency?.name }}</div>
-                  <v-chip v-if="supplierCfdi.has_cap_limit === 0" color="primary" size="small"
+                  <v-chip v-if="supplierCfdi.should_apply_cap_limit" color="primary" size="small"
                     >Cap limit by supplier type</v-chip
                   >
                 </div>
@@ -312,7 +312,7 @@ const serviceTypes = computed(() => {
 })
 
 const amountProvisioned = computed(() => {
-  if (supplierCfdi.value.has_cap_limit === 0) {
+  if (supplierCfdi.value.should_apply_cap_limit) {
     return parseFloat(supplierCfdi.value.cap_limit)
   }
   return parseFloat(supplierCfdi.value.amount_provisioned)
@@ -336,7 +336,7 @@ const getLinkName = (link: any) => {
 }
 
 const availableBalance = computed(() => {
-  if (supplierCfdi.value.has_cap_limit === 0) {
+  if (supplierCfdi.value.should_apply_cap_limit) {
     return parseFloat(supplierCfdi.value.cap_limit)
   }
   const total =
