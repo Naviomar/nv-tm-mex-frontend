@@ -1,63 +1,119 @@
 <template>
-  <v-dialog v-model="dialog.show" max-width="600" scrollable persistent>
-    <v-card rounded="xl">
-      <v-toolbar color="primary" density="comfortable">
-        <v-toolbar-title>System Config — {{ consigneeName }}</v-toolbar-title>
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" @click="closeDialog" />
-      </v-toolbar>
-      <v-card-text class="space-y-4 pt-4">
-        <v-card density="compact" variant="tonal" color="blue-lighten-5">
-          <v-card-title>Invoicing</v-card-title>
-          <v-card-text>
-            <div v-if="hasPermission('customers-update-credit-legend')">
-              <v-switch
-                v-model="form.show_credit_legend"
-                label="Show credit legend on invoice PDFs"
-                color="primary"
-                density="compact"
-                hide-details
-              />
-            </div>
-            <div v-else class="text-sm">
-              Credit legend on invoice PDFs: <strong>{{ form.show_credit_legend ? 'Enabled' : 'Disabled' }}</strong>
-            </div>
+  <v-dialog v-model="dialog.show" max-width="640" scrollable persistent>
+    <v-card rounded="lg">
+      <v-card-title class="d-flex justify-space-between align-center bg-primary text-white pa-4">
+        <div>
+          <div class="text-h6">System Config</div>
+          <div class="text-caption text-white" style="opacity: 0.8">{{ consigneeName }}</div>
+        </div>
+        <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="closeDialog" />
+      </v-card-title>
 
-            <div v-if="hasPermission('customers-update-invoicing-config')">
+      <v-card-text class="pa-0">
+        <v-list class="py-0" lines="two">
+          <v-list-subheader class="text-uppercase text-caption font-weight-bold">
+            Invoicing
+          </v-list-subheader>
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-file-document-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Credit legend on invoices</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Prints the credit days/start/due date legend on invoice PDFs.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
               <v-switch
-                v-model="form.auto_invoicing"
-                label="Transform proforma to invoice automatically"
+                v-if="hasPermission('customers-update-credit-legend')"
+                v-model="form.show_credit_legend"
                 color="primary"
                 density="compact"
                 hide-details
+                inset
               />
+              <v-chip v-else size="small" variant="tonal" :color="form.show_credit_legend ? 'success' : 'default'">
+                {{ form.show_credit_legend ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-autorenew" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Automatic invoicing</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Transforms the proforma into an invoice automatically once the deadline passes.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-update-invoicing-config')"
+                v-model="form.auto_invoicing"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip v-else size="small" variant="tonal" :color="form.auto_invoicing ? 'success' : 'default'">
+                {{ form.auto_invoicing ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-list-item v-if="form.auto_invoicing">
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-calendar-clock-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Date trigger</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              What the proforma deadline is calculated from.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
               <v-select
-                v-if="form.auto_invoicing"
+                v-if="hasPermission('customers-update-invoicing-config')"
                 v-model="form.invoice_trigger"
                 :items="invoiceTriggerOptions"
                 item-title="label"
                 item-value="value"
-                label="Date trigger"
                 density="compact"
                 variant="outlined"
-                class="mt-3"
                 hide-details
+                style="min-width: 220px"
               />
-              <div v-else class="text-sm text-grey-darken-1 mt-2">
-                Proformas for this customer will stay as proforma until someone converts them manually.
-              </div>
-            </div>
-            <div v-else class="text-sm mt-2">
-              Automatic invoicing: <strong>{{ form.auto_invoicing ? 'Enabled' : 'Disabled' }}</strong>
-              <span v-if="form.auto_invoicing"> ({{ invoiceTriggerLabel }})</span>
-            </div>
-          </v-card-text>
-        </v-card>
+              <span v-else class="text-body-2">{{ invoiceTriggerLabel }}</span>
+            </template>
+          </v-list-item>
+
+          <v-list-item v-else>
+            <template v-slot:prepend>
+              <v-icon icon="mdi-information-outline" color="warning" class="mr-3" />
+            </template>
+            <v-list-item-subtitle class="text-wrap">
+              Proformas for this customer will stay as proforma until someone converts them manually.
+            </v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
       </v-card-text>
-      <v-card-actions class="px-6 pb-6">
+
+      <v-card-actions class="px-6 py-4">
         <v-spacer />
         <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
-        <v-btn color="primary" prepend-icon="mdi-content-save" :loading="saving" @click="save">
+        <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save" :loading="saving" @click="save">
           Save
         </v-btn>
       </v-card-actions>
