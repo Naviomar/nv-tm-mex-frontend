@@ -196,11 +196,161 @@
             </v-table>
           </v-card-text>
         </v-card>
+
+    
+        <v-card class="mb-4">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div>Guarantee letter(s)</div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+        
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">Actions</th>
+                  <th class="text-left">Customs agent</th>
+                  <th class="text-left">Port</th>
+                  <th class="text-left">Validity of</th>
+                  <th class="text-left">To</th>
+                  <th v-if="false" class="text-left">Attachment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(warranty, index) in item?.warranty_letters" :key="`carta-encomienda-${index}`">
+                  <td class="whitespace-nowrap">{{ warranty.custom_agent?.short_name }}</td>
+                  <td class="whitespace-nowrap">{{ warranty.port?.name }}</td>
+                  <td class="whitespace-nowrap">{{ warranty.valid_from }}</td>
+                  <td class="whitespace-nowrap">{{ warranty.valid_to }}</td>
+                  <td v-if="false">
+                    <v-btn size="small" variant="outlined"
+                      ><v-icon>mdi-download-circle-outline</v-icon>Adjunto.pdf/img</v-btn
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+
+        <v-card class="mb-4">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div>Entrusts letter(s)</div>
+            </div>
+          </v-card-title>
+          <v-card-text>
+            <!-- <pre>{{ catalogs }}</pre> -->
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">Actions</th>
+                  <th class="text-left">Customs agent</th>
+                  <th class="text-left">Port</th>
+                  <th class="text-left">Validity of</th>
+                  <th class="text-left">To</th>
+                  <th v-if="false" class="text-left">Attachment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(entrust, index) in item?.entrust_letters" :key="`carta-encomienda-${index}`">
+                  <td class="whitespace-nowrap">{{ entrust.custom_agent.short_name }}</td>
+                  <td class="whitespace-nowrap">{{ entrust.port.name }}</td>
+                  <td class="whitespace-nowrap">{{ entrust.valid_from }}</td>
+                  <td class="whitespace-nowrap">{{ entrust.valid_to }}</td>
+                  <td v-if="false">
+                    <v-btn size="small" variant="outlined"
+                      ><v-icon>mdi-download-circle-outline</v-icon>Adjunto.pdf/img</v-btn
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+
+        <v-card class="mb-4">
+          <v-card-title>Emails</v-card-title>
+          <v-card-text>
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">Email</th>
+                  <th class="text-left">Notes</th>
+                  <th class="text-left">Port(s)</th>
+                  <th class="text-left">Airport(s)</th>
+                  <th class="text-left">Noty Type(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(mail, indexm) in item.consignee_emails" :key="`consg-email-${indexm}`">
+                  <td>{{ mail.email }}</td>
+                  <td>{{ mail.notes }}</td>
+                  <td>
+                    <div v-if="mail.ports && mail.ports.length > 0" class="d-flex flex-wrap gap-1 py-1">
+                    <v-chip
+                      v-for="(port, pIndex) in mail.ports"
+                      :key="`port-${pIndex}`"
+                      size="x-small"
+                      color="blue"
+                      variant="tonal"
+                    >
+                      <v-icon start size="x-small">mdi-anchor</v-icon>
+                      {{ port.name }}
+                    </v-chip>
+                  </div>
+                  <span v-else class="text-caption text-medium-emphasis">—</span>
+                  </td>
+                  <td>
+                    <div v-if="mail.airports && mail.airports.length > 0" class="d-flex flex-wrap gap-1 py-1">
+                      <v-chip
+                        v-for="(airport, aIndex) in mail.airports"
+                        :key="`airport-${aIndex}`"
+                        size="x-small"
+                        color="deep-purple"
+                        variant="tonal"
+                      >
+                        <v-icon start size="x-small">mdi-airplane</v-icon>
+                        {{ airport.name }}
+                      </v-chip>
+                    </div>
+                    <span v-else class="text-caption text-medium-emphasis">—</span>
+                  </td>
+                  <td>
+                    <div v-if="!mail.mail_notifications?.length" class="text-caption text-medium-emphasis">—</div>
+                    <div v-else class="noty-list py-1">
+                      <div
+                        v-for="(mailNoty, nIndex) in mail.mail_notifications"
+                        :key="`email-mail-noti-${nIndex}`"
+                        class="noty-row"
+                        :class="mailNoty.pivot.type === 'CC' ? 'noty-row--cc' : 'noty-row--to'"
+                      >
+                        <span class="noty-type">{{ mailNoty.pivot.type }}</span>
+                        <span class="noty-name">{{ formatNotificationName(mailNoty.short_name) }}</span>
+                        <v-icon
+                          v-if="isPortFilterableNotification(mailNoty.short_name) && mail.ports && mail.ports.length > 0"
+                          size="x-small"
+                          color="blue"
+                          v-tooltip="'Filtered by port'"
+                        >mdi-anchor</v-icon>
+                      </div>
+                      
+                    </div>
+
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+          
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { isPortFilterableNotification, formatNotificationName } from '~/utils/mailNotifications'
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 
@@ -231,3 +381,56 @@ onMounted(async () => {
   await getData()
 })
 </script>
+<style scoped>
+  .emails-table :deep(thead th) {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .emails-table :deep(tbody tr:hover td) {
+    background: rgba(var(--v-theme-primary), 0.03);
+  }
+
+  .emails-table :deep(td) {
+    vertical-align: top;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .noty-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .noty-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .noty-row--to {
+    background: rgba(var(--v-theme-primary), 0.07);
+  }
+
+  .noty-row--cc {
+    background: rgba(255, 179, 0, 0.1);
+  }
+
+  .noty-type {
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    opacity: 0.75;
+  }
+
+  .noty-name {
+    flex: 1;
+  }
+</style>
