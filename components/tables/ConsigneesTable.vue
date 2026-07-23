@@ -119,6 +119,18 @@
                 <div class="flex gap-2">
                   <ViewButton :item="consignee" @click="viewCustomer(consignee)" />
                   <EditButton :item="consignee" permission="customers-edit" @click="editCustomer(consignee)" />
+                  <v-tooltip v-if="canViewSystemConfig" text="System Config">
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        color="grey-darken-2"
+                        size="x-small"
+                        variant="elevated"
+                        v-bind="props"
+                        icon="mdi-cog-outline"
+                        @click="openSystemConfig(consignee)"
+                      ></v-btn>
+                    </template>
+                  </v-tooltip>
                   <TrashButton :item="consignee" permission="customers-delete" @click="showConfirmDelete" />
                 </div>
               </td>
@@ -173,6 +185,7 @@
         ></v-pagination>
       </v-card-text>
     </v-card>
+    <ConsigneeSystemConfigModal ref="systemConfigModalRef" @refresh="getConsignees" />
   </div>
 </template>
 <script setup lang="ts">
@@ -185,6 +198,16 @@ const snackbar = useSnackbar()
 const router = useRouter()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
+
+const systemConfigModalRef = ref<InstanceType<typeof ConsigneeSystemConfigModal> | null>(null)
+const canViewSystemConfig = computed(
+  () => hasPermission('customers-update-invoicing-config') || hasPermission('customers-update-credit-legend')
+)
+
+const openSystemConfig = (consignee: any) => {
+  systemConfigModalRef.value?.openEdit(consignee)
+}
 
 // Initial filter values
 const initialFilters = {
