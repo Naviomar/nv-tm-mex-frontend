@@ -148,6 +148,14 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/missing-notifications-summary`, fetchOptions)
   }
 
+  async exportExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/export-excel`, fetchOptions)
+  }
+
   async exportMissingNotificationsExcel(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',
@@ -199,6 +207,14 @@ class ConsigneesModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/${id}/update-executive`, fetchOptions)
+  }
+
+  async updateSystemConfig(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-system-config`, fetchOptions)
   }
 
   /**

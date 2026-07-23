@@ -101,7 +101,7 @@
                 <td>
                   <ButtonDownloadS3Object :s3Path="item.attachment" />
                 </td>
-                <td>{{ item.created_by?.name }}</td>
+                <td>{{ item.creator?.name }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -129,7 +129,7 @@
                 <td>
                   <ButtonDownloadS3Object :s3Path="item.attachment" />
                 </td>
-                <td>{{ item.created_by?.name }}</td>
+                <td>{{ item.creator?.name }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -218,7 +218,7 @@
                   <td>{{ bcharge.charge?.name }}</td>
                   <td>{{ formatToCurrency(bcharge.amount) }}</td>
                   <td>{{ bcharge.currency?.name }}</td>
-                  <td>{{ bcharge.created_by?.name }}</td>
+                  <td>{{ bcharge.creator?.name }}</td>
                 </tr>
               </tbody>
             </v-table>
@@ -253,7 +253,7 @@
                   <td>
                     {{ scharge.inv_type }}
                   </td>
-                  <td>{{ scharge.created_by?.name }}</td>
+                  <td>{{ scharge.creator?.name }}</td>
                 </tr>
               </tbody>
             </v-table>
