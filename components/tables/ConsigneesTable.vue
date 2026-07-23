@@ -81,6 +81,10 @@
         <div class="flex gap-2">
           <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
           <v-btn color="primary" @click="onClickFilters"> Search </v-btn>
+          <v-spacer />
+          <v-btn color="success" variant="tonal" :loading="exportingExcel" prepend-icon="mdi-file-excel" @click="exportExcel">
+            Export to Excel
+          </v-btn>
         </div>
       </div>
     </div>
@@ -339,6 +343,31 @@ const clearFilters = async () => {
   await resetFiltersComposable()
   consignees.value.current_page = 1
   await getConsignees()
+}
+
+const exportingExcel = ref(false)
+
+const exportExcel = async () => {
+  try {
+    exportingExcel.value = true
+    const response = await $api.consignees.exportExcel({
+      query: flattenArraysToCommaSeparatedString(filters.value),
+    })
+
+    const url = window.URL.createObjectURL(response as unknown as Blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `consignees_export_${new Date().toISOString().split('T')[0]}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error al exportar los clientes a Excel' })
+  } finally {
+    exportingExcel.value = false
+  }
 }
 
 onMounted(() => {

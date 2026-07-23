@@ -148,6 +148,14 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/missing-notifications-summary`, fetchOptions)
   }
 
+  async exportExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/export-excel`, fetchOptions)
+  }
+
   async exportMissingNotificationsExcel(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',
