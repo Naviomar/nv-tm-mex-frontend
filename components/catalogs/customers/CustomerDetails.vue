@@ -160,6 +160,35 @@
         </v-card>
       </div>
       <div>
+        <v-card color="" class="mb-4">
+          <v-card-title>
+            <div class="flex justify-between">
+              <div>Executive(s)</div>
+              
+            </div>
+          </v-card-title>
+             <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">Actions</th>
+                  <th class="text-left">Executive</th>
+                  <th class="text-left">From</th>
+                  <th class="text-left">To</th>
+                  <th class="text-left">Active</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(cnn, index) in item?.consignee_executives" :key="`consig-exec-${index}`">
+                 
+                  <td>{{ cnn.executive.name }}</td>
+                  <td>{{ cnn.valid_from }}</td>
+                  <td>{{ cnn.undefined_time ? 'Undefined' : cnn.valid_to }}</td>
+                  <td>{{ getExecutiveActiveByDates(item) }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+        </v-card>
+          
         <v-card class="mb-4">
           <v-card-title>Address book </v-card-title>
           <v-card-text>
@@ -362,6 +391,22 @@ const props = defineProps({
 })
 
 const item = ref<any>({})
+
+const getExecutiveActiveByDates = (item: any) => {
+  const today = new Date()
+  const validFrom = new Date(item.valid_from)
+  const validTo = new Date(item.valid_to)
+
+  if (item.undefined_time) {
+    return 'Yes'
+  }
+
+  if (today >= validFrom && today <= validTo) {
+    return 'Yes'
+  }
+
+  return 'No'
+}
 
 const getData = async () => {
   try {
