@@ -87,14 +87,15 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import MailLogsModule from '~/repository/modules/mailLogs'
 import ExportLogsModule from '~/repository/modules/exportLogs'
-import StatisticsModule from '~/repository/modules/statistics'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
 import AuthRequestTypesModule from '~/repository/modules/catalogs/authRequestTypes'
 import RequestCcUsersModule from '~/repository/modules/catalogs/requestCcUsers'
 import ImportRepoModule from '~/repository/modules/reports/importRepo'
 import AccountStatementModule from '~/repository/modules/reports/accountStatement'
 import ControlOperacionesModule from '~/repository/modules/reports/controlOperaciones'
+import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 
 interface IApiInstance {
@@ -104,6 +105,7 @@ interface IApiInstance {
   importRepo: ImportRepoModule
   accountStatement: AccountStatementModule
   controlOperaciones: ControlOperacionesModule
+  releaseReports: ReleaseReportsModule
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
@@ -189,8 +191,8 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  mailLogs: MailLogsModule
   exportLogs: ExportLogsModule
-  statistics: StatisticsModule
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
   userDataRestrictions: UserDataRestrictionsModule
@@ -207,6 +209,7 @@ export function useApiFactory() {
     importRepo: new ImportRepoModule(client),
     accountStatement: new AccountStatementModule(client),
     controlOperaciones: new ControlOperacionesModule(client),
+    releaseReports: new ReleaseReportsModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     shippers: new ShippersModule(client),
@@ -291,8 +294,8 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    mailLogs: new MailLogsModule(client),
     exportLogs: new ExportLogsModule(client),
-    statistics: new StatisticsModule(client),
     ticketMessages: new TicketMessagesModule(client),
     authRequestTypes: new AuthRequestTypesModule(client),
     requestCcUsers: new RequestCcUsersModule(client),

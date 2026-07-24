@@ -694,14 +694,10 @@
 import { currencies } from '@/utils/data/systemData'
 import { cargoTypes } from '@/utils/data/seaData'
 import { schemaEdit } from '~~/forms/maritimeReferenceForm'
-import { permissions } from '@/utils/data/system'
 
 const { $api } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const exchangeRatesStore = useExchangeRatesStore()
-const router = useRouter()
-const route = useRoute()
 const { hasPermission } = useCheckUser()
 
 const showImportInfo = ref(true)
@@ -837,18 +833,18 @@ const refreshVessels = async (newLineId: any) => {
 
 const cargo = computed(() => {
   let total_m3 = containers.value.reduce((acc: any, container: any) => {
-    return acc + parseFloat(container.volume)
+    return acc + Number.parseFloat(container.volume)
   }, 0)
   let total_kgs = containers.value.reduce((acc: any, container: any) => {
-    return acc + parseFloat(container.weight)
+    return acc + Number.parseFloat(container.weight)
   }, 0)
   let total_packages = containers.value.reduce((acc: any, container: any) => {
-    return acc + parseInt(container.num_packages)
+    return acc + Number.parseInt(container.num_packages)
   }, 0)
 
-  total_m3 = isNaN(total_m3) ? 0 : parseFloat(total_m3).toFixed(4)
-  total_kgs = isNaN(total_kgs) ? 0 : parseFloat(total_kgs).toFixed(4)
-  total_packages = isNaN(total_packages) ? 0 : parseInt(total_packages)
+  total_m3 = Number.isNaN(total_m3) ? 0 : Number.parseFloat(total_m3).toFixed(4)
+  total_kgs = Number.isNaN(total_kgs) ? 0 : Number.parseFloat(total_kgs).toFixed(4)
+  total_packages = Number.isNaN(total_packages) ? 0 : Number.parseInt(total_packages)
 
   return {
     total_m3,
@@ -1238,7 +1234,7 @@ onMounted(async () => {
 const entrustSamePort = (wl: any) => {
   const port = wl.port
   const pod = values.pod_id!
-  return parseInt(port?.id) === parseInt(pod)
+  return Number.parseInt(port?.id) === Number.parseInt(pod)
 }
 
 const voyageDestination = computed(() => {

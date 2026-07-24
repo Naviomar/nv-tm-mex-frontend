@@ -65,15 +65,15 @@
       <v-table density="compact">
         <thead>
           <tr>
-            <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Chat</th>
-            <th class="text-left">Requested by</th>
-            <th class="text-left">Process</th>
-            <th class="text-left">Reason</th>
-            <th class="text-left">Status</th>
-            <th class="text-left">Expiration date</th>
-            <th class="text-left">Granted by</th>
-            <th class="text-left">Created at</th>
+            <th class="text-left" id="request-id">ID</th>
+            <th class="text-left" id="request-chat">Chat</th>
+            <th class="text-left" id="request-user">Requested by</th>
+            <th class="text-left" id="request-process">Process</th>
+            <th class="text-left" id="request-reason">Reason</th>
+            <th class="text-left" id="request-status">Status</th>
+            <th class="text-left" id="request-expires">Expiration date</th>
+            <th class="text-left" id="request-granted-by">Granted by</th>
+            <th class="text-left" id="request-created-at">Created at</th>
           </tr>
         </thead>
         <tbody>
@@ -90,19 +90,17 @@
             <td>
               <div class="d-flex gap-1">
                 <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
-                  <v-badge
-                    v-if="authRequest.unread_count"
-                    :content="authRequest.unread_count"
-                    color="error"
-                    overlap
-                  >
+                  <v-badge v-if="authRequest.unread_count" :content="authRequest.unread_count" color="error" overlap>
                     <v-icon>mdi-message-text-outline</v-icon>
                   </v-badge>
                   <v-icon v-else>mdi-message-text-outline</v-icon>
                 </v-btn>
                 <v-btn
                   v-if="isPendingToGrant(authRequest) && hasPermission('process-requests-respond')"
-                  icon size="small" variant="text" color="primary"
+                  icon
+                  size="small"
+                  variant="text"
+                  color="primary"
                   title="Respond"
                   @click="showFormGrant(authRequest)"
                 >
@@ -110,7 +108,10 @@
                 </v-btn>
                 <v-btn
                   v-if="canDelete(authRequest)"
-                  icon size="small" variant="text" color="error"
+                  icon
+                  size="small"
+                  variant="text"
+                  color="error"
                   title="Cancel"
                   @click="showFormCancel(authRequest)"
                 >
@@ -126,7 +127,11 @@
               <div class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</div>
               <template v-if="authRequest.process_data?.charges?.length">
                 <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                  <div v-for="(c, ci) in authRequest.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1 text-xs bg-gray-50">
+                  <div
+                    v-for="(c, ci) in authRequest.process_data.charges"
+                    :key="ci"
+                    class="flex items-center gap-2 px-2 py-1 text-xs bg-gray-50"
+                  >
                     <div class="flex-1 min-w-0">
                       <div class="font-medium text-gray-800 truncate">{{ c.charge_name }}</div>
                       <div v-if="c.invoice_number" class="text-gray-400">Invoice #{{ c.invoice_number }}</div>
@@ -137,14 +142,22 @@
               </template>
               <template v-else-if="authRequest.process_data?.operations?.length">
                 <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                  <div v-for="(op, oi) in authRequest.process_data.operations" :key="oi" class="px-2 py-1 text-xs bg-gray-50">
+                  <div
+                    v-for="(op, oi) in authRequest.process_data.operations"
+                    :key="oi"
+                    class="px-2 py-1 text-xs bg-gray-50"
+                  >
                     <span class="font-semibold capitalize">{{ op.action }}</span>
                     <span class="ml-1">{{ describeOperation(op) }}</span>
                   </div>
                 </div>
               </template>
               <template v-else-if="authRequest.process_data">
-                <div v-for="(val, key) in authRequest.process_data" :key="key" class="text-xs text-gray-600 whitespace-nowrap">
+                <div
+                  v-for="(val, key) in authRequest.process_data"
+                  :key="key"
+                  class="text-xs text-gray-600 whitespace-nowrap"
+                >
                   <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
                 </div>
               </template>
@@ -182,7 +195,8 @@
       <GrantDenyDialog
         v-model="showGrantDialog"
         mode="process"
-        @submit="grantAuthorization"
+        :min-expires-at="minExpiresAt"
+        @submit="preGrantAuth"
       >
         <template #context>
           <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
@@ -222,7 +236,7 @@
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
-        <v-card v-if="activeChatTicket" flat style="border-radius:12px;overflow:hidden">
+        <v-card v-if="activeChatTicket" flat style="border-radius: 12px; overflow: hidden">
           <TicketChatPanel
             ticket-type="process-request"
             :ticket-id="activeChatTicket.id"
@@ -238,14 +252,30 @@
             <v-spacer />
             <v-btn
               v-if="isPendingToGrant(activeChatTicket) && hasPermission('process-requests-respond')"
-              color="primary" variant="flat" size="small"
-              @click="showChatDrawer = false; showFormGrant(activeChatTicket)"
-            >Respond</v-btn>
+              color="primary"
+              variant="flat"
+              size="small"
+              @click="
+                () => {
+                  showChatDrawer = false
+                  showFormGrant(activeChatTicket)
+                }
+              "
+              >Respond</v-btn
+            >
             <v-btn
               v-if="canDelete(activeChatTicket)"
-              color="error" variant="tonal" size="small"
-              @click="showChatDrawer = false; showFormCancel(activeChatTicket)"
-            >Delete</v-btn>
+              color="error"
+              variant="tonal"
+              size="small"
+              @click="
+                () => {
+                  showChatDrawer = false
+                  showFormCancel(activeChatTicket)
+                }
+              "
+              >Delete</v-btn
+            >
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -308,6 +338,12 @@ const form = ref<any>({
   auth_request: null,
 })
 
+const minExpiresAt = computed(() => {
+  const now = new Date()
+  const tzoffset = now.getTimezoneOffset() * 60000
+  return new Date(now.getTime() - tzoffset).toISOString().slice(0, 16)
+})
+
 const authRequests = ref<any>({
   data: [] as any,
   current_page: 1,
@@ -355,6 +391,21 @@ const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
 
+const preGrantAuth = async (payload: any) => {
+  if (payload.decision === 'granted') {
+    if (!payload.expiresAt) {
+      snackbar.add({ type: 'error', text: 'Please provide an expiration date' })
+      return
+    }
+    const expiresAt = new Date(payload.expiresAt)
+    if (expiresAt <= new Date()) {
+      snackbar.add({ type: 'error', text: 'Expiration date must be in the future' })
+      return
+    }
+  }
+  await grantAuthorization(payload)
+}
+
 const grantAuthorization = async (payload: any) => {
   try {
     loadingStore.loading = true
@@ -369,8 +420,10 @@ const grantAuthorization = async (payload: any) => {
     snackbar.add({ type: 'success', text: 'Authorization process request response sent' })
     closeGrantDialog()
     await getAuthProcessRequests()
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    const msg = e?.response?._data?.message || 'Error responding to authorization request'
+    snackbar.add({ type: 'error', text: msg })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
@@ -393,8 +446,8 @@ const canDelete = (authRequest: any) => {
 const cancelAuthorization = async () => {
   try {
     loadingStore.loading = true
-    const useCancelAuth = !hasPermission('process-requests-delete') &&
-                          formCancel.value.auth_request?.user_id === currentUser.value?.id
+    const useCancelAuth =
+      !hasPermission('process-requests-delete') && formCancel.value.auth_request?.user_id === currentUser.value?.id
 
     if (useCancelAuth) {
       await $api.authProcessRequests.cancelAuth(formCancel.value.auth_request.id, {
@@ -409,8 +462,10 @@ const cancelAuthorization = async () => {
     snackbar.add({ type: 'success', text: 'Authorization request canceled' })
     closeCancelDialog()
     await getAuthProcessRequests()
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    const msg = e?.response?._data?.message || 'Error canceling authorization request'
+    snackbar.add({ type: 'error', text: msg })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
@@ -494,7 +549,10 @@ const openChatFromQuery = () => {
   router.replace({ query: { ...route.query, openChat: undefined, ticketId: undefined } })
 }
 
-watch(() => route.query.openChat, (val) => {
-  if (val === '1') openChatFromQuery()
-})
+watch(
+  () => route.query.openChat,
+  (val) => {
+    if (val === '1') openChatFromQuery()
+  },
+)
 </script>

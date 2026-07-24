@@ -31,6 +31,7 @@
           type="datetime-local"
           label="Expires at"
           hint="Please provide an expiration date for the authorization"
+          :min="minExpiresAt"
         />
 
         <v-textarea v-model="reason" label="Comments" />
@@ -77,6 +78,7 @@ const props = defineProps<{
   modelValue: boolean
   mode: 'authorization' | 'process'
   title?: string
+  minExpiresAt?: string
 }>()
 
 const emit = defineEmits<{

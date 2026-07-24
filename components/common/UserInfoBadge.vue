@@ -110,9 +110,38 @@ const props = defineProps({
 })
 
 const usersStore = useUsersStore()
-const createdBy = computed(() => usersStore.getUserById(props.item?.[props.createdByKey]))
-const updatedBy = computed(() => usersStore.getUserById(props.item?.updated_by))
-const deletedBy = computed(() => usersStore.getUserById(props.item?.deleted_by))
+const createdBy = computed(() => {
+  const keyVal = props.item?.[props.createdByKey]
+  if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
+    return keyVal
+  }
+  if (props.item && 'creator' in props.item) {
+    return props.item.creator
+  }
+  return usersStore.getUserById(keyVal)
+})
+
+const updatedBy = computed(() => {
+  const keyVal = props.item?.updated_by
+  if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
+    return keyVal
+  }
+  if (props.item && 'updator' in props.item) {
+    return props.item.updator
+  }
+  return usersStore.getUserById(keyVal)
+})
+
+const deletedBy = computed(() => {
+  const keyVal = props.item?.deleted_by
+  if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
+    return keyVal
+  }
+  if (props.item && 'deletor' in props.item) {
+    return props.item.deletor
+  }
+  return usersStore.getUserById(keyVal)
+})
 
 // Reactive states for tooltip and dialog
 const showDetails = ref(false)

@@ -74,10 +74,10 @@
             <tr>
               <th class="text-left" width="20"></th>
               <th class="text-left" width="20"></th>
-              <th class="text-left">Master BL #</th>
-              <th class="text-left">Consginee</th>
-              <th class="text-left">Type</th>
-              <th class="text-left">Attachment</th>
+              <th class="text-left" id="master-bl">Master BL #</th>
+              <th class="text-left" id="consignee">Consginee</th>
+              <th class="text-left" id="type">Type</th>
+              <th class="text-left" id="attachment">Attachment</th>
               <th class="text-left" width="20"></th>
             </tr>
           </thead>
@@ -142,10 +142,10 @@
           <v-table density="compact">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Comments</th>
-                <th>Updated at</th>
+                <th id="mbl-name">Name</th>
+                <th id="mbl-type">Type</th>
+                <th id="mbl-comments">Comments</th>
+                <th id="mbl-updated-at">Updated at</th>
               </tr>
             </thead>
             <tbody>

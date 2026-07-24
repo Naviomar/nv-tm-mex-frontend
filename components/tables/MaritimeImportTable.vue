@@ -55,6 +55,9 @@
           <v-text-field v-model="filters.houseBl" density="compact" label="House BL" />
         </div>
         <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" />
+        </div>
+        <div class="col-span-2">
           <ACustomerSearch v-model="filters.consignee_id" />
         </div>
         <div class="col-span-2">
@@ -102,9 +105,6 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.containerNumber" density="compact" label="Container #" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" />
         </div>
         <div class="col-span-2">
           <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line" />
@@ -215,6 +215,7 @@
                   </v-icon>
                 </div>
               </th>
+              <th class="text-left">Booking</th>
               <th class="text-left">Vessel - voyage</th>
               <th class="text-left">Consignee</th>
               <th class="text-left">Freight line</th>
@@ -249,7 +250,7 @@
                     @click="viewMaritimeReference(item)"
                   ></v-btn>
                   <v-btn
-                    v-if="hasPermission('sea-import-references-view')"
+                    v-if="hasPermission('sea-import-references-view') && canViewReference(item)"
                     variant="text"
                     icon="mdi-eye-outline"
                     color="green-lighten-2"
@@ -262,7 +263,8 @@
                 <UserInfoBadge :item="item">
                   <ServiceNumberLabel :service="item" />
                 </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="ml-1 font-bold">CANCELLED</v-chip>
+                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip><br>
+                <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
               </td>
               <td>
                 <div class="flex flex-col gap-1">
@@ -306,6 +308,9 @@
                     </v-chip>
                   </div>
                 </div>
+              </td>
+              <td>
+                <v-chip v-if="item.booking_number" size="small" color="teal">{{ item.booking_number }}</v-chip>
               </td>
               <td>{{ item.voyage_discharge?.name }}</td>
               <td>
@@ -351,7 +356,7 @@
               </td>
               <td>{{ item.shipper?.name }}</td>
               <td>
-                <TrashButton :item="item" serviceType="sea-import" @click="confirmDeletion" />
+                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
               </td>
             </tr>
           </tbody>
@@ -383,8 +388,11 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const { hasPermission } = useCheckUser()
-
+const { hasPermission, fetchIsRestricted, canViewReference } = useCheckUser()
+fetchIsRestricted()
+const formDeletion = ref<any>({
+  reason: null as string | null,
+})
 const catalogs = ref({
   consignees: [] as any,
   freights: [] as any,
@@ -450,6 +458,19 @@ const references = ref({
   to: 1,
   total: 1,
 })
+
+function splitText(text){
+  const spliText = text.split(' ')
+  const num_words = 5
+  return spliText.reduce((txt, word, i, arr) => {
+    txt.push(word)
+    if((i + 1) % num_words === 0 && i < arr.length - 1){
+        txt.push('<br>')
+    }
+
+    return txt;
+  }, []).join(' ') 
+}
 
 // Expose getFilteredUrl for child components and back navigation
 const backUrl = computed(() => getFilteredUrl('/maritime/import'))
@@ -660,7 +681,7 @@ const viewDetails = (item: any) => {
 const confirmDeletion = async (item: any) => {
   try {
     loadingStore.start()
-    await $api.referencias.deleteReference(item.id.toString())
+    await $api.referencias.deleteReference(item.id.toString(), { body: { reason: formDeletion.value.reason, } })
     snackbar.add({ type: 'success', text: `Reference ${item.reference_number} cancelled successfully` })
     await getSeaImportReferences()
   } catch (e) {

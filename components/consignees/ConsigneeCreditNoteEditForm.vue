@@ -508,6 +508,8 @@ const viewInvoice = (payment: any) => {
   const t = payment.chargeable?.invoice?.invoiceable_type
   if (t?.includes('InvoiceSeaTm')) { router.push(`/invoices/search/tm-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
   if (t?.includes('InvoiceSeaWm')) { router.push(`/invoices/search/wm-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
+  if (t?.includes('InvoiceAirTm')) { router.push(`/invoices/search/tm-air-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
+  if (t?.includes('InvoiceAirWm')) { router.push(`/invoices/search/wm-air-view-${payment.chargeable?.invoice?.invoiceable_id}`); return }
   snackbar.add({ type: 'error', text: 'Unknown invoice type' })
 }
 

@@ -76,10 +76,12 @@ const openDialog = () => {
   form.showDialog = true
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const onSendClick = async () => {
   try {
-    if (!form.emails || !form.body) {
-      snackbar.add({ type: 'error', text: 'Please fill all fields' })
+    if (!hasAtLeastOneValidEmail(form.emails) || !form.body) {
+      snackbar.add({ type: 'error', text: 'Enter at least one valid email and the message' })
       return
     }
 

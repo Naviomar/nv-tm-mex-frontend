@@ -119,7 +119,13 @@ const getSeaExportDetails = async () => {
   }
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const onClickSenAirImportNotfy = async () => {
+  if (!hasAtLeastOneValidEmail(form.value.emails)) {
+    snackbar.add({ type: 'warning', text: 'Enter at least one valid email' })
+    return
+  }
   try {
     loadingStore.start()
     const response = await $api.airImport.sendNotify(props.id.toString(), {

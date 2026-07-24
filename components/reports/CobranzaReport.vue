@@ -135,9 +135,9 @@ const lastDayCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 
 
 // Service type options
 const serviceTypeOptions = [
-  { label: 'Todos', value: null },
-  { label: 'Marítimo', value: 'sea' },
-  { label: 'Aéreo', value: 'air' },
+  { label: 'All', value: null },
+  { label: 'Maritime', value: 'sea' },
+  { label: 'Air', value: 'air' },
 ]
 
 // Initialize the filters with the date range

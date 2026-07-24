@@ -19,13 +19,13 @@
       <v-table density="compact">
         <thead>
           <tr>
-            <th class="text-left">Container #</th>
-            <th class="text-left">Type</th>
-            <th class="text-left">m<sup>3</sup></th>
-            <th class="text-left">Kgs</th>
-            <th class="text-left"># Paquetes</th>
-            <th class="text-left">notes</th>
-            <th class="text-left">Created by</th>
+            <th class="text-left" id="container-number">Container #</th>
+            <th class="text-left" id="container-type">Type</th>
+            <th class="text-left" id="container-volume">m<sup>3</sup></th>
+            <th class="text-left" id="container-weight">Kgs</th>
+            <th class="text-left" id="container-packages"># Paquetes</th>
+            <th class="text-left" id="container-notes">notes</th>
+            <th class="text-left" id="container-created-by">Created by</th>
           </tr>
         </thead>
         <tbody>

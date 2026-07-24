@@ -448,7 +448,13 @@ const searchLines = async (search: any) => {
   }
 }
 
+const { hasAtLeastOneValidEmail } = useEmailListValidation()
+
 const sendEmailForSelected = async () => {
+  if (!hasAtLeastOneValidEmail(form.value.emails)) {
+    snackbar.add({ type: 'warning', text: 'Enter at least one valid email' })
+    return
+  }
   try {
     loadingIndicator.start()
     loadingStore.loading = true

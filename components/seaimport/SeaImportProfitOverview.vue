@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="hasPermission(permissions.SeaImportProfit)">
     <v-card color="light-green-lighten-5" class="mb-4">
       <v-card-title>
         <div class="flex items-center justify-between">
@@ -10,12 +10,7 @@
         </div>
       </v-card-title>
       <v-card-text>
-        <div v-if="!hasPermission(permissions.SeaImportProfit)">
-          <v-alert density="compact" type="warning" icon="mdi-alert">
-            You lack permission to see this module ({{ permissions.SeaImportProfit }})
-          </v-alert>
-        </div>
-        <div v-if="hasPermission(permissions.SeaImportProfit)">
+        <div>
           <div class="mb-4">
             <div class="grid grid-cols-4 divide-x divide-y border divide-slate-400 border-slate-400">
               <div class="text-center text-base bg-slate-600 text-white font-bold">💰 - Demurrages</div>

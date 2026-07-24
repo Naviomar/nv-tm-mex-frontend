@@ -634,6 +634,10 @@ onMounted(() => {
 })
 
 const viewInvoice = (invoice: any) => {
+  if (invoice.service_type === 'air') {
+    router.push(`/invoices/search/wm-air-view-${invoice.id}`)
+    return
+  }
   router.push(`/invoices/search/wm-view-${invoice.id}`)
 }
 </script>
