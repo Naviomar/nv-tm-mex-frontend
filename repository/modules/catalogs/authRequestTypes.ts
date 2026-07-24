@@ -126,6 +126,8 @@ export interface IAuthRequestType {
   icon: string | null
   color: string | null
   is_active: boolean
+  automatable?: boolean | null
+  default_expiration_hours?: number | null
   sort_order: number
   form_fields?: IFormField[] | null
   template?: IRequestTemplate | null
