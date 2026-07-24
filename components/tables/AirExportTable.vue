@@ -14,13 +14,11 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-2">
-          <v-autocomplete
-            v-model="filters.year"
-            :items="prefixYears"
-            density="compact"
-            label="Year"
-            @keyup.enter="getAirExportReferences"
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -29,7 +27,7 @@
             density="compact"
             label="Add reference #"
             hint="Separate multiple references with commas"
-            @keyup.enter="addReferencia"
+            @keyup.enter.stop="onClickFilters"
           >
             <template #append-inner>
               <v-btn
@@ -49,7 +47,7 @@
             v-model="filters.masterAwb"
             density="compact"
             label="Master AWB"
-            @keyup.enter="getAirExportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -57,27 +55,32 @@
             v-model="filters.houseAwb"
             density="compact"
             label="House AWB"
-            @keyup.enter="getAirExportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-4">
-          <ACustomerSearch v-model="filters.consignee_id" />
+          <AFreightForwarderSearch
+            v-model="filters.origin_ff_id"
+            label="Freight Forwarder origin"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-4">
-          <AFreightForwarderSearch v-model="filters.origin_ff_id" label="Freight Forwarder origin" />
+          <AFreightForwarderSearch
+            v-model="filters.destination_ff_id"
+            label="Freight Forwarder destination"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-4">
-          <AFreightForwarderSearch v-model="filters.destination_ff_id" label="Freight Forwarder destination" />
-        </div>
-        <div class="col-span-4">
-          <AAirlineSearch v-model="filters.airline_id" />
+          <AAirlineSearch v-model="filters.airline_id" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.flightNum"
             density="compact"
             label="Flight number"
-            @keyup.enter="getAirExportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -88,7 +91,7 @@
             :items="deletedStatus"
             item-title="name"
             item-value="value"
-            @keyup.enter="getAirExportReferences"
+            @keyup.enter.stop="onClickFilters"
             hide-details
           />
         </div>
@@ -233,7 +236,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { useTableFilters } from '~/composables/useTableFilters'
@@ -265,12 +267,12 @@ const toggleFilters = () => {
 
 // Initial filter values
 const initialFilters = {
-  year: '',
   referencia: '',
   referencias: [] as string[],
   masterAwb: '',
   houseAwb: '',
   consignee_id: '',
+  consignee_name: '',
   freight_forwarder_id: '',
   airline_id: '',
   flightNum: '',
@@ -344,6 +346,16 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+// When an exact customer is selected, drop the free-text name search so the
+// two filters never combine into an impossible AND.
+const buildQueryParams = () => {
+  const params: any = { ...flattenArraysToCommaSeparatedString(filters.value) }
+  if (params.consignee_id) {
+    delete params.consignee_name
+  }
+  return params
+}
+
 const onClickPagination = async (page: number) => {
   await onPageChange(page)
 }
@@ -380,7 +392,7 @@ const getAirExportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...buildQueryParams(),
       },
     })
 
@@ -408,7 +420,7 @@ const exportAirRefsXlsx = async () => {
 
     const response = (await $api.airExport.exportXlsxReport({
       query: {
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...buildQueryParams(),
       },
     })) as any
 

@@ -14,42 +14,51 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-2">
-          <v-autocomplete
-            v-model="filters.year"
-            :items="prefixYears"
-            density="compact"
-            label="Year"
-            @keyup.enter="getAirImportReferences"
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
-        <div class="col-span-2">
-          <v-text-field
-            v-model="filters.referencia"
-            density="compact"
-            label="Add reference #"
-            hint="Press Enter to add numbers"
-            @keyup.enter="addReferencia"
-          >
-            <template #append-inner>
-              <v-btn
-                v-if="filters.referencia"
-                icon="mdi-plus"
-                size="x-small"
-                variant="text"
-                color="primary"
-                @click="addReferencia"
-                title="Add reference to filter"
-              />
-            </template>
-          </v-text-field>
+        <div class="col-span-3">
+          <div class="flex gap-1">
+            <v-select
+              v-model="refInputType"
+              :items="refTypeOptions"
+              item-title="title"
+              item-value="value"
+              density="compact"
+              hide-details
+              style="max-width: 130px"
+            />
+            <v-text-field
+              v-model="filters.referencia"
+              density="compact"
+              :label="refInputType === 'tracker' ? 'Add tracker ref' : 'Add reference #'"
+              hint="Separate multiple with commas"
+              @keyup.enter.stop="onClickFilters"
+            >
+              <template #append-inner>
+                <v-btn
+                  v-if="filters.referencia"
+                  icon="mdi-plus"
+                  size="x-small"
+                  variant="text"
+                  color="primary"
+                  @click="addReferencia"
+                  title="Add to filter"
+                />
+              </template>
+            </v-text-field>
+          </div>
         </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.masterAwb"
             density="compact"
             label="Master AWB"
-            @keyup.enter="getAirImportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -57,24 +66,25 @@
             v-model="filters.houseAwb"
             density="compact"
             label="House AWB"
-            @keyup.enter="getAirImportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-4">
-          <ACustomerSearch v-model="filters.consignee_id" />
-        </div>
-        <div class="col-span-4">
-          <AFreightForwarderSearch v-model="filters.origin_ff_id" label="Freight Forwarder origin" />
+          <AFreightForwarderSearch
+            v-model="filters.origin_ff_id"
+            label="Freight Forwarder origin"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-2">
-          <AAirlineSearch v-model="filters.airline_id" />
+          <AAirlineSearch v-model="filters.airline_id" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.flightNum"
             density="compact"
             label="Flight number"
-            @keyup.enter="getAirImportReferences"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -85,6 +95,7 @@
             :items="sourceSystems"
             item-title="name"
             item-value="id"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -98,10 +109,8 @@
             ]"
             item-title="name"
             item-value="value"
+            @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.trackerRef" density="compact" label="Tracker ref" hint="Comma separated" />
         </div>
         <div class="col-span-2">
           <v-autocomplete
@@ -111,21 +120,33 @@
             :items="deletedStatus"
             item-title="name"
             item-value="value"
-            @keyup.enter="getAirImportReferences"
+            @keyup.enter.stop="onClickFilters"
             hide-details
           />
         </div>
       </div>
-      <div v-if="filters.referencias.length > 0">
-        <div>Filter by reference(s)</div>
-        <div class="flex gap-2">
+      <div v-if="filters.referencias.length > 0 || filters.trackerRef.length > 0">
+        <div>Filter by reference(s) / tracker ref(s)</div>
+        <div class="flex gap-2 flex-wrap">
           <v-chip
             v-for="(ref, index) in filters.referencias"
             :key="`ref-search-${ref}`"
             closable
+            color="primary"
+            size="small"
             @click:close="removeReferencia(index)"
           >
-            {{ ref }}
+            <v-icon start size="14">mdi-pound</v-icon>{{ ref }}
+          </v-chip>
+          <v-chip
+            v-for="(ref, index) in filters.trackerRef"
+            :key="`tracker-search-${ref}`"
+            closable
+            color="teal"
+            size="small"
+            @click:close="removeTrackerRef(index)"
+          >
+            <v-icon start size="14">mdi-crosshairs-gps</v-icon>{{ ref }}
           </v-chip>
         </div>
       </div>
@@ -266,7 +287,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { prefixYears } from '~/utils/date'
 import { sourceSystems, deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { useTableFilters } from '~/composables/useTableFilters'
@@ -297,19 +317,19 @@ const toggleFilters = () => {
 
 // Initial filter values
 const initialFilters = {
-  year: '',
   referencia: '',
   referencias: [] as string[],
   has_arrival_noty: null as number | null,
   masterAwb: '',
   houseAwb: '',
   consignee_id: '',
+  consignee_name: '',
   origin_ff_id: '',
   destination_ff_id: '',
   airline_id: '',
   flightNum: '',
   source_system_id: '',
-  trackerRef: '',
+  trackerRef: [] as string[],
   deleted_status: '',
 }
 
@@ -323,10 +343,17 @@ const {
   getFilteredUrl,
 } = useTableFilters(initialFilters, {
   storageKey: 'air-import-filters',
-  arrayFields: ['referencias'],
+  arrayFields: ['referencias', 'trackerRef'],
   enablePerPage: true,
   defaultPerPage: 10,
 })
+
+// Unified "Add reference # / Tracker ref" input: one field feeds either chip list
+const refInputType = ref<'ref' | 'tracker'>('ref')
+const refTypeOptions = [
+  { title: 'Reference #', value: 'ref' },
+  { title: 'Tracker ref', value: 'tracker' },
+]
 
 const references = ref({
   data: [] as any,
@@ -366,10 +393,17 @@ const addReferencia = () => {
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
     // remove duplicates in refs array using set
 
-    refs.forEach((ref) => {
-      filters.value.referencias.push(ref)
-    })
-    filters.value.referencias = [...new Set(filters.value.referencias)]
+    if (refInputType.value === 'tracker') {
+      refs.forEach((ref) => {
+        filters.value.trackerRef.push(ref)
+      })
+      filters.value.trackerRef = [...new Set(filters.value.trackerRef)]
+    } else {
+      refs.forEach((ref) => {
+        filters.value.referencias.push(ref)
+      })
+      filters.value.referencias = [...new Set(filters.value.referencias)]
+    }
     filters.value.referencia = ''
     syncToUrl()
   }
@@ -378,6 +412,21 @@ const addReferencia = () => {
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
   syncToUrl()
+}
+
+const removeTrackerRef = (index: number) => {
+  filters.value.trackerRef.splice(index, 1)
+  syncToUrl()
+}
+
+// When an exact customer is selected, drop the free-text name search so the
+// two filters never combine into an impossible AND.
+const buildQueryParams = () => {
+  const params: any = { ...flattenArraysToCommaSeparatedString(filters.value) }
+  if (params.consignee_id) {
+    delete params.consignee_name
+  }
+  return params
 }
 
 const onClickPagination = async (page: number) => {
@@ -416,7 +465,7 @@ const getAirImportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...buildQueryParams(),
       },
     })
 
@@ -444,7 +493,7 @@ const exportAirRefsXlsx = async () => {
 
     const response = (await $api.airImport.exportXlsxReport({
       query: {
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...buildQueryParams(),
       },
     })) as any
 

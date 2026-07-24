@@ -14,8 +14,20 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
         <div class="col-span-2">
-          <v-autocomplete v-model="filters.year" :items="prefixYears" density="compact" label="Year" />
+          <v-text-field
+            v-model="filters.containerNumber"
+            density="compact"
+            label="Container #"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-2">
           <v-text-field
@@ -23,7 +35,7 @@
             density="compact"
             label="Add reference #"
             hint="Separate multiple references with commas"
-            @keyup.enter="addReferencia"
+            @keyup.enter.stop="onClickFilters"
           >
             <template #append-inner>
               <v-btn
@@ -39,16 +51,13 @@
           </v-text-field>
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" />
+          <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.houseBl" density="compact" label="House BL" />
+          <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-4">
-          <ACustomerSearch v-model="filters.consignee_id" />
-        </div>
-        <div class="col-span-4">
-          <AFreightForwarderSearch v-model="filters.freight_forwarder_id" />
+          <AFreightForwarderSearch v-model="filters.freight_forwarder_id" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-4">
           <v-autocomplete
@@ -61,6 +70,7 @@
             clearable
             hide-details
             @update:model-value="onUnifiedSearchChange"
+            @keyup.enter.stop="onClickFilters"
           >
             <template #item="{ props, item }">
               <v-list-item v-bind="props">
@@ -88,22 +98,19 @@
           </v-autocomplete>
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.origin" density="compact" label="Origin" />
+          <v-text-field v-model="filters.origin" density="compact" label="Origin" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.destination" density="compact" label="Destination" />
+          <v-text-field v-model="filters.destination" density="compact" label="Destination" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" />
+          <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.containerNumber" density="compact" label="Container #" />
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" />
+          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <v-autocomplete
@@ -113,6 +120,7 @@
             :items="catalogs.lines"
             item-title="name"
             item-value="id"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -132,6 +140,7 @@
             ]"
             item-title="name"
             item-value="value"
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
         <div class="col-span-2">
@@ -143,6 +152,7 @@
             item-title="name"
             item-value="value"
             hide-details
+            @keyup.enter.stop="onClickFilters"
           />
         </div>
       </div>
@@ -322,7 +332,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { prefixYears } from '~/utils/date'
 import { deletedStatus } from '~/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { useTableFilters } from '~/composables/useTableFilters'
@@ -356,12 +365,12 @@ const toggleFilters = () => {
 
 // Initial filter values
 const initialFilters = {
-  year: '',
   referencia: '',
   referencias: [] as string[],
   masterBl: '',
   houseBl: '',
   consignee_id: '',
+  consignee_name: '',
   freight_forwarder_id: '',
   vessel_id: '',
   voyage_departure_id: '',
@@ -453,6 +462,16 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+// When an exact customer is selected, drop the free-text name search so the
+// two filters never combine into an impossible AND.
+const buildQueryParams = () => {
+  const params: any = { ...flattenArraysToCommaSeparatedString(filters.value) }
+  if (params.consignee_id) {
+    delete params.consignee_name
+  }
+  return params
+}
+
 const onClickFilters = async () => {
   // Add any pending reference before searching
   addReferencia()
@@ -489,7 +508,7 @@ const getSeaExportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...buildQueryParams(),
       },
     })
 

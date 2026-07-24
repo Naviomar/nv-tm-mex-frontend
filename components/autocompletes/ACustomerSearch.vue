@@ -63,15 +63,27 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits(['update:modelValue', 'update:searchText'])
 
 const customers = ref<any>([])
 const selectedCustomer = ref<any>(null)
 const searchQuery = ref('')
+const lastSelectedTitle = ref('')
 
 watch(searchQuery, (newSearch) => {
   if (props.readonly) return
-  if (newSearch.length < 3 || hasData.value) return
+
+  // User is typing something different from the currently selected item's
+  // title: the old selection no longer applies, so clear it and let a new
+  // search happen instead of silently freezing on the previous customer.
+  if (selectedCustomer.value && newSearch !== lastSelectedTitle.value) {
+    selectedCustomer.value = null
+    onSelect(null)
+  }
+
+  emits('update:searchText', newSearch || '')
+
+  if (!newSearch || newSearch.length < 3) return
   onSearch(newSearch)
 })
 
@@ -80,6 +92,14 @@ watch(
   (newValue, oldValue) => {
     if (!newValue) {
       selectedCustomer.value = null
+      // Only wipe the visible text if the user hasn't typed something new
+      // since the last selection (e.g. a "Clear" button reset the parent
+      // filter). If they're mid-edit, our own searchQuery watch already
+      // handles clearing the stale id without touching what they're typing.
+      if (searchQuery.value === lastSelectedTitle.value) {
+        searchQuery.value = ''
+      }
+      lastSelectedTitle.value = ''
     }
   }
 )
@@ -89,6 +109,9 @@ const hasData = computed(() => !!selectedCustomer.value)
 const clearData = () => {
   selectedCustomer.value = null
   customers.value = []
+  searchQuery.value = ''
+  lastSelectedTitle.value = ''
+  emits('update:searchText', '')
   onSelect(null)
 }
 
@@ -109,6 +132,7 @@ const onSearch = _Debounce(async (search: string) => {
     }
     if (response.length === 1) {
       selectedCustomer.value = response[0]?.id
+      lastSelectedTitle.value = response[0]?.name || ''
       onSelect(response[0]?.id)
     }
   } catch (error) {
@@ -123,7 +147,11 @@ const onSearch = _Debounce(async (search: string) => {
   }
 }, 500)
 
-const onSelect = (customer: any) => {
-  emits('update:modelValue', customer)
+const onSelect = (customerId: any) => {
+  if (customerId) {
+    const selected = customers.value.find((c: any) => c.id === customerId)
+    lastSelectedTitle.value = selected?.name || ''
+  }
+  emits('update:modelValue', customerId)
 }
 </script>
