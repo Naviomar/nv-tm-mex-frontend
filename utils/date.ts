@@ -45,6 +45,16 @@ const convertPayloadDates = (value: unknown): unknown => {
   return value
 }
 
+// Formats a bare "YYYY-MM-DD" calendar-day string (e.g. DashboardCaptureStat's
+// stat_date, already bucketed by Mexico City day on the backend) for a chart axis.
+// `new Date("YYYY-MM-DD")` parses as UTC midnight per spec; rendering it with
+// toLocaleDateString() with no timeZone falls back to the browser's local zone and,
+// for any zone behind UTC (Mexico City included), rolls the label back a day. Since
+// this is a calendar day with no time-of-day, format it as UTC — i.e. don't shift it
+// at all — instead of letting the browser's local zone reinterpret it.
+const formatCaptureStatDay = (dateStr: string): string =>
+  new Date(dateStr + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+
 const initialYear = 2022
 const currentYear = new Date().getFullYear()
 const maxYear = currentYear + 1
@@ -56,4 +66,4 @@ for (let i = maxYear; i >= initialYear; i--) {
 }
 
 
-export { addWorkingDays, prefixYears, convertUtcDatetimeToLocal, convertPayloadDates }
+export { addWorkingDays, prefixYears, convertUtcDatetimeToLocal, convertPayloadDates, formatCaptureStatDay }
