@@ -135,7 +135,7 @@
           <v-col cols="12" v-if="log.payload && !isModelLog && Object.keys(log.payload).length > 0">
             <div class="text-caption text-grey-darken-1 mb-1">Payload</div>
             <v-sheet color="grey-lighten-4" rounded="lg" class="pa-3" style="max-height: 300px; overflow-y: auto;">
-              <pre class="text-body-2" style="white-space: pre-wrap; font-size: 11px; font-family: 'Fira Code', monospace;">{{ JSON.stringify(log.payload, null, 2) }}</pre>
+              <pre class="text-body-2" style="white-space: pre-wrap; font-size: 11px; font-family: 'Fira Code', monospace;">{{ JSON.stringify(formattedPayload, null, 2) }}</pre>
             </v-sheet>
           </v-col>
 
@@ -161,6 +161,7 @@
 
 <script setup lang="ts">
 import type { ISystemLog } from '~/repository/modules/systemLogs'
+import { convertUtcDatetimeToLocal, convertPayloadDates } from '~/utils/date'
 
 const dialogVisible = defineModel<boolean>({ default: false })
 
@@ -214,8 +215,11 @@ const formatDate = (date?: string) => {
 const formatValue = (val: any): string => {
   if (val === null || val === undefined) return '—'
   if (typeof val === 'object') return JSON.stringify(val)
+  if (typeof val === 'string') return convertUtcDatetimeToLocal(val)
   return String(val)
 }
+
+const formattedPayload = computed(() => convertPayloadDates(props.log?.payload ?? {}))
 </script>
 
 <style scoped>
