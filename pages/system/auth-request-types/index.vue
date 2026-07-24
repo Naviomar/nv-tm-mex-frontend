@@ -110,6 +110,30 @@
                 <span v-if="!(type.approvers?.length)" class="text-caption text-disabled">Falls back to permission holders</span>
               </div>
             </div>
+
+            <div class="mt-2">
+              <div class="text-caption text-medium-emphasis d-flex align-center gap-1 mb-1">
+                <v-icon size="14">mdi-lock-outline</v-icon> Server-side permission gate
+              </div>
+              <div v-if="type.route_permission_info?.enforced">
+                <div v-if="type.route_permission_info.permissions.length" class="d-flex flex-wrap gap-1">
+                  <v-chip
+                    v-for="perm in type.route_permission_info.permissions"
+                    :key="perm"
+                    size="x-small"
+                    color="teal"
+                    variant="tonal"
+                    :title="`Execution route also requires permission '${perm}'`"
+                  >
+                    <v-icon start size="12">mdi-shield-check</v-icon> {{ perm }}
+                  </v-chip>
+                </div>
+                <span v-else class="text-caption text-disabled">Authorization-only, no extra permission required</span>
+              </div>
+              <span v-else class="text-caption text-disabled" title="No route was found gating this code with check.authorization/check.process — it may still be enforced manually inside a service">
+                Not detected on a route (may be enforced in code)
+              </span>
+            </div>
           </v-card-text>
 
           <v-divider />

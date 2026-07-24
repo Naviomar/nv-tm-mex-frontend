@@ -160,11 +160,16 @@
                   <BankMovementPayments :bankMovement="bankMovement" />
                 </div>
                 
-                <v-btn 
+                <v-tooltip v-if="cancellationFailed(bankMovement)" text="The previous approved cancellation failed to run automatically. You can request it again." location="top">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-icon v-bind="tooltipProps" color="error" size="20">mdi-alert-circle</v-icon>
+                  </template>
+                </v-tooltip>
+                <v-btn
                   v-if="canRequestCancellation(bankMovement)"
-                  color="orange-darken-2" 
-                  variant="elevated" 
-                  density="compact" 
+                  color="orange-darken-2"
+                  variant="elevated"
+                  density="compact"
                   @click="showCancelDialog(bankMovement)"
                 >
                   <v-icon>mdi-delete-alert</v-icon> Request cancellation
@@ -634,25 +639,30 @@ const splitPaymentDetail = (movement: any) => {
 
 const pendingCancelIds = ref<Set<number>>(new Set())
 const approvedCancelIds = ref<Set<number>>(new Set())
+const failedCancelIds = ref<Set<number>>(new Set())
 
 const loadActiveCancellationRequests = async () => {
   try {
     const result = (await $api.authRequests.getActiveResourceIds('cancel-bank-movement')) as any
     pendingCancelIds.value = new Set((result.pending ?? []).map(Number))
     approvedCancelIds.value = new Set((result.approved ?? []).map(Number))
+    failedCancelIds.value = new Set((result.failed ?? []).map(Number))
   } catch (e) {
     // non-critical
   }
 }
 
+const cancellationFailed = (bankMovement: any) => failedCancelIds.value.has(Number(bankMovement.id))
+
 const canRequestCancellation = (bankMovement: any) => {
   // Can only request cancellation if movement has no payments, available amount equals total amount,
-  // and there isn't already a pending/approved cancellation request for it.
+  // and there isn't already a pending/approved cancellation request for it. A request whose
+  // auto-execution failed is treated as if it never happened, so the user can try again.
   return (
     bankMovement.amount === bankMovement.amount_available &&
     bankMovement.payments.length === 0 &&
     !pendingCancelIds.value.has(Number(bankMovement.id)) &&
-    !approvedCancelIds.value.has(Number(bankMovement.id))
+    (!approvedCancelIds.value.has(Number(bankMovement.id)) || cancellationFailed(bankMovement))
   )
 }
 
