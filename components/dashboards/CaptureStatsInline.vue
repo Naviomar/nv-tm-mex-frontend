@@ -50,6 +50,8 @@
 </template>
 
 <script setup lang="ts">
+import { formatCaptureStatDay } from '~/utils/date'
+
 const props = defineProps({
   title: String,
   subtitle: String,
@@ -91,7 +93,7 @@ const labels = computed(() =>
       const [year, month] = s.period.split('-')
       return new Date(year, month - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
     }
-    return new Date(s.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return formatCaptureStatDay(s.period)
   })
 )
 
