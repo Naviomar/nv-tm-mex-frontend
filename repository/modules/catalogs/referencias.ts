@@ -290,22 +290,22 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/delete-agent-freight-note`, fetchOptions)
   }
 
-  async updateContainer(id: string, form: any, fetchOptions?: FetchOptions) {
+  async updateContainer(id: string, containerId: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {
       body: body,
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/sea-service/${id}/update-container`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/sea-service/${id}/containers/${containerId}/update`, fetchOptions)
   }
 
-  async deleteContainer(id: string, form: any, fetchOptions?: FetchOptions) {
+  async deleteContainer(id: string, containerId: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {
       body: body,
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/sea-service/${id}/delete-container`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/sea-service/${id}/containers/${containerId}/delete`, fetchOptions)
   }
 
   async updateChargeFromReferencia(id: string, form: any, withPermission: boolean, fetchOptions?: FetchOptions) {

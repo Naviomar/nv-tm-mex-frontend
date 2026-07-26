@@ -69,7 +69,7 @@
                   <ProcessAuthorizationWrapper
                         v-if="!item.deleted_at && isLocked"
                         processName="container-edit"
-                        :requestKey="`${item.id}:${item.id}`"
+                        :requestKey="`${props.referenciaId}:${item.id}`"
                         label="Edit"
                         :displayName="`Container. #${item.container_number}`"
                   >
@@ -96,7 +96,7 @@
                    <ProcessAuthorizationWrapper
                         v-if="!item.deleted_at && isLocked"
                         processName="container-delete"
-                        :requestKey="`${item.id}`"
+                        :requestKey="`${props.referenciaId}:${item.id}`"
                         label="Delete"
                         :displayName="`Container. #${item.container_number}`"
                       >
@@ -320,7 +320,7 @@ const deleteContainer = async (container: any, index: number) => {
     const body = {
       ...container,
     }
-    const response = await $api.referencias.deleteContainer(props.referenciaId!.toString(), body)
+    const response = await $api.referencias.deleteContainer(props.referenciaId!.toString(), container.id.toString(), body)
 
     snackbar.add({ type: 'success', text: 'Container deleted' })
     emit('refresh')
