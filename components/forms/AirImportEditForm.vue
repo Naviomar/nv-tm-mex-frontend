@@ -388,13 +388,15 @@
         <div class="flex items-center">
           <v-icon size="x-small">mdi-check-network-outline</v-icon>
           <div class="ml-2 font-bold flex items-center">
-            Release information
+            Release & Revalidation
 
             <UserInfoBadge v-if="values.sent_releases?.length" :item="values" />
           </div>
         </div>
       </v-card-title>
       <v-card-text>
+        <!-- Release fields -->
+        <div class="text-subtitle-2 text-grey-darken-1 mb-2">Release information</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div>
             <InputText name="release_date" type="date" density="compact" variant="solo-filled" label="Release date" />
@@ -447,33 +449,80 @@
             <InputTextArea name="release_notes" density="compact" variant="solo-filled" label="Notes" />
           </div>
         </div>
+
+        <!-- Attachments -->
+        <div class="text-subtitle-2 text-grey-darken-1 mt-4 mb-2">Attachments</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
-            <InputFile name="files" density="compact" multiple label="Attachment(s)" />
+            <input ref="fileInputRef" type="file" multiple class="hidden" @change="onFileSelect" />
+            <div
+              class="border-2 border-dashed rounded-lg pa-4 text-center transition-colors cursor-pointer"
+              :class="isDragging ? 'border-primary bg-primary-lighten-5' : 'border-grey-lighten-2'"
+              @click="fileInputRef?.click()"
+              @dragover.prevent="isDragging = true"
+              @dragenter.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="onDrop"
+            >
+              <v-icon :color="isDragging ? 'primary' : 'grey'" size="large" class="mb-1">
+                {{ isDragging ? 'mdi-tray-arrow-down' : 'mdi-cloud-upload-outline' }}
+              </v-icon>
+              <div class="text-body-2 text-grey-darken-1">
+                {{ isDragging ? 'Suelta los archivos aquí' : 'Arrastra archivos aquí o' }}
+                <span v-if="!isDragging" class="text-primary font-weight-bold cursor-pointer">haz click</span>
+              </div>
+            </div>
+            <div v-if="selectedFiles.length > 0" class="flex flex-wrap gap-2 mt-3">
+              <v-chip
+                v-for="(file, index) in selectedFiles"
+                :key="`sel-${index}`"
+                closable
+                color="primary"
+                variant="outlined"
+                size="small"
+                @click:close="removeSelectedFile(index)"
+              >
+                <v-icon start size="small">mdi-file-outline</v-icon>
+                <span class="text-truncate" style="max-width: 180px">{{ file.name }}</span>
+                <span class="text-grey ml-1 text-caption">{{ formatFileSize(file.size) }}</span>
+              </v-chip>
+            </div>
           </div>
           <div>
-            <div class="font-bold">Attachments in release information</div>
-            <div v-if="values.release_files?.length === 0">No attachments</div>
-            <div v-for="(file, index) in values.release_files" :key="`file-${index}`">
-              <div class="flex gap-2 items-center">
-                <div>
-                  <v-icon color="red" size="small" class="cursor-pointer">mdi-close-circle</v-icon>
-                </div>
+            <div class="font-bold mb-2">Attachments in release information</div>
+            <div v-if="!values.release_files?.length" class="text-grey text-caption">No attachments</div>
+            <div v-else class="flex flex-wrap gap-2">
+              <v-chip
+                v-for="(file, index) in values.release_files"
+                :key="`file-${index}`"
+                color="green"
+                variant="outlined"
+                size="small"
+              >
+                <v-icon start size="small">mdi-file-check-outline</v-icon>
                 <ButtonDownloadS3Object :s3Path="file.attachment" />
-              </div>
+              </v-chip>
             </div>
           </div>
         </div>
 
-        <div>
-          <div class="flex justify-end gap-3">
-            <v-btn color="primary" size="small" variant="tonal" @click="onSaveRevalidation">
-              Save revalidation changes
-            </v-btn>
-            <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation"> Send revalidation </v-btn>
-          </div>
+        <v-divider class="my-4" />
+
+        <!-- Revalidation PDF stamping -->
+        <div class="text-subtitle-2 text-grey-darken-1 mb-2">Revalidation PDF</div>
+        <Stamp :reference="values" service-type="air" @update-reference="getData" />
+
+        <v-divider class="my-4" />
+
+        <!-- Action buttons -->
+        <div class="flex justify-end gap-3">
+          <v-btn color="primary" size="small" variant="tonal" @click="onSaveRevalidation">
+            Save revalidation changes
+          </v-btn>
+          <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation"> Send revalidation </v-btn>
         </div>
 
+        <!-- Past revalidations -->
         <div v-if="hasSentRevalidations" class="py-4">
           <v-expansion-panels class="mb-4">
             <v-expansion-panel bg-color="lime-lighten-4">
@@ -911,6 +960,35 @@ const removeRoute = (index: number) => {
   routes.value.splice(index, 1)
 }
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFiles = ref<File[]>([])
+const isDragging = ref(false)
+
+const onFileSelect = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files) {
+    selectedFiles.value.push(...Array.from(target.files))
+  }
+  target.value = ''
+}
+
+const onDrop = (e: DragEvent) => {
+  isDragging.value = false
+  if (e.dataTransfer?.files) {
+    selectedFiles.value.push(...Array.from(e.dataTransfer.files))
+  }
+}
+
+const removeSelectedFile = (index: number) => {
+  selectedFiles.value.splice(index, 1)
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 const onSaveAirImportClick = handleSubmit(onSuccess, onInvalidSubmit)
 
 const onConfirmDuplicateSave = () => {
@@ -927,12 +1005,16 @@ const onCancelDuplicateSave = () => {
 const onSaveRevalidation = async () => {
   try {
     loadingStore.start()
-    const body = {
+    const body: any = {
       ...values,
+    }
+    if (selectedFiles.value.length > 0) {
+      body.files = selectedFiles.value
     }
     const response = await $api.airImport.updateRevalidation(props.id, body)
 
     snackbar.add({ type: 'success', text: 'Revalidation updated' })
+    selectedFiles.value = []
     await getData()
   } catch (e) {
     console.error(e)

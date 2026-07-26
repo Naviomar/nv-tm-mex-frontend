@@ -108,6 +108,39 @@
             </v-list-item-subtitle>
           </v-list-item>
         </v-list>
+
+        <v-list class="py-0" lines="two">
+          <v-list-subheader class="text-uppercase text-caption font-weight-bold">
+            Revalidation
+          </v-list-subheader>
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-file-check-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Skip House BL validation</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Allows revalidation to proceed without checking that every House BL can be delivered.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-skip-hbl-validation')"
+                v-model="form.skip_hbl_validation"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip v-else size="small" variant="tonal" :color="form.skip_hbl_validation ? 'success' : 'default'">
+                {{ form.skip_hbl_validation ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+        </v-list>
       </v-card-text>
 
       <v-card-actions class="px-6 py-4">
@@ -144,6 +177,7 @@ const form = reactive({
   show_credit_legend: false,
   auto_invoicing: true,
   invoice_trigger: 'deadline',
+  skip_hbl_validation: false,
 })
 
 const invoiceTriggerLabel = computed(() => {
@@ -154,6 +188,7 @@ const resetForm = () => {
   form.show_credit_legend = false
   form.auto_invoicing = true
   form.invoice_trigger = 'deadline'
+  form.skip_hbl_validation = false
 }
 
 const openEdit = async (consignee: any) => {
@@ -162,6 +197,7 @@ const openEdit = async (consignee: any) => {
   form.show_credit_legend = !!consignee.show_credit_legend
   form.auto_invoicing = consignee.auto_invoicing === undefined ? true : !!consignee.auto_invoicing
   form.invoice_trigger = consignee.invoice_trigger ?? 'deadline'
+  form.skip_hbl_validation = !!consignee.skip_hbl_validation
   dialog.show = true
 }
 
