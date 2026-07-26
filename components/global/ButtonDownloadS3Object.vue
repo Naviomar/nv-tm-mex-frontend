@@ -1,7 +1,12 @@
 <template>
-  <div>
-    <v-btn v-if="hasS3Path" size="small" variant="outlined" @click="downloadFile"
-      ><v-icon>mdi-download-circle-outline</v-icon>{{ fileName }}</v-btn
+  <div class="s3-download-trigger">
+    <v-btn
+      v-if="hasS3Path"
+      size="small"
+      :icon="iconOnly"
+      :variant="iconOnly ? 'text' : 'outlined'"
+      @click="downloadFile"
+      ><v-icon>mdi-download-circle-outline</v-icon><template v-if="!iconOnly">{{ fileName }}</template></v-btn
     >
     <v-dialog v-model="showPdfDialog" fullscreen>
       <v-card>
@@ -28,14 +33,25 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  // Overrides the button label / downloaded filename — the raw S3 key
+  // (last path segment) is a UUID, not something meant for humans to see.
+  displayName: {
+    type: String,
+    required: false,
+  },
+  // Icon-only button, for contexts that already show the filename elsewhere
+  // (e.g. a chat attachment chip) and would otherwise show it twice.
+  iconOnly: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const hasS3Path = computed(() => props.s3Path != null && props.s3Path !== '')
 
 const fileName = computed(() => {
-  console.log('props.s3Path', props.s3Path)
-  if (!hasS3Path) return ''
-  return props.s3Path!.split('/').pop()
+  if (!hasS3Path.value) return ''
+  return props.displayName || props.s3Path!.split('/').pop()
 })
 
 const showPdfDialog = ref(false)
@@ -71,4 +87,6 @@ const closePdfDialog = () => {
   showPdfDialog.value = false
   pdfViewer.value!.data = null
 }
+
+defineExpose({ downloadFile })
 </script>

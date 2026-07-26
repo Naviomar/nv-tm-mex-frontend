@@ -134,7 +134,7 @@ const saveUpdatedContainer = async (values: any) => {
     const body = {
       ...values,
     }
-    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), body)
+    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body)
 
     snackbar.add({ type: 'success', text: 'Container updated' })
     emit('updated', container)

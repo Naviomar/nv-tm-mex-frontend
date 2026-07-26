@@ -73,6 +73,14 @@
                 <v-chip size="x-small" :color="type.is_active ? 'success' : 'grey'" variant="tonal">
                   {{ type.is_active ? 'Active' : 'Inactive' }}
                 </v-chip>
+                <v-chip
+                  v-if="type.automatable !== null"
+                  size="x-small"
+                  :color="type.automatable ? 'info' : 'warning'"
+                  variant="tonal"
+                >
+                  {{ type.automatable ? 'Automatable' : 'Manual only' }}
+                </v-chip>
               </div>
             </div>
 
@@ -102,6 +110,30 @@
                 <span v-if="!(type.approvers?.length)" class="text-caption text-disabled">Falls back to permission holders</span>
               </div>
             </div>
+
+            <div class="mt-2">
+              <div class="text-caption text-medium-emphasis d-flex align-center gap-1 mb-1">
+                <v-icon size="14">mdi-lock-outline</v-icon> Server-side permission gate
+              </div>
+              <div v-if="type.route_permission_info?.enforced">
+                <div v-if="type.route_permission_info.permissions.length" class="d-flex flex-wrap gap-1">
+                  <v-chip
+                    v-for="perm in type.route_permission_info.permissions"
+                    :key="perm"
+                    size="x-small"
+                    color="teal"
+                    variant="tonal"
+                    :title="`Execution route also requires permission '${perm}'`"
+                  >
+                    <v-icon start size="12">mdi-shield-check</v-icon> {{ perm }}
+                  </v-chip>
+                </div>
+                <span v-else class="text-caption text-disabled">Authorization-only, no extra permission required</span>
+              </div>
+              <span v-else class="text-caption text-disabled" title="No route was found gating this code with check.authorization/check.process — it may still be enforced manually inside a service">
+                Not detected on a route (may be enforced in code)
+              </span>
+            </div>
           </v-card-text>
 
           <v-divider />
@@ -125,7 +157,7 @@
           <v-expand-transition>
             <div v-if="showFlowForId.has(type.id)" class="px-3 pb-3">
               <v-divider class="mb-2" />
-              <RequestFlowDiagram :auto-execute="isAutoExecute(type.code)" />
+              <RequestFlowDiagram :auto-execute="type.automatable === true" />
             </div>
           </v-expand-transition>
         </v-card>
@@ -195,8 +227,47 @@
               <v-col cols="12" md="6">
                 <v-text-field v-model="form.color" label="Color" hint="Vuetify color name (optional)" />
               </v-col>
-              <v-col cols="12">
+              <v-col cols="12" md="6">
                 <v-switch v-model="form.is_active" label="Active" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="form.automatable"
+                  :items="[
+                    { title: 'Automatable', value: true },
+                    { title: 'Manual only (never approve from ticket)', value: false },
+                    { title: 'Unclassified', value: null },
+                  ]"
+                  label="Post-approval action"
+                  hint="Can this request type's business action run automatically once granted?"
+                  persistent-hint
+                />
+              </v-col>
+              <v-col v-if="form.kind !== 'support'" cols="12" md="6">
+                <div class="d-flex align-center mb-1">
+                  <v-switch
+                    :model-value="usesHourBasedExpiration"
+                    hide-details
+                    density="compact"
+                    color="primary"
+                    class="mr-2"
+                    @update:model-value="onToggleHourBasedExpiration"
+                  />
+                  <div>
+                    <div class="text-body-2 font-weight-medium">Auto-expires by hours</div>
+                    <div class="text-caption text-medium-emphasis">Grant a fixed validity window from approval instead of a manually picked date</div>
+                  </div>
+                </div>
+                <v-text-field
+                  v-if="usesHourBasedExpiration"
+                  v-model.number="form.default_expiration_hours"
+                  type="number"
+                  min="1"
+                  label="Default hours of validity"
+                  density="compact"
+                  hint="Used automatically when this type is approved from SIGA"
+                  persistent-hint
+                />
               </v-col>
             </v-row>
           </v-form>
@@ -406,14 +477,6 @@ import type { IAuthRequestType, IDefaultCcUser, IFormField, IRequestTemplate } f
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 
-const AUTO_EXECUTE_PROCESS_CODES = [
-  'credit-note.update-meta',
-  'credit-note.add-charge',
-  'container-delay-rates.apply-changes',
-  'invoice-sea.delete-charge-proforma',
-  'sea-import.add-charge-locked',
-]
-
 definePageMeta({
   title: 'Auth Request Types - System',
   layout: 'default',
@@ -488,8 +551,16 @@ const form = ref({
   icon: '',
   color: '',
   is_active: true,
+  automatable: null as boolean | null,
+  default_expiration_hours: null as number | null,
   form_fields: [] as IFormField[],
 })
+
+const usesHourBasedExpiration = computed(() => form.value.default_expiration_hours != null)
+
+function onToggleHourBasedExpiration(enabled: boolean | null) {
+  form.value.default_expiration_hours = enabled ? 12 : null
+}
 
 const codeRules = [(v: string) => !!v || 'Code is required']
 
@@ -528,7 +599,7 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, form_fields: [] }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, default_expiration_hours: null, form_fields: [] }
   showDialog.value = true
 }
 
@@ -668,10 +739,6 @@ function toggleFlow(id: number) {
     showFlowForId.value.add(id)
   }
   showFlowForId.value = new Set(showFlowForId.value)
-}
-
-function isAutoExecute(code: string) {
-  return AUTO_EXECUTE_PROCESS_CODES.includes(code)
 }
 
 // ── Form fields editor ────────────────────────────────────────────────────────
