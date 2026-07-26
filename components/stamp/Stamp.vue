@@ -75,7 +75,7 @@
             </div>
             <div class="border-l border-black grid grid-cols-1 p-4">
               <div class="flex mx-auto">
-                <div class="text-center">
+                <div v-if="!isAir" class="text-center">
                   <div :class="cssSealRevalidado" @click="app.generate('REVALIDACION')">
                     <div>
                       <v-icon class="text-h3">mdi-stamper</v-icon>
@@ -83,11 +83,17 @@
                     <div>Revalidación</div>
                   </div>
                 </div>
-                <div :class="cssSealEndoso" @click="app.generate('ENDOSO')">
+                <div v-if="!isAir" :class="cssSealEndoso" @click="app.generate('ENDOSO')">
                   <div>
                     <v-icon class="text-h3">mdi-stamper</v-icon>
                   </div>
                   <div>Endoso</div>
+                </div>
+                <div v-if="isAir" :class="cssSealAirRevalidation" @click="app.generate('AIR_REVALIDACION')">
+                  <div>
+                    <v-icon class="text-h3">mdi-stamper</v-icon>
+                  </div>
+                  <div>Revalidación Aérea</div>
                 </div>
                 <div class="flex gap-2 m-4 justify-center">
                   <div class="justify-center">{{ fontSizeRef }} pts</div>
@@ -222,7 +228,13 @@ const props = defineProps({
     type: Object,
     required: false,
   },
+  serviceType: {
+    type: String,
+    default: 'sea',
+  },
 })
+
+const isAir = computed(() => props.serviceType === 'air')
 
 const { user } = useSanctumAuth() as any
 
@@ -312,6 +324,17 @@ const cssSealEndoso = computed(() => {
   }
 })
 
+const cssSealAirRevalidation = computed(() => {
+  let bgColor = ''
+  if (typeSeal.value === 'AIR_REVALIDACION') {
+    bgColor = 'bg-green-300 dark:bg-green-500'
+  }
+  return {
+    'text-center w-32 m-4 p-4 border rounded-md hover:bg-green-600 hover:cursor-pointer': true,
+    [bgColor]: true,
+  }
+})
+
 const totalLabelCargoType = computed(() => {
   if (props.reference?.cargo_type === 'FCL') {
     return `TOTAL CONTENEDORES: ${props.reference?.containers.length} CTRS`
@@ -329,6 +352,11 @@ const totalLabelCargoType = computed(() => {
 })
 
 const hashSeal = computed(() => {
+  if (isAir.value) {
+    return btoa(
+      `TM_#${props.reference?.reference_number} ${props.reference?.master_awb || ''} ${props.reference?.house_awb || ''}`
+    )
+  }
   return btoa(
     `TM_#${props.reference?.reference_number} ${props.reference?.voyage_discharge?.name} ${props.reference?.line?.name}`
   )
@@ -396,7 +424,7 @@ const app = reactive({
         ctx.drawImage(img, 0, 0, 1200, 1500)
         if (draw) {
           const prevState = this.states[container]
-          if (prevState.stamp) {
+          if (prevState?.stamp) {
             console.warn('ESTADO PREVIO')
             console.warn(prevState)
             const posX = prevState.posX ? prevState.posX : 100
@@ -498,7 +526,7 @@ const app = reactive({
 
     this.generate(typeSeal.value)
 
-    const image = this.imagesPreviews[this.pageSelected].value
+    const image = this.imagesPreviews[this.pageSelected]?.value
     this.transfer(image, this.pageSelected, true)
   },
   decreaseFont: function () {
@@ -506,7 +534,7 @@ const app = reactive({
     if (tmp >= 10) fontSizeRef.value -= 1
     this.generate(typeSeal.value)
 
-    const image = this.imagesPreviews[this.pageSelected].value
+    const image = this.imagesPreviews[this.pageSelected]?.value
     this.transfer(image, this.pageSelected, true)
   },
   generate: function (type: string) {
@@ -539,7 +567,12 @@ const app = reactive({
     ctx.clearRect(0, 0, 500, 350)
 
     typeSeal.value = type
-    const tipoSello = type === 'REVALIDACION' ? 'REVALIDADO' : 'ENDOSADO'
+    const tipoSello =
+      type === 'REVALIDACION'
+        ? 'REVALIDADO'
+        : type === 'ENDOSO'
+        ? 'ENDOSADO'
+        : 'REVALIDADO'
     let increment = 15
     const testFontSize = 14
 
@@ -566,50 +599,139 @@ const app = reactive({
     const maxWidth = w - 20 // Allow some padding inside the box
     const lineHeight = increment
 
-    // Update calls
-    base = wrapText(
-      ctx,
-      'B/M: ' + props.reference?.voyage_discharge?.voyage?.vessel?.name,
-      10,
-      base,
-      maxWidth,
-      lineHeight
-    )
+    let airRevalidationHeight = h
 
-    // Use the new wrapTextWithAlignment for Voyage and ETA
-    base = wrapTextWithAlignment(
-      ctx,
-      'Voyage: ' + (props.reference?.voyage_discharge.voyage.name || ''),
-      'ETA: ' + (props.reference?.voyage_discharge?.eta_date || ''),
-      20,
-      base,
-      maxWidth,
-      lineHeight + 4
-    )
+    if (type === 'AIR_REVALIDACION') {
+      const lastTransit = props.reference?.transits?.[props.reference.transits.length - 1]
+      const arrivalDate = lastTransit?.arrival_date || ''
+      const padding = 12
+      const rowGap = lineHeight + 8
 
-    // Centered Text Example: 'type' text
-    ctx.textAlign = 'center' // Set text alignment to center
-    ctx.font = `bold ${baseFont + 3}px ${fontName}`
-    base = wrapText(ctx, tipoSello, w / 2, base, maxWidth, lineHeight + 4) // Center type text
+      // Title
+      ctx.textAlign = 'center'
+      ctx.font = `bold ${baseFont + 2}px ${fontName}`
+      base += 6
+      base = wrapText(ctx, 'Transporte Multimodal, S.A de C.V', w / 2, base, maxWidth, lineHeight)
+      base += 8
 
-    ctx.textAlign = 'left'
-    ctx.font = `${baseFont - 1}px ${fontName}`
-    base = wrapText(ctx, 'CONFORME CON LA ENTREGA DE ESTA MERCANCIA', 10, base, maxWidth, lineHeight + 1)
-    base = wrapText(ctx, 'AL AGENTE ADUANAL', 10, base, maxWidth, lineHeight + 1)
+      ctx.textAlign = 'left'
+      ctx.font = `${baseFont}px ${fontName}`
 
-    ctx.font = `bold ${baseFont}px ${fontName}`
-    base = wrapText(ctx, customAgentPatente2, 10, base, maxWidth, lineHeight + 1)
+      const labelWidth = 92 * (fontSizeRef.value / 12)
+      const rows = [
+        { label: 'Revalidamos a:', value: props.reference?.consignee?.name || '' },
+        { label: 'Guía Master No.:', value: props.reference?.master_awb || '' },
+        { label: 'Fecha de llegada:', value: arrivalDate },
+        { label: 'Registro(s):', value: props.reference?.house_awb || '' },
+      ]
 
-    ctx.font = `${baseFont}px ${fontName}`
-    base = wrapText(ctx, totalLabelCargoType.value, 10, base, maxWidth, lineHeight + 1)
-    base = wrapText(ctx, `${user.value?.name?.toUpperCase()} ${formattedDate}`, 10, base, maxWidth, lineHeight + 4)
+      rows.forEach((row) => {
+        ctx.fillText(row.label, padding, base)
+        const lineStartX = padding + labelWidth
+        const lineEndX = w - padding
+        ctx.fillText(row.value, lineStartX + 5, base)
+        ctx.beginPath()
+        ctx.lineWidth = 1
+        ctx.moveTo(lineStartX, base + 4)
+        ctx.lineTo(lineEndX, base + 4)
+        ctx.stroke()
+        base += rowGap
+      })
 
-    ctx.textAlign = 'center' // Set text alignment to center
-    ctx.font = `bold ${baseFont}px ${fontName}`
-    base = wrapText(ctx, 'TRANSPORTE MULTIMODAL, S.A. DE C.V.', w / 2, base, maxWidth, lineHeight)
+      base += 6
+      // Blank free line
+      ctx.beginPath()
+      ctx.lineWidth = 1
+      ctx.moveTo(padding, base)
+      ctx.lineTo(w - padding, base)
+      ctx.stroke()
+      base += rowGap
 
-    ctx.lineWidth = 3
-    ctx.strokeRect(0, 0, w, h)
+      // Fecha / Sección row
+      const halfW = (w - padding * 2) / 2
+      const fechaLabelX = padding
+      const fechaLineStartX = fechaLabelX + 42 * (fontSizeRef.value / 12)
+      const fechaLineEndX = padding + halfW - 8
+
+      ctx.fillText('Fecha:', fechaLabelX, base)
+      ctx.fillText(formattedDate.split(' ')[0], fechaLineStartX + 4, base)
+      ctx.beginPath()
+      ctx.lineWidth = 1
+      ctx.moveTo(fechaLineStartX, base + 4)
+      ctx.lineTo(fechaLineEndX, base + 4)
+      ctx.stroke()
+
+      const seccionLabelX = padding + halfW + 8
+      const seccionLineStartX = seccionLabelX + 54 * (fontSizeRef.value / 12)
+      const seccionLineEndX = w - padding
+
+      ctx.fillText('Sección:', seccionLabelX, base)
+      ctx.beginPath()
+      ctx.lineWidth = 1
+      ctx.moveTo(seccionLineStartX, base + 4)
+      ctx.lineTo(seccionLineEndX, base + 4)
+      ctx.stroke()
+
+      base += rowGap + 6
+      airRevalidationHeight = Math.min(base, canvasCustom.value.height)
+    } else {
+      // Update calls
+      base = wrapText(
+        ctx,
+        'B/M: ' + props.reference?.voyage_discharge?.voyage?.vessel?.name,
+        10,
+        base,
+        maxWidth,
+        lineHeight
+      )
+
+      // Use the new wrapTextWithAlignment for Voyage and ETA
+      base = wrapTextWithAlignment(
+        ctx,
+        'Voyage: ' + (props.reference?.voyage_discharge.voyage.name || ''),
+        'ETA: ' + (props.reference?.voyage_discharge?.eta_date || ''),
+        20,
+        base,
+        maxWidth,
+        lineHeight + 4
+      )
+
+      // Centered Text Example: 'type' text
+      ctx.textAlign = 'center' // Set text alignment to center
+      ctx.font = `bold ${baseFont + 3}px ${fontName}`
+      base = wrapText(ctx, tipoSello, w / 2, base, maxWidth, lineHeight + 4) // Center type text
+
+      ctx.textAlign = 'left'
+      ctx.font = `${baseFont - 1}px ${fontName}`
+      base = wrapText(ctx, 'CONFORME CON LA ENTREGA DE ESTA MERCANCIA', 10, base, maxWidth, lineHeight + 1)
+      base = wrapText(ctx, 'AL AGENTE ADUANAL', 10, base, maxWidth, lineHeight + 1)
+
+      ctx.font = `bold ${baseFont}px ${fontName}`
+      base = wrapText(ctx, customAgentPatente2, 10, base, maxWidth, lineHeight + 1)
+
+      ctx.font = `${baseFont}px ${fontName}`
+      base = wrapText(ctx, totalLabelCargoType.value, 10, base, maxWidth, lineHeight + 1)
+      base = wrapText(ctx, `${user.value?.name?.toUpperCase()} ${formattedDate}`, 10, base, maxWidth, lineHeight + 4)
+
+      ctx.textAlign = 'center' // Set text alignment to center
+      ctx.font = `bold ${baseFont}px ${fontName}`
+      base = wrapText(ctx, 'TRANSPORTE MULTIMODAL, S.A. DE C.V.', w / 2, base, maxWidth, lineHeight)
+    }
+
+    if (type === 'AIR_REVALIDACION') {
+      h = airRevalidationHeight
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      if (typeof (ctx as any).roundRect === 'function') {
+        ;(ctx as any).roundRect(2, 2, w - 4, h - 4, 12)
+        ctx.stroke()
+      } else {
+        ctx.strokeRect(0, 0, w, h)
+      }
+    } else {
+      ctx.lineWidth = 3
+      ctx.strokeRect(0, 0, w, h)
+    }
 
     // Update seal dimensions to match the actual drawn stamp size
     sealWidth = w
@@ -969,7 +1091,10 @@ const previewPdfToSeal = async () => {
   try {
     loadingStore.loading = true
     numPages.value = 0
-    const response = await $api.testServices.previewPdfToSeal(props.reference?.id)
+    const response = isAir.value
+      ? await $api.airImport.previewRevalidationPdfToSeal(props.reference?.id)
+      : await $api.testServices.previewPdfToSeal(props.reference?.id)
+    if (!response || !response.images) return
     console.log('preview images', response)
 
     response.images.forEach((image: any, idx: number) => {
@@ -977,7 +1102,7 @@ const previewPdfToSeal = async () => {
       console.warn('blob', imageBlob)
 
       const newImage = URL.createObjectURL(imageBlob)
-      app.imagesPreviews[idx].value = newImage
+      ;(app.imagesPreviews[idx] as any).value = newImage
       numPages.value += 1
     })
     if (app.imagesPreviews[0]?.value) app.transfer(app.imagesPreviews[0].value, 0, true)
@@ -999,7 +1124,9 @@ const process = async () => {
   try {
     loadingIndicator.start()
     loadingStore.loading = true
-    const response = await $api.testServices.processPdf(props.reference?.id, form)
+    const response = isAir.value
+      ? await $api.airImport.addRevalidationOriginalPdf(props.reference?.id, form)
+      : await $api.testServices.processPdf(props.reference?.id, form)
 
     const maxPages = response.images.length
     if (maxPages > 10) {
@@ -1012,9 +1139,9 @@ const process = async () => {
     })
 
     console.warn('numero de paginas', numPages.value)
+    if (!response || !response.images) return
     response.images.forEach((image: any, idx: number) => {
-      const tmpImage = response.images[idx]
-      const decodedImage = atob(tmpImage)
+      const decodedImage = atob(image)
       const arrayBuffer = new ArrayBuffer(decodedImage.length)
       const uint8Array = new Uint8Array(arrayBuffer)
       for (let i = 0; i < decodedImage.length; i++) {
@@ -1022,7 +1149,7 @@ const process = async () => {
       }
       const blob = new Blob([uint8Array], { type: 'image/webp' })
       const newImage = URL.createObjectURL(blob)
-      app.imagesPreviews[idx].value = newImage
+      ;(app.imagesPreviews[idx] as any).value = newImage
     })
     console.log(app.imagesPreviews)
     if (app.imagesPreviews[0]?.value) app.transfer(app.imagesPreviews[0].value, 0, true)
@@ -1082,7 +1209,9 @@ const saveSeal = async () => {
 
     console.log('save seal', formData)
 
-    const response = await $api.testServices.addSeal(props.reference?.id, formData)
+    const response = isAir.value
+      ? await $api.airImport.saveRevalidationPdfSellos(props.reference?.id, formData)
+      : await $api.testServices.addSeal(props.reference?.id, formData)
     console.log(response)
     fileOriginal.value = response.attachment_original
     fileSealed.value = response.attachment_sellos
