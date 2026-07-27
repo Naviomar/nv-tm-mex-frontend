@@ -33,6 +33,7 @@
             :referenciaId="props.referenciaId"
             :container="containerToEdit"
             :containerTypes="customContainerTypes"
+            :isLocked="isLocked"
             @cancel="cancelEditContainer"
             @updated="setUpdatedContainer"
           />
