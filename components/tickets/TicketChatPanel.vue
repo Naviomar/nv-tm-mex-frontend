@@ -198,13 +198,23 @@
                       v-for="file in msg.files"
                       :key="file.id"
                       class="d-flex align-center gap-1 file-chip"
+                      :class="isOwnMessage(msg) ? 'file-chip--own' : 'file-chip--other'"
+                      role="button"
+                      tabindex="0"
+                      @click="onFileChipClick($event, file.id)"
+                      @keydown.enter="fileButtonRefs[file.id]?.downloadFile()"
                     >
                       <v-icon size="14" :color="isOwnMessage(msg) ? 'white' : 'primary'">mdi-paperclip</v-icon>
                       <span
                         class="text-caption font-weight-medium"
                         :class="isOwnMessage(msg) ? 'text-white' : 'text-primary'"
                       >{{ file.original_name }}</span>
-                      <ButtonDownloadS3Object :s3Path="file.file_path" />
+                      <ButtonDownloadS3Object
+                        :ref="(el: any) => { if (el) fileButtonRefs[file.id] = el }"
+                        :s3Path="file.file_path"
+                        :display-name="file.original_name"
+                        icon-only
+                      />
                     </div>
                   </div>
                 </template>
@@ -378,7 +388,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, watch } from 'vue'
 import { useTicketChat } from '~/composables/useTicketChat'
 import { useCheckUser } from '~/composables/useCheckUser'
 import type { TicketType, TicketMessage } from '~/repository/modules/catalogs/ticketMessages'
@@ -452,6 +462,17 @@ function isOwnMessage(msg: TicketMessage) {
   return Number(msg.sender_id) === Number(currentUserId.value)
 }
 
+// Lets a click anywhere on the attachment chip trigger the download, not
+// just the small icon button — but the button already handles its own click,
+// so skip re-triggering when the click originated inside it (avoids a
+// double download).
+const fileButtonRefs = reactive<Record<number, any>>({})
+function onFileChipClick(event: MouseEvent, fileId: number) {
+  const target = event.target as HTMLElement
+  if (target.closest('.s3-download-trigger')) return
+  fileButtonRefs[fileId]?.downloadFile()
+}
+
 function canDeleteMessage(msg: TicketMessage) {
   return isOwnMessage(msg) || (props.canManage ?? false)
 }
@@ -472,10 +493,17 @@ function getAvatarColor(senderId: number) {
 }
 
 function sanitizeHtml(html: string) {
-  // Basic tag allowlist — prevents XSS while preserving formatting
-  // TODO: Unused variable
-  const allowed = /<\/?(b|i|u|strong|em|ul|ol|li|br|p|span)[^>]*>/gi
-  return html.replace(/<(?!\/?(b|i|u|strong|em|ul|ol|li|br|p|span)\b)[^>]+>/gi, '')
+  // Basic tag allowlist — prevents XSS while preserving formatting.
+  // `a` is intentionally restricted to safe attributes only: stripping any
+  // href value that isn't http(s) blocks javascript:/data: URIs, and
+  // target/rel are hardcoded below rather than trusted from the input.
+  const stripped = html.replace(/<(?!\/?(b|i|u|strong|em|ul|ol|li|br|p|span|a)\b)[^>]+>/gi, '')
+  return stripped.replace(/<a\b([^>]*)>/gi, (_match, attrs: string) => {
+    const hrefMatch = /href\s*=\s*"([^"]*)"|href\s*=\s*'([^']*)'/i.exec(attrs)
+    const href = hrefMatch ? (hrefMatch[1] ?? hrefMatch[2] ?? '') : ''
+    if (!/^https?:\/\//i.test(href)) return '<a>'
+    return `<a href="${href.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">`
+  })
 }
 
 // contenteditable inserts a trailing/leading "&nbsp;" (literal entity, not the
@@ -853,9 +881,36 @@ onMounted(async () => {
 }
 
 .file-chip {
-  background: rgba(var(--v-theme-surface-variant), 0.4);
-  border-radius: 6px;
-  padding: 2px 6px;
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.file-chip:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 1px;
+}
+
+/* Own message: bubble background is the solid primary color, so a
+   white-based overlay keeps contrast in both light and dark themes without
+   depending on the exact primary hue. */
+.file-chip--own {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.file-chip--own:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Other message: bubble background follows the theme surface, so tie the
+   chip to on-surface tokens — this adapts automatically between light/dark. */
+.file-chip--other {
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  border-color: rgba(var(--v-theme-on-surface), 0.12);
+}
+.file-chip--other:hover {
+  background: rgba(var(--v-theme-on-surface), 0.09);
 }
 
 .empty-state { min-height: 180px; }

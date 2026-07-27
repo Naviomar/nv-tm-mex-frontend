@@ -138,7 +138,7 @@ const saveUpdatedContainer = async (values: any) => {
     const body = {
       ...values,
     }
-    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), body, {
+    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body, {
       headers: {
         'X-Skip-Process-Check': String(!props.isLocked),
       },
