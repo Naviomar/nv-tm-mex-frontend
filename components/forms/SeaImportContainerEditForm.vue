@@ -102,6 +102,10 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  isLocked: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['cancel', 'updated'])
@@ -134,7 +138,11 @@ const saveUpdatedContainer = async (values: any) => {
     const body = {
       ...values,
     }
-    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body)
+    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body, {
+      headers: {
+        'X-Skip-Process-Check': String(!props.isLocked),
+      },
+    })
 
     snackbar.add({ type: 'success', text: 'Container updated' })
     emit('updated', container)
