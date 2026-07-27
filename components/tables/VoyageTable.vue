@@ -112,14 +112,18 @@
               v-for="(voyageDest, index) in voyageDestinations.data"
               :key="`voyage-${index}`"
               :class="{
-                '!bg-orange-100 dark:!bg-orange-900/80 dark:text-white': voyageDest.voyage?.impoExpo === 'I', // Import (I) - Dark green background
-                '!bg-purple-100 dark:!bg-purple-900/80 dark:text-white': voyageDest.voyage?.impoExpo === 'E', // Export (E) - Dark blue background
-                'bg-red-100 dark:bg-red-500': voyageDest.deleted_at, // Deleted records handling
+                '!bg-red-100 dark:!bg-red-900/80 dark:text-white opacity-70': voyageDest.deleted_at, // Deleted/cancelled — takes priority over import/export coloring
+                '!bg-orange-100 dark:!bg-orange-900/80 dark:text-white': !voyageDest.deleted_at && voyageDest.voyage?.impoExpo === 'I', // Import (I)
+                '!bg-purple-100 dark:!bg-purple-900/80 dark:text-white': !voyageDest.deleted_at && voyageDest.voyage?.impoExpo === 'E', // Export (E)
               }"
             >
               <td>
-                <div class="flex gap-2">
-                  <EditButton :item="voyageDest" permission="voyage-destinations-edit" @click="editVoyageDestination(voyageDest)" />
+                <div class="flex gap-2 items-center">
+                  <v-chip v-if="voyageDest.deleted_at" size="small" color="error" variant="elevated">
+                    <v-icon start size="14">mdi-cancel</v-icon>
+                    CANCELLED
+                  </v-chip>
+                  <EditButton v-if="!voyageDest.deleted_at" :item="voyageDest" permission="voyage-destinations-edit" @click="editVoyageDestination(voyageDest)" />
                   <ProcessAuthorizationWrapper
                     :processName="voyageDest.deleted_at ? 'voyage-restore' : 'voyage-delete'"
                     :requestKey="`${voyageDest.id}`"
@@ -131,7 +135,7 @@
                     </template>
                   </ProcessAuthorizationWrapper>
                   <VoyageTransferReferencesDialog
-                    v-if="voyageDest.total_references > 0"
+                    v-if="!voyageDest.deleted_at && voyageDest.total_references > 0"
                     :voyageDest="voyageDest"
                     :has-approved-auth="approvedTransferIds.has(Number(voyageDest.id))"
                     :has-pending-auth="pendingTransferIds.has(Number(voyageDest.id))"
@@ -182,7 +186,7 @@
                       ><v-icon>mdi-new-box</v-icon>{{ formatDateOnlyString(voyageDest.eta_date) }}</v-chip
                     >
                   </div>
-                  <div v-if="voyageDest.eta_date">
+                  <div v-if="voyageDest.eta_date && !voyageDest.deleted_at">
                       <v-chip
                         class="ma-2"
                         color="primary"
@@ -204,7 +208,7 @@
               </td>
               <td>
                 <v-btn
-                  v-if="voyageDest.voyage?.impoExpo === 'I'"
+                  v-if="voyageDest.voyage?.impoExpo === 'I' && !voyageDest.deleted_at"
                   size="small"
                   color="primary"
                   @click="goToNotifyPort(voyageDest)"
