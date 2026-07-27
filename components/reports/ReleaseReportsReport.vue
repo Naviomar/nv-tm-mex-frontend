@@ -203,6 +203,7 @@
               <v-autocomplete
                 v-model="filters.consignee_id"
                 :items="filteredConsignees"
+                :loading="loadingConsignees"
                 @update:search="onConsigneeSearch"
                 item-title="name"
                 item-value="id"
@@ -214,6 +215,15 @@
                 prepend-inner-icon="mdi-account"
                 auto-select-first
               >
+                <template #no-data>
+                  <div v-if="loadingConsignees" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
+                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                    <span>Loading consignees...</span>
+                  </div>
+                  <div v-else class="text-center py-2 text-caption text-grey">
+                    No data available
+                  </div>
+                </template>
                 <template #append-item>
                   <div
                     v-if="hasMoreConsignees"
@@ -370,14 +380,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import type { DateOrString, CatalogOption, ReleaseReportFilters } from '~/typings/reports/reports'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 
 // Helper to format date
-function formatDate(date: Date | string | null) {
+function formatDate(date: DateOrString) {
   if (!date) return ''
   if (typeof date === 'string') return date.slice(0, 10)
   return date.toISOString().slice(0, 10)
@@ -392,7 +402,7 @@ const reportType = ref<'general' | 'documents' | 'port'>('general')
 const useLegacyData = ref(true)
 const useNewData = ref(true)
 
-const filters = ref<any>({
+const filters = ref<ReleaseReportFilters>({
   fromDate: fromDate,
   toDate: toDate,
   dateType: 'eta',
@@ -407,11 +417,12 @@ const filters = ref<any>({
 })
 
 // Catalog reactive lists
-const voyages = ref<any[]>([])
-const ports = ref<any[]>([])
-const consignees = ref<any[]>([])
-const consigneeGroups = ref<any[]>([])
-const executives = ref<any[]>([])
+const loadingConsignees = ref(true)
+const voyages = ref<CatalogOption[]>([])
+const ports = ref<CatalogOption[]>([])
+const consignees = ref<CatalogOption[]>([])
+const consigneeGroups = ref<CatalogOption[]>([])
+const executives = ref<CatalogOption[]>([])
 
 // Autocomplete Filters
 const {
@@ -547,6 +558,7 @@ const applyFilters = async () => {
 
 onMounted(async () => {
   try {
+    loadingConsignees.value = true
     const response = await $api.releaseReports.getCatalogs()
     const data = response.data || {}
 
@@ -557,6 +569,8 @@ onMounted(async () => {
     executives.value = data.executives || []
   } catch (error) {
     console.error('Error loading catalogs for releases reports:', error)
+  } finally {
+    loadingConsignees.value = false
   }
 })
 </script>
