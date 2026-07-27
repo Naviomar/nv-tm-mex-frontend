@@ -68,7 +68,7 @@
               <td>
                 <div class="flex gap-2">
                   <ProcessAuthorizationWrapper
-                        v-if="!item.deleted_at && isLocked"
+                        v-if="!item.deleted_at && isLocked && canEditContainers"
                         processName="container-edit"
                         :requestKey="`${item.id}:${item.id}`"
                         label="Edit"
@@ -86,7 +86,7 @@
                     </template>
                   </ProcessAuthorizationWrapper>
                   <v-btn
-                      v-if="!item.deleted_at && !isLocked"
+                      v-if="!item.deleted_at && !isLocked && canEditContainers"
                       size="small"
                       variant="text"
                       icon="mdi-pencil-outline"
@@ -95,7 +95,7 @@
                       @click="editContainer(item)"
                   ></v-btn>
                    <ProcessAuthorizationWrapper
-                        v-if="!item.deleted_at && isLocked"
+                        v-if="!item.deleted_at && isLocked && canDeleteContainers"
                         processName="container-delete"
                         :requestKey="`${item.id}:${item.id}`"
                         label="Delete"
@@ -105,7 +105,7 @@
                     <TrashButton size="small" density="compact" variant="text"  @click="removeContainer(item, index)" :can-restore="false" />
                   </template>
                   </ProcessAuthorizationWrapper>
-                  <TrashButton  v-if="!item.deleted_at && !isLocked" size="small" density="compact" variant="text"  @click="removeContainer(item, index)" :can-restore="false" />
+                  <TrashButton  v-if="!item.deleted_at && !isLocked && canDeleteContainers" size="small" density="compact" variant="text"  @click="removeContainer(item, index)" :can-restore="false" />
                 </div>
               </td>
               <td>{{ index + 1 }}</td>
@@ -137,7 +137,11 @@ const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
 const isLocked = ref(false);
+
+const canEditContainers = computed(() => hasPermission('sea-service-containers-edit'))
+const canDeleteContainers = computed(() => hasPermission('sea-service-containers-delete'))
 
 const props = defineProps({
   referenciaId: {
