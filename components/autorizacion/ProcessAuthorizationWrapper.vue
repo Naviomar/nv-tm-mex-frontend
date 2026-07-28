@@ -15,16 +15,21 @@
 
     <!-- Pending -->
     <div v-else-if="hasPendingRequest && !hasGrantedRequest" class="paw-pending">
-      <v-chip
-        color="amber-darken-2"
-        variant="tonal"
-        size="small"
-        class="paw-chip-pending"
-      >
-        <v-icon start size="14">mdi-clock-outline</v-icon>
-        Pending approval
-        <v-progress-circular v-if="isPolling" indeterminate size="10" width="1" class="ml-1" />
-      </v-chip>
+      <v-tooltip :text="`No changes have been made yet — '${label}' will run once this request is approved.`" location="top">
+        <template #activator="{ props: tooltipProps }">
+          <v-chip
+            v-bind="tooltipProps"
+            color="amber-darken-2"
+            variant="tonal"
+            size="small"
+            class="paw-chip-pending"
+          >
+            <v-icon start size="14">mdi-clock-outline</v-icon>
+            {{ label }} — pending approval
+            <v-progress-circular v-if="isPolling" indeterminate size="10" width="1" class="ml-1" />
+          </v-chip>
+        </template>
+      </v-tooltip>
       <v-btn
         variant="text"
         color="error"

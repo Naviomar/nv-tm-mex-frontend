@@ -59,6 +59,14 @@ class MailLogsModule extends FetchFactory<any> {
       ...fetchOptions,
     })
   }
+
+  async exportCategoryReport(params?: Record<string, any>, fetchOptions?: FetchOptions) {
+    const query = new URLSearchParams({ ...params, special_report: '1' }).toString()
+    return this.call('GET', `${this.RESOURCE}/export?${query}`, {
+      responseType: 'blob',
+      ...fetchOptions,
+    })
+  }
 }
 
 export default MailLogsModule
