@@ -148,6 +148,7 @@ const {
   setFilters: setMailFilters,
   clearFilters: clearMailFilters,
   exportExcel: exportMailExcel,
+  exportCategoryReport,
 } = useMailLogs()
 
 const { users: presenceUsers } = useSystemPresence()
@@ -178,8 +179,8 @@ const openMailDetail = async (log: IMailLog) => {
   }
 }
 
-const handleGenerateReport = () => {
-  exportMailExcel()
+const handleGenerateReport = (filters: Record<string, string>) => {
+  exportCategoryReport(filters)
 }
 
 onMounted(async () => {
