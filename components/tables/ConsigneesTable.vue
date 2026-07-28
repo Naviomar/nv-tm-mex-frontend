@@ -207,7 +207,12 @@ const { hasPermission } = useCheckUser()
 
 const systemConfigModalRef = ref<InstanceType<typeof ConsigneeSystemConfigModal> | null>(null)
 const canViewSystemConfig = computed(
-  () => hasPermission('customers-view-system-config') || hasPermission('customers-update-invoicing-config') || hasPermission('customers-update-credit-legend') || hasPermission('customers-skip-hbl-validation')
+  () =>
+    hasPermission('customers-view-system-config') ||
+    hasPermission('customers-update-invoicing-config') ||
+    hasPermission('customers-update-credit-legend') ||
+    hasPermission('customers-skip-hbl-validation') ||
+    hasPermission('customers-skip-air-invoice-validation')
 )
 
 const openSystemConfig = (consignee: any) => {

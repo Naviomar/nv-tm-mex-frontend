@@ -140,6 +140,40 @@
               </v-chip>
             </template>
           </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-airplane" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Skip air invoice validation</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Allows revalidation to proceed even if the customer has unpaid air invoices.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-skip-air-invoice-validation')"
+                v-model="form.skip_air_invoice_validation"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.skip_air_invoice_validation ? 'success' : 'default'"
+              >
+                {{ form.skip_air_invoice_validation ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
         </v-list>
       </v-card-text>
 
@@ -178,6 +212,7 @@ const form = reactive({
   auto_invoicing: true,
   invoice_trigger: 'deadline',
   skip_hbl_validation: false,
+  skip_air_invoice_validation: false,
 })
 
 const invoiceTriggerLabel = computed(() => {
@@ -189,6 +224,7 @@ const resetForm = () => {
   form.auto_invoicing = true
   form.invoice_trigger = 'deadline'
   form.skip_hbl_validation = false
+  form.skip_air_invoice_validation = false
 }
 
 const openEdit = async (consignee: any) => {
@@ -198,6 +234,7 @@ const openEdit = async (consignee: any) => {
   form.auto_invoicing = consignee.auto_invoicing === undefined ? true : !!consignee.auto_invoicing
   form.invoice_trigger = consignee.invoice_trigger ?? 'deadline'
   form.skip_hbl_validation = !!consignee.skip_hbl_validation
+  form.skip_air_invoice_validation = !!consignee.skip_air_invoice_validation
   dialog.show = true
 }
 

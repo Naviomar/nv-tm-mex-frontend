@@ -222,6 +222,9 @@
         <tr>
           <td class="p-2 font-medium">Facturas aéreas pendientes</td>
           <td class="p-2">
+            <div v-if="checklist.skip_air_invoice_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <span
               :class="checklist.unpaid_air_invoices?.length > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'"
             >
@@ -579,6 +582,7 @@ const checklist = ref<any>({
   has_valid_warranty_letter: null,
   has_entrust_letter: null,
   unpaid_air_invoices: [],
+  skip_air_invoice_validation: false,
   warranty_letter_applies: true,
 })
 
