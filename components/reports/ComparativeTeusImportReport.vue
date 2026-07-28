@@ -56,7 +56,7 @@
 
           <v-row>
             <!-- Report Type (Yearly vs Monthly) -->
-            <v-col cols="12" md="6">
+            <v-col cols="12" md="3">
               <v-select
                 v-model="filters.report_type"
                 :items="[
@@ -74,7 +74,7 @@
             </v-col>
 
             <!-- Executive Dropdown -->
-            <v-col cols="12" md="6">
+            <v-col cols="12" md="3">
               <v-autocomplete
                 v-model="filters.ejecutivo_id"
                 :items="executives"
@@ -88,6 +88,43 @@
                 prepend-inner-icon="mdi-account-tie"
                 auto-select-first
               />
+            </v-col>
+
+            <!-- Consignee -->
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.client_id"
+                :items="filteredConsignees"
+                @update:search="onConsigneeSearch"
+                item-title="name"
+                item-value="id"
+                label="Consignee"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-domain"
+                auto-select-first
+              >
+                <template #no-data>
+                  <div v-if="loadingConsignees" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
+                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                    <span>Loading consignees...</span>
+                  </div>
+                  <div v-else class="text-center py-2 text-caption text-grey">
+                    No data available
+                  </div>
+                </template>
+                <template #append-item>
+                  <div
+                    v-if="hasMoreConsignees"
+                    v-intersect="onConsigneeIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
             <!-- Yearly Range Inputs -->
@@ -188,6 +225,8 @@
 </template>
 
 <script setup lang="ts">
+import type { CatalogOption, ComparativeTeusFilters } from '~/typings/reports/reports'
+
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
@@ -197,16 +236,26 @@ const useNewData = ref(true)
 
 const currentYear = new Date().getFullYear()
 
-const filters = ref({
+const filters = ref<ComparativeTeusFilters>({
   report_type: 'yearly',
   start_year: 2017,
   end_year: currentYear,
   year: currentYear,
-  ejecutivo_id: null as number | null,
+  ejecutivo_id: null,
+  client_id: null,
   include_offices: false,
 })
 
-const executives = ref<any[]>([])
+const loadingConsignees = ref(true)
+const executives = ref<CatalogOption[]>([])
+const consignees = ref<CatalogOption[]>([])
+
+const {
+  onSearch: onConsigneeSearch,
+  filteredItems: filteredConsignees,
+  hasMore: hasMoreConsignees,
+  onIntersect: onConsigneeIntersect,
+} = useAutocompleteFilter(consignees, () => filters.value.client_id)
 
 const availableYears = computed(() => {
   const years = []
@@ -229,6 +278,7 @@ const applyFilters = async () => {
         end_year: filters.value.end_year,
         year: filters.value.year,
         ejecutivo_id: filters.value.ejecutivo_id,
+        client_id: filters.value.client_id,
         include_offices: filters.value.include_offices,
       },
     }
@@ -257,9 +307,10 @@ const applyFilters = async () => {
       text: 'Report generated successfully!',
       type: 'success',
     })
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(e)
-    if (e?.response?.status === 403) {
+    const err = e as { response?: { status?: number } }
+    if (err?.response?.status === 403) {
       snackbar.add({
         text: 'You do not have permission to generate this report.',
         type: 'error',
@@ -281,6 +332,7 @@ const clearFilters = () => {
   filters.value.end_year = currentYear
   filters.value.year = currentYear
   filters.value.ejecutivo_id = null
+  filters.value.client_id = null
   filters.value.include_offices = false
   useLegacyData.value = true
   useNewData.value = true
@@ -288,10 +340,17 @@ const clearFilters = () => {
 
 onMounted(async () => {
   try {
-    const { data } = await $api.reports.getEjecutivos()
-    executives.value = data || []
+    loadingConsignees.value = true
+    const [execRes, consigneesRes] = await Promise.all([
+      $api.reports.getEjecutivos(),
+      $api.importRepo.getConsignees(),
+    ])
+    executives.value = execRes?.data || execRes || []
+    consignees.value = consigneesRes?.data || consigneesRes || []
   } catch (error) {
     console.error('Error loading catalogs:', error)
+  } finally {
+    loadingConsignees.value = false
   }
 })
 </script>

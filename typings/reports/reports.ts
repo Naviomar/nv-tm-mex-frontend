@@ -65,3 +65,13 @@ export interface ImportRepoFilters {
   destinationPort_id: number | null
   etaMode: string
 }
+
+export interface ComparativeTeusFilters {
+  report_type: string
+  start_year: number
+  end_year: number
+  year: number
+  ejecutivo_id: number | null
+  client_id: number | null
+  include_offices: boolean
+}

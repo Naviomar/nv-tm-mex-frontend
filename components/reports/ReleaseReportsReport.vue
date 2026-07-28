@@ -203,7 +203,6 @@
               <v-autocomplete
                 v-model="filters.consignee_id"
                 :items="filteredConsignees"
-                :loading="loadingConsignees"
                 @update:search="onConsigneeSearch"
                 item-title="name"
                 item-value="id"
