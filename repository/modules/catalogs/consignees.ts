@@ -164,6 +164,14 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/missing-notifications-export-excel`, fetchOptions)
   }
 
+  async exportMissingNotificationsEmailListExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/missing-notifications-export-emails-excel`, fetchOptions)
+  }
+
   /**
    * Return a shipper
    * @param fetchOptions options for `useFetch`
