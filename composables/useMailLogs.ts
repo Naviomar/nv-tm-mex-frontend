@@ -94,6 +94,15 @@ export function useMailLogs() {
     }
   }
 
+  const exportCategoryReport = async (filters: Record<string, string>) => {
+    try {
+      const blob = await api.mailLogs.exportCategoryReport(filters)
+      downloadBlob(blob, `reporte-facturas-arribo-revalidacion-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (e) {
+      console.error('[MailLogs] Export category report failed:', e)
+    }
+  }
+
   const downloadBlob = (blob: any, filename: string) => {
     const url = window.URL.createObjectURL(new Blob([blob]))
     const link = document.createElement('a')
@@ -113,5 +122,6 @@ export function useMailLogs() {
     setFilters,
     clearFilters,
     exportExcel,
+    exportCategoryReport,
   }
 }
