@@ -542,10 +542,15 @@ const app = reactive({
     let customAgent = 'Pending customs agent'
     let customAgentPatente = ''
     let customAgentPatente2 = ''
-    if (props.reference?.release?.release_agent) {
-      customAgent = props.reference?.release?.release_agent.name
-      customAgentPatente = `Patente: ${props.reference?.release?.release_agent.patente}`
-      customAgentPatente2 = `${customAgent} ${props.reference?.release?.release_agent.patente}`
+    let customAgentShortName = ''
+    // Sea references keep the agent under `release.release_agent`; air references
+    // have it directly under `release_agent` (no `release` sub-object).
+    const releaseAgent = props.reference?.release?.release_agent || props.reference?.release_agent
+    if (releaseAgent) {
+      customAgent = releaseAgent.name
+      customAgentPatente = `Patente: ${releaseAgent.patente}`
+      customAgentPatente2 = `${customAgent} ${releaseAgent.patente}`
+      customAgentShortName = `${customAgent} - ${releaseAgent.patente}`
     }
 
     const date = new Date()
@@ -619,10 +624,10 @@ const app = reactive({
 
       const labelWidth = 92 * (fontSizeRef.value / 12)
       const rows = [
-        { label: 'Revalidamos a:', value: props.reference?.consignee?.name || '' },
+        { label: 'Revalidamos a:', value: customAgentShortName },
         { label: 'Guía Master No.:', value: props.reference?.master_awb || '' },
         { label: 'Fecha de llegada:', value: arrivalDate },
-        { label: 'Registro(s):', value: props.reference?.house_awb || '' },
+        { label: 'Registro(s):', value: props.reference?.release_notes || '' },
       ]
 
       rows.forEach((row) => {
