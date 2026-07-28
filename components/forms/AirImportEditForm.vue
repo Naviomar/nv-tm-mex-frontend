@@ -414,7 +414,7 @@
             <InputAutocomplete
               name="release_agent_id"
               :items="catalogs.custom_agents"
-              item-title="name"
+              item-title="short_name"
               item-value="id"
               density="compact"
               variant="solo-filled"
@@ -446,7 +446,7 @@
             <AirWarehousesSmart @refresh="getCatalogs" />
           </div>
           <div>
-            <InputTextArea name="release_notes" density="compact" variant="solo-filled" label="Notes" />
+            <InputTextArea name="release_notes" density="compact" variant="solo-filled" label="Registro(s)" />
           </div>
         </div>
 
