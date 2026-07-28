@@ -178,23 +178,18 @@ const selectAll = () => {
   })
 }
 
-const setNewEtaOnBody = () => {
+const resetNewEtaOnBody = () => {
   if (!voyageDestUpdateEtaFormRef.value?.values.new_eta_date) {
     snackbar.add({ type: 'error', text: 'Please select a new ETA date' })
     return
   }
   const newEta = voyageDestUpdateEtaFormRef.value?.values.new_eta_date
-  const body = valueHtml.value.replaceAll('{new_eta_date}', `${newEta}`)
+  const tmp = JSON.parse(JSON.stringify(updateEtaBody.bodyEs))
+  const body = tmp
+    .replace('{vessel}', voyageDestination.value.short_name)
+    .replace('{port}', voyageDestination.value.pod?.name)
+    .replaceAll('{new_eta_date}', `${newEta}`)
   editorRef.value?.setHtml(body)
-}
-
-const resetBodyMessage = () => {
-  fillBodyWithData()
-}
-
-const resetNewEtaOnBody = () => {
-  resetBodyMessage()
-  setNewEtaOnBody()
 }
 
 const updateEtaClick = async (values: any) => {
