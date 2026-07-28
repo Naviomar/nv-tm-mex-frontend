@@ -132,6 +132,15 @@
                 prepend-inner-icon="mdi-account"
                 auto-select-first
               >
+                <template #no-data>
+                  <div v-if="loadingConsignees" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
+                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                    <span>Loading consignees...</span>
+                  </div>
+                  <div v-else class="text-center py-2 text-caption text-grey">
+                    No data available
+                  </div>
+                </template>
                 <template #append-item>
                   <div
                     v-if="hasMoreConsignees"
@@ -394,12 +403,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { DateOrString, CatalogOption, AccountStatementFilters } from '~/typings/reports/reports'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 
-function formatDate(date: Date | string) {
+function formatDate(date: DateOrString) {
+  if (!date) return ''
   if (typeof date === 'string') return date.slice(0, 10)
   return date.toISOString().slice(0, 10)
 }
@@ -424,7 +435,7 @@ const transportTypes = [
   { title: 'RAIL TRUCK', value: 'RAILTRUCK' },
 ]
 
-const filters = ref<any>({
+const filters = ref<AccountStatementFilters>({
   fromDate: fromDate,
   toDate: toDate,
   voyage_id: null,
@@ -441,12 +452,13 @@ const filters = ref<any>({
   etaMode: 'ambos',
 })
 
-const voyages = ref<any[]>([])
-const lines = ref<any[]>([])
-const executives = ref<any[]>([])
-const ports = ref<any[]>([])
-const consignees = ref<any[]>([])
-const freightForwarders = ref<any[]>([])
+const loadingConsignees = ref(true)
+const voyages = ref<CatalogOption[]>([])
+const lines = ref<CatalogOption[]>([])
+const executives = ref<CatalogOption[]>([])
+const ports = ref<CatalogOption[]>([])
+const consignees = ref<CatalogOption[]>([])
+const freightForwarders = ref<CatalogOption[]>([])
 
 
 const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
@@ -501,9 +513,10 @@ const applyFilters = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(e)
-    if (e?.response?.status === 403) {
+    const err = e as { response?: { status?: number } }
+    if (err?.response?.status === 403) {
       snackbar.add({
         text: 'You do not have permission to generate this report.',
         type: 'error',
@@ -540,6 +553,7 @@ const clearFilters = () => {
 
 onMounted(async () => {
   try {
+    loadingConsignees.value = true
     const catalogsData = await $api.accountStatement.getCatalogs()
     const catalogs = catalogsData.data || catalogsData
     voyages.value = catalogs.voyages || []
@@ -550,6 +564,8 @@ onMounted(async () => {
     freightForwarders.value = catalogs.freightForwarders || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
+  } finally {
+    loadingConsignees.value = false
   }
 })
 </script>
