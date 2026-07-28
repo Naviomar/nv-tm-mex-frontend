@@ -90,6 +90,15 @@
       <v-row dense class="mt-3">
         <v-col cols="12" class="d-flex justify-end ga-2">
           <v-btn
+            prepend-icon="mdi-file-chart-outline"
+            variant="tonal"
+            color="green-darken-2"
+            @click="generateTodayReport"
+          >
+            Generar reporte de hoy
+          </v-btn>
+          <v-spacer />
+          <v-btn
             prepend-icon="mdi-filter-remove"
             variant="outlined"
             color="grey-darken-1"
@@ -115,6 +124,7 @@
 const emit = defineEmits<{
   (e: 'apply', filters: Record<string, string>): void
   (e: 'clear'): void
+  (e: 'generate-report', filters: Record<string, string>): void
 }>()
 
 const localFilters = reactive<Record<string, string>>({
@@ -157,6 +167,23 @@ const hasActiveFilters = computed(() => {
 const activeFilterCount = computed(() => {
   return Object.values(localFilters).filter((v) => v !== '').length
 })
+
+const todayInMexico = () => {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' })
+}
+
+const generateTodayReport = () => {
+  const today = todayInMexico()
+  localFilters.date_from = today
+  localFilters.date_to = today
+
+  const clean: Record<string, string> = {}
+  Object.entries(localFilters).forEach(([k, v]) => {
+    if (v) clean[k] = v
+  })
+  emit('apply', clean)
+  emit('generate-report', clean)
+}
 </script>
 
 <style scoped>
