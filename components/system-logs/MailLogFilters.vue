@@ -38,6 +38,19 @@
           />
         </v-col>
 
+        <v-col cols="12" md="2">
+          <v-select
+            v-model="localFilters.category"
+            :items="categoryOptions"
+            label="Reporte"
+            density="comfortable"
+            variant="outlined"
+            prepend-inner-icon="mdi-shape-outline"
+            clearable
+            hide-details
+          />
+        </v-col>
+
         <v-col cols="6" md="2">
           <v-select
             v-model="localFilters.has_recipient"
@@ -107,6 +120,7 @@ const emit = defineEmits<{
 const localFilters = reactive<Record<string, string>>({
   search: '',
   mailable_class: '',
+  category: '',
   has_recipient: '',
   date_from: '',
   date_to: '',
@@ -115,6 +129,12 @@ const localFilters = reactive<Record<string, string>>({
 const hasRecipientOptions = [
   { title: 'Sí', value: '1' },
   { title: 'No (sin destinatario)', value: '0' },
+]
+
+const categoryOptions = [
+  { title: 'Facturas', value: 'invoices' },
+  { title: 'Notificaciones de arribo', value: 'arrival' },
+  { title: 'Revalidación', value: 'revalidation' },
 ]
 
 const applyFilters = () => {
