@@ -310,6 +310,7 @@
                   <th class="text-left">Port(s)</th>
                   <th class="text-left">Airport(s)</th>
                   <th class="text-left">Noty Type(s)</th>
+                  <th class="text-left">Created</th>
                 </tr>
               </thead>
               <tbody>
@@ -364,16 +365,21 @@
                           v-tooltip="'Filtered by port'"
                         >mdi-anchor</v-icon>
                       </div>
-                      
+
                     </div>
 
+                  </td>
+                  <td class="whitespace-nowrap">
+                    <UserInfoBadge :item="mail">
+                      {{ formatDateString(mail.created_at) }}
+                    </UserInfoBadge>
                   </td>
                 </tr>
               </tbody>
             </v-table>
           </v-card-text>
         </v-card>
-          
+
       </div>
     </div>
   </div>

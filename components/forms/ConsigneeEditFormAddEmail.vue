@@ -32,6 +32,7 @@
             <th>Port(s)</th>
             <th>Airport(s)</th>
             <th>Noty Type(s)</th>
+            <th>Created</th>
           </tr>
         </thead>
         <tbody>
@@ -125,6 +126,11 @@
                   {{ expandedRows.has(item.id) ? 'Show less' : `+${item.mail_notifications.length - NOTY_PREVIEW} more` }}
                 </button>
               </div>
+            </td>
+            <td class="whitespace-nowrap">
+              <UserInfoBadge :item="item">
+                {{ formatDateString(item.created_at) }}
+              </UserInfoBadge>
             </td>
           </tr>
         </tbody>
