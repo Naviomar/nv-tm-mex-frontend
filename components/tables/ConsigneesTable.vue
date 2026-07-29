@@ -173,9 +173,9 @@
                 >
               </td>
               <td>
-                <UserInfoBadge :item="consignee">
+                <ConsigneeHistoryBadge :consignee-id="consignee.id">
                   {{ formatDateString(consignee.created_at) }}
-                </UserInfoBadge>
+                </ConsigneeHistoryBadge>
               </td>
             </tr>
           </tbody>

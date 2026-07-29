@@ -140,6 +140,10 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/${id}`, fetchOptions)
   }
 
+  async getActivityLog(id: string | number, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/activity-log`, fetchOptions)
+  }
+
   async searchConsignees(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/search`, fetchOptions)
   }

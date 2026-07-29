@@ -370,9 +370,9 @@
 
                   </td>
                   <td class="whitespace-nowrap">
-                    <UserInfoBadge :item="mail">
+                    <ConsigneeHistoryBadge :consignee-id="id">
                       {{ formatDateString(mail.created_at) }}
-                    </UserInfoBadge>
+                    </ConsigneeHistoryBadge>
                   </td>
                 </tr>
               </tbody>
