@@ -128,9 +128,9 @@
               </div>
             </td>
             <td class="whitespace-nowrap">
-              <UserInfoBadge :item="item">
+              <ConsigneeHistoryBadge :consignee-id="id">
                 {{ formatDateString(item.created_at) }}
-              </UserInfoBadge>
+              </ConsigneeHistoryBadge>
             </td>
           </tr>
         </tbody>

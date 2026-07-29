@@ -46,9 +46,9 @@
               </td>
               <td>{{ note.note }}</td>
               <td class="whitespace-nowrap">
-                <UserInfoBadge :item="note">
+                <ConsigneeHistoryBadge :consignee-id="customer.id">
                   {{ formatDateString(note.created_at) }}
-                </UserInfoBadge>
+                </ConsigneeHistoryBadge>
               </td>
             </tr>
           </v-table>
