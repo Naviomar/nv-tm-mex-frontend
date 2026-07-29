@@ -14,12 +14,12 @@ const deletedStatus = [
 const bankAccounts = [
   {
     type: 'wm',
-    beneficiary: 'WORLD MARITIME LTD',
-    account_number: '6550240651',
+    beneficiary: 'WM WORLD MARITIME LTD',
+    account_number: '65502406591',
     swift: 'BOFAUS3N',
     aba: '026009593',
     bank: 'BANK OF AMERICA NT & SA',
-    bank_address: 'NEW YORK BRANCH, 10 W. 33rd, N.Y. 10001',
+    bank_address: 'NEW YORK BRANCH, 10 W 33RD STREET, NEW YORK, N.Y. 10001',
     country: 'USA',
     currency: 'USD',
   },
