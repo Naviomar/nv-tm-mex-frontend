@@ -22,36 +22,25 @@
           />
         </div>
         <div class="col-span-3">
-          <div class="flex gap-1">
-            <v-select
-              v-model="refInputType"
-              :items="refTypeOptions"
-              item-title="title"
-              item-value="value"
-              density="compact"
-              hide-details
-              style="max-width: 130px"
-            />
-            <v-text-field
-              v-model="filters.referencia"
-              density="compact"
-              :label="refInputType === 'tracker' ? 'Add tracker ref' : 'Add reference #'"
-              hint="Separate multiple with commas"
-              @keyup.enter.stop="onClickFilters"
-            >
-              <template #append-inner>
-                <v-btn
-                  v-if="filters.referencia"
-                  icon="mdi-plus"
-                  size="x-small"
-                  variant="text"
-                  color="primary"
-                  @click="addReferencia"
-                  title="Add to filter"
-                />
-              </template>
-            </v-text-field>
-          </div>
+          <v-text-field
+            v-model="filters.referencia"
+            density="compact"
+            label="Add reference # / tracker ref"
+            hint="Separate multiple with commas"
+            @keyup.enter.stop="onClickFilters"
+          >
+            <template #append-inner>
+              <v-btn
+                v-if="filters.referencia"
+                icon="mdi-plus"
+                size="x-small"
+                variant="text"
+                color="primary"
+                @click="addReferencia"
+                title="Add to filter"
+              />
+            </template>
+          </v-text-field>
         </div>
         <div class="col-span-2">
           <v-text-field
@@ -289,6 +278,7 @@
 <script setup lang="ts">
 import { sourceSystems, deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { classifyReference } from '~/utils/references'
 import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
@@ -348,13 +338,6 @@ const {
   defaultPerPage: 10,
 })
 
-// Unified "Add reference # / Tracker ref" input: one field feeds either chip list
-const refInputType = ref<'ref' | 'tracker'>('ref')
-const refTypeOptions = [
-  { title: 'Reference #', value: 'ref' },
-  { title: 'Tracker ref', value: 'tracker' },
-]
-
 const references = ref({
   data: [] as any,
   current_page: 1,
@@ -393,17 +376,19 @@ const addReferencia = () => {
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
     // remove duplicates in refs array using set
 
-    if (refInputType.value === 'tracker') {
-      refs.forEach((ref) => {
-        filters.value.trackerRef.push(ref)
-      })
-      filters.value.trackerRef = [...new Set(filters.value.trackerRef)]
-    } else {
-      refs.forEach((ref) => {
+    // Infer reference vs. tracker ref from the prefix; bare numbers with no
+    // prefix are ambiguous, so they're searched against both.
+    refs.forEach((ref) => {
+      const kind = classifyReference(ref)
+      if (kind === 'reference' || kind === 'both') {
         filters.value.referencias.push(ref)
-      })
-      filters.value.referencias = [...new Set(filters.value.referencias)]
-    }
+      }
+      if (kind === 'tracker' || kind === 'both') {
+        filters.value.trackerRef.push(ref)
+      }
+    })
+    filters.value.referencias = [...new Set(filters.value.referencias)]
+    filters.value.trackerRef = [...new Set(filters.value.trackerRef)]
     filters.value.referencia = ''
     syncToUrl()
   }
