@@ -94,7 +94,7 @@
           <MailLogMetrics :metrics="mailLogsState.metrics" />
 
           <!-- Filters Bar -->
-          <MailLogFilters @apply="setMailFilters" @clear="clearMailFilters" />
+          <MailLogFilters @apply="setMailFilters" @clear="clearMailFilters" @generate-report="handleGenerateReport" />
 
           <!-- Logs Table -->
           <MailLogTable
@@ -148,6 +148,7 @@ const {
   setFilters: setMailFilters,
   clearFilters: clearMailFilters,
   exportExcel: exportMailExcel,
+  exportCategoryReport,
 } = useMailLogs()
 
 const { users: presenceUsers } = useSystemPresence()
@@ -176,6 +177,10 @@ const openMailDetail = async (log: IMailLog) => {
   if (full) {
     selectedMailLog.value = full
   }
+}
+
+const handleGenerateReport = (filters: Record<string, string>) => {
+  exportCategoryReport(filters)
 }
 
 onMounted(async () => {

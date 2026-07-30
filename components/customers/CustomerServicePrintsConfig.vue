@@ -31,9 +31,9 @@
                 </div>
               </td>
               <td class="whitespace-nowrap">
-                <UserInfoBadge :item="service.item">
+                <ConsigneeHistoryBadge :consignee-id="id">
                   {{ formatDateString(service.item?.created_at) }}
-                </UserInfoBadge>
+                </ConsigneeHistoryBadge>
               </td>
             </tr>
           </tbody>

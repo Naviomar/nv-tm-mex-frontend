@@ -173,9 +173,9 @@
                 >
               </td>
               <td>
-                <UserInfoBadge :item="consignee">
+                <ConsigneeHistoryBadge :consignee-id="consignee.id">
                   {{ formatDateString(consignee.created_at) }}
-                </UserInfoBadge>
+                </ConsigneeHistoryBadge>
               </td>
             </tr>
           </tbody>
@@ -193,6 +193,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import ConsigneeSystemConfigModal from '~/components/forms/ConsigneeSystemConfigModal.vue'
 import { deletedStatus } from '@/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
 
@@ -206,7 +207,12 @@ const { hasPermission } = useCheckUser()
 
 const systemConfigModalRef = ref<InstanceType<typeof ConsigneeSystemConfigModal> | null>(null)
 const canViewSystemConfig = computed(
-  () => hasPermission('customers-update-invoicing-config') || hasPermission('customers-update-credit-legend')
+  () =>
+    hasPermission('customers-view-system-config') ||
+    hasPermission('customers-update-invoicing-config') ||
+    hasPermission('customers-update-credit-legend') ||
+    hasPermission('customers-skip-hbl-validation') ||
+    hasPermission('customers-skip-air-invoice-validation')
 )
 
 const openSystemConfig = (consignee: any) => {

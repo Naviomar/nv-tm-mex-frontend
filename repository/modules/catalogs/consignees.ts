@@ -140,6 +140,10 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/${id}`, fetchOptions)
   }
 
+  async getActivityLog(id: string | number, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/activity-log`, fetchOptions)
+  }
+
   async searchConsignees(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/search`, fetchOptions)
   }
@@ -162,6 +166,14 @@ class ConsigneesModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('GET', `${this.RESOURCE}/missing-notifications-export-excel`, fetchOptions)
+  }
+
+  async exportMissingNotificationsEmailListExcel(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/missing-notifications-export-emails-excel`, fetchOptions)
   }
 
   /**

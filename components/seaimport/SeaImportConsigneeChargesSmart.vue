@@ -121,6 +121,7 @@
               </div>
               <div class="flex flex-col gap-1 items-center">
                 <v-checkbox
+                  v-if="charge.inv_type !== 'wm'"
                   v-model="charge.is_con_iva"
                   density="compact"
                   variant="solo-filled"
@@ -134,6 +135,7 @@
               </div>
               <div class="flex flex-col gap-1 items-center">
                 <v-checkbox
+                  v-if="charge.is_ocean_freight"
                   v-model="charge.has_desglose"
                   density="compact"
                   variant="solo-filled"
@@ -234,6 +236,7 @@
               </div>
               <div class="flex flex-col gap-1 items-center">
                 <v-checkbox
+                  v-if="charge.inv_type !== 'wm'"
                   v-model="charge.is_con_iva"
                   density="compact"
                   variant="solo-filled"
@@ -274,7 +277,7 @@
             />
           </div>
           <div v-if="chargeForm.show && canAddCharge">
-            <div class="grid grid-cols-9 gap-1">
+            <div class="grid grid-cols-8 gap-1">
               <div class="col-span-1">
                 <v-autocomplete
                   v-model="chargeForm.inv_type"
@@ -326,6 +329,7 @@
               </div>
               <div class="">
                 <v-checkbox
+                  v-if="chargeForm.inv_type !== 'wm'"
                   v-model="chargeForm.charge.is_con_iva"
                   density="compact"
                   variant="solo-filled"
@@ -333,16 +337,7 @@
                   :value="1"
                 />
                 </div>
-                <div class="">
-                <v-checkbox
-                  v-model="chargeForm.charge.has_desglose"
-                  density="compact"
-                  variant="solo-filled"
-                  label="Breakdown?"
-                  :value="1"
-                />
-              </div>
-              
+
               <div class="flex flex-col justify-center items-center gap-2">
                 <v-btn density="compact" variant="outlined" color="red" @click="toggleChargeAddForm">Cancel</v-btn>
                 <v-btn density="compact" variant="outlined" color="green" @click="addCharge">Add charge</v-btn>
@@ -493,7 +488,11 @@ const wm_invoices = computed(() => {
 })
 
 const isChargeLinkedToInvoice = (charge: any) => {
-  return charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)
+  return (
+    charge.invoice_charge != null ||
+    (charge.invoice_charges && charge.invoice_charges.length > 0) ||
+    charge.absorbed_invoice_id != null
+  )
 }
 
 const isChargeReadOnly = (charge: any) => {
@@ -505,7 +504,7 @@ const isSellChargeReadOnly = (charge: any) => {
 }
 
 const linkedChargeIcon = (charge: any) => {
-  if (charge.invoice_charge != null) {
+  if (charge.invoice_charge != null || charge.absorbed_invoice_id != null) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

@@ -214,6 +214,27 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/${id}/send-air-revalidation`, fetchOptions)
   }
 
+  async addRevalidationOriginalPdf(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/revalidation/add-original-pdf`, fetchOptions)
+  }
+
+  async previewRevalidationPdfToSeal(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/revalidation/preview-pdf`, fetchOptions)
+  }
+
+  async saveRevalidationPdfSellos(id: string, formData: FormData, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: formData,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/revalidation/save-pdf-sellos`, fetchOptions)
+  }
+
   async exportXlsxReport(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',

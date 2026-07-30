@@ -126,6 +126,8 @@ export interface IAuthRequestType {
   icon: string | null
   color: string | null
   is_active: boolean
+  automatable?: boolean | null
+  default_expiration_hours?: number | null
   sort_order: number
   form_fields?: IFormField[] | null
   template?: IRequestTemplate | null
@@ -133,6 +135,12 @@ export interface IAuthRequestType {
   approvers?: IDefaultCcUser[]
   created_at: string
   updated_at: string
+  /** Computed live from the route table — never stored, never stale. */
+  route_permission_info?: {
+    enforced: boolean
+    permissions: string[]
+    uri: string | null
+  }
 }
 
 class AuthRequestTypesModule extends FetchFactory<IAuthRequestType[]> {

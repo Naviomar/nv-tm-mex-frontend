@@ -73,7 +73,11 @@
                           v-model="sell_charge.selected"
                           density="compact"
                           color="primary"
-                          :disabled="sell_charge.invoice_charge != null || (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0)"
+                          :disabled="
+                            sell_charge.invoice_charge != null ||
+                            (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0) ||
+                            sell_charge.absorbed_invoice_id != null
+                          "
                           hide-details
                         />
                       </td>
@@ -92,7 +96,7 @@
                         <v-chip v-else color="error" class="ml-2">No</v-chip>
                       </td>
                       <td>
-                        <v-chip v-if="sell_charge.invoice_charge" color="success" class="ml-2">Yes</v-chip>
+                        <v-chip v-if="sell_charge.invoice_charge || sell_charge.absorbed_invoice_id" color="success" class="ml-2">Yes</v-chip>
                         <v-chip v-else color="error" class="ml-2">Pending invoice</v-chip>
                       </td>
                     </tr>

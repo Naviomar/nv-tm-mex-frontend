@@ -120,6 +120,15 @@
                 prepend-inner-icon="mdi-account"
                 auto-select-first
               >
+                <template #no-data>
+                  <div v-if="loadingConsignees" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
+                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                    <span>Loading consignees...</span>
+                  </div>
+                  <div v-else class="text-center py-2 text-caption text-grey">
+                    No data available
+                  </div>
+                </template>
                 <template #append-item>
                   <div
                     v-if="hasMoreConsignees"
@@ -293,14 +302,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { DateOrString, CatalogOption, ControlOperacionesFilters } from '~/typings/reports/reports'
 
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 
 // Helper to format date as YYYY-MM-DD
-function formatDate(date: Date | string) {
+function formatDate(date: DateOrString) {
+  if (!date) return ''
   if (typeof date === 'string') return date.slice(0, 10)
   return date.toISOString().slice(0, 10)
 }
@@ -316,7 +326,7 @@ const useLegacyData = ref(true)
 const useNewData = ref(true)
 
 // Filters
-const filters = ref<any>({
+const filters = ref<ControlOperacionesFilters>({
   fromDate: fromDate,
   toDate: toDate,
   voyage_id: null,
@@ -330,12 +340,13 @@ const filters = ref<any>({
 })
 
 // Catalog reactive bindings
-const voyages = ref<any[]>([])
-const lines = ref<any[]>([])
-const ports = ref<any[]>([])
-const consignees = ref<any[]>([])
-const freightForwarders = ref<any[]>([])
-const consigneeGroups = ref<any[]>([])
+const loadingConsignees = ref(true)
+const voyages = ref<CatalogOption[]>([])
+const lines = ref<CatalogOption[]>([])
+const ports = ref<CatalogOption[]>([])
+const consignees = ref<CatalogOption[]>([])
+const freightForwarders = ref<CatalogOption[]>([])
+const consigneeGroups = ref<CatalogOption[]>([])
 
 
 const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
@@ -426,6 +437,7 @@ const applyFilters = async () => {
 // Load Catalogs on Mounted
 onMounted(async () => {
   try {
+    loadingConsignees.value = true
     const response = await $api.controlOperaciones.getCatalogs()
     const data = response.data || {}
 
@@ -437,6 +449,8 @@ onMounted(async () => {
     consigneeGroups.value = data.consigneeGroups || []
   } catch (error) {
     console.error('Error loading catalogs for Control Operaciones:', error)
+  } finally {
+    loadingConsignees.value = false
   }
 })
 </script>

@@ -38,6 +38,19 @@
           />
         </v-col>
 
+        <v-col cols="12" md="2">
+          <v-select
+            v-model="localFilters.category"
+            :items="categoryOptions"
+            label="Reporte"
+            density="comfortable"
+            variant="outlined"
+            prepend-inner-icon="mdi-shape-outline"
+            clearable
+            hide-details
+          />
+        </v-col>
+
         <v-col cols="6" md="2">
           <v-select
             v-model="localFilters.has_recipient"
@@ -77,6 +90,15 @@
       <v-row dense class="mt-3">
         <v-col cols="12" class="d-flex justify-end ga-2">
           <v-btn
+            prepend-icon="mdi-file-chart-outline"
+            variant="tonal"
+            color="green-darken-2"
+            @click="generateTodayReport"
+          >
+            Generar reporte de hoy
+          </v-btn>
+          <v-spacer />
+          <v-btn
             prepend-icon="mdi-filter-remove"
             variant="outlined"
             color="grey-darken-1"
@@ -102,11 +124,13 @@
 const emit = defineEmits<{
   (e: 'apply', filters: Record<string, string>): void
   (e: 'clear'): void
+  (e: 'generate-report', filters: Record<string, string>): void
 }>()
 
 const localFilters = reactive<Record<string, string>>({
   search: '',
   mailable_class: '',
+  category: '',
   has_recipient: '',
   date_from: '',
   date_to: '',
@@ -115,6 +139,12 @@ const localFilters = reactive<Record<string, string>>({
 const hasRecipientOptions = [
   { title: 'Sí', value: '1' },
   { title: 'No (sin destinatario)', value: '0' },
+]
+
+const categoryOptions = [
+  { title: 'Facturas', value: 'invoices' },
+  { title: 'Notificaciones de arribo', value: 'arrival' },
+  { title: 'Revalidación', value: 'revalidation' },
 ]
 
 const applyFilters = () => {
@@ -137,6 +167,23 @@ const hasActiveFilters = computed(() => {
 const activeFilterCount = computed(() => {
   return Object.values(localFilters).filter((v) => v !== '').length
 })
+
+const todayInMexico = () => {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' })
+}
+
+const generateTodayReport = () => {
+  const today = todayInMexico()
+  localFilters.date_from = today
+  localFilters.date_to = today
+
+  const clean: Record<string, string> = {}
+  Object.entries(localFilters).forEach(([k, v]) => {
+    if (v) clean[k] = v
+  })
+  emit('apply', clean)
+  emit('generate-report', clean)
+}
 </script>
 
 <style scoped>

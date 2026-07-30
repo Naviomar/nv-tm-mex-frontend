@@ -31,13 +31,16 @@
         </div>
         <div class="col-span-2">
           <v-autocomplete
-            v-model="filters.executiveId"
+            v-model="filters.executiveIds"
             :items="catalogs?.executives ?? []"
             item-value="id"
             item-title="name"
             label="Executive"
             density="compact"
+            multiple
             clearable
+            chips
+            closable-chips
             hide-details
             @update:model-value="onSearch"
           ></v-autocomplete>
@@ -48,7 +51,7 @@
           <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
           <v-btn color="primary" @click="onSearch"> Search </v-btn>
           <v-btn color="success" variant="tonal" prepend-icon="mdi-file-excel-outline" :loading="exportingExcel" @click="exportExcel">
-            Download report
+            Download matrix report
           </v-btn>
           <v-checkbox
             v-model="includeCatalogCc"
@@ -57,6 +60,15 @@
             hide-details
             class="flex-grow-0"
           />
+          <v-btn
+            color="info"
+            variant="tonal"
+            prepend-icon="mdi-email-outline"
+            :loading="exportingEmailList"
+            @click="exportEmailListExcel"
+          >
+            Download email list report
+          </v-btn>
           <v-select
             v-model="limit"
             :items="perPageOptions"
@@ -152,7 +164,7 @@ const customerMailNotificationIds = customerMailNotifications.map((n: any) => n.
 const filters = ref({
   name: '',
   mailNotificationIds: [] as number[],
-  executiveId: null as number | null,
+  executiveIds: [] as number[],
 })
 
 const perPageOptions = [10, 25, 50, 100]
@@ -175,6 +187,7 @@ const catalogs = ref<any>(null)
 const showMatrix = ref(false)
 const selectedConsignee = ref<any>(null)
 const exportingExcel = ref(false)
+const exportingEmailList = ref(false)
 const includeCatalogCc = ref(false)
 
 const getConsignees = async () => {
@@ -188,7 +201,7 @@ const getConsignees = async () => {
         name: filters.value.name,
         mail_notification_ids: customerMailNotificationIds.join(','),
         mail_notification_id: filters.value.mailNotificationIds.join(',') || undefined,
-        executive_id: filters.value.executiveId ?? undefined,
+        executive_ids: filters.value.executiveIds.join(',') || undefined,
       },
     })
     consignees.value = {
@@ -222,8 +235,27 @@ const onSearch = async () => {
   await getConsignees()
 }
 
+const datePart = () => {
+  const today = new Date()
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+}
+
+const downloadExcelBlob = (data: any, filename: string) => {
+  const blob = new Blob([data], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', filename)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
 const clearFilters = async () => {
-  filters.value = { name: '', mailNotificationIds: [], executiveId: null }
+  filters.value = { name: '', mailNotificationIds: [], executiveIds: [] }
   consignees.value.current_page = 1
   await getConsignees()
 }
@@ -238,24 +270,12 @@ const exportExcel = async () => {
           ? filters.value.mailNotificationIds
           : customerMailNotificationIds
         ).join(','),
-        executive_id: filters.value.executiveId ?? undefined,
+        executive_ids: filters.value.executiveIds.join(',') || undefined,
         include_catalog_cc: includeCatalogCc.value ? 1 : 0,
       },
     })
 
-    const blob = new Blob([response], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    const today = new Date()
-    const datePart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    link.setAttribute('download', `reporte_notificaciones_clientes_${datePart}.xlsx`)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
+    downloadExcelBlob(response, `reporte_notificaciones_clientes_${datePart()}.xlsx`)
 
     snackbar.add({
       text: 'Report generated and downloaded successfully.',
@@ -269,6 +289,33 @@ const exportExcel = async () => {
     })
   } finally {
     exportingExcel.value = false
+  }
+}
+
+const exportEmailListExcel = async () => {
+  try {
+    exportingEmailList.value = true
+    const response: any = await $api.consignees.exportMissingNotificationsEmailListExcel({
+      query: {
+        name: filters.value.name,
+        executive_ids: filters.value.executiveIds.join(',') || undefined,
+      },
+    })
+
+    downloadExcelBlob(response, `reporte_correos_clientes_${datePart()}.xlsx`)
+
+    snackbar.add({
+      text: 'Report generated and downloaded successfully.',
+      type: 'success',
+    })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({
+      text: 'Error exporting the report.',
+      type: 'error',
+    })
+  } finally {
+    exportingEmailList.value = false
   }
 }
 

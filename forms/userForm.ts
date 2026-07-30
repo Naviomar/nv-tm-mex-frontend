@@ -11,14 +11,6 @@ const schema = toTypedSchema(
         'Email address is not valid'
       )
       .required('El email es requerido'),
-    password: yup
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .required('Password is required'),
-    password_confirmation: yup
-      .string()
-      .oneOf([yup.ref('password')], 'Your passwords do not match.')
-      .required('Password confirmation is required'),
     roles: yup.array().of(yup.object()),
     permissions: yup.array().of(yup.object()),
   })

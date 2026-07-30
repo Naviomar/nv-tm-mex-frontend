@@ -63,7 +63,7 @@
           </v-card>
 
           <!-- Fiscal Information -->
-          <v-card variant="tonal" color="purple" class="mb-4">
+          <v-card v-if="!isWm" variant="tonal" color="purple" class="mb-4">
             <v-card-text>
               <div class="flex items-center gap-2 mb-3">
                 <v-icon color="purple-darken-2">mdi-file-document-outline</v-icon>
@@ -575,6 +575,10 @@ const isCancelled = computed(() => {
 
 const isProforma = computed(() => {
   return partyInvoice.value?.is_proforma === 1
+})
+
+const isWm = computed(() => {
+  return partyInvoice.value?.inv_type === 'wm'
 })
 
 const isPaid = computed(() => {

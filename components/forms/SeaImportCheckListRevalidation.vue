@@ -45,6 +45,9 @@
         <tr>
           <td class="p-2 font-medium">House BL</td>
           <td class="p-2">
+            <div v-if="checklist.skip_hbl_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <div v-for="(houseBl, index) in checklist.house_bls" :key="`hbl-${index}`" class="text-xs">
               <span class="font-semibold">HBL {{ houseBl.name }}:</span>
               <span :class="houseBl.can_be_delivered === 1 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'">{{
@@ -52,7 +55,7 @@
               }}</span>
               <div
                 v-if="
-                  (houseBl.can_be_delivered == null || houseBl.can_be_delivered === 0) && houseBl.type === 'Original'
+                  !checklist.skip_hbl_validation && (houseBl.can_be_delivered == null || houseBl.can_be_delivered === 0) && houseBl.type === 'Original'
                 "
                 class="text-sm text-red-600"
               >
@@ -219,6 +222,9 @@
         <tr>
           <td class="p-2 font-medium">Facturas aéreas pendientes</td>
           <td class="p-2">
+            <div v-if="checklist.skip_air_invoice_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <span
               :class="checklist.unpaid_air_invoices?.length > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'"
             >
@@ -529,9 +535,9 @@
               </div>
             </v-card-text>
           </v-card>
-          <iframe :src="pdfUrl" width="100%" height="100%" allowfullscreen></iframe>
+          <iframe :src="pdfUrl ?? ''" width="100%" height="100%" allowfullscreen></iframe>
 
-          <object v-if="pdfUrl" :data="pdfUrl" type="application/pdf" width="100%" height="100%">
+          <object v-if="pdfUrl" :data="pdfUrl ?? ''" type="application/pdf" width="100%" height="100%">
             <p>Your browser does not support PDFs. Please download the PDF to view it.</p>
           </object>
         </v-card-text>
@@ -576,6 +582,7 @@ const checklist = ref<any>({
   has_valid_warranty_letter: null,
   has_entrust_letter: null,
   unpaid_air_invoices: [],
+  skip_air_invoice_validation: false,
   warranty_letter_applies: true,
 })
 
