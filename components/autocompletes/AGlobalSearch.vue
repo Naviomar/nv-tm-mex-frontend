@@ -16,6 +16,7 @@
       :append-inner-icon="appendInnerIcon"
       :prepend-inner-icon="prependInnerIcon"
       :error-messages="errorMessage"
+      :loading="isSearching"
       @update:model-value="onSelect"
       @click:clear="clearData"
       hint="Type at least 3 characters to search"
@@ -39,7 +40,6 @@
   </div>
 </template>
 <script setup lang="ts">
-const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
 interface Item {
@@ -119,6 +119,9 @@ const emits = defineEmits(['update:modelValue'])
 const items = ref<Item[]>([])
 const searchQuery = ref('')
 const lastSelectedTitle = ref('')
+// Local, field-scoped loading flag: the catalog lookup that backs this
+// autocomplete shouldn't block the whole page with the global overlay.
+const isSearching = ref(false)
 
 const hasData = computed(() => !!value.value)
 
@@ -145,7 +148,7 @@ const clearData = () => {
 
 const searchData = _Debounce(async (search: string, id?: string) => {
   try {
-    loadingStore.start()
+    isSearching.value = true
     // create object with values to search discard id if null
     const body = {
       name: search,
@@ -189,9 +192,7 @@ const searchData = _Debounce(async (search: string, id?: string) => {
       text: `Error fetching ${props.label}`,
     })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    isSearching.value = false
   }
 }, 500)
 

@@ -10,6 +10,7 @@
       hide-no-data
       density="compact"
       clearable
+      :loading="isSearching"
       prepend-inner-icon="mdi-magnify"
       @update:model-value="onSelect"
       @click:clear="clearData"
@@ -22,7 +23,6 @@
 </template>
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
 const props = defineProps({
@@ -44,6 +44,9 @@ const items = ref<any>([])
 const selectedItem = ref<any>(null)
 const searchQuery = ref('')
 const lastSelectedTitle = ref('')
+// Local, field-scoped loading flag: the catalog lookup that backs this
+// autocomplete shouldn't block the whole page with the global overlay.
+const isSearching = ref(false)
 
 watch(searchQuery, (newSearch) => {
   // User is typing something different from the currently selected item's
@@ -82,7 +85,7 @@ const clearData = () => {
 }
 
 const onSearch = _Debounce(async (search: string) => {
-  loadingStore.start()
+  isSearching.value = true
   try {
     const response = await $api.freightForwarders.searchFfs({
       query: {
@@ -96,9 +99,7 @@ const onSearch = _Debounce(async (search: string) => {
       text: 'Error fetching data',
     })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    isSearching.value = false
   }
 }, 500)
 

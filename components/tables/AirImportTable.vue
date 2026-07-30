@@ -376,15 +376,17 @@ const addReferencia = () => {
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
     // remove duplicates in refs array using set
 
-    // Infer reference vs. tracker ref from the prefix; bare numbers with no
-    // prefix are ambiguous, so they're searched against both.
+    // Infer reference vs. tracker ref from the prefix. Bare numbers with no
+    // prefix are ambiguous, so they go through "referencias" only - the
+    // backend matches those against both the consecutive and the tracker
+    // number. Sending the same bare number to both filters here would AND
+    // them together at the query level and never match anything.
     refs.forEach((ref) => {
       const kind = classifyReference(ref)
-      if (kind === 'reference' || kind === 'both') {
-        filters.value.referencias.push(ref)
-      }
-      if (kind === 'tracker' || kind === 'both') {
+      if (kind === 'tracker') {
         filters.value.trackerRef.push(ref)
+      } else {
+        filters.value.referencias.push(ref)
       }
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
