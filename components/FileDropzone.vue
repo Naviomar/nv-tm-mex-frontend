@@ -2,10 +2,9 @@
   <div
     class="input-file-dropzone"
     :class="{ 'input-file-dropzone--dragging': isDragging }"
-    @dragenter.capture.stop.prevent="onDragEnter"
-    @dragover.capture.stop.prevent="onDragEnter"
-    @dragleave.capture.stop.prevent="onDragLeave"
-    @drop.capture.stop.prevent="onDrop"
+    @dragenter="onDragEnter"
+    @dragleave="onDragLeave"
+    @drop.capture="onDrop"
   >
     <slot />
   </div>
@@ -14,11 +13,9 @@
 <script setup>
 import { ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   multiple: Boolean,
 })
-
-const emit = defineEmits(['drop-files'])
 
 const isDragging = ref(false)
 let dragCounter = 0
@@ -36,14 +33,9 @@ const onDragLeave = () => {
   }
 }
 
-const onDrop = (e) => {
+const onDrop = () => {
   dragCounter = 0
   isDragging.value = false
-
-  const files = Array.from(e.dataTransfer?.files || [])
-  if (!files.length) return
-
-  emit('drop-files', props.multiple ? files : files[0])
 }
 </script>
 
