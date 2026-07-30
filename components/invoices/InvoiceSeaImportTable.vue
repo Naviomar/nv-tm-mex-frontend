@@ -208,10 +208,10 @@
                     v-for="(charge, index) in item.sell_rate_breakdown"
                     :key="`charge-${index}`"
                     size="small"
-                    :color="charge.invoice_charge ? 'primary' : 'error'"
+                    :color="charge.invoice_charge || charge.absorbed_invoice_id ? 'primary' : 'error'"
                     variant="flat"
                   >
-                    <v-icon>{{ charge.invoice_charge ? 'mdi-link' : 'mdi-link-off' }}</v-icon> {{ charge.charge?.name }}
+                    <v-icon>{{ charge.invoice_charge || charge.absorbed_invoice_id ? 'mdi-link' : 'mdi-link-off' }}</v-icon> {{ charge.charge?.name }}
                   </v-chip>
                 </div>
                 <div v-if="item.demurrage_charges?.length > 0" class="flex flex-col gap-1">
