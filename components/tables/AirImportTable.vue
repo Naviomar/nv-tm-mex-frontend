@@ -14,13 +14,6 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-4">
-          <ACustomerSearch
-            v-model="filters.consignee_id"
-            @update:search-text="filters.consignee_name = $event"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.referencia"
@@ -48,6 +41,13 @@
             density="compact"
             label="Tracker ref"
             hint="Comma separated"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
             @keyup.enter.stop="onClickFilters"
           />
         </div>
