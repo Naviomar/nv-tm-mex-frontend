@@ -13,7 +13,9 @@
             <span class="ms-2">Seleccione un nuevo PDF para sellar</span>
           </div>
           <div class="flex">
-            <v-file-input v-model="form.files" density="compact" counter label="File PDF" />
+            <FileDropzone @drop-files="(file) => (form.files = file)">
+              <v-file-input v-model="form.files" density="compact" counter label="File PDF" />
+            </FileDropzone>
 
             <v-btn color="primary" @click="process"> Upload pdf</v-btn>
           </div>

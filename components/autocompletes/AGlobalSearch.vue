@@ -16,6 +16,7 @@
       :append-inner-icon="appendInnerIcon"
       :prepend-inner-icon="prependInnerIcon"
       :error-messages="errorMessage"
+      :loading="isSearching"
       @update:model-value="onSelect"
       @click:clear="clearData"
       hint="Type at least 3 characters to search"
@@ -39,7 +40,6 @@
   </div>
 </template>
 <script setup lang="ts">
-const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
 interface Item {
@@ -118,6 +118,10 @@ const emits = defineEmits(['update:modelValue'])
 
 const items = ref<Item[]>([])
 const searchQuery = ref('')
+const lastSelectedTitle = ref('')
+// Local, field-scoped loading flag: the catalog lookup that backs this
+// autocomplete shouldn't block the whole page with the global overlay.
+const isSearching = ref(false)
 
 const hasData = computed(() => !!value.value)
 
@@ -137,12 +141,14 @@ const getItemTitle = (item: any) => {
 const clearData = () => {
   value.value = null
   items.value = []
+  searchQuery.value = ''
+  lastSelectedTitle.value = ''
   onSelect(null)
 }
 
 const searchData = _Debounce(async (search: string, id?: string) => {
   try {
-    loadingStore.start()
+    isSearching.value = true
     // create object with values to search discard id if null
     const body = {
       name: search,
@@ -169,13 +175,15 @@ const searchData = _Debounce(async (search: string, id?: string) => {
 
       if (props.returnObject) {
         value.value = response[0]
+        lastSelectedTitle.value = getItemTitle(response[0])
         onSelect(response[0])
       } else {
         value.value = response[0]?.id
+        lastSelectedTitle.value = getItemTitle(response[0])
         onSelect(response[0]?.id)
       }
-      // clear search query
-      searchQuery.value = ''
+      // reflect the auto-selected item's title instead of the raw typed text
+      searchQuery.value = lastSelectedTitle.value
     }
   } catch (error) {
     console.error(error)
@@ -184,14 +192,20 @@ const searchData = _Debounce(async (search: string, id?: string) => {
       text: `Error fetching ${props.label}`,
     })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    isSearching.value = false
   }
 }, 500)
 
-const onSelect = (customer: any) => {
-  emits('update:modelValue', customer)
+const onSelect = (selected: any) => {
+  if (selected) {
+    if (props.returnObject) {
+      lastSelectedTitle.value = getItemTitle(selected)
+    } else {
+      const found = items.value.find((i: any) => i.id === selected)
+      lastSelectedTitle.value = found ? getItemTitle(found) : lastSelectedTitle.value
+    }
+  }
+  emits('update:modelValue', selected)
 }
 
 const { value, errorMessage } = useField(() => props.validateKey)
@@ -217,8 +231,15 @@ defineExpose({
 })
 
 watch(searchQuery, (input) => {
-  if (!input || input.length < 3 || hasData.value) return
-  console.log('searchQuery changed:', input)
+  // User is typing something different from the currently selected item's
+  // title: the old selection no longer applies, so clear it and let a new
+  // search happen instead of silently freezing on the previous value.
+  if (value.value && input !== lastSelectedTitle.value) {
+    value.value = null
+    onSelect(null)
+  }
+
+  if (!input || input.length < 3) return
   searchData(input)
 })
 
@@ -227,6 +248,10 @@ watch(
   (newValue, oldValue) => {
     if (!newValue) {
       value.value = null
+      if (searchQuery.value === lastSelectedTitle.value) {
+        searchQuery.value = ''
+      }
+      lastSelectedTitle.value = ''
     }
   }
 )

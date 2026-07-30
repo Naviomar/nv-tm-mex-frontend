@@ -39,7 +39,9 @@
             <div class="text-caption text-medium-emphasis mb-1">Current attachment</div>
             <ButtonDownloadS3Object :s3Path="lineInvoice.attachment" />
           </div>
-          <v-file-input v-model="folioForm.file" density="compact" label="Replace PDF (optional)" class="mb-3" />
+          <FileDropzone @drop-files="(file) => (folioForm.file = file)">
+            <v-file-input v-model="folioForm.file" density="compact" label="Replace PDF (optional)" class="mb-3" />
+          </FileDropzone>
 
           <div class="d-flex justify-end">
             <v-btn color="primary" size="small" :loading="savingFolio" @click="saveFolioEdit">
@@ -341,7 +343,9 @@
             <div class="text-caption text-medium-emphasis mb-1">Current PDF</div>
             <ButtonDownloadS3Object :s3Path="lineInvoice.attachment" />
           </div>
-          <v-file-input v-model="authorizedForm.file" density="compact" label="Replace PDF (optional)" />
+          <FileDropzone @drop-files="(file) => (authorizedForm.file = file)">
+            <v-file-input v-model="authorizedForm.file" density="compact" label="Replace PDF (optional)" />
+          </FileDropzone>
         </v-card-text>
         <v-card-actions class="pa-3 pt-0">
           <v-spacer />

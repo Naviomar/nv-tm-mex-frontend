@@ -29,7 +29,9 @@
               </div>
               <v-text-field v-model="form.folio" density="compact" label="Folio *" />
               <v-text-field v-model="form.amount" type="number" density="compact" label="Amount *" />
-              <v-file-input v-model="form.file" density="compact" label="Attachment" />
+              <FileDropzone @drop-files="(file) => (form.file = file)">
+                <v-file-input v-model="form.file" density="compact" label="Attachment" />
+              </FileDropzone>
 
               <v-textarea v-model="form.description" density="compact" label="Comments *" />
               <div class="flex justify-end">

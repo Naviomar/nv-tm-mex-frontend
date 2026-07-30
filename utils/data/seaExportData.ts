@@ -153,27 +153,25 @@ const bookingConfirmationBody = {
 }
 
 const draftBlBody = {
-    bodyEs: `<h2>Alert: Draft Bill of Lading</h2>
-    <p>Buenas tardes estimado cliente,</p>
-    <p>Enviamos draft BL de referencia a revisión. <strong>Favor de confirmar si los datos manifestados son correctos, SHIPPER, CONSIGNEE, NOTIFY PARTY, (Nombre, dirección completa, RFC o RNC, CTC, tel, mail) descripción, peso, número de contenedor así como sellos manifestados y tipo de liberación</strong>.</p>
-    <p style="color: red;"><strong>Deadline: {deadline}</strong></p>    
-    <p>De requerir correcciones favor enviarlas en modo de TEXTO sobre este mismo mensaje para agilizar la respuesta a su solicitud.</p>
-    <p>Saludos Cordiales.</p>
-    <p>Notas importantes:</p>
-    <p>**Favor de notar que por disposición oficial a partir del 16 de Febrero del año 2016 todos los BL's de importación/exportación deben manifestar el RFC/TAX Id. del Shipper, Consignee y Notify Party.</p>
-    <p>**Estimado cliente, favor de confirmar con su planta el/los nos. de sello aplicados a los contenedores cargados ya que ni la línea o terminal se hacen responsables de sellos erroneos o no manifestados. Es responsabilidad del embarcador manifestar correctamente todos los sellos aplicados a los contenedores sean de la línea o del embarcador así como revisar y confirmar que los sellos manifestados en B/L sean correctos. </p>
-    <p>**De igual forma se les notifica que cualquier cambio después del Vo.Bo. final y zarpe del buque aplica un cargo por corrección extemporánea</p>
+    bodyEs: `<p style="text-align: justify;">Buenas tardes estimado cliente,</p>
+    <p style="text-align: justify;">Enviamos draft BL de referencia a revisión. <strong>Favor de confirmar si los datos manifestados son correctos, SHIPPER, CONSIGNEE, NOTIFY PARTY, (Nombre, dirección completa, RFC o RNC, CTC, tel, mail) descripción, peso, número de contenedor así como sellos manifestados y tipo de liberación</strong>.</p>
+    <p style="color: red; text-align: justify;"><strong>Deadline: {deadline}</strong></p>
+    <p style="text-align: justify;">De requerir correcciones, por favor enviarlas en modo de TEXTO sobre este mismo mensaje para agilizar la respuesta a su solicitud.</p>
+    <p style="text-align: justify;">Saludos Cordiales.</p>
+    <p style="text-align: justify;">Notas importantes:</p>
+    <p style="text-align: justify;">**Favor de notar que por disposición oficial a partir del 16 de Febrero del año 2016 todos los BL's de importación/exportación deben manifestar el RFC/TAX Id. del Shipper, Consignee y Notify Party.</p>
+    <p style="text-align: justify;">**Estimado cliente, favor de confirmar con su planta el/los nos. de sello aplicados a los contenedores cargados ya que ni la línea o terminal se hacen responsables de sellos erróneos o no manifestados. Es responsabilidad del embarcador manifestar correctamente todos los sellos aplicados a los contenedores sean de la línea o del embarcador así como revisar y confirmar que los sellos manifestados en B/L sean correctos. </p>
+    <p style="text-align: justify;">**De igual forma se les notifica que cualquier cambio después del Vo.Bo. final y zarpe del buque aplica un cargo por corrección extemporánea</p>
     `,
-    bodyEn: `<h2>Alert: Draft Bill of Lading</h2>
-    <p>Good afternoon dear customer,</p>
-    <p>We are sending the draft BL for your reference and review. <strong>Please confirm if the data stated is correct, SHIPPER, CONSIGNEE, NOTIFY PARTY, (Name, full address, RFC or RNC, CTC, tel, email) description, weight, container number as well as stated seals and type of release</strong>.</p>
-    <p style="color: red;"><strong>Deadline: {deadline}</strong></p>    
-    <p>If corrections are required, please send them as TEXT in this same message to expedite the response to your request.</p>
-    <p>Best regards.</p>
-    <p>Important notes:</p>
-    <p>**Please note that as of February 16, 2016, all import/export BL's must include the RFC/TAX Id. of the Shipper, Consignee, and Notify Party, as per official regulations.</p>
-    <p>**Dear customer, please confirm with your plant the seal numbers applied to the loaded containers, as neither the line nor the terminal are responsible for incorrect or unmanifested seals. It is the shipper's responsibility to correctly manifest all seals applied to the containers, whether they belong to the line or the shipper, and to review and confirm that the seals manifested in the B/L are correct.</p>
-    <p>**Please also note that any changes after the final approval and departure of the vessel will incur a late correction fee.</p>
+    bodyEn: `<p style="text-align: justify;">Good afternoon dear customer,</p>
+    <p style="text-align: justify;">We are sending the draft BL for your reference and review. <strong>Please confirm if the data stated is correct, SHIPPER, CONSIGNEE, NOTIFY PARTY, (Name, full address, RFC or RNC, CTC, tel, email) description, weight, container number as well as stated seals and type of release</strong>.</p>
+    <p style="color: red; text-align: justify;"><strong>Deadline: {deadline}</strong></p>
+    <p style="text-align: justify;">If corrections are required, please send them as TEXT in this same message to expedite the response to your request.</p>
+    <p style="text-align: justify;">Best regards.</p>
+    <p style="text-align: justify;">Important notes:</p>
+    <p style="text-align: justify;">**Please note that as of February 16, 2016, all import/export BL's must include the RFC/TAX Id. of the Shipper, Consignee, and Notify Party, as per official regulations.</p>
+    <p style="text-align: justify;">**Dear customer, please confirm with your plant the seal numbers applied to the loaded containers, as neither the line nor the terminal are responsible for incorrect or unmanifested seals. It is the shipper's responsibility to correctly manifest all seals applied to the containers, whether they belong to the line or the shipper, and to review and confirm that the seals manifested in the B/L are correct.</p>
+    <p style="text-align: justify;">**Please also note that any changes after the final approval and departure of the vessel will incur a late correction fee.</p>
     `,
 }
 
@@ -228,16 +226,15 @@ const finalAlertBody = {
 }
 
 const updateEtaBody = {
-    bodyEs: `<h2>Este comunicado es para informarte que el barco {vessel} ha actualizado su ETA a {new_eta_date}.</h2>
-    <p>Con puerto de llegada {port} realizó cambio de ETA y por tal motivo la fecha de arribo será el día: {new_eta_date}</p>
-    <p>Por favor, toma en cuenta esta información para cualquier ajuste en tus operaciones.</p>
-    <p>NOTA: Para seguimiento de su carga agradecemos mantenerse en contacto con su ejecutivo.</p>
+    bodyEs: `<h2>Le informamos que el barco {vessel} actualizó su ETA. La nueva fecha de arribo al puerto de {port} será el {new_eta_date}.</h2>
+    <p>Le solicitamos considerar esta información para cualquier ajuste en sus operaciones.</p>
+    <p>NOTA: Para dar seguimiento a su carga, le agradecemos mantenerse en contacto con su ejecutivo.</p>
     <p>IMPORTANTE:</p>
-    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hace responsable por cualquier atraso derivado de la operacion del almacen, de la terminal, terceros o actos de Dios, por lo que le recomendamos estar al pendiente de su embarque y mantener comunicacion con nosotros.</p>
-    <p>Este aviso es de caracter informativo unicamente y no crea responsabilidad alguna para TRANSPORTE MULTIMODAL, SA DE CV. por problemas consecuenciales derivados de la no recepcion del mismo en tiempo y forma.</p>
-    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hara responsable de demoras y almacenajes.</p>
-    <p>Para cualquier duda puede ponerse en contacto con nuestros Representantes en Puerto.</p>
-    <p>gracias</p>
+    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hace responsable por cualquier atraso derivado de la operación del almacén, de la terminal, terceros o actos de Dios, por lo que le recomendamos estar al pendiente de su embarque y mantener comunicación con nosotros.</p>
+    <p>Este aviso es de carácter informativo únicamente y no crea responsabilidad alguna para TRANSPORTE MULTIMODAL, SA DE CV. por problemas consecuenciales derivados de la no recepción del mismo en tiempo y forma.</p>
+    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hará responsable de demoras y almacenajes.</p>
+    <p>Para cualquier duda, puede ponerse en contacto con nuestros representantes en puerto.</p>
+    <p>Gracias.</p>
 `,
 }
 

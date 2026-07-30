@@ -46,14 +46,16 @@
                 />
               </v-card-text>
             </v-card>
-            <v-file-input
-              v-model="form.file"
-              accept=".xlsx"
-              density="compact"
-              label="Import schedule file"
-              prepend-icon="mdi-file-excel"
-              placeholder="Select your file"
-            />
+            <FileDropzone @drop-files="(file) => (form.file = file)">
+              <v-file-input
+                v-model="form.file"
+                accept=".xlsx"
+                density="compact"
+                label="Import schedule file"
+                prepend-icon="mdi-file-excel"
+                placeholder="Select your file"
+              />
+            </FileDropzone>
             <div class="">
               <v-btn @click="previewScheduleFile" color="primary" size="small">Preview & Validate</v-btn>
             </div>

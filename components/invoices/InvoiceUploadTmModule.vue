@@ -23,7 +23,9 @@
       <div class="font-bold mb-2">Filters</div>
       <div class="grid grid-cols-2 gap-5">
         <div class="flex">
-          <v-file-input v-model="form.zipFile" density="compact" counter accept=".zip" label="File ZIP" />
+          <FileDropzone @drop-files="(file) => (form.zipFile = file)">
+            <v-file-input v-model="form.zipFile" density="compact" counter accept=".zip" label="File ZIP" />
+          </FileDropzone>
           <v-btn color="primary" class="ms-4" @click="uploadZip"> Upload</v-btn>
         </div>
       </div>

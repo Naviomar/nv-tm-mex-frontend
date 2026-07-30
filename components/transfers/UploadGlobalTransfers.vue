@@ -34,15 +34,17 @@
                   @update:model-value="getBankMovements"
                 />
                 <div class="">
-                  <v-file-input
-                    v-model="form.archivo"
-                    density="compact"
-                    label="Select a file to upload"
-                    accept=".xlsx,.csv"
-                    show-size
-                    show-file-size
-                    show-file-name
-                  />
+                  <FileDropzone @drop-files="(file) => (form.archivo = file)">
+                    <v-file-input
+                      v-model="form.archivo"
+                      density="compact"
+                      label="Select a file to upload"
+                      accept=".xlsx,.csv"
+                      show-size
+                      show-file-size
+                      show-file-name
+                    />
+                  </FileDropzone>
                 </div>
               </v-card-text>
               <v-card-actions>

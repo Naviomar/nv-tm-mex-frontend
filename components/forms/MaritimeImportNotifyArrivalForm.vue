@@ -73,13 +73,15 @@
             </div>
             <div class="col-span-1">Attach files (optional)</div>
             <div class="col-span-2">
-              <v-file-input
-                v-model="form.files"
-                density="compact"
-                multiple
-                counter
-                label="Attach additional files (optional)"
-              />
+              <FileDropzone multiple @drop-files="(files) => (form.files = files)">
+                <v-file-input
+                  v-model="form.files"
+                  density="compact"
+                  multiple
+                  counter
+                  label="Attach additional files (optional)"
+                />
+              </FileDropzone>
             </div>
             <div v-if="hasHouseBlsWithFile" class="col-span-3 grid grid-cols-3">
               <div class="col-span-1">Select House BL(s) to attach file</div>

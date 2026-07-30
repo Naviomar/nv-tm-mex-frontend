@@ -351,17 +351,19 @@
           />
 
           <div class="mb-2">
-            <v-file-input
-              v-model="cancelDialog.files"
-              label="Attach supporting documents (optional)"
-              density="compact"
-              variant="outlined"
-              multiple
-              prepend-icon="mdi-paperclip"
-              accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
-              show-size
-              chips
-            />
+            <FileDropzone multiple @drop-files="(files) => (cancelDialog.files = files)">
+              <v-file-input
+                v-model="cancelDialog.files"
+                label="Attach supporting documents (optional)"
+                density="compact"
+                variant="outlined"
+                multiple
+                prepend-icon="mdi-paperclip"
+                accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx"
+                show-size
+                chips
+              />
+            </FileDropzone>
           </div>
         </v-card-text>
         <v-card-actions>

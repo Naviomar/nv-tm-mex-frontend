@@ -10,6 +10,7 @@
       hide-no-data
       density="compact"
       clearable
+      :loading="isSearching"
       prepend-inner-icon="mdi-magnify"
       @update:model-value="onSelect"
       @click:clear="clearData"
@@ -22,7 +23,6 @@
 </template>
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
 const props = defineProps({
@@ -43,9 +43,21 @@ const emits = defineEmits(['update:modelValue'])
 const items = ref<any>([])
 const selectedItem = ref<any>(null)
 const searchQuery = ref('')
+const lastSelectedTitle = ref('')
+// Local, field-scoped loading flag: the catalog lookup that backs this
+// autocomplete shouldn't block the whole page with the global overlay.
+const isSearching = ref(false)
 
 watch(searchQuery, (newSearch) => {
-  if (newSearch.length < 3 || hasData.value) return
+  // User is typing something different from the currently selected item's
+  // title: the old selection no longer applies, so clear it and let a new
+  // search happen instead of silently freezing on the previous value.
+  if (selectedItem.value && newSearch !== lastSelectedTitle.value) {
+    selectedItem.value = null
+    onSelect(null)
+  }
+
+  if (!newSearch || newSearch.length < 3) return
   onSearch(newSearch)
 })
 
@@ -54,6 +66,10 @@ watch(
   (newValue, oldValue) => {
     if (!newValue) {
       selectedItem.value = null
+      if (searchQuery.value === lastSelectedTitle.value) {
+        searchQuery.value = ''
+      }
+      lastSelectedTitle.value = ''
     }
   }
 )
@@ -63,11 +79,13 @@ const hasData = computed(() => !!selectedItem.value)
 const clearData = () => {
   selectedItem.value = null
   items.value = []
+  searchQuery.value = ''
+  lastSelectedTitle.value = ''
   onSelect(null)
 }
 
 const onSearch = _Debounce(async (search: string) => {
-  loadingStore.start()
+  isSearching.value = true
   try {
     const response = await $api.freightForwarders.searchFfs({
       query: {
@@ -81,13 +99,15 @@ const onSearch = _Debounce(async (search: string) => {
       text: 'Error fetching data',
     })
   } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+    isSearching.value = false
   }
 }, 500)
 
-const onSelect = (customer: any) => {
-  emits('update:modelValue', customer)
+const onSelect = (itemId: any) => {
+  if (itemId) {
+    const selected = items.value.find((i: any) => i.id === itemId)
+    lastSelectedTitle.value = selected?.name || ''
+  }
+  emits('update:modelValue', itemId)
 }
 </script>
