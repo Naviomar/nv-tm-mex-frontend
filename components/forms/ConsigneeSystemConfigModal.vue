@@ -175,6 +175,68 @@
             </template>
           </v-list-item>
         </v-list>
+
+        <v-list class="py-0" lines="two">
+          <v-list-subheader class="text-uppercase text-caption font-weight-bold">
+            Notifications
+          </v-list-subheader>
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-file-document-multiple-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Send WM proforma on arrival notification</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Attaches the WM proforma to the Sea Import arrival notification email.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-update-notification-config')"
+                v-model="form.send_arrival_proforma_wm"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip v-else size="small" variant="tonal" :color="form.send_arrival_proforma_wm ? 'success' : 'default'">
+                {{ form.send_arrival_proforma_wm ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-file-document-multiple-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Send TM proforma on arrival notification</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Attaches the TM proforma to the Sea Import arrival notification email.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-update-notification-config')"
+                v-model="form.send_arrival_proforma_tm"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip v-else size="small" variant="tonal" :color="form.send_arrival_proforma_tm ? 'success' : 'default'">
+                {{ form.send_arrival_proforma_tm ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+        </v-list>
       </v-card-text>
 
       <v-card-actions class="px-6 py-4">
@@ -213,6 +275,8 @@ const form = reactive({
   invoice_trigger: 'deadline',
   skip_hbl_validation: false,
   skip_air_invoice_validation: false,
+  send_arrival_proforma_wm: true,
+  send_arrival_proforma_tm: false,
 })
 
 const invoiceTriggerLabel = computed(() => {
@@ -225,6 +289,8 @@ const resetForm = () => {
   form.invoice_trigger = 'deadline'
   form.skip_hbl_validation = false
   form.skip_air_invoice_validation = false
+  form.send_arrival_proforma_wm = true
+  form.send_arrival_proforma_tm = false
 }
 
 const openEdit = async (consignee: any) => {
@@ -235,6 +301,8 @@ const openEdit = async (consignee: any) => {
   form.invoice_trigger = consignee.invoice_trigger ?? 'deadline'
   form.skip_hbl_validation = !!consignee.skip_hbl_validation
   form.skip_air_invoice_validation = !!consignee.skip_air_invoice_validation
+  form.send_arrival_proforma_wm = consignee.send_arrival_proforma_wm === undefined ? true : !!consignee.send_arrival_proforma_wm
+  form.send_arrival_proforma_tm = !!consignee.send_arrival_proforma_tm
   dialog.show = true
 }
 

@@ -212,7 +212,8 @@ const canViewSystemConfig = computed(
     hasPermission('customers-update-invoicing-config') ||
     hasPermission('customers-update-credit-legend') ||
     hasPermission('customers-skip-hbl-validation') ||
-    hasPermission('customers-skip-air-invoice-validation')
+    hasPermission('customers-skip-air-invoice-validation') ||
+    hasPermission('customers-update-notification-config')
 )
 
 const openSystemConfig = (consignee: any) => {
