@@ -190,7 +190,9 @@ const hasUnlinkedCharges = computed(() => {
 const unlinkedCharges = computed(() => {
   if (!referencia.value) return []
   const refCharges = referencia.value.charges.filter((charge: any) => !charge.invoice_charge)
-  const sellCharges = referencia.value.sell_rate_breakdown.filter((charge: any) => !charge.invoice_charge)
+  const sellCharges = referencia.value.sell_rate_breakdown.filter(
+    (charge: any) => !charge.invoice_charge && !charge.absorbed_invoice_id
+  )
 
   return [...refCharges, ...sellCharges]
 })

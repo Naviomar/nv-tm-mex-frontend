@@ -104,6 +104,7 @@
                   </div>
                   <div class="">
                     <v-checkbox
+                      v-if="form.tm_wm !== 'wm'"
                       v-model="form.is_con_iva"
                       density="compact"
                       variant="solo-filled"
@@ -126,6 +127,7 @@
                   </div>
                   <div>
                     <v-autocomplete
+                      v-if="form.charge_id === 23"
                       v-model="form.has_desglose"
                       :items="[
                         { value: 1, name: 'Yes' },
@@ -268,7 +270,11 @@ const hasAnyInvoice = computed(() => {
 })
 
 const linkedChargeToInvoice = (charge: any) => {
-  if (charge.invoice_charge != null || (charge.invoice_charges && charge.invoice_charges.length > 0)) {
+  if (
+    charge.invoice_charge != null ||
+    (charge.invoice_charges && charge.invoice_charges.length > 0) ||
+    charge.absorbed_invoice_id != null
+  ) {
     return 'mdi-link'
   }
   return 'mdi-link-off'

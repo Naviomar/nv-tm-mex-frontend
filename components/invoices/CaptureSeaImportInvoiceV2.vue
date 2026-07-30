@@ -479,6 +479,7 @@ const availableSellCharges = computed(() => {
   return props.referencia?.sell_rate_breakdown.filter(
     (charge: any) =>
       !charge.invoice_charge &&
+      !charge.absorbed_invoice_id &&
       !form.value.sell_charges.includes(charge) &&
       charge.currency_id === form.value.currency_id
   )
@@ -489,7 +490,11 @@ const availableSellChargesTm = computed(() => {
   if (!form.value.invoice_type) return []
 
   return props.referencia?.sell_rate_breakdown.filter(
-    (charge: any) => !charge.invoice_charge && !form.value.sell_charges.includes(charge) && charge.inv_type === 'tm'
+    (charge: any) =>
+      !charge.invoice_charge &&
+      !charge.absorbed_invoice_id &&
+      !form.value.sell_charges.includes(charge) &&
+      charge.inv_type === 'tm'
   )
 })
 
@@ -497,7 +502,11 @@ const availableSellChargesWm = computed(() => {
   if (!form.value.invoice_type) return []
 
   return props.referencia?.sell_rate_breakdown.filter(
-    (charge: any) => !charge.invoice_charge && !form.value.sell_charges.includes(charge) && charge.inv_type === 'wm'
+    (charge: any) =>
+      !charge.invoice_charge &&
+      !charge.absorbed_invoice_id &&
+      !form.value.sell_charges.includes(charge) &&
+      charge.inv_type === 'wm'
   )
 })
 

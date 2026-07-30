@@ -82,6 +82,7 @@
             </div>
             <div class="">
               <v-checkbox
+                v-if="props.invoiceType !== 'wm'"
                 v-model="charge.is_con_iva"
                 density="compact"
                 variant="solo-filled"

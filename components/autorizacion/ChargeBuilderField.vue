@@ -160,10 +160,10 @@
           </v-col>
 
           <!-- Flags -->
-          <v-col cols="6">
+          <v-col v-if="showIvaCheckbox" cols="6">
             <v-checkbox v-model="form.is_con_iva" label="+ IVA" density="compact" hide-details />
           </v-col>
-          <v-col v-if="form.tipo_operacion === 'venta'" cols="6">
+          <v-col v-if="form.tipo_operacion === 'venta' && form.charge_id === 23" cols="6">
             <v-checkbox v-model="form.has_desglose" label="Breakdown (desglose)" density="compact" hide-details />
           </v-col>
         </v-row>
@@ -257,6 +257,13 @@ const chargeHint = computed(() => {
     return `TM compra: mostrando solo cargos con clave SAT (${filteredChargeOptions.value.length})`
   }
   return ''
+})
+
+// WM invoices never carry IVA today; TM may or may not.
+const showIvaCheckbox = computed(() => {
+  const f = form.value
+  if (f.tipo_operacion === 'compra') return f.tm_wm !== 'WM'
+  return f.inv_type !== 'wm'
 })
 
 // Reset charge_id when filter changes so a stale value isn't kept
