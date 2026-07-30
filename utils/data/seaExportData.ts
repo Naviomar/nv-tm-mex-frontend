@@ -228,16 +228,15 @@ const finalAlertBody = {
 }
 
 const updateEtaBody = {
-    bodyEs: `<h2>Este comunicado es para informarte que el barco {vessel} ha actualizado su ETA a {new_eta_date}.</h2>
-    <p>Con puerto de llegada {port} realizó cambio de ETA y por tal motivo la fecha de arribo será el día: {new_eta_date}</p>
-    <p>Por favor, toma en cuenta esta información para cualquier ajuste en tus operaciones.</p>
-    <p>NOTA: Para seguimiento de su carga agradecemos mantenerse en contacto con su ejecutivo.</p>
+    bodyEs: `<h2>Le informamos que el barco {vessel} actualizó su ETA. La nueva fecha de arribo al puerto de {port} será el {new_eta_date}.</h2>
+    <p>Le solicitamos considerar esta información para cualquier ajuste en sus operaciones.</p>
+    <p>NOTA: Para dar seguimiento a su carga, le agradecemos mantenerse en contacto con su ejecutivo.</p>
     <p>IMPORTANTE:</p>
-    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hace responsable por cualquier atraso derivado de la operacion del almacen, de la terminal, terceros o actos de Dios, por lo que le recomendamos estar al pendiente de su embarque y mantener comunicacion con nosotros.</p>
-    <p>Este aviso es de caracter informativo unicamente y no crea responsabilidad alguna para TRANSPORTE MULTIMODAL, SA DE CV. por problemas consecuenciales derivados de la no recepcion del mismo en tiempo y forma.</p>
-    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hara responsable de demoras y almacenajes.</p>
-    <p>Para cualquier duda puede ponerse en contacto con nuestros Representantes en Puerto.</p>
-    <p>gracias</p>
+    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hace responsable por cualquier atraso derivado de la operación del almacén, de la terminal, terceros o actos de Dios, por lo que le recomendamos estar al pendiente de su embarque y mantener comunicación con nosotros.</p>
+    <p>Este aviso es de carácter informativo únicamente y no crea responsabilidad alguna para TRANSPORTE MULTIMODAL, SA DE CV. por problemas consecuenciales derivados de la no recepción del mismo en tiempo y forma.</p>
+    <p>TRANSPORTE MULTIMODAL, SA DE CV. no se hará responsable de demoras y almacenajes.</p>
+    <p>Para cualquier duda, puede ponerse en contacto con nuestros representantes en puerto.</p>
+    <p>Gracias.</p>
 `,
 }
 
