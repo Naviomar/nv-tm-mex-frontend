@@ -21,11 +21,11 @@
             @keyup.enter.stop="onClickFilters"
           />
         </div>
-        <div class="col-span-3">
+        <div class="col-span-2">
           <v-text-field
             v-model="filters.referencia"
             density="compact"
-            label="Add reference # / tracker ref"
+            label="Add reference #"
             hint="Separate multiple with commas"
             @keyup.enter.stop="onClickFilters"
           >
@@ -41,6 +41,15 @@
               />
             </template>
           </v-text-field>
+        </div>
+        <div class="col-span-2">
+          <v-text-field
+            v-model="filters.trackerRef"
+            density="compact"
+            label="Tracker ref"
+            hint="Comma separated"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-2">
           <v-text-field
@@ -114,28 +123,16 @@
           />
         </div>
       </div>
-      <div v-if="filters.referencias.length > 0 || filters.trackerRef.length > 0">
-        <div>Filter by reference(s) / tracker ref(s)</div>
-        <div class="flex gap-2 flex-wrap">
+      <div v-if="filters.referencias.length > 0">
+        <div>Filter by reference(s)</div>
+        <div class="flex gap-2">
           <v-chip
             v-for="(ref, index) in filters.referencias"
             :key="`ref-search-${ref}`"
             closable
-            color="primary"
-            size="small"
             @click:close="removeReferencia(index)"
           >
-            <v-icon start size="14">mdi-pound</v-icon>{{ ref }}
-          </v-chip>
-          <v-chip
-            v-for="(ref, index) in filters.trackerRef"
-            :key="`tracker-search-${ref}`"
-            closable
-            color="teal"
-            size="small"
-            @click:close="removeTrackerRef(index)"
-          >
-            <v-icon start size="14">mdi-crosshairs-gps</v-icon>{{ ref }}
+            {{ ref }}
           </v-chip>
         </div>
       </div>
@@ -278,7 +275,6 @@
 <script setup lang="ts">
 import { sourceSystems, deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
-import { classifyReference } from '~/utils/references'
 import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
@@ -319,7 +315,7 @@ const initialFilters = {
   airline_id: '',
   flightNum: '',
   source_system_id: '',
-  trackerRef: [] as string[],
+  trackerRef: '',
   deleted_status: '',
 }
 
@@ -333,7 +329,7 @@ const {
   getFilteredUrl,
 } = useTableFilters(initialFilters, {
   storageKey: 'air-import-filters',
-  arrayFields: ['referencias', 'trackerRef'],
+  arrayFields: ['referencias'],
   enablePerPage: true,
   defaultPerPage: 10,
 })
@@ -376,21 +372,10 @@ const addReferencia = () => {
     const refs = Array.from(new Set(filters.value.referencia.split(','))).filter((ref) => ref !== '')
     // remove duplicates in refs array using set
 
-    // Infer reference vs. tracker ref from the prefix. Bare numbers with no
-    // prefix are ambiguous, so they go through "referencias" only - the
-    // backend matches those against both the consecutive and the tracker
-    // number. Sending the same bare number to both filters here would AND
-    // them together at the query level and never match anything.
     refs.forEach((ref) => {
-      const kind = classifyReference(ref)
-      if (kind === 'tracker') {
-        filters.value.trackerRef.push(ref)
-      } else {
-        filters.value.referencias.push(ref)
-      }
+      filters.value.referencias.push(ref)
     })
     filters.value.referencias = [...new Set(filters.value.referencias)]
-    filters.value.trackerRef = [...new Set(filters.value.trackerRef)]
     filters.value.referencia = ''
     syncToUrl()
   }
@@ -398,11 +383,6 @@ const addReferencia = () => {
 
 const removeReferencia = (index: number) => {
   filters.value.referencias.splice(index, 1)
-  syncToUrl()
-}
-
-const removeTrackerRef = (index: number) => {
-  filters.value.trackerRef.splice(index, 1)
   syncToUrl()
 }
 
