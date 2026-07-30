@@ -140,12 +140,21 @@
                         <div>Missing:</div>
                         <div>{{ ffNoteMissingThings(note) }}</div>
                       </v-tooltip>
-                      <v-file-input
-                        v-model="note.file"
-                        density="compact"
-                        label="Attachment"
-                        @update:model-value="uploadFfNoteAttachment(note)"
-                      />
+                      <FileDropzone
+                        @drop-files="
+                          (file) => {
+                            note.file = file
+                            uploadFfNoteAttachment(note)
+                          }
+                        "
+                      >
+                        <v-file-input
+                          v-model="note.file"
+                          density="compact"
+                          label="Attachment"
+                          @update:model-value="uploadFfNoteAttachment(note)"
+                        />
+                      </FileDropzone>
                     </div>
                     <div v-if="isNotePending(note)">
                       <v-checkbox v-model="note.checked" density="compact" hide-details />

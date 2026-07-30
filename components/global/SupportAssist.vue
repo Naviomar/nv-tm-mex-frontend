@@ -109,13 +109,15 @@
                 <v-textarea v-model="form.message" label="Describa la ayuda que necesita *" counter density="compact" />
               </v-col>
               <v-col cols="12">
-                <v-file-input
-                  v-model="form.attachments"
-                  multiple
-                  label="Adjunte soportes a su solicitud"
-                  counter
-                  density="compact"
-                />
+                <FileDropzone multiple @drop-files="(files) => (form.attachments = files)">
+                  <v-file-input
+                    v-model="form.attachments"
+                    multiple
+                    label="Adjunte soportes a su solicitud"
+                    counter
+                    density="compact"
+                  />
+                </FileDropzone>
               </v-col>
             </v-row>
           </div>

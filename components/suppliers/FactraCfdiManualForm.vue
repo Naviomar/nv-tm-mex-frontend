@@ -44,14 +44,16 @@
               </v-card-title>
               <v-card-text>
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-end">
-                  <v-file-input
-                    v-model="form.templateFile"
-                    accept=".xlsx,.xls"
-                    label="Excel template"
-                    density="compact"
-                    prepend-icon="mdi-file-excel"
-                    hide-details="auto"
-                  />
+                  <FileDropzone @drop-files="(file) => (form.templateFile = file)">
+                    <v-file-input
+                      v-model="form.templateFile"
+                      accept=".xlsx,.xls"
+                      label="Excel template"
+                      density="compact"
+                      prepend-icon="mdi-file-excel"
+                      hide-details="auto"
+                    />
+                  </FileDropzone>
                   <v-btn color="primary" @click="loadTemplateRows">Load file into forms</v-btn>
                 </div>
                 <div class="text-sm text-grey-darken-1 mt-2">

@@ -121,7 +121,9 @@
                     </td>
                     <td>
                       <div class="flex flex-col gap-2">
-                        <v-file-input v-model="item.new_file" label="Add attachment" density="compact" hide-details />
+                        <FileDropzone @drop-files="(file) => (item.new_file = file)">
+                          <v-file-input v-model="item.new_file" label="Add attachment" density="compact" hide-details />
+                        </FileDropzone>
                         <v-btn color="primary" size="small" @click="uploadMasterBlFile(item)"> Upload file </v-btn>
                       </div>
                     </td>
@@ -148,7 +150,9 @@
                     </td>
                     <td>
                       <div class="flex flex-col gap-2">
-                        <v-file-input v-model="item.new_file" label="Add attachment" density="compact" hide-details />
+                        <FileDropzone @drop-files="(file) => (item.new_file = file)">
+                          <v-file-input v-model="item.new_file" label="Add attachment" density="compact" hide-details />
+                        </FileDropzone>
                         <v-btn color="primary" size="small" @click="uploadHouseBlFile(item)"> Upload file </v-btn>
                       </div>
                     </td>
@@ -343,13 +347,15 @@
           </div>
           <div class="px-4">
             Upload additional files (optional)
-            <v-file-input
-              v-model="finalAlert.attachments"
-              density="compact"
-              multiple
-              label="Additional files"
-              hide-detials
-            />
+            <FileDropzone multiple @drop-files="(files) => (finalAlert.attachments = files)">
+              <v-file-input
+                v-model="finalAlert.attachments"
+                density="compact"
+                multiple
+                label="Additional files"
+                hide-detials
+              />
+            </FileDropzone>
           </div>
         </v-card-text>
         <v-card-actions>

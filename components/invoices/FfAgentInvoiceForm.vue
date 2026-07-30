@@ -212,7 +212,9 @@
             </div>
 
             <div v-if="isInbound">
-              <v-file-input v-model="form.file" density="compact" label="Attachment" />
+              <FileDropzone @drop-files="(file) => (form.file = file)">
+                <v-file-input v-model="form.file" density="compact" label="Attachment" />
+              </FileDropzone>
             </div>
 
             <v-textarea v-model="form.notes" density="compact" label="Additional notes" />

@@ -38,7 +38,9 @@
             <v-btn size="small" color="secondary" @click="getCustomAgentEmails">Add custom agent email(s)</v-btn>
           </div>
           <v-textarea v-model="form.notes" density="compact" label="Additional notes" :rows="5" />
-          <v-file-input v-model="form.attachments" multiple label="Attachments" />
+          <FileDropzone multiple @drop-files="(files) => (form.attachments = files)">
+            <v-file-input v-model="form.attachments" multiple label="Attachments" />
+          </FileDropzone>
         </div>
       </v-card-text>
       <v-card-actions>

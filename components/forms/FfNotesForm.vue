@@ -113,14 +113,16 @@
                   />
                 </div>
                 <div class="col-span-1">
-                  <v-file-input
-                    v-model="form.attachment"
-                    :counter="true"
-                    density="compact"
-                    :multiple="false"
-                    :show-size="false"
-                    label="File"
-                  />
+                  <FileDropzone @drop-files="(file) => (form.attachment = file)">
+                    <v-file-input
+                      v-model="form.attachment"
+                      :counter="true"
+                      density="compact"
+                      :multiple="false"
+                      :show-size="false"
+                      label="File"
+                    />
+                  </FileDropzone>
                 </div>
               </div>
               <div class="flex justify-start items-center gap-4 mb-2">

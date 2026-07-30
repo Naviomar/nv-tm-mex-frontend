@@ -6,15 +6,17 @@
     <div class="grid grid-cols-2 gap-3 px-4 pb-4">
       <div class="flex flex-col">
         <div>Upload MBL files here</div>
-        <v-file-input
-          v-model="form.mbl_files"
-          label="Upload MBL(s)"
-          density="compact"
-          multiple
-          dense
-          counter
-          hide-details
-        />
+        <FileDropzone multiple @drop-files="(files) => (form.mbl_files = files)">
+          <v-file-input
+            v-model="form.mbl_files"
+            label="Upload MBL(s)"
+            density="compact"
+            multiple
+            dense
+            counter
+            hide-details
+          />
+        </FileDropzone>
         <v-btn size="small" color="primary" @click="addMblFilesClick">Add MBL files</v-btn>
       </div>
       <div>

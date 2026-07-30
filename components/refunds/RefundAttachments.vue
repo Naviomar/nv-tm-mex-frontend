@@ -44,7 +44,9 @@
             </tbody>
           </v-table>
           <div class="flex flex-col gap-2 py-4">
-            <v-file-input v-model="form.files" label="Upload files" density="compact" multiple hide-details />
+            <FileDropzone multiple @drop-files="(files) => (form.files = files)">
+              <v-file-input v-model="form.files" label="Upload files" density="compact" multiple hide-details />
+            </FileDropzone>
             <v-btn color="blue-darken-1" @click="() => checkUserAndExecute(reqRefund.created_by, onUploadClick)"
               >Upload</v-btn
             >

@@ -91,12 +91,14 @@
             <div v-if="formTransitFiles.show">
               <div class="grid grid-cols-2 gap-2">
                 <div class="col-span-2">
-                  <v-file-input
-                    v-model="formTransitFiles.file"
-                    name="attachment"
-                    label="Attachment *"
-                    density="compact"
-                  />
+                  <FileDropzone @drop-files="(file) => (formTransitFiles.file = file)">
+                    <v-file-input
+                      v-model="formTransitFiles.file"
+                      name="attachment"
+                      label="Attachment *"
+                      density="compact"
+                    />
+                  </FileDropzone>
                 </div>
                 <div class="col-span-2">
                   <div class="flex justify-end items-center">
