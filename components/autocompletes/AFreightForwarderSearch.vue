@@ -49,6 +49,12 @@ const lastSelectedTitle = ref('')
 const isSearching = ref(false)
 
 watch(searchQuery, (newSearch) => {
+  // This change just mirrors the title of the item we (or the user) already
+  // selected, not new user input: skip re-searching, otherwise we'd search
+  // by the full resolved name (which the backend may not match) and clobber
+  // a valid selection with a "not found" state.
+  if (lastSelectedTitle.value && newSearch === lastSelectedTitle.value) return
+
   // User is typing something different from the currently selected item's
   // title: the old selection no longer applies, so clear it and let a new
   // search happen instead of silently freezing on the previous value.
