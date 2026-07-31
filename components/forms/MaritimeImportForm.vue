@@ -728,8 +728,13 @@ const searchPolPorts = async (search: SearchParams) => {
         return obj
       }, {})
 
-    // Add additional static values to the query if needed
-    query['not_country_id'] = 140
+    // Only constrain by country when searching by name. An id-based lookup
+    // (e.g. re-displaying an already-saved POL) must resolve regardless of
+    // whether that port's country_id matches - the value was valid when it
+    // was saved, and legacy/migrated ports may not have it set correctly.
+    if (!query.id) {
+      query['not_country_id'] = 140
+    }
     const response = await $api.ports.searchPorts({
       query: query,
     })
@@ -755,8 +760,13 @@ const searchPodPorts = async (search: SearchParams) => {
         return obj
       }, {})
 
-    // Add additional static values to the query if needed
-    query['country_ids'] = catalogs.value.sea_import_pod_country_ids.join(',')
+    // Only constrain by country when searching by name. An id-based lookup
+    // (e.g. re-displaying an already-saved POD) must resolve regardless of
+    // whether that port's country_id matches - the value was valid when it
+    // was saved, and legacy/migrated ports may not have it set correctly.
+    if (!query.id) {
+      query['country_ids'] = catalogs.value.sea_import_pod_country_ids.join(',')
+    }
     const response = await $api.ports.searchPorts({
       query: query,
     })
