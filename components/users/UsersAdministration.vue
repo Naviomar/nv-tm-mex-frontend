@@ -63,6 +63,19 @@
 
                     <EditButton :item="user" permission="users-edit" @click="editUserClick(user)" />
 
+                    <v-tooltip v-if="hasPermission('users-manage-notifications')" text="Notifications">
+                      <template v-slot:activator="{ props: tooltipProps }">
+                        <v-btn
+                          color="teal"
+                          size="x-small"
+                          variant="elevated"
+                          v-bind="tooltipProps"
+                          icon="mdi-email-multiple-outline"
+                          @click="onClickUserNotifications(user)"
+                        ></v-btn>
+                      </template>
+                    </v-tooltip>
+
                     <div v-if="user.is_active === 0">
                       <v-chip color="red" text-color="white" size="small" @click="onClickDeleteUser(user)"
                         ><v-icon>mdi-delete-empty-outline</v-icon>Inactive</v-chip
@@ -147,6 +160,20 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="showNotificationsDialog" max-width="1200" scrollable>
+          <v-card>
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div>
+                <v-icon color="primary" class="mr-2">mdi-email-multiple-outline</v-icon>
+                Notifications — {{ userForNotifications?.name || userForNotifications?.email }}
+              </div>
+              <v-btn icon="mdi-close" size="small" variant="text" @click="showNotificationsDialog = false" />
+            </v-card-title>
+            <v-card-text style="max-height: 75vh">
+              <UserMailNotificationsPanel v-if="userForNotifications" :user-id="userForNotifications.id" />
+            </v-card-text>
+          </v-card>
+        </v-dialog>
       </v-card-text>
     </v-card>
   </div>
@@ -155,6 +182,7 @@
 const { $api } = useNuxtApp()
 const loadintStore = useLoadingStore()
 const clipboard = useCopyToClipboard()
+const { hasPermission } = useCheckUser()
 
 const users = ref({
   data: [] as any,
@@ -166,6 +194,8 @@ const users = ref({
 const filters = ref<any>({ name: '', email: '', active: null })
 const showDeleteDialog = ref(false)
 const userToDelete = ref<any>(null)
+const showNotificationsDialog = ref(false)
+const userForNotifications = ref<any>(null)
 // let usersPaged = ref<any>({})
 
 const onClickResetFilters = async () => {
@@ -214,6 +244,11 @@ function onClickUserView(user: any) {
 
 function editUserClick(user: any) {
   return navigateTo(`/system/users/edit/${user.id}/`)
+}
+
+function onClickUserNotifications(user: any) {
+  userForNotifications.value = user
+  showNotificationsDialog.value = true
 }
 
 async function getUsers() {
