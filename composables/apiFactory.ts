@@ -97,6 +97,7 @@ import AccountStatementModule from '~/repository/modules/reports/accountStatemen
 import ControlOperacionesModule from '~/repository/modules/reports/controlOperaciones'
 import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
+import UserMailNotificationsModule from '~/repository/modules/userMailNotifications'
 
 interface IApiInstance {
   audit: AuditModule
@@ -196,6 +197,7 @@ interface IApiInstance {
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
   userDataRestrictions: UserDataRestrictionsModule
+  userMailNotifications: UserMailNotificationsModule
 }
 
 export function useApiFactory() {
@@ -300,6 +302,7 @@ export function useApiFactory() {
     authRequestTypes: new AuthRequestTypesModule(client),
     requestCcUsers: new RequestCcUsersModule(client),
     userDataRestrictions: new UserDataRestrictionsModule(client),
+    userMailNotifications: new UserMailNotificationsModule(client),
   }
 
   return modules
