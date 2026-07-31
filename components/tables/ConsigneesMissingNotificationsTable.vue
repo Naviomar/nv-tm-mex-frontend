@@ -50,24 +50,8 @@
         <div class="flex gap-2 align-center">
           <v-btn color="secondary" @click="clearFilters"> Clear </v-btn>
           <v-btn color="primary" @click="onSearch"> Search </v-btn>
-          <v-btn color="success" variant="tonal" prepend-icon="mdi-file-excel-outline" :loading="exportingExcel" @click="exportExcel">
-            Download matrix report
-          </v-btn>
-          <v-checkbox
-            v-model="includeCatalogCc"
-            label="Include notification admin CC's"
-            density="compact"
-            hide-details
-            class="flex-grow-0"
-          />
-          <v-btn
-            color="info"
-            variant="tonal"
-            prepend-icon="mdi-email-outline"
-            :loading="exportingEmailList"
-            @click="exportEmailListExcel"
-          >
-            Download email list report
+          <v-btn color="success" variant="tonal" prepend-icon="mdi-file-chart-outline" @click="showReportsModal = true">
+            Reports
           </v-btn>
           <v-select
             v-model="limit"
@@ -144,17 +128,27 @@
       :consignee-name="selectedConsignee?.name"
       @refresh="onMatrixRefresh"
     />
+
+    <ConsigneeNotificationsReportsModal
+      v-model:show="showReportsModal"
+      :filters="{
+        name: filters.name,
+        mailNotificationIds: filters.mailNotificationIds,
+        executiveIds: filters.executiveIds,
+        customerMailNotificationIds,
+      }"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { mailNotifications } from '~/utils/data/systemData'
 import { formatNotificationName } from '~/utils/mailNotifications'
 import ConsigneeNotificationsMatrix from '~/components/forms/ConsigneeNotificationsMatrix.vue'
+import ConsigneeNotificationsReportsModal from '~/components/forms/ConsigneeNotificationsReportsModal.vue'
 
 const { $api } = useNuxtApp()
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
-const snackbar = useSnackbar()
 
 const customerMailNotifications = [...mailNotifications]
   .filter((n: any) => n.is_for_consignee)
@@ -185,10 +179,8 @@ const selectedNotificationLabels = computed(() =>
 
 const catalogs = ref<any>(null)
 const showMatrix = ref(false)
+const showReportsModal = ref(false)
 const selectedConsignee = ref<any>(null)
-const exportingExcel = ref(false)
-const exportingEmailList = ref(false)
-const includeCatalogCc = ref(false)
 
 const getConsignees = async () => {
   try {
@@ -235,88 +227,10 @@ const onSearch = async () => {
   await getConsignees()
 }
 
-const datePart = () => {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
-
-const downloadExcelBlob = (data: any, filename: string) => {
-  const blob = new Blob([data], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.setAttribute('download', filename)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
-}
-
 const clearFilters = async () => {
   filters.value = { name: '', mailNotificationIds: [], executiveIds: [] }
   consignees.value.current_page = 1
   await getConsignees()
-}
-
-const exportExcel = async () => {
-  try {
-    exportingExcel.value = true
-    const response: any = await $api.consignees.exportMissingNotificationsExcel({
-      query: {
-        name: filters.value.name,
-        mail_notification_ids: (filters.value.mailNotificationIds.length
-          ? filters.value.mailNotificationIds
-          : customerMailNotificationIds
-        ).join(','),
-        executive_ids: filters.value.executiveIds.join(',') || undefined,
-        include_catalog_cc: includeCatalogCc.value ? 1 : 0,
-      },
-    })
-
-    downloadExcelBlob(response, `reporte_notificaciones_clientes_${datePart()}.xlsx`)
-
-    snackbar.add({
-      text: 'Report generated and downloaded successfully.',
-      type: 'success',
-    })
-  } catch (e) {
-    console.error(e)
-    snackbar.add({
-      text: 'Error exporting the report.',
-      type: 'error',
-    })
-  } finally {
-    exportingExcel.value = false
-  }
-}
-
-const exportEmailListExcel = async () => {
-  try {
-    exportingEmailList.value = true
-    const response: any = await $api.consignees.exportMissingNotificationsEmailListExcel({
-      query: {
-        name: filters.value.name,
-        executive_ids: filters.value.executiveIds.join(',') || undefined,
-      },
-    })
-
-    downloadExcelBlob(response, `reporte_correos_clientes_${datePart()}.xlsx`)
-
-    snackbar.add({
-      text: 'Report generated and downloaded successfully.',
-      type: 'success',
-    })
-  } catch (e) {
-    console.error(e)
-    snackbar.add({
-      text: 'Error exporting the report.',
-      type: 'error',
-    })
-  } finally {
-    exportingEmailList.value = false
-  }
 }
 
 const openMatrix = async (consignee: any) => {
