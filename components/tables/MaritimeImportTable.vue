@@ -14,30 +14,6 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-4">
-          <ACustomerSearch
-            v-model="filters.consignee_id"
-            @update:search-text="filters.consignee_name = $event"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field
-            v-model="filters.containerNumber"
-            density="compact"
-            label="Container #"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
-        </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.referencia"
@@ -65,6 +41,19 @@
             density="compact"
             label="Tracker ref"
             hint="Comma separated"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
             @keyup.enter.stop="onClickFilters"
           />
         </div>
@@ -111,6 +100,17 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field
+            v-model="filters.containerNumber"
+            density="compact"
+            label="Container #"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line" @keyup.enter.stop="onClickFilters" />

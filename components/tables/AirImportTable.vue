@@ -44,13 +44,6 @@
             @keyup.enter.stop="onClickFilters"
           />
         </div>
-        <div class="col-span-4">
-          <ACustomerSearch
-            v-model="filters.consignee_id"
-            @update:search-text="filters.consignee_name = $event"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.masterAwb"
@@ -64,6 +57,13 @@
             v-model="filters.houseAwb"
             density="compact"
             label="House AWB"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
             @keyup.enter.stop="onClickFilters"
           />
         </div>

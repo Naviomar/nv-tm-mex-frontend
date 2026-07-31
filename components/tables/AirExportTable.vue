@@ -14,13 +14,6 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-4">
-          <ACustomerSearch
-            v-model="filters.consignee_id"
-            @update:search-text="filters.consignee_name = $event"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.referencia"
@@ -58,6 +51,21 @@
             @keyup.enter.stop="onClickFilters"
           />
         </div>
+        <div class="col-span-2">
+          <v-text-field
+            v-model="filters.flightNum"
+            density="compact"
+            label="Flight number"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
         <div class="col-span-4">
           <AFreightForwarderSearch
             v-model="filters.origin_ff_id"
@@ -74,14 +82,6 @@
         </div>
         <div class="col-span-4">
           <AAirlineSearch v-model="filters.airline_id" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field
-            v-model="filters.flightNum"
-            density="compact"
-            label="Flight number"
-            @keyup.enter.stop="onClickFilters"
-          />
         </div>
         <div class="col-span-2">
           <v-autocomplete
