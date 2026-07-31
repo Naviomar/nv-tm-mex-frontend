@@ -15,7 +15,7 @@ const bankAccounts = [
   {
     type: 'wm',
     beneficiary: 'WM WORLD MARITIME LTD',
-    account_number: '65502406591',
+    account_number: '6550240651',
     swift: 'BOFAUS3N',
     aba: '026009593',
     bank: 'BANK OF AMERICA NT & SA',
