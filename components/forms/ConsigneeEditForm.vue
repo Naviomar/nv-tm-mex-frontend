@@ -273,6 +273,16 @@
                 </v-card-text>
               </v-card>
 
+              <v-card density="compact" class="mb-2" color="grey-lighten-4">
+                <v-card-title>Operational data</v-card-title>
+                <v-card-text>
+                  <div class="text-caption mb-2">
+                    For internal/operational use only. It is not part of the customer's official information.
+                  </div>
+                  <InputText name="commercial_name" density="compact" variant="solo-filled" label="Commercial name" />
+                </v-card-text>
+              </v-card>
+
               <div v-if="false">
                 <InputTextArea name="notes" variant="solo-filled" :counter="400" label="Notes" />
               </div>

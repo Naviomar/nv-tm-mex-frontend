@@ -85,7 +85,7 @@
               <div>{{ referencia.notify }}</div>
 
               <div>Release typing</div>
-              <div>{{ referencia.release_type }}</div>
+              <div>{{ houseBlReleaseTypes }}</div>
 
               <div>Release agent</div>
               <div>{{ referencia.release_agent?.name }}</div>
@@ -386,6 +386,11 @@ const creditExpirationDate = computed(() => {
   const expirationDate = new Date(baseDateString)
   expirationDate.setDate(expirationDate.getDate() + creditDays)
   return formatDateOnlyString(expirationDate)
+})
+
+const houseBlReleaseTypes = computed(() => {
+  const types = (referencia.value?.house_bls || []).map((hbl: any) => hbl.type).filter(Boolean)
+  return [...new Set(types)].join(', ') || '—'
 })
 
 const hasBuyCharges = computed(() => {
