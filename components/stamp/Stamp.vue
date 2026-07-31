@@ -234,6 +234,16 @@ const props = defineProps({
     type: String,
     default: 'sea',
   },
+  selectedAgent: {
+    type: Object,
+    required: false,
+    default: null,
+  },
+  selectedWarehouse: {
+    type: Object,
+    required: false,
+    default: null,
+  },
 })
 
 const isAir = computed(() => props.serviceType === 'air')
@@ -545,9 +555,12 @@ const app = reactive({
     let customAgentPatente = ''
     let customAgentPatente2 = ''
     let customAgentShortName = ''
-    // Sea references keep the agent under `release.release_agent`; air references
-    // have it directly under `release_agent` (no `release` sub-object).
-    const releaseAgent = props.reference?.release?.release_agent || props.reference?.release_agent
+    // Prefer the agent currently selected in the "A.A." field over the saved one,
+    // so the seal preview reflects the pending selection before it's saved.
+    // Sea references keep the saved agent under `release.release_agent`; air
+    // references have it directly under `release_agent` (no `release` sub-object).
+    const releaseAgent =
+      props.selectedAgent || props.reference?.release?.release_agent || props.reference?.release_agent
     if (releaseAgent) {
       customAgent = releaseAgent.name
       customAgentPatente = `Patente: ${releaseAgent.patente}`
@@ -671,8 +684,10 @@ const app = reactive({
       const seccionLabelX = padding + halfW + 8
       const seccionLineStartX = seccionLabelX + 54 * (fontSizeRef.value / 12)
       const seccionLineEndX = w - padding
+      const warehouseName = props.selectedWarehouse?.name || props.reference?.warehouse?.name || ''
 
       ctx.fillText('Sección:', seccionLabelX, base)
+      ctx.fillText(warehouseName, seccionLineStartX + 4, base)
       ctx.beginPath()
       ctx.lineWidth = 1
       ctx.moveTo(seccionLineStartX, base + 4)

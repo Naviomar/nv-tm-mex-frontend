@@ -510,7 +510,13 @@
 
         <!-- Revalidation PDF stamping -->
         <div class="text-subtitle-2 text-grey-darken-1 mb-2">Revalidation PDF</div>
-        <Stamp :reference="values" service-type="air" @update-reference="getData" />
+        <Stamp
+          :reference="values"
+          service-type="air"
+          :selected-agent="selectedReleaseAgent"
+          :selected-warehouse="selectedWarehouse"
+          @update-reference="getData"
+        />
 
         <v-divider class="my-4" />
 
@@ -813,6 +819,14 @@ const getSellCharges = (callback: Function) => {
 
 const canEditCharges = computed(() => {
   return values.locked_at == null
+})
+
+const selectedReleaseAgent = computed(() => {
+  return catalogs.value.custom_agents.find((agent: any) => agent.id === values.release_agent_id) || null
+})
+
+const selectedWarehouse = computed(() => {
+  return catalogs.value.warehouses.find((warehouse: any) => warehouse.id === values.warehouse_id) || null
 })
 
 const { handleSubmit, values, errors, meta, setValues } = useForm({
