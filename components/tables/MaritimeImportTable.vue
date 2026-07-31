@@ -50,6 +50,17 @@
         <div class="col-span-2">
           <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
         </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field
+            v-model="filters.containerNumber"
+            density="compact"
+            label="Container #"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
         <div class="col-span-4">
           <ACustomerSearch
             v-model="filters.consignee_id"
@@ -100,17 +111,6 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field
-            v-model="filters.containerNumber"
-            density="compact"
-            label="Container #"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <AGlobalSearch :onSearch="searchLines" v-model="filters.line_id" label="Freight line" @keyup.enter.stop="onClickFilters" />

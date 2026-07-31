@@ -49,6 +49,12 @@
             @keyup.enter.stop="onClickFilters"
           />
         </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
+        </div>
         <div class="col-span-4">
           <ACustomerSearch
             v-model="filters.consignee_id"
@@ -105,12 +111,6 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <v-autocomplete
