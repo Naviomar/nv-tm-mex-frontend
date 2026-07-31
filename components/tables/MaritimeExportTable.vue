@@ -14,21 +14,6 @@
       <v-expand-transition>
       <div v-show="showFilters">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-4">
-          <ACustomerSearch
-            v-model="filters.consignee_id"
-            @update:search-text="filters.consignee_name = $event"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
-        <div class="col-span-2">
-          <v-text-field
-            v-model="filters.containerNumber"
-            density="compact"
-            label="Container #"
-            @keyup.enter.stop="onClickFilters"
-          />
-        </div>
         <div class="col-span-2">
           <v-text-field
             v-model="filters.referencia"
@@ -55,6 +40,27 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field
+            v-model="filters.containerNumber"
+            density="compact"
+            label="Container #"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-2">
+          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
+        </div>
+        <div class="col-span-4">
+          <ACustomerSearch
+            v-model="filters.consignee_id"
+            @update:search-text="filters.consignee_name = $event"
+            @keyup.enter.stop="onClickFilters"
+          />
         </div>
         <div class="col-span-4">
           <AFreightForwarderSearch v-model="filters.freight_forwarder_id" @keyup.enter.stop="onClickFilters" />
@@ -105,12 +111,6 @@
         </div>
         <div class="col-span-2">
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
-          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
         </div>
         <div class="col-span-2">
           <v-autocomplete
