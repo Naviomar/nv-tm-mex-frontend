@@ -235,20 +235,23 @@ const getBuyTotalRate = (referencia: any) => {
   buyConcepts = buyConcepts.concat(exportCharges)
   // if currency_id is not USD get exchange rate by now
 
-  console.log('buyConcepts', buyConcepts)
-
   // Calculate the total rate
-  return buyConcepts.reduce((acc: any, rate: any) => {
+  const total = buyConcepts.reduce((acc: any, rate: any) => {
     return acc + parseFloat(rate.amount)
   }, 0)
+  return roundToTwoDecimals(total)
+}
+
+function roundToTwoDecimals(num: number): number {
+  return Math.round((num + Number.EPSILON) * 100) / 100
 }
 
 const totalAmount = computed(() => {
-  return (
+  const total =
     referenciasFoundSelected.value.reduce((acc: any, referencia: any) => {
       return acc + parseFloat(referencia.amount_invoice)
     }, 0) || 0
-  )
+  return roundToTwoDecimals(total)
 })
 
 const addMasterblToSearch = () => {
@@ -387,9 +390,10 @@ const isGreaterAmount = computed(() => {
 })
 
 const getSurplusAmount = computed(() => {
-  return referenciasFoundSelected.value.reduce((acc: any, ref: any) => {
+  const total = referenciasFoundSelected.value.reduce((acc: any, ref: any) => {
     return acc + ((ref.amount_invoice || 0) - getBuyTotalRate(ref))
   }, 0)
+  return roundToTwoDecimals(total)
 })
 
 // const isGreaterAmount = (referencia: any) => {
