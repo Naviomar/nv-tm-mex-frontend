@@ -5,6 +5,7 @@ const schema = toTypedSchema(
   yup.object().shape({
     name: yup.string().required('Name is required'),
     contact_name: yup.string().nullable(),
+    commercial_name: yup.string().nullable(),
     tax_number: yup.string().required('Tax number is required'),
     regimen_fiscal: yup.string().required('Régimen fiscal is required'),
     address: yup.object({
@@ -25,6 +26,7 @@ const schemaEdit = toTypedSchema(
   yup.object().shape({
     name: yup.string().required('Name is required'),
     contact_name: yup.string().nullable(),
+    commercial_name: yup.string().nullable(),
     tax_number: yup.string().required('Tax number is required'),
     regimen_fiscal: yup.string().required('Régimen fiscal is required'),
     metodo_pago: yup.string().nullable(),

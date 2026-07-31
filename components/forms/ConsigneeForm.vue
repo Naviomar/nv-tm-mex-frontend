@@ -115,6 +115,16 @@
                 <InputText name="curp" density="compact" label="CURP" />
               </div>
 
+              <v-card density="compact" class="mb-2" color="grey-lighten-4">
+                <v-card-title>Operational data</v-card-title>
+                <v-card-text>
+                  <div class="text-caption mb-2">
+                    For internal/operational use only. It is not part of the customer's official information.
+                  </div>
+                  <InputText name="commercial_name" density="compact" label="Commercial name" />
+                </v-card-text>
+              </v-card>
+
               <div>
                 <InputTextArea name="notes" :counter="5" label="Notes" />
               </div>
