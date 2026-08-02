@@ -13,8 +13,12 @@
       </div>
       <v-expand-transition>
       <div v-show="showFilters">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-2">
+      <FilterLayoutGrid
+        :filters="filterLayoutDefs"
+        storage-key="filter-layout:sea-export"
+        @hide="onLayoutFilterHidden"
+      >
+        <template #referencia>
           <v-text-field
             v-model="filters.referencia"
             density="compact"
@@ -34,38 +38,44 @@
               />
             </template>
           </v-text-field>
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #masterBl>
           <v-text-field v-model="filters.masterBl" density="compact" label="Master BL" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #houseBl>
           <v-text-field v-model="filters.houseBl" density="compact" label="House BL" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #containerNumber>
           <v-text-field
             v-model="filters.containerNumber"
             density="compact"
             label="Container #"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #bookingNum>
           <v-text-field v-model="filters.bookingNum" density="compact" label="Booking line" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #bookingTm>
           <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #shipper>
+          <!-- Data swap por decisión de negocio: consignee_id guarda al shipper real -->
           <ACustomerSearch
             v-model="filters.consignee_id"
+            label="shipper"
             @update:search-text="filters.consignee_name = $event"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #freightForwarder>
           <AFreightForwarderSearch v-model="filters.freight_forwarder_id" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #consignee>
+          <!-- Data swap por decisión de negocio: shipper_id guarda al consignee real -->
+          <AShipperSearch v-model="filters.shipper_id" label="consignee" @keyup.enter.stop="onClickFilters" />
+        </template>
+        <template #vesselVoyage>
           <v-autocomplete
             v-model="unifiedVesselVoyageSearch"
             density="compact"
@@ -102,17 +112,17 @@
               </span>
             </template>
           </v-autocomplete>
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #origin>
           <v-text-field v-model="filters.origin" density="compact" label="Origin" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #destination>
           <v-text-field v-model="filters.destination" density="compact" label="Destination" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #eta>
           <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #line>
           <v-autocomplete
             v-model="filters.line_id"
             density="compact"
@@ -122,28 +132,19 @@
             item-value="id"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #hasSailed>
           <v-autocomplete
             v-model="filters.has_sailed"
             density="compact"
             label="Has sailed?"
-            :items="[
-              {
-                name: 'Yes',
-                value: 1,
-              },
-              {
-                name: 'No',
-                value: 0,
-              },
-            ]"
+            :items="yesNoItems"
             item-title="name"
             item-value="value"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #status>
           <v-autocomplete
             density="compact"
             label="Status"
@@ -154,8 +155,56 @@
             hide-details
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-      </div>
+        </template>
+        <template #invoiceNumber>
+          <v-text-field
+            v-model="filters.invoiceNumber"
+            density="compact"
+            label="Invoice #"
+            hint="TM or WM invoice number"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #poNum>
+          <v-text-field v-model="filters.poNum" density="compact" label="PO #" @keyup.enter.stop="onClickFilters" />
+        </template>
+        <template #hasTmInvoices>
+          <v-autocomplete
+            v-model="filters.hasTmInvoices"
+            density="compact"
+            label="Has TM invoices"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #hasWmInvoices>
+          <v-autocomplete
+            v-model="filters.hasWmInvoices"
+            density="compact"
+            label="Has WM invoices"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #sourceSystem>
+          <v-autocomplete
+            v-model="filters.source_system_id"
+            density="compact"
+            label="Source system"
+            :items="sourceSystems"
+            item-title="name"
+            item-value="id"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+      </FilterLayoutGrid>
       <div v-if="filters.referencias.length > 0">
         <div>Filter by reference(s)</div>
         <div class="flex gap-2">
@@ -194,33 +243,38 @@
           @page-change="onPageChange"
           @per-page-change="onPerPageChange"
         />
+        <div class="flex justify-end mb-1">
+          <TableColumnsMenu :state="columnsLayout" />
+        </div>
         <div class="catalog-table-wrapper">
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="50">Actions</th>
-              <th class="text-left"># Reference</th>
-              <th class="text-left">Freight line</th>
-              <th class="text-left">Shipper</th>
-              <th class="text-left">Consignee</th>
-              <th class="text-left">Master BL(s)</th>
-              <th class="text-left">House BL(s)</th>
-              <th class="text-left">Total containers</th>
-              <th class="text-left">
-                <div class="flex items-center gap-2">
-                  <div>Containers</div>
-                  <v-icon @click="showDetails">
-                    {{ !containerViewer ? 'mdi-eye-off' : 'mdi-eye' }}
-                  </v-icon>
-                </div>
-              </th>
-              <th class="text-left">Vessel - Voyage</th>
-              <th class="text-left">POL</th>
-              <th class="text-left">POD</th>
-              <th class="text-left">Booking Number</th>
-              <th class="text-left">Booking TM</th>
-              <th class="text-left">Created</th>
-              <th class="text-left" width="50"></th>
+              <template v-for="col in visibleColumns" :key="col.key">
+                <th v-if="col.key === 'actions'" class="text-left" width="50">Actions</th>
+                <th v-else-if="col.key === 'reference'" class="text-left"># Reference</th>
+                <th v-else-if="col.key === 'line'" class="text-left">Freight line</th>
+                <th v-else-if="col.key === 'shipper'" class="text-left">Shipper</th>
+                <th v-else-if="col.key === 'consignee'" class="text-left">Consignee</th>
+                <th v-else-if="col.key === 'masterBls'" class="text-left">Master BL(s)</th>
+                <th v-else-if="col.key === 'houseBls'" class="text-left">House BL(s)</th>
+                <th v-else-if="col.key === 'totalContainers'" class="text-left">Total containers</th>
+                <th v-else-if="col.key === 'containers'" class="text-left">
+                  <div class="flex items-center gap-2">
+                    <div>Containers</div>
+                    <v-icon @click="showDetails">
+                      {{ !containerViewer ? 'mdi-eye-off' : 'mdi-eye' }}
+                    </v-icon>
+                  </div>
+                </th>
+                <th v-else-if="col.key === 'vesselVoyage'" class="text-left">Vessel - Voyage</th>
+                <th v-else-if="col.key === 'pol'" class="text-left">POL</th>
+                <th v-else-if="col.key === 'pod'" class="text-left">POD</th>
+                <th v-else-if="col.key === 'bookingNumber'" class="text-left">Booking Number</th>
+                <th v-else-if="col.key === 'bookingTm'" class="text-left">Booking TM</th>
+                <th v-else-if="col.key === 'created'" class="text-left">Created</th>
+                <th v-else-if="col.key === 'trash'" class="text-left" width="50"></th>
+              </template>
             </tr>
           </thead>
           <tbody>
@@ -234,83 +288,85 @@
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
               }"
             >
-              <td>
-                <div class="flex">
-                  <v-btn
-                    v-if="!item.deleted_at && hasPermission('sea-export-references-edit')"
-                    variant="text"
-                    icon="mdi-pencil-outline"
-                    color="blue-lighten-2"
-                    density="compact"
-                    @click="viewMaritimeReference(item)"
-                  ></v-btn>
-                  <v-btn
-                    v-if="hasPermission('sea-export-references-view') && canViewReference(item)"
-                    variant="text"
-                    icon="mdi-eye-outline"
-                    color="green-lighten-2"
-                    density="compact"
-                    @click="viewDetails(item)"
-                  ></v-btn>
-                </div>
-              </td>
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="item">
-                  <ServiceNumberLabel :service="item" />
-                </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
-                <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
-              </td>
-              <td>{{ item.line?.name }}</td>
-              <td>{{ item.consignee?.name }}</td>
-              <td>{{ item.shipper?.name }}</td>
-              <td>
-                <div class="flex flex-col gap-1">
-                  <v-chip
-                    v-for="(bl, index) in item.master_bls"
-                    :key="`master-bl-${index}`"
-                    size="small"
-                    color="primary"
-                  >
-                    <v-icon v-if="bl.type">mdi-check</v-icon>{{ bl.name }}
-                  </v-chip>
-                </div>
-              </td>
-              <td>
-                <div class="flex flex-col gap-1">
-                  <v-chip v-for="(bl, index) in item.house_bls" :key="`house-bl-${index}`" size="small" color="primary">
-                    <v-icon v-if="bl.type">mdi-check</v-icon>{{ bl.name }}
-                  </v-chip>
-                </div>
-              </td>
-              <td>{{ item.containers.length }}</td>
-              <td class="whitespace-nowrap">
-                <div v-if="!containerViewer" class="flex justify-center">
-                  <v-icon>mdi-eye-off</v-icon>
-                </div>
-                <div v-if="containerViewer">
+              <template v-for="col in visibleColumns" :key="col.key">
+                <td v-if="col.key === 'actions'">
+                  <div class="flex">
+                    <v-btn
+                      v-if="!item.deleted_at && hasPermission('sea-export-references-edit')"
+                      variant="text"
+                      icon="mdi-pencil-outline"
+                      color="blue-lighten-2"
+                      density="compact"
+                      @click="viewMaritimeReference(item)"
+                    ></v-btn>
+                    <v-btn
+                      v-if="hasPermission('sea-export-references-view') && canViewReference(item)"
+                      variant="text"
+                      icon="mdi-eye-outline"
+                      color="green-lighten-2"
+                      density="compact"
+                      @click="viewDetails(item)"
+                    ></v-btn>
+                  </div>
+                </td>
+                <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
+                  <UserInfoBadge :item="item">
+                    <ServiceNumberLabel :service="item" />
+                  </UserInfoBadge>
+                  <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
+                  <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
+                </td>
+                <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
+                <td v-else-if="col.key === 'shipper'">{{ item.consignee?.name }}</td>
+                <td v-else-if="col.key === 'consignee'">{{ item.shipper?.name }}</td>
+                <td v-else-if="col.key === 'masterBls'">
                   <div class="flex flex-col gap-1">
                     <v-chip
-                      v-for="(container, index) in item.containers"
-                      :key="`container-${index}`"
+                      v-for="(bl, index) in item.master_bls"
+                      :key="`master-bl-${index}`"
                       size="small"
                       color="primary"
-                      class="overflow-auto! text-[10px]!"
                     >
-                      {{ container.container_number }} {{ container.container_type?.name }}
+                      <v-icon v-if="bl.type">mdi-check</v-icon>{{ bl.name }}
                     </v-chip>
                   </div>
-                </div>
-              </td>
-              <td>{{ item.voyage_discharge?.short_name }}</td>
-              <td>{{ item.pol?.country_port }}</td>
-              <td>{{ item.pod?.country_port }}</td>
-              <td>{{ item.booking_number }}</td>
-              <td>{{ item.booking_tm }}</td>
-              <td class="whitespace-nowrap">{{ formatDateString(item.created_at) }}</td>
-              <td>
-                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-export" @click="confirmDeletion" />
-              </td>
+                </td>
+                <td v-else-if="col.key === 'houseBls'">
+                  <div class="flex flex-col gap-1">
+                    <v-chip v-for="(bl, index) in item.house_bls" :key="`house-bl-${index}`" size="small" color="primary">
+                      <v-icon v-if="bl.type">mdi-check</v-icon>{{ bl.name }}
+                    </v-chip>
+                  </div>
+                </td>
+                <td v-else-if="col.key === 'totalContainers'">{{ item.containers.length }}</td>
+                <td v-else-if="col.key === 'containers'" class="whitespace-nowrap">
+                  <div v-if="!containerViewer" class="flex justify-center">
+                    <v-icon>mdi-eye-off</v-icon>
+                  </div>
+                  <div v-if="containerViewer">
+                    <div class="flex flex-col gap-1">
+                      <v-chip
+                        v-for="(container, index) in item.containers"
+                        :key="`container-${index}`"
+                        size="small"
+                        color="primary"
+                        class="overflow-auto! text-[10px]!"
+                      >
+                        {{ container.container_number }} {{ container.container_type?.name }}
+                      </v-chip>
+                    </div>
+                  </div>
+                </td>
+                <td v-else-if="col.key === 'vesselVoyage'">{{ item.voyage_discharge?.short_name }}</td>
+                <td v-else-if="col.key === 'pol'">{{ item.pol?.country_port }}</td>
+                <td v-else-if="col.key === 'pod'">{{ item.pod?.country_port }}</td>
+                <td v-else-if="col.key === 'bookingNumber'">{{ item.booking_number }}</td>
+                <td v-else-if="col.key === 'bookingTm'">{{ item.booking_tm }}</td>
+                <td v-else-if="col.key === 'created'" class="whitespace-nowrap">{{ formatDateString(item.created_at) }}</td>
+                <td v-else-if="col.key === 'trash'">
+                  <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-export" @click="confirmDeletion" />
+                </td>
+              </template>
             </tr>
           </tbody>
         </v-table>
@@ -332,7 +388,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deletedStatus } from '~/utils/data/systemData'
+import { sourceSystems, deletedStatus } from '~/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { useTableFilters } from '~/composables/useTableFilters'
 
@@ -372,6 +428,7 @@ const initialFilters = {
   consignee_id: '',
   consignee_name: '',
   freight_forwarder_id: '',
+  shipper_id: '',
   vessel_id: '',
   voyage_departure_id: '',
   origin: '',
@@ -383,7 +440,104 @@ const initialFilters = {
   line_id: '',
   has_sailed: null as number | null,
   deleted_status: '',
+  invoiceNumber: '',
+  poNum: '',
+  hasTmInvoices: null as number | null,
+  hasWmInvoices: null as number | null,
+  source_system_id: null as number | null,
 }
+
+const yesNoItems = [
+  { name: 'Yes', value: 1 },
+  { name: 'No', value: 0 },
+]
+
+// Registry of every filter available in the search form. The order and spans
+// here define the default layout; filters with visible: false are only shown
+// when the user adds them from the Layout menu.
+const filterLayoutDefs = [
+  { key: 'referencia', label: 'Reference #', span: 2 },
+  { key: 'masterBl', label: 'Master BL', span: 2 },
+  { key: 'houseBl', label: 'House BL', span: 2 },
+  { key: 'containerNumber', label: 'Container #', span: 2 },
+  { key: 'bookingNum', label: 'Booking line', span: 2 },
+  { key: 'bookingTm', label: 'Booking TM', span: 2 },
+  { key: 'shipper', label: 'Shipper', span: 2 },
+  { key: 'freightForwarder', label: 'Freight forwarder', span: 2 },
+  { key: 'consignee', label: 'Consignee', span: 2 },
+  { key: 'vesselVoyage', label: 'Vessel / Voyage', span: 2 },
+  { key: 'origin', label: 'Origin', span: 2 },
+  { key: 'destination', label: 'Destination', span: 2 },
+  { key: 'eta', label: 'ETA', span: 2 },
+  { key: 'line', label: 'Line', span: 2 },
+  { key: 'hasSailed', label: 'Has sailed?', span: 2 },
+  { key: 'status', label: 'Status', span: 2 },
+  { key: 'invoiceNumber', label: 'Invoice #', span: 2, visible: false },
+  { key: 'poNum', label: 'PO #', span: 2, visible: false },
+  { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
+  { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
+  { key: 'sourceSystem', label: 'Source system', span: 2, visible: false },
+]
+
+// Model keys backing each layout filter, used to clear values when the user
+// hides a filter so hidden filters never affect the search.
+const filterModelKeys: Record<string, string[]> = {
+  referencia: ['referencia', 'referencias'],
+  masterBl: ['masterBl'],
+  houseBl: ['houseBl'],
+  containerNumber: ['containerNumber'],
+  bookingNum: ['bookingNum'],
+  bookingTm: ['bookingTm'],
+  shipper: ['consignee_id', 'consignee_name'],
+  freightForwarder: ['freight_forwarder_id'],
+  consignee: ['shipper_id'],
+  vesselVoyage: ['vessel_id', 'voyage_departure_id'],
+  origin: ['origin'],
+  destination: ['destination'],
+  eta: ['eta'],
+  line: ['line_id'],
+  hasSailed: ['has_sailed'],
+  status: ['deleted_status'],
+  invoiceNumber: ['invoiceNumber'],
+  poNum: ['poNum'],
+  hasTmInvoices: ['hasTmInvoices'],
+  hasWmInvoices: ['hasWmInvoices'],
+  sourceSystem: ['source_system_id'],
+}
+
+const onLayoutFilterHidden = (key: string) => {
+  const modelKeys = filterModelKeys[key] || []
+  modelKeys.forEach((modelKey) => {
+    const initialValue = (initialFilters as any)[modelKey]
+    ;(filters.value as any)[modelKey] = Array.isArray(initialValue) ? [...initialValue] : initialValue
+  })
+  if (key === 'vesselVoyage') unifiedVesselVoyageSearch.value = null
+  syncToUrl()
+}
+
+// Registry of the table columns. Locked columns (Actions, # Reference) cannot
+// be hidden nor reordered; the rest can be managed from the Columns menu.
+const tableColumnDefs = [
+  { key: 'actions', label: 'Actions', locked: true },
+  { key: 'reference', label: '# Reference', locked: true },
+  { key: 'line', label: 'Freight line' },
+  { key: 'shipper', label: 'Shipper' },
+  { key: 'consignee', label: 'Consignee' },
+  { key: 'masterBls', label: 'Master BL(s)' },
+  { key: 'houseBls', label: 'House BL(s)' },
+  { key: 'totalContainers', label: 'Total containers' },
+  { key: 'containers', label: 'Containers' },
+  { key: 'vesselVoyage', label: 'Vessel - Voyage' },
+  { key: 'pol', label: 'POL' },
+  { key: 'pod', label: 'POD' },
+  { key: 'bookingNumber', label: 'Booking Number' },
+  { key: 'bookingTm', label: 'Booking TM' },
+  { key: 'created', label: 'Created' },
+  { key: 'trash', label: 'Delete' },
+]
+
+const columnsLayout = useTableColumns('table-columns:sea-export', tableColumnDefs)
+const { visibleColumns } = columnsLayout
 
 // Use the table filters composable for URL persistence
 const {
