@@ -30,51 +30,53 @@ export function useTableColumns(storageKey: string, defs: TableColumnDef[]) {
   const buildDefaults = (): ColumnState[] =>
     allowedDefs.value.map((d) => ({ key: d.key, visible: d.visible !== false }))
 
-  const loadState = (): ColumnState[] => {
+  // Merge a saved state with the registry: locked columns always come first
+  // in registry order and stay visible; unknown keys are dropped and columns
+  // missing from the saved state (e.g. newly added) are appended.
+  const mergeState = (saved: any): ColumnState[] | null => {
+    if (!Array.isArray(saved)) return null
     const defaults = buildDefaults()
-    try {
-      const raw = localStorage.getItem(storageKey)
-      if (!raw) return defaults
-      const saved = JSON.parse(raw) as ColumnState[]
-      if (!Array.isArray(saved)) return defaults
+    const allowedKeys = new Set(allowedDefs.value.map((d) => d.key))
+    const savedKeys = new Set(saved.map((s: ColumnState) => s.key))
 
-      const allowedKeys = new Set(allowedDefs.value.map((d) => d.key))
-      const savedKeys = new Set(saved.map((s) => s.key))
+    const locked = defaults.filter((d) => allowedDefs.value.find((def) => def.key === d.key)?.locked)
+    const merged = saved
+      .filter((s: ColumnState) => allowedKeys.has(s.key) && !allowedDefs.value.find((d) => d.key === s.key)?.locked)
+      .map((s: ColumnState) => ({ key: s.key, visible: !!s.visible }))
 
-      // Locked columns always come first in registry order and are always visible
-      const locked = defaults.filter((d) => allowedDefs.value.find((def) => def.key === d.key)?.locked)
-      const merged = saved
-        .filter((s) => allowedKeys.has(s.key) && !allowedDefs.value.find((d) => d.key === s.key)?.locked)
-        .map((s) => ({ key: s.key, visible: !!s.visible }))
-
-      // Append columns that are not in the saved state (e.g. newly added columns)
-      for (const def of defaults) {
-        if (!savedKeys.has(def.key) && !locked.some((l) => l.key === def.key)) merged.push(def)
-      }
-
-      return [...locked, ...merged]
-    } catch {
-      return defaults
+    for (const def of defaults) {
+      if (!savedKeys.has(def.key) && !locked.some((l) => l.key === def.key)) merged.push(def)
     }
+
+    return [...locked, ...merged]
   }
+
+  // localStorage = fast cache, backend = source of truth per user
+  const { readLocal, persist, loadServer } = useUiPreference(storageKey)
 
   const items = ref<ColumnState[]>(buildDefaults())
 
-  onMounted(() => {
-    items.value = loadState()
+  onMounted(async () => {
+    // 1) Fast first paint: apply the local cache immediately
+    items.value = mergeState(readLocal()) ?? buildDefaults()
+    // 2) Source of truth: the backend. Seed it if the user has nothing saved
+    const serverValue = await loadServer()
+    if (serverValue) {
+      items.value = mergeState(serverValue) ?? items.value
+    } else {
+      persistCurrent(items.value)
+    }
   })
+
+  const persistCurrent = (value: ColumnState[]) => {
+    // Only persist the non-locked columns; locked are enforced on load
+    const lockedKeys = new Set(allowedDefs.value.filter((d) => d.locked).map((d) => d.key))
+    persist(value.filter((i) => !lockedKeys.has(i.key)))
+  }
 
   watch(
     items,
-    (value) => {
-      try {
-        // Only persist the non-locked columns; locked are enforced on load
-        const lockedKeys = new Set(allowedDefs.value.filter((d) => d.locked).map((d) => d.key))
-        localStorage.setItem(storageKey, JSON.stringify(value.filter((i) => !lockedKeys.has(i.key))))
-      } catch {
-        // Ignore storage errors (private mode, quota, etc.)
-      }
-    },
+    (value) => persistCurrent(value),
     { deep: true }
   )
 

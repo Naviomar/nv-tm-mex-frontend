@@ -138,51 +138,48 @@ const clampSpan = (span: any): number => {
 const buildDefaults = (): LayoutItem[] =>
   props.filters.filter((f) => f.visible !== false).map((f) => ({ key: f.key, span: clampSpan(f.span ?? 2) }))
 
-const loadLayout = (): LayoutItem[] => {
+// Merge a saved layout with the registry: keep saved order/spans for known
+// filters, and append registry filters that are visible by default but are
+// not in the saved layout (e.g. added to the codebase after the user saved)
+const mergeLayout = (saved: any): LayoutItem[] | null => {
+  if (!Array.isArray(saved)) return null
   const defaults = buildDefaults()
-  try {
-    const raw = localStorage.getItem(props.storageKey)
-    if (!raw) return defaults
-    const saved = JSON.parse(raw) as LayoutItem[]
-    if (!Array.isArray(saved)) return defaults
+  const registryKeys = new Set(props.filters.map((f) => f.key))
+  const savedKeys = new Set(saved.map((s: LayoutItem) => s.key))
 
-    const registryKeys = new Set(props.filters.map((f) => f.key))
-    const savedKeys = new Set(saved.map((s) => s.key))
+  const merged = saved
+    .filter((s: LayoutItem) => registryKeys.has(s.key))
+    .map((s: LayoutItem) => ({ key: s.key, span: clampSpan(s.span) }))
 
-    // Keep saved order/spans, dropping filters that no longer exist
-    const merged = saved
-      .filter((s) => registryKeys.has(s.key))
-      .map((s) => ({ key: s.key, span: clampSpan(s.span) }))
-
-    // Append registry filters that are visible by default but are not in the
-    // saved layout (e.g. filters added to the codebase after the user saved)
-    for (const def of defaults) {
-      if (!savedKeys.has(def.key)) merged.push(def)
-    }
-
-    return merged.length > 0 ? merged : defaults
-  } catch {
-    return defaults
+  for (const def of defaults) {
+    if (!savedKeys.has(def.key)) merged.push(def)
   }
+
+  return merged.length > 0 ? merged : null
 }
+
+// localStorage = fast cache, backend = source of truth per user
+const { readLocal, persist, loadServer } = useUiPreference(props.storageKey)
 
 const items = ref<LayoutItem[]>(buildDefaults())
 const draggedKey = ref<string | null>(null)
 const dropIndicator = ref<DropIndicator | null>(null)
 
-onMounted(() => {
-  items.value = loadLayout()
+onMounted(async () => {
+  // 1) Fast first paint: apply the local cache immediately
+  items.value = mergeLayout(readLocal()) ?? buildDefaults()
+  // 2) Source of truth: the backend. Seed it if the user has nothing saved
+  const serverValue = await loadServer()
+  if (serverValue) {
+    items.value = mergeLayout(serverValue) ?? items.value
+  } else {
+    persist(items.value)
+  }
 })
 
 watch(
   items,
-  (value) => {
-    try {
-      localStorage.setItem(props.storageKey, JSON.stringify(value))
-    } catch {
-      // Ignore storage errors (private mode, quota, etc.)
-    }
-  },
+  (value) => persist(value),
   { deep: true }
 )
 
