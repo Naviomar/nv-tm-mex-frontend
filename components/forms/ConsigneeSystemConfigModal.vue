@@ -22,9 +22,9 @@
               </v-avatar>
             </template>
 
-            <v-list-item-title>Credit legend on invoices</v-list-item-title>
+            <v-list-item-title>Credit legend on WM invoices</v-list-item-title>
             <v-list-item-subtitle class="text-wrap">
-              Prints the credit days/start/due date legend on invoice PDFs.
+              Prints the credit days/start/due date legend on WM invoice PDFs.
             </v-list-item-subtitle>
 
             <template v-slot:append>
@@ -38,6 +38,35 @@
               />
               <v-chip v-else size="small" variant="tonal" :color="form.show_credit_legend ? 'success' : 'default'">
                 {{ form.show_credit_legend ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-file-document-outline" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Credit legend on TM invoices</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Prints the credit days/start/due date legend on TM invoice PDFs.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-update-credit-legend')"
+                v-model="form.show_credit_legend_tm"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip v-else size="small" variant="tonal" :color="form.show_credit_legend_tm ? 'success' : 'default'">
+                {{ form.show_credit_legend_tm ? 'Enabled' : 'Disabled' }}
               </v-chip>
             </template>
           </v-list-item>
@@ -271,6 +300,7 @@ const invoiceTriggerOptions = [
 
 const form = reactive({
   show_credit_legend: false,
+  show_credit_legend_tm: false,
   auto_invoicing: true,
   invoice_trigger: 'deadline',
   skip_hbl_validation: false,
@@ -285,6 +315,7 @@ const invoiceTriggerLabel = computed(() => {
 
 const resetForm = () => {
   form.show_credit_legend = false
+  form.show_credit_legend_tm = false
   form.auto_invoicing = true
   form.invoice_trigger = 'deadline'
   form.skip_hbl_validation = false
@@ -297,6 +328,7 @@ const openEdit = async (consignee: any) => {
   dialog.itemId = consignee.id
   consigneeName.value = consignee.name
   form.show_credit_legend = !!consignee.show_credit_legend
+  form.show_credit_legend_tm = !!consignee.show_credit_legend_tm
   form.auto_invoicing = consignee.auto_invoicing === undefined ? true : !!consignee.auto_invoicing
   form.invoice_trigger = consignee.invoice_trigger ?? 'deadline'
   form.skip_hbl_validation = !!consignee.skip_hbl_validation

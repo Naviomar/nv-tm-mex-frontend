@@ -171,7 +171,13 @@
           <v-text-field v-model="filters.destination" density="compact" label="Destination (POD)" @keyup.enter.stop="onClickFilters" />
         </template>
         <template #poNum>
-          <v-text-field v-model="filters.poNum" density="compact" label="PO #" @keyup.enter.stop="onClickFilters" />
+          <v-text-field
+            v-model="filters.poNum"
+            density="compact"
+            label="PO #"
+            hint="PO o pedido tracker"
+            @keyup.enter.stop="onClickFilters"
+          />
         </template>
         <template #hasTmInvoices>
           <v-autocomplete

@@ -143,6 +143,15 @@
             @keyup.enter.stop="onClickFilters"
           />
         </template>
+        <template #ffNoteFolio>
+          <v-text-field
+            v-model="filters.ffNoteFolio"
+            density="compact"
+            label="CN/DN #"
+            hint="Nota de crédito/débito del FF"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
         <template #hasTmInvoices>
           <v-autocomplete
             v-model="filters.hasTmInvoices"
@@ -373,6 +382,7 @@ const initialFilters = {
   bookingTm: '',
   eta: '',
   invoiceNumber: '',
+  ffNoteFolio: '',
   hasTmInvoices: null as number | null,
   hasWmInvoices: null as number | null,
 }
@@ -401,6 +411,7 @@ const filterLayoutDefs = [
   { key: 'bookingTm', label: 'Booking TM', span: 2, visible: false },
   { key: 'eta', label: 'ETA', span: 2, visible: false },
   { key: 'invoiceNumber', label: 'Invoice #', span: 2, visible: false },
+  { key: 'ffNoteFolio', label: 'CN/DN #', span: 2, visible: false },
   { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
   { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
 ]
@@ -423,6 +434,7 @@ const filterModelKeys: Record<string, string[]> = {
   bookingTm: ['bookingTm'],
   eta: ['eta'],
   invoiceNumber: ['invoiceNumber'],
+  ffNoteFolio: ['ffNoteFolio'],
   hasTmInvoices: ['hasTmInvoices'],
   hasWmInvoices: ['hasWmInvoices'],
 }
