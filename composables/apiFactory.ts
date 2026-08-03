@@ -2,6 +2,7 @@ import { $fetch, type $Fetch, type FetchOptions, type IFetchError } from 'ofetch
 
 import AuthModule from '~/repository/modules/auth'
 import UsersModule from '~/repository/modules/users'
+import UiPreferencesModule from '~/repository/modules/uiPreferences'
 import ShippersModule from '~/repository/modules/catalogs/shippers'
 import SeaTrafficsModule from '~/repository/modules/catalogs/seatraffics'
 import SeaRegionsModule from '~/repository/modules/catalogs/searegions'
@@ -110,6 +111,7 @@ interface IApiInstance {
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
+  uiPreferences: UiPreferencesModule
   shippers: ShippersModule
   seaTraffics: SeaTrafficsModule
   seaRegions: SeaRegionsModule
@@ -214,6 +216,7 @@ export function useApiFactory() {
     releaseReports: new ReleaseReportsModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
+    uiPreferences: new UiPreferencesModule(client),
     shippers: new ShippersModule(client),
     seaTraffics: new SeaTrafficsModule(client),
     seaRegions: new SeaRegionsModule(client),

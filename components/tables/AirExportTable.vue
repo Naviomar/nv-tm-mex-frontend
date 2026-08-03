@@ -13,8 +13,12 @@
       </div>
       <v-expand-transition>
       <div v-show="showFilters">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
-        <div class="col-span-2">
+      <FilterLayoutGrid
+        :filters="filterLayoutDefs"
+        storage-key="filter-layout:air-export"
+        @hide="onLayoutFilterHidden"
+      >
+        <template #referencia>
           <v-text-field
             v-model="filters.referencia"
             density="compact"
@@ -34,56 +38,56 @@
               />
             </template>
           </v-text-field>
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #masterAwb>
           <v-text-field
             v-model="filters.masterAwb"
             density="compact"
             label="Master AWB"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #houseAwb>
           <v-text-field
             v-model="filters.houseAwb"
             density="compact"
             label="House AWB"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #flightNum>
           <v-text-field
             v-model="filters.flightNum"
             density="compact"
             label="Flight number"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #consignee>
           <ACustomerSearch
             v-model="filters.consignee_id"
             @update:search-text="filters.consignee_name = $event"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #originFf>
           <AFreightForwarderSearch
             v-model="filters.origin_ff_id"
             label="Freight Forwarder origin"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #destinationFf>
           <AFreightForwarderSearch
             v-model="filters.destination_ff_id"
             label="Freight Forwarder destination"
             @keyup.enter.stop="onClickFilters"
           />
-        </div>
-        <div class="col-span-4">
+        </template>
+        <template #airline>
           <AAirlineSearch v-model="filters.airline_id" @keyup.enter.stop="onClickFilters" />
-        </div>
-        <div class="col-span-2">
+        </template>
+        <template #status>
           <v-autocomplete
             density="compact"
             label="Status"
@@ -94,8 +98,71 @@
             @keyup.enter.stop="onClickFilters"
             hide-details
           />
-        </div>
-      </div>
+        </template>
+        <template #trackerRef>
+          <v-text-field
+            v-model="filters.trackerRef"
+            density="compact"
+            label="Tracker ref"
+            hint="Comma separated"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #bookingNum>
+          <v-text-field v-model="filters.bookingNum" density="compact" label="Booking number" @keyup.enter.stop="onClickFilters" />
+        </template>
+        <template #bookingTm>
+          <v-text-field v-model="filters.bookingTm" density="compact" label="Booking TM" @keyup.enter.stop="onClickFilters" />
+        </template>
+        <template #eta>
+          <v-text-field v-model="filters.eta" type="date" density="compact" label="ETA" @keyup.enter.stop="onClickFilters" />
+        </template>
+        <template #invoiceNumber>
+          <v-text-field
+            v-model="filters.invoiceNumber"
+            density="compact"
+            label="Invoice #"
+            hint="TM or WM invoice number"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #sourceSystem>
+          <v-autocomplete
+            v-model="filters.source_system_id"
+            density="compact"
+            label="Source system"
+            :items="sourceSystems"
+            item-title="name"
+            item-value="id"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #hasTmInvoices>
+          <v-autocomplete
+            v-model="filters.hasTmInvoices"
+            density="compact"
+            label="Has TM invoices"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+        <template #hasWmInvoices>
+          <v-autocomplete
+            v-model="filters.hasWmInvoices"
+            density="compact"
+            label="Has WM invoices"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
+      </FilterLayoutGrid>
       <div v-if="filters.referencias.length > 0">
         <div>Filter by reference(s)</div>
         <div class="flex gap-2">
@@ -133,23 +200,28 @@
           @page-change="onPageChange"
           @per-page-change="onPerPageChange"
         />
+        <div class="flex justify-end mb-1">
+          <TableColumnsMenu :state="columnsLayout" />
+        </div>
         <div class="catalog-table-wrapper">
         <v-table density="compact" fixed-header>
           <thead>
             <tr>
-              <th class="text-left" width="50">Actions</th>
-              <th class="text-left"># Reference</th>
-              <th class="text-left">Master AWB</th>
-              <th class="text-left">House AWB</th>
-              <th class="text-left">Origin F.F.</th>
-              <th class="text-left">Destination F.F.</th>
-              <th class="text-left">Customer</th>
-              <th class="text-left">Origin</th>
-              <th class="text-left">Destination</th>
-              <th class="text-left">Airline</th>
-              <th class="text-left">Flight number</th>
-              <th class="text-left">Departure</th>
-              <th class="text-left" width="50"></th>
+              <template v-for="col in visibleColumns" :key="col.key">
+                <th v-if="col.key === 'actions'" class="text-left" width="50">Actions</th>
+                <th v-else-if="col.key === 'reference'" class="text-left"># Reference</th>
+                <th v-else-if="col.key === 'masterAwb'" class="text-left">Master AWB</th>
+                <th v-else-if="col.key === 'houseAwb'" class="text-left">House AWB</th>
+                <th v-else-if="col.key === 'originFf'" class="text-left">Origin F.F.</th>
+                <th v-else-if="col.key === 'destinationFf'" class="text-left">Destination F.F.</th>
+                <th v-else-if="col.key === 'customer'" class="text-left">Customer</th>
+                <th v-else-if="col.key === 'origin'" class="text-left">Origin</th>
+                <th v-else-if="col.key === 'destination'" class="text-left">Destination</th>
+                <th v-else-if="col.key === 'airline'" class="text-left">Airline</th>
+                <th v-else-if="col.key === 'flightNum'" class="text-left">Flight number</th>
+                <th v-else-if="col.key === 'departure'" class="text-left">Departure</th>
+                <th v-else-if="col.key === 'trash'" class="text-left" width="50"></th>
+              </template>
             </tr>
           </thead>
           <tbody>
@@ -162,59 +234,61 @@
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
               }"
             >
-              <td>
-                <div class="flex">
-                  <v-btn
-                    v-if="!item.deleted_at && hasPermission('air-export-references-edit')"
-                    variant="text"
-                    icon="mdi-pencil-outline"
-                    color="blue-lighten-2"
-                    density="compact"
-                    @click="viewReference(item)"
-                  ></v-btn>
-                  <v-btn
-                    v-if="hasPermission('air-export-references-view') && canViewReference(item)"
-                    variant="text"
-                    icon="mdi-eye-outline"
-                    color="green-lighten-2"
-                    density="compact"
-                    @click="viewDetails(item)"
-                  ></v-btn>
-                </div>
-              </td>
-              <td class="whitespace-nowrap">
-                <UserInfoBadge :item="item">
-                  {{ item.reference_number }}
-                </UserInfoBadge>
-                <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
-                <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
-              </td>
-              <td>
-                <v-chip size="small" color="primary">
-                  {{ item.master_awb }}
-                </v-chip>
-              </td>
-              <td>
-                <v-chip
-                  v-for="(house, index) in item.house_awbs"
-                  :key="`house-awb-${index}`"
-                  size="small"
-                  color="primary"
-                >
-                  {{ house.name }}
-                </v-chip>
-              </td>
-              <td>{{ item.origin_ff?.name }}</td>
-              <td>{{ item.destination_ff?.name }}</td>
-              <td>{{ item.consignee?.name }}</td>
-              <td>{{ item.origin }}</td>
-              <td>{{ item.destination }}</td>
-              <td>{{ item.airline?.name }}</td>
-              <td>{{ getFirstRouteFlightNum(item) }}</td>
-              <td>{{ getFirstRouteDeparture(item) }}</td>
-              <td>
-                <TrashButton :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
-              </td>
+              <template v-for="col in visibleColumns" :key="col.key">
+                <td v-if="col.key === 'actions'">
+                  <div class="flex">
+                    <v-btn
+                      v-if="!item.deleted_at && hasPermission('air-export-references-edit')"
+                      variant="text"
+                      icon="mdi-pencil-outline"
+                      color="blue-lighten-2"
+                      density="compact"
+                      @click="viewReference(item)"
+                    ></v-btn>
+                    <v-btn
+                      v-if="hasPermission('air-export-references-view') && canViewReference(item)"
+                      variant="text"
+                      icon="mdi-eye-outline"
+                      color="green-lighten-2"
+                      density="compact"
+                      @click="viewDetails(item)"
+                    ></v-btn>
+                  </div>
+                </td>
+                <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
+                  <UserInfoBadge :item="item">
+                    {{ item.reference_number }}
+                  </UserInfoBadge>
+                  <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
+                  <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
+                </td>
+                <td v-else-if="col.key === 'masterAwb'">
+                  <v-chip size="small" color="primary">
+                    {{ item.master_awb }}
+                  </v-chip>
+                </td>
+                <td v-else-if="col.key === 'houseAwb'">
+                  <v-chip
+                    v-for="(house, index) in item.house_awbs"
+                    :key="`house-awb-${index}`"
+                    size="small"
+                    color="primary"
+                  >
+                    {{ house.name }}
+                  </v-chip>
+                </td>
+                <td v-else-if="col.key === 'originFf'">{{ item.origin_ff?.name }}</td>
+                <td v-else-if="col.key === 'destinationFf'">{{ item.destination_ff?.name }}</td>
+                <td v-else-if="col.key === 'customer'">{{ item.consignee?.name }}</td>
+                <td v-else-if="col.key === 'origin'">{{ item.origin }}</td>
+                <td v-else-if="col.key === 'destination'">{{ item.destination }}</td>
+                <td v-else-if="col.key === 'airline'">{{ item.airline?.name }}</td>
+                <td v-else-if="col.key === 'flightNum'">{{ getFirstRouteFlightNum(item) }}</td>
+                <td v-else-if="col.key === 'departure'">{{ getFirstRouteDeparture(item) }}</td>
+                <td v-else-if="col.key === 'trash'">
+                  <TrashButton :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
+                </td>
+              </template>
             </tr>
           </tbody>
         </v-table>
@@ -236,7 +310,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deletedStatus } from '@/utils/data/systemData'
+import { sourceSystems, deletedStatus } from '@/utils/data/systemData'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { useTableFilters } from '~/composables/useTableFilters'
 
@@ -274,10 +348,100 @@ const initialFilters = {
   consignee_id: '',
   consignee_name: '',
   freight_forwarder_id: '',
+  origin_ff_id: '',
+  destination_ff_id: '',
   airline_id: '',
   flightNum: '',
   deleted_status: '',
+  trackerRef: '',
+  bookingNum: '',
+  bookingTm: '',
+  eta: '',
+  invoiceNumber: '',
+  source_system_id: '',
+  hasTmInvoices: null as number | null,
+  hasWmInvoices: null as number | null,
 }
+
+const yesNoItems = [
+  { name: 'Yes', value: 1 },
+  { name: 'No', value: 0 },
+]
+
+// Registry of every filter available in the search form. The order and spans
+// here define the default layout; filters with visible: false are only shown
+// when the user adds them from the Layout menu.
+const filterLayoutDefs = [
+  { key: 'referencia', label: 'Reference #', span: 2 },
+  { key: 'masterAwb', label: 'Master AWB', span: 2 },
+  { key: 'houseAwb', label: 'House AWB', span: 2 },
+  { key: 'flightNum', label: 'Flight number', span: 2 },
+  { key: 'consignee', label: 'Consignee', span: 2 },
+  { key: 'originFf', label: 'FF origin', span: 2 },
+  { key: 'destinationFf', label: 'FF destination', span: 2 },
+  { key: 'airline', label: 'Airline', span: 2 },
+  { key: 'status', label: 'Status', span: 2 },
+  { key: 'trackerRef', label: 'Tracker ref', span: 2, visible: false },
+  { key: 'bookingNum', label: 'Booking number', span: 2, visible: false },
+  { key: 'bookingTm', label: 'Booking TM', span: 2, visible: false },
+  { key: 'eta', label: 'ETA', span: 2, visible: false },
+  { key: 'invoiceNumber', label: 'Invoice #', span: 2, visible: false },
+  { key: 'sourceSystem', label: 'Source system', span: 2, visible: false },
+  { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
+  { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
+]
+
+// Model keys backing each layout filter, used to clear values when the user
+// hides a filter so hidden filters never affect the search.
+const filterModelKeys: Record<string, string[]> = {
+  referencia: ['referencia', 'referencias'],
+  masterAwb: ['masterAwb'],
+  houseAwb: ['houseAwb'],
+  flightNum: ['flightNum'],
+  consignee: ['consignee_id', 'consignee_name'],
+  originFf: ['origin_ff_id'],
+  destinationFf: ['destination_ff_id'],
+  airline: ['airline_id'],
+  status: ['deleted_status'],
+  trackerRef: ['trackerRef'],
+  bookingNum: ['bookingNum'],
+  bookingTm: ['bookingTm'],
+  eta: ['eta'],
+  invoiceNumber: ['invoiceNumber'],
+  sourceSystem: ['source_system_id'],
+  hasTmInvoices: ['hasTmInvoices'],
+  hasWmInvoices: ['hasWmInvoices'],
+}
+
+const onLayoutFilterHidden = (key: string) => {
+  const modelKeys = filterModelKeys[key] || []
+  modelKeys.forEach((modelKey) => {
+    const initialValue = (initialFilters as any)[modelKey]
+    ;(filters.value as any)[modelKey] = Array.isArray(initialValue) ? [...initialValue] : initialValue
+  })
+  syncToUrl()
+}
+
+// Registry of the table columns. Locked columns (Actions, # Reference) cannot
+// be hidden nor reordered; the rest can be managed from the Columns menu.
+const tableColumnDefs = [
+  { key: 'actions', label: 'Actions', locked: true },
+  { key: 'reference', label: '# Reference', locked: true },
+  { key: 'masterAwb', label: 'Master AWB' },
+  { key: 'houseAwb', label: 'House AWB' },
+  { key: 'originFf', label: 'Origin F.F.' },
+  { key: 'destinationFf', label: 'Destination F.F.' },
+  { key: 'customer', label: 'Customer' },
+  { key: 'origin', label: 'Origin' },
+  { key: 'destination', label: 'Destination' },
+  { key: 'airline', label: 'Airline' },
+  { key: 'flightNum', label: 'Flight number' },
+  { key: 'departure', label: 'Departure' },
+  { key: 'trash', label: 'Delete' },
+]
+
+const columnsLayout = useTableColumns('table-columns:air-export', tableColumnDefs)
+const { visibleColumns } = columnsLayout
 
 // Use the table filters composable for URL persistence
 const {
