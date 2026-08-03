@@ -165,6 +165,15 @@
             @keyup.enter.stop="onClickFilters"
           />
         </template>
+        <template #ffNoteFolio>
+          <v-text-field
+            v-model="filters.ffNoteFolio"
+            density="compact"
+            label="CN/DN #"
+            hint="Nota de crédito/débito del FF"
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
         <template #poNum>
           <v-text-field v-model="filters.poNum" density="compact" label="PO #" @keyup.enter.stop="onClickFilters" />
         </template>
@@ -441,6 +450,7 @@ const initialFilters = {
   has_sailed: null as number | null,
   deleted_status: '',
   invoiceNumber: '',
+  ffNoteFolio: '',
   poNum: '',
   hasTmInvoices: null as number | null,
   hasWmInvoices: null as number | null,
@@ -473,6 +483,7 @@ const filterLayoutDefs = [
   { key: 'hasSailed', label: 'Has sailed?', span: 2 },
   { key: 'status', label: 'Status', span: 2 },
   { key: 'invoiceNumber', label: 'Invoice #', span: 2, visible: false },
+  { key: 'ffNoteFolio', label: 'CN/DN #', span: 2, visible: false },
   { key: 'poNum', label: 'PO #', span: 2, visible: false },
   { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
   { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
@@ -499,6 +510,7 @@ const filterModelKeys: Record<string, string[]> = {
   hasSailed: ['has_sailed'],
   status: ['deleted_status'],
   invoiceNumber: ['invoiceNumber'],
+  ffNoteFolio: ['ffNoteFolio'],
   poNum: ['poNum'],
   hasTmInvoices: ['hasTmInvoices'],
   hasWmInvoices: ['hasWmInvoices'],
