@@ -139,11 +139,10 @@ const onSearch = _Debounce(async (search: string) => {
         text: 'No customers found',
       })
     }
-    if (response.length === 1) {
-      selectedCustomer.value = response[0]?.id
-      lastSelectedTitle.value = response[0]?.name || ''
-      onSelect(response[0]?.id)
-    }
+    // Do NOT auto-select on a single match: this runs while the user may
+    // still be typing (debounce just paused), and silently replacing their
+    // in-progress text with a premature match feels like the field is
+    // erasing what they wrote. Let them pick from the dropdown themselves.
   } catch (error) {
     snackbar.add({
       type: 'error',
