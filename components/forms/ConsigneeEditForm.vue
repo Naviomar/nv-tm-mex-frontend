@@ -396,7 +396,11 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in consignee?.consignee_executives" :key="`consig-exec-${index}`">
+                <tr
+                  v-for="(item, index) in consignee?.consignee_executives"
+                  :key="`consig-exec-${index}`"
+                  :class="{ 'bg-red-100! dark:bg-red-900!': item.executive?.deleted_at }"
+                >
                   <td>
                     <div class="flex gap-2">
                       <button
@@ -408,7 +412,17 @@
                       </button>
                     </div>
                   </td>
-                  <td>{{ item.executive.name }}</td>
+                  <td>
+                    <div :class="{ 'text-red-600 dark:text-red-400 line-through': item.executive?.deleted_at }">
+                      {{ item.executive?.name ?? 'Deleted executive' }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      Created by {{ item.executive?.creator?.name ?? '—' }}
+                      <span v-if="item.executive?.deleted_at">
+                        · Deleted by {{ item.executive?.deletor?.name ?? '—' }}
+                      </span>
+                    </div>
+                  </td>
                   <td>{{ item.valid_from }}</td>
                   <td>{{ item.undefined_time ? 'Undefined' : item.valid_to }}</td>
                   <td>{{ getExecutiveActiveByDates(item) }}</td>
