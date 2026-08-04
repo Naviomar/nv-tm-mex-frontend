@@ -9,7 +9,7 @@
             :onSearch="searchPorts"
             v-model="form.pod_id"
             prepend-inner-icon="mdi-ferry"
-            :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+            :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
             label="Port *"
           />
           <div>

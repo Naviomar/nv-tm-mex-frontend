@@ -173,7 +173,7 @@
               <v-autocomplete
                 v-model="ports"
                 :items="catalogs?.ports || []"
-                :item-title="(row: any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row: any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                 item-value="id"
                 label="Filter by Ports (optional)"
                 density="comfortable"

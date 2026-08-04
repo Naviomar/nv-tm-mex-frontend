@@ -21,7 +21,7 @@
               append-inner-icon="mdi-ferry"
               :set-id="tranship.port_id"
               :validate-key="`port_id_${index}`"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
               label="T/S Port"
             />
           </div>

@@ -144,7 +144,7 @@
               :onSearch="searchPolPorts"
               validate-key="pol_id"
               prepend-inner-icon="mdi-ferry"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
               label="POL *"
               :set-id="values.pol_id"
             />
@@ -154,7 +154,7 @@
               :onSearch="searchPodPorts"
               validate-key="pod_id"
               append-inner-icon="mdi-ferry"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
               label="POD *"
               :set-id="values.pod_id"
             />
@@ -189,7 +189,7 @@
                   :onSearch="searchPorts"
                   validate-key="port_id"
                   append-inner-icon="mdi-ferry"
-                  :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                  :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                   label="T/S Port"
                 />
               </div>
