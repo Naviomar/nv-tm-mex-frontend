@@ -31,7 +31,7 @@
               :onSearch="searchPorts"
               validate-key="port_id"
               append-inner-icon="mdi-ferry"
-              :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+              :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
               label="Port"
             />
           </div>
@@ -122,7 +122,7 @@
                 :onSearch="searchPorts"
                 validate-key="port_id"
                 append-inner-icon="mdi-ferry"
-                :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                 label="Port"
                 :set-id="values.port_id"
               />

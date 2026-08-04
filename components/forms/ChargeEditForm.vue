@@ -36,6 +36,16 @@
             </div>
 
             <div>
+              <v-text-field
+                v-model="charge.service_code"
+                density="compact"
+                label="Service code"
+                hint="Clave corta del servicio para el timbrado (ej. CANJE). No confundir con el Code (clave SAT)."
+                persistent-hint
+              />
+            </div>
+
+            <div>
               <v-autocomplete
                 v-model="charge.charge_entity_id"
                 density="compact"

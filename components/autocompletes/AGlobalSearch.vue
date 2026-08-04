@@ -163,7 +163,14 @@ const searchData = _Debounce(async (search: string, id?: string) => {
       })
     }
 
-    if (response.length === 1) {
+    // Only auto-select when this was an id-based lookup (initial load of an
+    // already-saved value, or re-resolving a known id) - there only one
+    // correct answer exists. A plain name search must NEVER auto-select:
+    // this runs mid-typing whenever the debounce pauses, and silently
+    // replacing the user's in-progress text with a premature match feels
+    // like the field is erasing what they wrote. Let them pick from the
+    // dropdown themselves in that case.
+    if (id && response.length === 1) {
       const item = response[0]
       if (item.deleted_at) {
         snackbar.add({

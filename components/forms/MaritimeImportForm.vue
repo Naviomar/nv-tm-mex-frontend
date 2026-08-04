@@ -127,7 +127,7 @@
                 :onSearch="searchPolPorts"
                 validate-key="pol_id"
                 prepend-inner-icon="mdi-ferry"
-                :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                 label="POL *"
                 :set-id="seaImportAddFormRef?.values.pol_id || undefined"
               />
@@ -137,7 +137,7 @@
                 :onSearch="searchPodPorts"
                 validate-key="pod_id"
                 append-inner-icon="mdi-ferry"
-                :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                 label="POD *"
                 :set-id="seaImportAddFormRef?.values.pod_id || undefined"
               />
@@ -172,7 +172,7 @@
                     :onSearch="searchPorts"
                     validate-key="tranship.port_id"
                     prepend-inner-icon="mdi-ferry"
-                    :item-title="(row : any) => `[${row.country?.code2}] ${row.name}`"
+                    :item-title="(row : any) => `[${row.country?.code2}] ${row.name} (${row.code})`"
                     label="T/S Port"
                   />
                 </div>
