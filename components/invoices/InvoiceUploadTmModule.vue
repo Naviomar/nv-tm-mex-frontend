@@ -21,13 +21,11 @@
     </ul>
     <div class="py-4">
       <div class="font-bold mb-2">Filters</div>
-      <div class="grid grid-cols-2 gap-5">
-        <div class="flex">
-          <FileDropzone @drop-files="(file) => (form.zipFile = file)">
-            <v-file-input v-model="form.zipFile" density="compact" counter accept=".zip" label="File ZIP" />
-          </FileDropzone>
-          <v-btn color="primary" class="ms-4" @click="uploadZip"> Upload</v-btn>
-        </div>
+      <div class="flex flex-col gap-2">
+        <FileDropzone @drop-files="(file) => (form.zipFile = file)">
+          <v-file-input v-model="form.zipFile" density="compact" counter accept=".zip" label="File ZIP" hide-details />
+        </FileDropzone>
+        <v-btn color="primary" class="align-self-start" @click="uploadZip">Upload</v-btn>
       </div>
     </div>
   </div>
