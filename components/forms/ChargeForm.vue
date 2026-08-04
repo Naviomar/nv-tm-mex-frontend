@@ -17,6 +17,16 @@
         </div>
 
         <div>
+          <InputText
+            density="compact"
+            name="service_code"
+            label="Service code"
+            hint="Clave corta del servicio para el timbrado (ej. CANJE). No confundir con el Code (clave SAT)."
+            persistent-hint
+          />
+        </div>
+
+        <div>
           <InputAutocomplete
             density="compact"
             name="charge_entity_id"

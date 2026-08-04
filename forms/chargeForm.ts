@@ -5,6 +5,7 @@ const schema = toTypedSchema(
   yup.object().shape({
     name: yup.string().required('Name is required'),
     code: yup.string(),
+    service_code: yup.string(),
     charge_type_id: yup.string().nullable(),
     charge_entity_id: yup.string().nullable(),
     services: yup.array().of(yup.number()),

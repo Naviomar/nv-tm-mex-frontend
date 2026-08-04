@@ -100,6 +100,10 @@
                   <v-icon size="small" class="mr-1">mdi-barcode</v-icon>
                   Code
                 </th>
+                <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="120">
+                  <v-icon size="small" class="mr-1">mdi-tag-outline</v-icon>
+                  Service code
+                </th>
                 <th class="text-left font-weight-bold text-blue-grey-darken-3 py-4" width="140">
                   <v-icon size="small" class="mr-1">mdi-domain</v-icon>
                   Entity
@@ -181,6 +185,12 @@
                 <td class="py-3 px-4">
                   <code v-if="charge.code" class="charge-code text-grey-darken-2 font-weight-medium dark:text-white">
                     {{ charge.code }}
+                  </code>
+                  <span v-else class="text-grey-lighten-1 text-caption dark:text-grey-darken-1">—</span>
+                </td>
+                <td class="py-3 px-4">
+                  <code v-if="charge.service_code" class="charge-code text-grey-darken-2 font-weight-medium dark:text-white">
+                    {{ charge.service_code }}
                   </code>
                   <span v-else class="text-grey-lighten-1 text-caption dark:text-grey-darken-1">—</span>
                 </td>
