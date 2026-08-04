@@ -178,12 +178,26 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(cnn, index) in item?.consignee_executives" :key="`consig-exec-${index}`">
-                 
-                  <td>{{ cnn.executive.name }}</td>
+                <tr
+                  v-for="(cnn, index) in item?.consignee_executives"
+                  :key="`consig-exec-${index}`"
+                  :class="{ 'bg-red-100! dark:bg-red-900!': cnn.executive?.deleted_at }"
+                >
+                  <td></td>
+                  <td>
+                    <div :class="{ 'text-red-600 dark:text-red-400 line-through': cnn.executive?.deleted_at }">
+                      {{ cnn.executive?.name ?? 'Deleted executive' }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      Created by {{ cnn.executive?.creator?.name ?? '—' }}
+                      <span v-if="cnn.executive?.deleted_at">
+                        · Deleted by {{ cnn.executive?.deletor?.name ?? '—' }}
+                      </span>
+                    </div>
+                  </td>
                   <td>{{ cnn.valid_from }}</td>
                   <td>{{ cnn.undefined_time ? 'Undefined' : cnn.valid_to }}</td>
-                  <td>{{ getExecutiveActiveByDates(item) }}</td>
+                  <td>{{ getExecutiveActiveByDates(cnn) }}</td>
                 </tr>
               </tbody>
             </v-table>
