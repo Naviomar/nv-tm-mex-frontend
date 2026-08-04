@@ -45,14 +45,14 @@
               </div>
             </div>
             <v-alert
-              v-if="!isSelectedGreatherThanSupplierConcept && !isSkipLinkConcepts"
-              type="error"
+              v-if="!isSelectedGreatherThanSupplierConcept && !isSkipLinkConcepts && selectedSellConceptsCount > 0"
+              type="warning"
               density="compact"
               variant="tonal"
               class="mt-2"
             >
-              The selected amount is less than the supplier concept amount. Please select more concepts to generate
-              profit.
+              The selected amount is less than the supplier concept amount, so this concept will generate negative
+              profit. You can still continue if this is intentional.
             </v-alert>
             <v-alert
               v-if="isSelectedGreatherThanSupplierConcept"
@@ -124,7 +124,7 @@
           <v-btn color="secondary" @click="cancel"> Close </v-btn>
           <v-btn
             color="primary"
-            :disabled="!isSelectedGreatherThanSupplierConcept && !isSkipLinkConcepts"
+            :disabled="!isSkipLinkConcepts && selectedSellConceptsCount === 0"
             @click="addConceptToSupplierInvoice"
           >
             Add concept to supplier invoice
