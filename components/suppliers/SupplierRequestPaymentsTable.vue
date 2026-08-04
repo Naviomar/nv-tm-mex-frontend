@@ -2,13 +2,24 @@
   <div>
     <div @keyup.enter="onClickFilters">
       <div class="font-bold mb-2">Filters</div>
-      <div class="grid grid-cols-4 gap-5">
+      <div class="grid grid-cols-5 gap-5">
         <div><v-text-field v-model="filters.id" type="number" density="compact" label="Folio" /></div>
         <div>
           <ASupplierSearch v-model="filters.supplier_id" />
         </div>
         <div><v-text-field v-model="filters.date_from" type="date" density="compact" label="Date from" /></div>
         <div><v-text-field v-model="filters.date_to" type="date" density="compact" label="Date to" /></div>
+        <div>
+          <v-autocomplete
+            v-model="filters.deleted_status"
+            density="compact"
+            label="Status"
+            :items="deletedStatus"
+            item-title="name"
+            item-value="value"
+            clearable
+          />
+        </div>
       </div>
       <div class="flex gap-4">
         <v-btn class="" color="secondary" @click="clearFilters"> Clear </v-btn>
@@ -46,11 +57,19 @@
             }"
           >
             <td>
-              <div class="flex gap-2">
+              <div class="flex flex-col items-center gap-1">
                 <ViewButton :id="supReqPayment.id" @click="viewItem(supReqPayment)" />
-                <div v-if="supReqPayment.deleted_at == null">
-                  <TrashButton :item="supReqPayment" permission="supplier-req-payments-delete" @click="showFormDelete(supReqPayment)" />
-                </div>
+                <ProcessAuthorizationWrapper
+                  v-if="!supReqPayment.deleted_at"
+                  processName="supplier-request-cancel-payment"
+                  :requestKey="`${supReqPayment.id}`"
+                  label="Request cancellation"
+                  :displayName="`Payment Request #${supReqPayment.id}`"
+                >
+                  <template #auth>
+                    <TrashButton :item="supReqPayment" @click="showFormCancelReq(supReqPayment)" />
+                  </template>
+                </ProcessAuthorizationWrapper>
               </div>
             </td>
             <td>{{ supReqPayment.id }}</td>
@@ -95,11 +114,16 @@
             </td>
             <td>
               <div class="flex flex-col items-center gap-1 mb-2">
-                <v-chip size="small" :color="supReqPayment.invoice?.is_paid == 1 ? 'green' : 'red'">{{
-                  supReqPayment.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
-                }}</v-chip>
+                <v-chip
+                  size="small"
+                  :color="supReqPayment.deleted_at ? 'grey' : supReqPayment.invoice?.is_paid == 1 ? 'green' : 'red'"
+                >
+                  {{
+                    supReqPayment.deleted_at ? 'Cancelled' : supReqPayment.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
+                  }}
+                </v-chip>
 
-                <InvoiceChargePaymentsView size="x-small" :invoice="supReqPayment.invoice" />
+                <InvoiceChargePaymentsView v-if="!supReqPayment.deleted_at" size="x-small" :invoice="supReqPayment.invoice" />
               </div>
             </td>
             <td class="whitespace-nowrap">
@@ -118,24 +142,21 @@
         @update:model-value="onClickPagination"
       ></v-pagination>
     </div>
-    <v-dialog v-model="formDelete.show" max-width="500">
+    <v-dialog v-model="formCancelReq.show" max-width="500">
       <v-card>
         <v-card-title>
-          <span class="text-h5">Cancel supplier request payment #{{ formDelete.supReqPayment?.id }}</span>
+          <span class="text-h5">Cancel payment request #{{ formCancelReq.supReqPayment?.id }}</span>
         </v-card-title>
         <v-card-text>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              Please confirm the cancellation of the supplier request payment #{{ formDelete.supReqPayment?.id }}
-            </div>
-            <div class="col-span-2">
-              <v-textarea v-model="formDelete.comments" label="Comments" />
-            </div>
-          </div>
+          <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
+            This will permanently cancel this payment request, release all linked invoices and applied advances, and
+            mark it as cancelled everywhere (module, PDF). This action cannot be undone.
+          </v-alert>
+          <v-textarea v-model="formCancelReq.comments" label="Cancellation notes" density="compact" :rows="3" />
         </v-card-text>
         <v-card-actions>
-          <v-btn color="red" @click="closeFormDelete">Close</v-btn>
-          <v-btn color="primary" @click="deleteReqSupPayment">Yes, I confirm</v-btn>
+          <v-btn color="red" @click="closeFormCancelReq">Close</v-btn>
+          <v-btn color="primary" @click="confirmCancelReq">Cancel request</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -153,12 +174,7 @@ const filters = ref<any>({
   date_from: '',
   date_to: '',
   supplier_id: '',
-})
-
-const formDelete = ref<any>({
-  show: false,
-  supReqPayment: null,
-  comments: '',
+  deleted_status: '',
 })
 
 const supReqPayments = ref({
@@ -168,21 +184,46 @@ const supReqPayments = ref({
   last_page: 1,
 })
 
-const showFormDelete = (supReqPayment: any) => {
-  formDelete.value.supReqPayment = supReqPayment
-  formDelete.value.show = true
+const formCancelReq = ref<any>({
+  show: false,
+  supReqPayment: null,
+  comments: '',
+})
+
+const showFormCancelReq = (supReqPayment: any) => {
+  formCancelReq.value.supReqPayment = supReqPayment
+  formCancelReq.value.comments = ''
+  formCancelReq.value.show = true
 }
 
-const closeFormDelete = () => {
-  formDelete.value.show = false
-  formDelete.value.supReqPayment = null
-  formDelete.value.comments = ''
+const closeFormCancelReq = () => {
+  formCancelReq.value.show = false
+  formCancelReq.value.supReqPayment = null
+}
+
+const confirmCancelReq = async () => {
+  try {
+    loadingStore.start()
+    await $api.supplierReqPayments.cancelSupReqPayment(formCancelReq.value.supReqPayment.id.toString(), {
+      comments: formCancelReq.value.comments,
+    })
+    snackbar.add({ type: 'success', text: 'Payment request cancelled' })
+    closeFormCancelReq()
+    await getSupReqPayments()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const getUniqueServices = (supReqPayment: any) => {
   let services: any = []
-  // add reference_number to services array if it doesn't exist
-  supReqPayment.pay_invoices?.forEach((payInvoice: any) => {
+  // pay_invoices_all incluye los pivotes con soft-delete (solicitudes canceladas
+  // desvinculan sus facturas), pay_invoices solo trae los activos.
+  supReqPayment.pay_invoices_all?.forEach((payInvoice: any) => {
     const referenceable = payInvoice.supplier_invoice?.referenceable
     if (
       referenceable &&
@@ -235,6 +276,7 @@ const clearFilters = async () => {
     date_from: '',
     date_to: '',
     supplier_id: '',
+    deleted_status: '',
   }
   await getSupReqPayments()
 }
@@ -252,36 +294,6 @@ const onClickFilters = async () => {
   // set current page to 1
   supReqPayments.value.current_page = 1
   await getSupReqPayments()
-}
-
-const deleteReqSupPayment = async () => {
-  try {
-    if (!formDelete.value.comments) {
-      snackbar.add({
-        type: 'warning',
-        text: 'Please add comments',
-      })
-      return
-    }
-    loadingStore.start()
-    const body = {
-      comments: formDelete.value.comments,
-      supplier_req_payment_id: formDelete.value.supReqPayment.id,
-    }
-    await $api.supplierReqPayments.cancelSupReqPayment(body)
-    snackbar.add({
-      type: 'success',
-      text: 'Supplier request payment deleted successfully',
-    })
-    closeFormDelete()
-    await getSupReqPayments()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
 }
 
 const getSupReqPayments = async () => {

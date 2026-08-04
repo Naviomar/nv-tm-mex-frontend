@@ -30,7 +30,12 @@
             </div>
           </td>
           <td class="p-2">
-            <div @click="goToSupplierReqPaymentView(cfdi)" class="cursor-pointer hover:underline">{{ cfdi.folio }}</div>
+            <div
+              :class="hasFirstInvoiceReqPay(cfdi) ? 'cursor-pointer hover:underline' : ''"
+              @click="hasFirstInvoiceReqPay(cfdi) && goToSupplierReqPaymentView(cfdi)"
+            >
+              {{ cfdi.folio }}
+            </div>
           </td>
           <td class="p-2">{{ cfdi.supplier?.name }}</td>
           <td class="p-2">

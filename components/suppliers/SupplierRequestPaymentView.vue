@@ -9,8 +9,8 @@
               <div class="flex justify-between gap-2">
                 <div>Details</div>
                 <div>
-                  <v-chip :color="supReqPayment.invoice?.is_paid ? 'success' : 'warning'" size="small">
-                    {{ supReqPayment.invoice?.is_paid ? 'Paid' : 'Pending' }}
+                  <v-chip :color="isDeleted ? 'grey' : (supReqPayment.invoice?.is_paid ? 'success' : 'warning')" size="small">
+                    {{ isDeleted ? 'Cancelled' : (supReqPayment.invoice?.is_paid ? 'Paid' : 'Pending') }}
                   </v-chip>
                 </div>
               </div>
@@ -42,19 +42,33 @@
                   </UserInfoBadge>
                 </div>
               </div>
-              <div class="flex gap-2 py-2">
+              <div class="flex flex-wrap items-center gap-2 py-2">
                 <v-btn color="primary" size="small" @click="previewReqPdf">View PDF</v-btn>
                 <v-btn color="purple" size="small" @click="showSendByEmail">Send by email</v-btn>
                 <ReqSupplierPaymentAttachments :sup-req-payment="supReqPayment" />
                 
-                <v-btn 
-                  v-if="!isUSD && !hasInvoiceAmountPaid" 
-                  color="indigo" 
-                  size="small" 
+                <v-btn
+                  v-if="!isUSD && !hasInvoiceAmountPaid"
+                  color="indigo"
+                  size="small"
                   @click="showUpdateExchangeRate"
                 >
                   Update exchange rate
                 </v-btn>
+
+                <ProcessAuthorizationWrapper
+                  v-if="!isDeleted && !hasInvoiceAmountPaid"
+                  processName="supplier-request-cancel-payment"
+                  :requestKey="props.id.toString()"
+                  label="Request cancellation"
+                  :displayName="`Payment Request #${props.id}`"
+                >
+                  <template #auth>
+                    <v-btn color="red" size="small" @click="showConfirmCancelReq">
+                      Cancel request payment
+                    </v-btn>
+                  </template>
+                </ProcessAuthorizationWrapper>
               </div>
             </v-card-text>
           </v-card>
@@ -388,6 +402,25 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="formCancelReq.show" max-width="500">
+      <v-card>
+        <v-card-title>
+          <span class="text-h5">Cancel payment request</span>
+        </v-card-title>
+        <v-card-text>
+          <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
+            This will permanently cancel this payment request, release all linked invoices and applied advances, and
+            mark it as cancelled everywhere (module, PDF). This action cannot be undone.
+          </v-alert>
+          <v-textarea v-model="formCancelReq.comments" label="Cancellation notes" density="compact" :rows="3" />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="red" @click="closeFormCancelReq">Close</v-btn>
+          <v-btn color="primary" @click="confirmCancelReq">Cancel request</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="formExchangeRate.show" max-width="600">
       <v-card>
         <v-card-title>
@@ -451,6 +484,11 @@ const formExchangeRate = reactive<any>({
   rate: 0,
 })
 
+const formCancelReq = reactive<any>({
+  show: false,
+  comments: '',
+})
+
 const exchangeRate = computed(() => {
   if (supReqPayment.value.exchange_rate_display) {
     return supReqPayment.value.exchange_rate_display
@@ -497,6 +535,31 @@ const showUpdateExchangeRate = () => {
 
 const closeFormExRate = () => {
   formExchangeRate.show = false
+}
+
+const showConfirmCancelReq = () => {
+  formCancelReq.comments = ''
+  formCancelReq.show = true
+}
+
+const closeFormCancelReq = () => {
+  formCancelReq.show = false
+}
+
+const confirmCancelReq = async () => {
+  try {
+    loadingStore.start()
+    await $api.supplierReqPayments.cancelSupReqPayment(props.id.toString(), { comments: formCancelReq.comments })
+    snackbar.add({ type: 'success', text: 'Payment request cancelled' })
+    formCancelReq.show = false
+    await getSupReqPayment()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const showEditBankInfo = () => {
