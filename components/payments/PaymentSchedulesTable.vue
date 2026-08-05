@@ -312,31 +312,20 @@ const schedules = ref<any>({
 })
 
 const validatePaid = (paramRef: any): string => {
-  let array_paids = new Array();
-  let size_data_reference = paramRef.length
-  let data_reference = paramRef;
-  ///validamos si cada referencia esta pagada
-  for(var i = 0; i < size_data_reference; i++){
-    let line_pay_schedules_data = data_reference[i].referencia.line_pay_schedules;
-    
-    ///validamos facturas de referencia
-    for(var v = 0; v < line_pay_schedules_data.length; v++){
-      let invoices_reference = line_pay_schedules_data[v].line_invoice_refs;
-      for(var iv = 0; iv < invoices_reference.length; iv++){
-        let is_paid_ref = invoices_reference[iv].invoice.is_paid;
-        if(is_paid_ref === 1){
-          array_paids.push('Paid');
-        }
-      }
-    }
-  }
+  const scheduleRefs = paramRef || []
+  if (scheduleRefs.length === 0) return 'Pending'
 
-  if(size_data_reference===array_paids.length){
-    return 'Paid';
-  }else{
-    return 'Pending';
-  }
-  
+  // Cada scheduleRef (referencia dentro de ESTE schedule) debe tener al menos una
+  // factura de línea ligada y todas las ligadas deben estar pagadas. Antes se recorría
+  // referencia.line_pay_schedules (el historial COMPLETO de esa referencia en TODOS los
+  // schedules), lo que mezclaba pagos de otros batches al validar este — una misma
+  // referencia puede aparecer en más de un schedule (pagos parciales en distintas fechas).
+  const allPaid = scheduleRefs.every((ref: any) => {
+    const linkedInvoiceRefs = ref.line_invoice_refs || []
+    return linkedInvoiceRefs.length > 0 && linkedInvoiceRefs.every((lir: any) => lir.invoice?.is_paid == 1)
+  })
+
+  return allPaid ? 'Paid' : 'Pending'
 }
 
 const showNotyForm = (schedule: any) => {

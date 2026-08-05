@@ -45,12 +45,12 @@ class SupplierReqPaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/update-exchange-rate`, fetchOptions)
   }
 
-  async cancelSupReqPayment(form: any, fetchOptions?: FetchOptions) {
+  async cancelSupReqPayment(id: string, form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/cancel`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/${id}/cancel`, fetchOptions)
   }
 
   async updateBankInfo(id: string, form: any, fetchOptions?: FetchOptions) {

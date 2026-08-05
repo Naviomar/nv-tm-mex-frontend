@@ -300,6 +300,12 @@ const processResources = {
     description: 'Unlink Supplier Invoice from Payment Request',
     keyLabel: null,
   },
+  /** Authorize cancelling a supplier payment request (releases all linked invoices) */
+  SupplierRequestCancelPayment: {
+    processName: 'supplier-request-cancel-payment',
+    description: 'Cancel Supplier Payment Request',
+    keyLabel: 'Payment Request',
+  },
   /** Authorize editing a line invoice after it has been locked */
   InvoicesLinesUpdate: {
     processName: 'invoices.lines.update',
