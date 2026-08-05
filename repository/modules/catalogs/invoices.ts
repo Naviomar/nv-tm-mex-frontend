@@ -193,6 +193,14 @@ class InvoicesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/send-invoice-by-email`, fetchOptions)
   }
 
+  async previewInvoiceRecipients(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/preview-invoice-recipients`, fetchOptions)
+  }
+
   async deleteCfdiLink(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

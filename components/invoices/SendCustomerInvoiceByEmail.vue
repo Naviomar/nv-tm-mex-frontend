@@ -20,13 +20,38 @@
             />
           </div>
           <div>Add emails comma separated</div>
-          <v-textarea v-model="emailProcess.emails.value" :rows="3" label="Emails" hint="Comma separated" />
+          <v-textarea
+            v-model="emailProcess.emails.value"
+            :rows="3"
+            label="Emails"
+            hint="Comma separated"
+            @blur="recipientsPreview.load"
+          />
 
           <CustomerEmailsWidget
             :customer-id="invoice.consignee_id"
             :notifys="customerNotifys"
-            @fetched-emails="emailProcess.setEmails"
+            @fetched-emails="(value: string) => { emailProcess.setEmails(value); recipientsPreview.load() }"
           />
+
+          <v-divider class="my-3"></v-divider>
+          <div class="text-caption font-bold mb-1">
+            Destinatarios reales de este correo
+            <v-progress-circular v-if="recipientsPreview.loading.value" indeterminate size="14" width="2" class="ml-1" />
+          </div>
+          <div class="mb-2">
+            <div class="text-caption text-grey-darken-1">Para (TO)</div>
+            <div v-if="recipientsPreview.to.value.length === 0" class="text-caption text-red">Sin destinatarios TO</div>
+            <v-chip v-for="(email, idx) in recipientsPreview.to.value" :key="`preview-to-${idx}`" size="small" class="mr-1 mb-1">
+              {{ email }}
+            </v-chip>
+          </div>
+          <div>
+            <div class="text-caption text-grey-darken-1">Con copia (CC)</div>
+            <v-chip v-for="(email, idx) in recipientsPreview.cc.value" :key="`preview-cc-${idx}`" size="small" color="amber" class="mr-1 mb-1">
+              {{ email }}
+            </v-chip>
+          </div>
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
@@ -151,4 +176,39 @@ const useEmail = () => {
 }
 
 const emailProcess = useEmail()
+
+const useRecipientsPreview = () => {
+  const to = ref<string[]>([])
+  const cc = ref<string[]>([])
+  const loading = ref(false)
+
+  const load = async () => {
+    try {
+      loading.value = true
+      const response: any = await $api.invoices.previewInvoiceRecipients({
+        emails: emailProcess.emails.value,
+        invoice_id: props.id,
+        invoice_class_name: props.invoice.class_name,
+        invoice_type: props.invoice_type,
+      })
+      to.value = response?.to ?? []
+      cc.value = response?.cc ?? []
+    } catch (e) {
+      console.error(e)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { to, cc, loading, load }
+}
+
+const recipientsPreview = useRecipientsPreview()
+
+watch(
+  () => emailProcess.showForm.value,
+  (isOpen) => {
+    if (isOpen) recipientsPreview.load()
+  }
+)
 </script>

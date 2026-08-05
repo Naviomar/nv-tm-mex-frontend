@@ -395,6 +395,21 @@
         </div>
       </v-card-title>
       <v-card-text>
+        <v-tabs v-model="revalidationTab" class="mb-2">
+          <v-tab value="checklist">
+            <v-icon start> mdi-file </v-icon>
+            Checklist revalidation
+          </v-tab>
+          <v-tab value="release">
+            <v-icon start> mdi-transfer </v-icon>
+            Release & Revalidation
+          </v-tab>
+        </v-tabs>
+        <v-window v-model="revalidationTab">
+          <v-window-item value="checklist">
+            <AirImportCheckListRevalidation :reference="values" />
+          </v-window-item>
+          <v-window-item value="release">
         <!-- Release fields -->
         <div class="text-subtitle-2 text-grey-darken-1 mb-2">Release information</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -525,8 +540,17 @@
           <v-btn color="primary" size="small" variant="tonal" @click="onSaveRevalidation">
             Save revalidation changes
           </v-btn>
-          <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation"> Send revalidation </v-btn>
         </div>
+
+        <AirImportValidateElectronicRev
+          ref="validateElectronicRevRef"
+          :reference-id="props.id"
+          :reference-number="values.reference_number"
+        >
+          <div class="flex justify-end gap-3 mt-2">
+            <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation"> Send revalidation </v-btn>
+          </div>
+        </AirImportValidateElectronicRev>
 
         <!-- Past revalidations -->
         <div v-if="hasSentRevalidations" class="py-4">
@@ -550,6 +574,8 @@
             </v-expansion-panel>
           </v-expansion-panels>
         </div>
+          </v-window-item>
+        </v-window>
       </v-card-text>
     </v-card>
 
@@ -701,6 +727,9 @@ const onAgentChange = async (agentId: number | null) => {
     loadingStore.stop()
   }
 }
+
+const revalidationTab = ref('checklist')
+const validateElectronicRevRef = ref<any>(null)
 
 const formRevalidation = ref<any>({
   show: false,
@@ -1054,6 +1083,7 @@ const onSendRevalidation = async () => {
 
     snackbar.add({ type: 'success', text: 'Revalidation sent' })
     await getData()
+    await validateElectronicRevRef.value?.refresh()
 
     toggleRevalidation()
   } catch (e) {
