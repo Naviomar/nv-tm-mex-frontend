@@ -4,7 +4,7 @@
       <v-card class="mb-4">
         <v-card-title>
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <div class="font-bold">Customer TM {{ invoiceType }} #{{ invoiceTm.invoice.invoice_number }}</div>
+            <div class="font-bold">Customer TM {{ invoiceType }} #{{ invoiceTm.invoice?.invoice_number }}</div>
 
             <div class="flex flex-wrap gap-2 md:gap-4 items-center">
               <v-chip
@@ -15,6 +15,9 @@
                 v-if="!isCancelled"
               >
                 {{ isPaid ? 'Paid' : 'Payment pending' }}
+              </v-chip>
+              <v-chip v-if="hasCreditNoteBalance" color="teal" text-color="white" size="small">
+                Con saldo a favor
               </v-chip>
               <div v-if="invoiceTm.from_deleted_invoice">
                 <v-chip size="small" color="orange" variant="tonal">
@@ -605,6 +608,10 @@ const isPaid = computed(() => {
     return false
   }
   return invoiceTm.value?.invoice.is_paid === 1
+})
+
+const hasCreditNoteBalance = computed(() => {
+  return invoiceTm.value?.invoice?.has_credit_note_balance === true
 })
 
 const canConvertToInvoice = computed(() => {

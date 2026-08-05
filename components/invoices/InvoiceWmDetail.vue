@@ -10,6 +10,9 @@
                 v-if="!isCancelled">
                 {{ isPaid ? 'Paid' : 'Payment pending' }}
               </v-chip>
+              <v-chip v-if="hasCreditNoteBalance" color="teal" text-color="white" size="small">
+                Con saldo a favor
+              </v-chip>
               <div v-if="invoiceWm.from_deleted_invoice">
                 <v-chip size="small" color="orange" variant="tonal">
                   Re-invoice from
@@ -451,6 +454,10 @@ const isPaid = computed(() => {
     return false
   }
   return invoiceWm.value?.invoice.is_paid === 1
+})
+
+const hasCreditNoteBalance = computed(() => {
+  return invoiceWm.value?.invoice?.has_credit_note_balance === true
 })
 
 const wmAllowedCustomerIds = ref<number[]>([])

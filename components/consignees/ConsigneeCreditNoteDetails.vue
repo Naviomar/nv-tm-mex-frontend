@@ -14,6 +14,9 @@
               <v-chip color="orange" size="small" v-if="creditNote.inv_type">
                 {{ creditNote.inv_type?.toUpperCase() }}
               </v-chip>
+              <v-chip v-if="creditNote.is_fiscal" :color="fiscalStatusColor" size="small">
+                Fiscal - {{ fiscalStatusLabel }}
+              </v-chip>
             </div>
           </div>
         </v-card-title>
@@ -86,6 +89,61 @@
             </v-card-text>
           </v-card>
 
+          <!-- Fiscal CFDI Card -->
+          <v-card v-if="creditNote.is_fiscal" variant="tonal" color="teal" class="mb-4">
+            <v-card-text>
+              <div class="flex items-center gap-2 mb-3">
+                <v-icon color="teal-darken-2">mdi-file-certificate-outline</v-icon>
+                <div class="text-sm font-bold text-teal-darken-2">FISCAL CFDI (EGRESO)</div>
+              </div>
+
+              <div v-if="creditNote.uuid">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <div class="text-xs text-grey-darken-1 mb-1">UUID</div>
+                    <div class="font-semibold text-xs break-all">{{ creditNote.uuid }}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-grey-darken-1 mb-1">Serie / Folio</div>
+                    <div class="font-semibold">{{ creditNote.serie || '-' }} {{ creditNote.folio || '-' }}</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-grey-darken-1 mb-1">Related invoice UUID</div>
+                    <div class="font-semibold text-xs break-all">{{ creditNote.related_invoice_uuid || '-' }}</div>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <v-btn v-if="creditNote.xml_attachment" size="small" variant="outlined" @click="downloadAttachment(creditNote.xml_attachment, 'xml')">
+                    <v-icon start>mdi-file-xml-box</v-icon>XML
+                  </v-btn>
+                  <v-btn v-if="creditNote.pdf_attachment" size="small" variant="outlined" @click="downloadAttachment(creditNote.pdf_attachment, 'pdf')">
+                    <v-icon start>mdi-file-pdf-box</v-icon>PDF
+                  </v-btn>
+                </div>
+              </div>
+
+              <div v-else-if="hasPermission('customer-credit-notes-create-fiscal')">
+                <v-alert density="compact" type="warning" variant="outlined" class="mb-3">
+                  This fiscal credit note has no stamped CFDI attached yet. Upload the XML timbrado outside the
+                  system (must reference this invoice via CfdiRelacionados, TipoRelacion 01).
+                </v-alert>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                  <FileDropzone @drop-files="(file: any) => (uploadForm.xml_file = file)">
+                    <v-file-input v-model="uploadForm.xml_file" density="compact" accept=".xml" label="XML (required)" hide-details />
+                  </FileDropzone>
+                  <FileDropzone @drop-files="(file: any) => (uploadForm.pdf_file = file)">
+                    <v-file-input v-model="uploadForm.pdf_file" density="compact" accept=".pdf" label="PDF (optional)" hide-details />
+                  </FileDropzone>
+                </div>
+                <v-btn color="primary" size="small" :disabled="!uploadForm.xml_file" @click="uploadFiscalCfdi">
+                  Upload stamped CFDI
+                </v-btn>
+              </div>
+
+              <div v-else class="text-sm text-grey-darken-1">Pending: stamped CFDI not uploaded yet.</div>
+            </v-card-text>
+          </v-card>
+
           <!-- Comments -->
           <v-card variant="tonal" color="orange" class="mb-4" v-if="creditNote.description">
             <v-card-text>
@@ -104,6 +162,15 @@
             <PreviewCustomerCreditNote :id="creditNote.id" />
             <v-btn v-if="false" color="primary" size="small" variant="outlined" @click="emailCreditNote">
               <v-icon>mdi-email-outline</v-icon>Email
+            </v-btn>
+            <v-btn
+              v-if="creditNote.is_fiscal && hasCreditNoteAmountAvailable && !isDeleted"
+              color="teal"
+              size="small"
+              variant="outlined"
+              @click="goToRefund"
+            >
+              <v-icon start>mdi-bank-transfer-out</v-icon>Refund by egreso
             </v-btn>
           </div>
 
@@ -438,6 +505,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -451,6 +519,10 @@ const creditNote = ref<any>(null)
 const invoicesFound = ref<any>([])
 const invoicesFoundSelected = ref<any>([])
 const chargeCfdiNames = ref<any>([])
+const uploadForm = reactive<{ xml_file: any; pdf_file: any }>({
+  xml_file: null,
+  pdf_file: null,
+})
 
 const filters = ref<any>({
   typeInvoice: null,
@@ -667,6 +739,71 @@ const isDeleted = computed(() => {
 const hasCreditNoteAmountAvailable = computed(() => {
   return creditNote.value.amount_available > 0
 })
+
+const fiscalStatusLabel = computed(() => {
+  const status = creditNote.value?.fiscal_status
+  const labels: Record<string, string> = {
+    disponible: 'Available',
+    cancelado: 'Cancelled',
+    reembolsado: 'Refunded',
+    aplicado_a_factura: 'Applied to invoice',
+    mixto: 'Applied + Refunded',
+    parcialmente_reembolsado: 'Partially refunded',
+    parcialmente_aplicado_a_factura: 'Partially applied',
+    parcialmente_mixto: 'Partially applied + refunded',
+  }
+  return labels[status] || (creditNote.value?.uuid ? 'Available' : 'Pending CFDI upload')
+})
+
+const fiscalStatusColor = computed(() => {
+  const status = creditNote.value?.fiscal_status
+  if (status === 'cancelado') return 'red'
+  if (status === 'disponible') return 'green'
+  if (!creditNote.value?.uuid) return 'grey'
+  return 'orange'
+})
+
+const uploadFiscalCfdi = async () => {
+  try {
+    if (!uploadForm.xml_file) {
+      snackbar.add({ type: 'warning', text: 'Select the stamped XML file' })
+      return
+    }
+    loadingStore.loading = true
+    await $api.consigneeCreditNotes.uploadFiscalCfdi(creditNote.value.id, uploadForm)
+    snackbar.add({ type: 'success', text: 'Fiscal CFDI uploaded and linked correctly' })
+    uploadForm.xml_file = null
+    uploadForm.pdf_file = null
+    await getCreditNote()
+  } catch (e: any) {
+    console.error(e)
+    if (e?.data?.message) {
+      snackbar.add({ type: 'error', text: e.data.message })
+    }
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const downloadAttachment = async (path: string, kind: string) => {
+  try {
+    const response = await $api.aws.downloadS3Object(path)
+    const url = URL.createObjectURL(response as any)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `credit-note-${creditNote.value.id}.${kind}`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const goToRefund = () => {
+  router.push('/refunds/add')
+}
 
 const payInvoices = async () => {
   try {

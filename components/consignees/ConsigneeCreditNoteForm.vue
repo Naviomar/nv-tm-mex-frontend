@@ -10,16 +10,25 @@
             <v-btn-toggle v-model="cnMode" mandatory color="primary" density="compact" class="mb-2">
               <v-btn value="customer">Customer Invoice</v-btn>
               <v-btn value="party">Free Format Invoice</v-btn>
+              <v-btn v-if="hasPermission('customer-credit-notes-create-fiscal')" value="fiscal">Fiscal (Overpayment)</v-btn>
             </v-btn-toggle>
+            <v-alert v-if="cnMode === 'fiscal'" density="compact" type="info" variant="outlined" class="mt-2">
+              Genera una nota de crédito fiscal (CFDI Egreso) por un sobrepago sobre una factura ya liquidada.
+              El monto queda como saldo a favor — no reduce ningún cargo de la factura seleccionada. Después de
+              crearla, deberás subir el XML/PDF ya timbrado desde el detalle de la nota.
+            </v-alert>
           </v-card-text>
         </v-card>
 
         <!-- Search: Customer service invoice -->
-        <v-card v-if="cnMode === 'customer'" class="mb-4">
+        <v-card v-if="cnMode === 'customer' || cnMode === 'fiscal'" class="mb-4">
           <v-card-title>
             <h3>Search customer service invoice (Sea/Air - Import/Export)</h3>
           </v-card-title>
-          <v-card-subtitle> Search invoices to create a credit note. You can add multiple invoices from the same customer. </v-card-subtitle>
+          <v-card-subtitle v-if="cnMode === 'fiscal'">
+            Search the single already-paid invoice this fiscal credit note relates to.
+          </v-card-subtitle>
+          <v-card-subtitle v-else> Search invoices to create a credit note. You can add multiple invoices from the same customer. </v-card-subtitle>
           <v-card-text>
             <div>
               <div class="grid grid-cols-2 gap-4">
@@ -61,7 +70,7 @@
         </v-card>
 
         <!-- Selected invoices list: Customer mode -->
-        <v-card v-if="cnMode === 'customer' && selectedInvoices.length > 0" class="mb-4">
+        <v-card v-if="(cnMode === 'customer' || cnMode === 'fiscal') && selectedInvoices.length > 0" class="mb-4">
           <v-card-title>
             <h3>Selected invoices ({{ selectedInvoices.length }})</h3>
           </v-card-title>
@@ -110,45 +119,80 @@
             <v-text-field v-model="form.external_folio" density="compact" label="External folio" />
 
             <div class="text-subtitle-2 font-bold mb-2">Concepts</div>
-            <v-alert v-if="allCharges.length === 0" density="compact" type="info" variant="outlined" class="mb-2">
-              No concepts found in the selected invoices.
-            </v-alert>
 
-            <div
-              v-for="(charge, index) in allCharges"
-              :key="`charge-${index}`"
-              class="grid gap-3 mb-1 items-center"
-              :class="cnMode === 'party' ? 'grid-cols-[2fr_1fr_auto_1fr]' : 'grid-cols-[2fr_1fr_1fr]'"
-            >
-              <div>
-                <div class="text-sm font-medium">{{ charge.charge_name }}</div>
-                <div class="text-xs text-gray-500">Invoice #{{ charge.invoice_number }}</div>
-              </div>
-              <div>
+            <!-- Fiscal mode: free concepts, not tied to an existing invoice charge -->
+            <template v-if="cnMode === 'fiscal'">
+              <v-alert v-if="allCharges.length === 0" density="compact" type="info" variant="outlined" class="mb-2">
+                Add at least one concept for the overpayment amount.
+              </v-alert>
+              <div v-for="(charge, index) in allCharges" :key="`fiscal-charge-${index}`" class="grid grid-cols-[2fr_1fr_auto] gap-3 mb-2 items-center">
+                <v-autocomplete
+                  v-model="charge.charge_id"
+                  :items="chargesCatalog"
+                  item-value="id"
+                  item-title="name"
+                  density="compact"
+                  label="Concept"
+                  hide-details
+                  @update:model-value="(val: any) => onFiscalChargeSelected(index, val)"
+                />
                 <v-text-field
                   v-model.number="charge.amount"
                   type="number"
                   density="compact"
                   label="Amount"
                   hide-details
-                  :max="charge.max_available"
                   min="0"
-                  @update:model-value="validateChargeAmount(index)"
                 />
-                <div class="text-xs" :class="charge.max_available > 0 ? 'text-green-600' : 'text-red-600'">
-                  Max: {{ formatToCurrency(charge.max_available) }}
+                <v-btn icon size="x-small" color="red" variant="text" @click="removeFiscalConcept(index)">
+                  <v-icon size="16">mdi-close</v-icon>
+                </v-btn>
+              </div>
+              <v-btn size="small" variant="tonal" color="primary" class="mb-2" @click="addFiscalConcept"> + Add concept </v-btn>
+            </template>
+
+            <!-- Customer / Party mode: concepts derived from the selected invoice(s), capped by pending balance -->
+            <template v-else>
+              <v-alert v-if="allCharges.length === 0" density="compact" type="info" variant="outlined" class="mb-2">
+                No concepts found in the selected invoices.
+              </v-alert>
+
+              <div
+                v-for="(charge, index) in allCharges"
+                :key="`charge-${index}`"
+                class="grid gap-3 mb-1 items-center"
+                :class="cnMode === 'party' ? 'grid-cols-[2fr_1fr_auto_1fr]' : 'grid-cols-[2fr_1fr_1fr]'"
+              >
+                <div>
+                  <div class="text-sm font-medium">{{ charge.charge_name }}</div>
+                  <div class="text-xs text-gray-500">Invoice #{{ charge.invoice_number }}</div>
+                </div>
+                <div>
+                  <v-text-field
+                    v-model.number="charge.amount"
+                    type="number"
+                    density="compact"
+                    label="Amount"
+                    hide-details
+                    :max="charge.max_available"
+                    min="0"
+                    @update:model-value="validateChargeAmount(index)"
+                  />
+                  <div class="text-xs" :class="charge.max_available > 0 ? 'text-green-600' : 'text-red-600'">
+                    Max: {{ formatToCurrency(charge.max_available) }}
+                  </div>
+                </div>
+                <div v-if="cnMode === 'party'" class="flex items-center">
+                  <v-checkbox v-model="charge.is_con_iva" label="IVA" density="compact" hide-details />
+                </div>
+                <div class="text-right text-sm">
+                  {{ formatToCurrency(charge.amount || 0) }}
+                  <div v-if="cnMode === 'party' && charge.is_con_iva" class="text-xs text-gray-500">
+                    + IVA {{ formatToCurrency((charge.amount || 0) * 0.16) }}
+                  </div>
                 </div>
               </div>
-              <div v-if="cnMode === 'party'" class="flex items-center">
-                <v-checkbox v-model="charge.is_con_iva" label="IVA" density="compact" hide-details />
-              </div>
-              <div class="text-right text-sm">
-                {{ formatToCurrency(charge.amount || 0) }}
-                <div v-if="cnMode === 'party' && charge.is_con_iva" class="text-xs text-gray-500">
-                  + IVA {{ formatToCurrency((charge.amount || 0) * 0.16) }}
-                </div>
-              </div>
-            </div>
+            </template>
 
             <v-divider class="my-3" />
 
@@ -169,7 +213,7 @@
             </div>
 
             <v-alert
-              v-if="hasAmountExceeded"
+              v-if="cnMode !== 'fiscal' && hasAmountExceeded"
               density="compact"
               type="error"
               variant="outlined"
@@ -188,8 +232,8 @@
 
       <!-- Right column: Invoice details & history -->
       <div v-if="hasInvoicesSelected">
-        <!-- Customer mode: service invoice details -->
-        <template v-if="cnMode === 'customer'">
+        <!-- Customer / Fiscal mode: service invoice details -->
+        <template v-if="cnMode === 'customer' || cnMode === 'fiscal'">
           <v-card v-for="(inv, invIdx) in selectedInvoices" :key="`detail-${invIdx}`" class="mb-4">
             <v-card-title>
               <h4>
@@ -254,8 +298,18 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { hasPermission } = useCheckUser()
 
-const cnMode = ref<'customer' | 'party'>('customer')
+const cnMode = ref<'customer' | 'party' | 'fiscal'>('customer')
+const chargesCatalog = ref<any[]>([])
+
+onMounted(async () => {
+  try {
+    chargesCatalog.value = await $api.charges.getAll()
+  } catch (e) {
+    console.error(e)
+  }
+})
 
 const filters = reactive({
   inv_type: null as string | null,
@@ -281,6 +335,14 @@ const form = reactive({
 // All charges from all selected invoices, each with amount input
 const allCharges = ref<any[]>([])
 
+watch(cnMode, () => {
+  selectedInvoices.value = []
+  selectedPartyInvoices.value = []
+  lastCreditNotes.value = []
+  allCharges.value = []
+  form.currency_id = null
+})
+
 const entityName = computed(() => {
   if (cnMode.value === 'party') {
     if (selectedPartyInvoices.value.length === 0) return ''
@@ -294,6 +356,19 @@ const hasInvoicesSelected = computed(() => {
   if (cnMode.value === 'party') return selectedPartyInvoices.value.length > 0
   return selectedInvoices.value.length > 0
 })
+
+const addFiscalConcept = () => {
+  allCharges.value.push({ charge_id: null, charge_name: '', amount: 0 })
+}
+
+const removeFiscalConcept = (index: number) => {
+  allCharges.value.splice(index, 1)
+}
+
+const onFiscalChargeSelected = (index: number, chargeId: number) => {
+  const charge = chargesCatalog.value.find((c: any) => c.id === chargeId)
+  allCharges.value[index].charge_name = charge?.name || ''
+}
 
 const totalCreditNoteAmount = computed(() => {
   return allCharges.value.reduce((sum: number, c: any) => {
@@ -312,9 +387,17 @@ const hasAmountExceeded = computed(() => {
 const canSubmit = computed(() => {
   if (!form.currency_id || !form.description) return false
   if (totalCreditNoteAmount.value <= 0) return false
-  if (hasAmountExceeded.value) return false
   // at least one charge with amount > 0
   if (!allCharges.value.some((c: any) => parseFloat(c.amount) > 0)) return false
+
+  if (cnMode.value === 'fiscal') {
+    if (selectedInvoices.value.length !== 1) return false
+    // every concept row must have a concept selected
+    if (allCharges.value.some((c: any) => parseFloat(c.amount) > 0 && !c.charge_id)) return false
+    return true
+  }
+
+  if (hasAmountExceeded.value) return false
   return true
 })
 
@@ -379,6 +462,11 @@ const searchAndAddInvoice = async () => {
       return
     }
 
+    if (cnMode.value === 'fiscal' && selectedInvoices.value.length >= 1) {
+      snackbar.add({ type: 'warning', text: 'A fiscal credit note relates to a single invoice. Remove the current one first.' })
+      return
+    }
+
     // Check if already added
     const alreadyAdded = selectedInvoices.value.some(
       (inv: any) => inv.serviceInvoice.invoice?.invoice_number == filters.invoiceId && inv.inv_type == filters.inv_type
@@ -419,8 +507,11 @@ const searchAndAddInvoice = async () => {
     lastCreditNotes.value = response.lastCreditNotes || []
     form.currency_id = response.invoice?.invoice?.currency_id
 
-    // Rebuild charges list
-    rebuildCharges()
+    // Fiscal mode uses free concepts (not tied to an invoice charge) — the
+    // invoice is already fully paid, there's nothing on it left to discount.
+    if (cnMode.value !== 'fiscal') {
+      rebuildCharges()
+    }
 
     // Clear search field for next search
     filters.invoiceId = null
@@ -435,7 +526,9 @@ const searchAndAddInvoice = async () => {
 
 const removeInvoice = (index: number) => {
   selectedInvoices.value.splice(index, 1)
-  rebuildCharges()
+  if (cnMode.value !== 'fiscal') {
+    rebuildCharges()
+  }
   if (selectedInvoices.value.length === 0) {
     form.currency_id = null
     lastCreditNotes.value = []
@@ -516,7 +609,11 @@ const saveCreditNote = async () => {
       snackbar.add({ type: 'warning', text: 'Please fill all required fields (currency, comments)' })
       return
     }
-    if (hasAmountExceeded.value) {
+    if (cnMode.value === 'fiscal' && activeCharges.some((c: any) => !c.charge_id)) {
+      snackbar.add({ type: 'warning', text: 'Select a concept for every row' })
+      return
+    }
+    if (cnMode.value !== 'fiscal' && hasAmountExceeded.value) {
       snackbar.add({ type: 'error', text: 'One or more amounts exceed the maximum available' })
       return
     }
@@ -524,6 +621,27 @@ const saveCreditNote = async () => {
     loadingStore.loading = true
 
     let body: any
+
+    if (cnMode.value === 'fiscal') {
+      const invoice = selectedInvoices.value[0]?.serviceInvoice
+      body = {
+        invoice_id: invoice?.invoice?.id,
+        consignee_id: invoice?.consignee?.id,
+        external_folio: form.external_folio,
+        charges: activeCharges.map((c: any) => ({
+          charge_id: c.charge_id,
+          amount: parseFloat(c.amount),
+        })),
+        currency_id: form.currency_id,
+        description: form.description,
+        inv_type: selectedInvoices.value[0]?.inv_type,
+      }
+
+      const created: any = await $api.consigneeCreditNotes.createFiscalNote(body)
+      snackbar.add({ type: 'success', text: 'Fiscal credit note created. Upload the stamped CFDI from its detail page.' })
+      router.push(`/invoices/search/credit-notes/view-${created.id}`)
+      return
+    }
 
     if (cnMode.value === 'party') {
       // Free format mode
