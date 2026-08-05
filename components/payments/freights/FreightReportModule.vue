@@ -160,8 +160,8 @@
     <div class="table-scroll-container">
       <table class="min-w-full table-auto border border-gray-300 text-sm">
         <thead>
-          <tr class="bg-gray-100">
-            <th class="border p-2 text-center">
+          <tr>
+            <th class="border border-gray-300 p-2 text-center">
               <v-checkbox
                 density="compact"
                 hide-details
@@ -170,18 +170,18 @@
                 @update:model-value="toggleSelectAll"
               />
             </th>
-            <th class="border p-2 text-left">Freight Forwarder</th>
-            <th class="border p-2 text-left">Group</th>
-            <th class="border p-2 text-right">Summary</th>
-            <th v-for="week in pivotTable.weeks" :key="week" class="border p-2 text-center whitespace-nowrap">
+            <th class="border border-gray-300 p-2 text-left">Freight Forwarder</th>
+            <th class="border border-gray-300 p-2 text-left">Group</th>
+            <th class="border border-gray-300 p-2 text-right">Summary</th>
+            <th v-for="week in pivotTable.weeks" :key="week" class="border border-gray-300 p-2 text-center whitespace-nowrap">
               {{ week }}
             </th>
-            <th class="border p-2 text-center sticky right-0 bg-gray-100">Acciones</th>
+            <th class="border border-gray-300 p-2 text-center sticky right-0">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="agent in pivotTable.agents" :key="agent.freight_forwarder_id" class="hover:bg-gray-50">
-            <td class="border p-2 text-center">
+          <tr v-for="agent in pivotTable.agents" :key="agent.freight_forwarder_id">
+            <td class="border border-gray-300 p-2 text-center">
               <v-checkbox
                 density="compact"
                 hide-details
@@ -189,18 +189,18 @@
                 v-model="selectedAgentIds"
               />
             </td>
-            <td class="border p-2 font-semibold">{{ agent.freight_forwarder_name }}</td>
-            <td class="border p-2">{{ agent.group_name }}</td>
+            <td class="border border-gray-300 p-2 font-semibold">{{ agent.freight_forwarder_name }}</td>
+            <td class="border border-gray-300 p-2">{{ agent.group_name }}</td>
             <!-- NUEVA -->
-            <td class="border p-2 text-right font-bold text-green-700">
+            <td class="border border-gray-300 p-2 text-right font-bold text-green-700 dark:text-green-400">
               {{ formatToCurrency(agent.summary) }}
             </td>
-            <td v-for="week in pivotTable.weeks" :key="week" class="border p-2 text-right">
+            <td v-for="week in pivotTable.weeks" :key="week" class="border border-gray-300 p-2 text-right">
               <span v-if="agent.totals[week]">
                 {{ formatToCurrency(agent.totals[week]) }}
               </span>
             </td>
-            <td class="border p-2 text-center sticky right-0 bg-white">
+            <td class="border border-gray-300 p-2 text-center sticky right-0">
               <v-btn
                 size="x-small"
                 color="success"
@@ -592,43 +592,42 @@ await getFreightCatalogs()
   position: relative;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-}
 
-/* Scrollbars personalizados - más gruesos y siempre visibles */
-.table-scroll-container::-webkit-scrollbar {
-  width: 14px;
-  height: 14px;
-}
+  --table-header-bg: #f3f4f6;
+  --table-body-bg: #ffffff;
+  --table-border-color: #e5e7eb;
+  --table-text-color: #1f2937;
+  --table-hover-bg: #f0f9ff;
 
-.table-scroll-container::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 8px;
-}
-
-.table-scroll-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #94a3b8, #64748b);
-  border-radius: 8px;
-  border: 2px solid #f1f5f9;
-}
-
-.table-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #64748b, #475569);
-}
-
-.table-scroll-container::-webkit-scrollbar-corner {
-  background: #f1f5f9;
-}
-
-/* Firefox */
-.table-scroll-container {
   scrollbar-width: auto;
   scrollbar-color: #64748b #f1f5f9;
+}
+
+:global(html.dark) .table-scroll-container,
+:global(.dark) .table-scroll-container,
+:global(.v-theme--dark) .table-scroll-container {
+  --table-header-bg: #1e293b;
+  --table-body-bg: #0f172a;
+  --table-border-color: #334155;
+  --table-text-color: #f8fafc;
+  --table-hover-bg: #334155;
+
+  scrollbar-color: #475569 #0f172a;
 }
 
 /* Tabla base */
 .table-scroll-container table {
   border-collapse: separate;
   border-spacing: 0;
+  background-color: var(--table-body-bg);
+  color: var(--table-text-color);
+  border-color: var(--table-border-color);
+}
+
+.table-scroll-container table th,
+.table-scroll-container table td {
+  border-color: var(--table-border-color) !important;
+  color: var(--table-text-color);
 }
 
 /* Header sticky */
@@ -636,7 +635,8 @@ await getFreightCatalogs()
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   white-space: nowrap;
 }
 
@@ -646,13 +646,14 @@ await getFreightCatalogs()
   position: sticky;
   left: 0;
   z-index: 15;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   min-width: 50px;
   max-width: 50px;
 }
 
 .table-scroll-container table tbody td:first-child {
-  background: white;
+  background: var(--table-body-bg);
   z-index: 5;
 }
 
@@ -662,7 +663,8 @@ await getFreightCatalogs()
   position: sticky;
   left: 50px;
   z-index: 15;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   min-width: 180px;
   max-width: 180px;
   white-space: nowrap;
@@ -671,7 +673,7 @@ await getFreightCatalogs()
 }
 
 .table-scroll-container table tbody td:nth-child(2) {
-  background: white;
+  background: var(--table-body-bg);
   z-index: 5;
 }
 
@@ -681,7 +683,8 @@ await getFreightCatalogs()
   position: sticky;
   left: 230px;
   z-index: 15;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   min-width: 120px;
   max-width: 120px;
   white-space: nowrap;
@@ -690,7 +693,7 @@ await getFreightCatalogs()
 }
 
 .table-scroll-container table tbody td:nth-child(3) {
-  background: white;
+  background: var(--table-body-bg);
   z-index: 5;
 }
 
@@ -700,13 +703,14 @@ await getFreightCatalogs()
   position: sticky;
   left: 350px;
   z-index: 15;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   min-width: 120px;
   box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.15);
 }
 
 .table-scroll-container table tbody td:nth-child(4) {
-  background: white;
+  background: var(--table-body-bg);
   z-index: 5;
 }
 
@@ -724,13 +728,14 @@ await getFreightCatalogs()
   position: sticky;
   right: 0;
   z-index: 15;
-  background: #f3f4f6;
+  background: var(--table-header-bg);
+  color: var(--table-text-color);
   min-width: 80px;
   box-shadow: -4px 0 8px -2px rgba(0, 0, 0, 0.15);
 }
 
 .table-scroll-container table tbody td:last-child {
-  background: white;
+  background: var(--table-body-bg);
   z-index: 5;
 }
 
@@ -741,7 +746,7 @@ await getFreightCatalogs()
 
 /* Hover en filas */
 .table-scroll-container table tbody tr:hover td {
-  background: #f0f9ff !important;
+  background: var(--table-hover-bg) !important;
 }
 
 /* Asegurar que sticky cells mantengan el hover */
@@ -750,12 +755,14 @@ await getFreightCatalogs()
 .table-scroll-container table tbody tr:hover td:nth-child(3),
 .table-scroll-container table tbody tr:hover td:nth-child(4),
 .table-scroll-container table tbody tr:hover td:last-child {
-  background: #f0f9ff !important;
+  background: var(--table-hover-bg) !important;
 }
 
 /* Celdas de datos de semanas */
 .table-scroll-container table tbody td:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)):not(:last-child) {
   white-space: nowrap;
   text-align: right;
+  background: var(--table-body-bg);
+  color: var(--table-text-color);
 }
 </style>

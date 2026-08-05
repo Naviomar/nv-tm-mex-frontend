@@ -586,34 +586,4 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Modern Dashboard Background */
-.modern-dashboard-bg {
-  background: linear-gradient(135deg, 
-    rgba(248, 250, 252, 1) 0%, 
-    rgba(241, 245, 249, 1) 50%, 
-    rgba(248, 250, 252, 1) 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
-  position: relative;
-}
-
-.theme--dark .modern-dashboard-bg {
-  background: linear-gradient(135deg, 
-    rgba(15, 23, 42, 1) 0%, 
-    rgba(30, 41, 59, 1) 50%, 
-    rgba(15, 23, 42, 1) 100%);
-}
-
-.modern-dashboard-bg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.03) 0%, transparent 50%);
-  pointer-events: none;
-}
 </style>

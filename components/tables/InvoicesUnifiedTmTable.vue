@@ -200,19 +200,19 @@
       <v-table density="compact" fixed-header height="75vh">
         <thead>
           <tr>
-            <th>Actions</th>
-            <th>Service Type</th>
-            <th>Services #</th>
-            <th>Status</th>
-            <th>Inv. type</th>
-            <th>Credit Notes</th>
-            <th>Customer</th>
-            <th>Concepts</th>
-            <th>Uso CFDI</th>
-            <th>Método pago</th>
-            <th>Total</th>
-            <th>Currency</th>
-            <th>Usuario / Fecha</th>
+            <th id="actions">Actions</th>
+            <th id="service-type">Service Type</th>
+            <th id="services">Services #</th>
+            <th id="status">Status</th>
+            <th id="inv-type">Inv. type</th>
+            <th id="credit-notes">Credit Notes</th>
+            <th id="customer">Customer</th>
+            <th id="concepts">Concepts</th>
+            <th id="uso-cfdi">Uso CFDI</th>
+            <th id="metodo-pago">Método pago</th>
+            <th id="total">Total</th>
+            <th id="currency">Currency</th>
+            <th id="user-date">Usuario / Fecha</th>
           </tr>
         </thead>
         <tbody>
@@ -332,9 +332,8 @@
 </template>
 <script setup lang="ts">
 import { prefixYears } from '~/utils/date'
-import { deletedStatus } from '@/utils/data/systemData'
+import { deletedStatus, currencies } from '@/utils/data/systemData'
 import { formatToCurrency } from '@/utils/formatters'
-import { currencies } from '@/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
@@ -545,7 +544,7 @@ const getInvoiceStatusColor = (invoiceTm: any) => {
 const checkParcialPaid = (invoiceTm: any) => {
   if (invoiceTm.invoice?.charges) {
     const totalPaid = invoiceTm.invoice.charges.reduce((acc: number, charge: any) => {
-      return acc + parseFloat(charge.amount_paid)
+      return acc + Number.parseFloat(charge.amount_paid)
     }, 0)
     if (totalPaid === invoiceTm.invoice.total) {
       return 'Paid @ ' + formatDateOnlyString(invoiceTm.invoice.paid_at)
