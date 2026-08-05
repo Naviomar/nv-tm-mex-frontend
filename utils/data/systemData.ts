@@ -530,6 +530,13 @@ const mailNotifications = [
     "short_name": "UpdatedSupportAssistance",
     "description": "Notification for updated support assistance request",
     "is_for_consignee": false
+  },
+  {
+    "id": 59,
+    "name": "App\\Mail\\Mexico\\AirImportChecklistNotify",
+    "short_name": "AirImportChecklistNotify",
+    "description": "Air Import - Notify Checklist revalidation",
+    "is_for_consignee": true
   }
 ];
 

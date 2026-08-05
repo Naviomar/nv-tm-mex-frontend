@@ -243,6 +243,38 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/export-report-xlsx`, fetchOptions)
   }
 
+  async getChecklistRevalidation(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `/air-checklist-revalidation/${id}/referencia`, fetchOptions)
+  }
+
+  async getChecklistRevalidationIsOk(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `/air-checklist-revalidation/${id}/is-ok`, fetchOptions)
+  }
+
+  async checklist(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/checklist`, fetchOptions)
+  }
+
+  async downloadChecklistPdf(id: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: '',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/checklist/download-pdf`, fetchOptions)
+  }
+
+  async sendChecklistRevalidation(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/checklist/send-notify`, fetchOptions)
+  }
+
   async checkDeletable(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/check-deletable`, fetchOptions)
   }
