@@ -181,18 +181,18 @@
       <v-table density="compact" fixed-header height="75vh">
         <thead>
           <tr>
-            <th>Actions</th>
-            <th>Service type</th>
-            <th>Invoice #</th>
-            <th>Services</th>
-            <th>Status</th>
-            <th>Inv. type</th>
-            <th>Credit Notes</th>
-            <th>Customer</th>
-            <th>Concepts</th>
-            <th>Total</th>
-            <th>Currency</th>
-            <th>Usuario / Fecha</th>
+            <th id="actions">Actions</th>
+            <th id="service-type">Service type</th>
+            <th id="invoice">Invoice #</th>
+            <th id="services">Services</th>
+            <th id="status">Status</th>
+            <th id="inv-type">Inv. type</th>
+            <th id="credit-notes">Credit Notes</th>
+            <th id="customer">Customer</th>
+            <th id="concepts">Concepts</th>
+            <th id="total">Total</th>
+            <th id="currency">Currency</th>
+            <th id="user-date">Usuario / Fecha</th>
           </tr>
         </thead>
         <tbody>
@@ -292,9 +292,8 @@
 </template>
 <script setup lang="ts">
 import { prefixYears } from '~/utils/date'
-import { deletedStatus } from '@/utils/data/systemData'
+import { deletedStatus, currencies } from '@/utils/data/systemData'
 import { formatToCurrency } from '@/utils/formatters'
-import { currencies } from '@/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
 
 const { $api } = useNuxtApp()
@@ -516,7 +515,7 @@ const checkParcialPaid = (invoiceWm: any) => {
   // get invoiceWm.invoice.charges.amount_paid and compare with invoiceWm.invoice.total
   if (invoiceWm.invoice?.charges) {
     const totalPaid = invoiceWm.invoice.charges.reduce((acc: number, charge: any) => {
-      return acc + parseFloat(charge.amount_paid)
+      return acc + Number.parseFloat(charge.amount_paid)
     }, 0)
     if (totalPaid === invoiceWm.invoice.total) {
       return 'Paid @ ' + formatDateOnlyString(invoiceWm.invoice.paid_at)
@@ -535,6 +534,7 @@ const searchCustomers = async (search: any) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching customers',
