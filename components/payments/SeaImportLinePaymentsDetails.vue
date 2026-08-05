@@ -139,26 +139,16 @@ const viewLineCreditNote = (note: any) => {
 }
 
 const paidLineSchedule = (refSchedule: any) => {
-  let data_reference_line = refSchedule.line_invoice_refs
-  let is_paid_line=0;
-  let array_paid = new Array();
+  const linkedInvoiceRefs = refSchedule.line_invoice_refs || []
 
-  if(typeof data_reference_line === 'object' && data_reference_line !== 'null'){
-    ///iteramos
-    let sizeData=Object.keys(data_reference_line).length;
-    
-    for(var i=0; i<sizeData; i++){
-      is_paid_line = data_reference_line[i].invoice.is_paid;
-      array_paid.push(is_paid_line);
-    }
+  // Sin facturas de línea ligadas todavía, no hay nada que confirme el pago —
+  // antes esto caía al "else" y mostraba "Paid" por defecto (verdad vacía).
+  if (linkedInvoiceRefs.length === 0) {
+    return { line_paid: 0 }
   }
 
-  if(array_paid.includes(0) === true){
-    return {line_paid: 0};
-  }else{
-    return {line_paid: 1};
-  }
-  
+  const allPaid = linkedInvoiceRefs.every((lineInvoiceRef: any) => lineInvoiceRef.invoice?.is_paid == 1)
+  return { line_paid: allPaid ? 1 : 0 }
 }
 
 const getReferenciaLinePayments = async () => {
