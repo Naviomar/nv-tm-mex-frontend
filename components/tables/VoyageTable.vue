@@ -208,7 +208,7 @@
               </td>
               <td>
                 <v-btn
-                  v-if="voyageDest.voyage?.impoExpo === 'I' && !voyageDest.deleted_at"
+                  v-if="voyageDest.voyage?.impoExpo === 'I' && !voyageDest.deleted_at && voyageDest.total_references > 0"
                   size="small"
                   color="primary"
                   @click="goToNotifyPort(voyageDest)"
