@@ -325,7 +325,11 @@ const deleteContainer = async (container: any, index: number) => {
     const body = {
       ...container,
     }
-    const response = await $api.referencias.deleteContainer(props.referenciaId!.toString(), container.id.toString(), body)
+    const response = await $api.referencias.deleteContainer(props.referenciaId!.toString(), container.id.toString(), body, {
+      headers: {
+        'X-Skip-Process-Check': String(!isLocked.value),
+      },
+    })
 
     snackbar.add({ type: 'success', text: 'Container deleted' })
     emit('refresh')
