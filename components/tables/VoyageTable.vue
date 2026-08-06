@@ -76,6 +76,27 @@
         </div>
       </div>
     </div>
+    <v-dialog v-model="showDirectDeleteDialog" max-width="480">
+      <v-card>
+        <v-card-title class="text-h6">
+          <v-icon class="mr-2">mdi-alert-outline</v-icon>
+          {{ directDeleteTarget?.deleted_at ? 'Restore voyage' : 'Cancel voyage' }}
+        </v-card-title>
+        <v-card-text>
+          <p>
+            This voyage destination has no linked references, so it can be
+            {{ directDeleteTarget?.deleted_at ? 'restored' : 'cancelled' }} directly without requesting authorization.
+          </p>
+          <v-textarea v-model="directDeleteReason" label="Reason" rows="3" counter clearable class="mt-2" />
+        </v-card-text>
+        <v-card-actions>
+          <div class="w-full flex justify-around">
+            <v-btn color="grey" variant="text" @click="showDirectDeleteDialog = false">Close</v-btn>
+            <v-btn color="primary" @click="confirmDirectDelete">Confirm</v-btn>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-card>
       <v-card-title> Voyage - Destinations </v-card-title>
 
@@ -124,7 +145,15 @@
                     CANCELLED
                   </v-chip>
                   <EditButton v-if="!voyageDest.deleted_at" :item="voyageDest" permission="voyage-destinations-edit" @click="editVoyageDestination(voyageDest)" />
+                  <!-- No linked references: nothing downstream depends on this voyage, so it can be cancelled/restored directly without an authorization request -->
+                  <TrashButton
+                    v-if="voyageDest.total_references === 0"
+                    :item="voyageDest"
+                    permission="voyage-destinations-delete"
+                    @click="showConfirmDeleteDirect"
+                  />
                   <ProcessAuthorizationWrapper
+                    v-else
                     :processName="voyageDest.deleted_at ? 'voyage-restore' : 'voyage-delete'"
                     :requestKey="`${voyageDest.id}`"
                     :label="voyageDest.deleted_at ? 'Restore Voyage' : 'Delete Voyage'"
@@ -322,6 +351,40 @@ const showConfirmDelete = async (voyage: any) => {
         loadingStore.stop()
       }, 250)
     }
+  }
+}
+
+const showDirectDeleteDialog = ref(false)
+const directDeleteReason = ref('')
+const directDeleteTarget = ref<any>(null)
+
+const showConfirmDeleteDirect = (voyage: any) => {
+  directDeleteTarget.value = voyage
+  directDeleteReason.value = ''
+  showDirectDeleteDialog.value = true
+}
+
+const confirmDirectDelete = async () => {
+  if (!directDeleteReason.value.trim()) {
+    snackbar.add({ type: 'warning', text: 'Please provide a reason' })
+    return
+  }
+
+  try {
+    loadingStore.start()
+    await $api.voyages.deleteDestination(directDeleteTarget.value.id, {
+      headers: { 'X-Skip-Process-Check': 'true' },
+      body: JSON.stringify({ reason: directDeleteReason.value.trim() }),
+    })
+    snackbar.add({ type: 'success', text: 'Voyage destination updated' })
+    showDirectDeleteDialog.value = false
+    await getVoyages()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
   }
 }
 
