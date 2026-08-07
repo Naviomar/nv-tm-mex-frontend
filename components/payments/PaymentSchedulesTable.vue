@@ -169,12 +169,75 @@
         ></v-pagination>
       </v-card-text>
     </v-card>
-    <v-dialog v-model="showDetail.showDialog" max-width="800">
+    <v-dialog v-model="showDetail.showDialog" max-width="900">
       <v-card>
-        <v-card-title>
+        <v-card-title class="flex items-center justify-between">
           <h1 class="text-xl font-bold">Payment schedule detail #{{ showDetail.schedule.id }}</h1>
+          <v-chip v-if="detailStatus === 'Paid'" color="success">Paid</v-chip>
+          <v-chip v-if="detailStatus === 'Pending'" color="warning">Pending</v-chip>
         </v-card-title>
         <v-card-text>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <div class="text-xs text-grey-darken-1">Freight line</div>
+              <div class="font-bold">{{ showDetail.schedule.line?.name || '-' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Total amount</div>
+              <div class="font-bold">
+                {{ getCurrencyName(showDetail.schedule.currency_id) }}
+                {{ formatToCurrency(showDetail.schedule.refs_total_amount) }}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Bank info</div>
+              <div v-if="showDetail.schedule.bank_json" class="text-sm">
+                <div class="font-bold">{{ showDetail.schedule.bank_json.name }}</div>
+                <div v-if="showDetail.schedule.bank_json.iban">IBAN: {{ showDetail.schedule.bank_json.iban }}</div>
+                <div v-if="showDetail.schedule.bank_json.clabe">CLABE: {{ showDetail.schedule.bank_json.clabe }}</div>
+                <div v-if="showDetail.schedule.bank_json.account_number">
+                  Account Number: {{ showDetail.schedule.bank_json.account_number }}
+                </div>
+              </div>
+              <div v-else class="text-red-500">No bank info</div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Created</div>
+              <div class="text-sm">
+                <UserInfoBadge :item="showDetail.schedule">
+                  {{ formatDateString(showDetail.schedule.created_at) }}
+                </UserInfoBadge>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="text-xs text-grey-darken-1 mb-1">Notification history</div>
+            <div v-if="showDetail.schedule.email_logs && showDetail.schedule.email_logs.length > 0" class="flex flex-wrap gap-2">
+              <v-chip
+                v-for="(log, index) in showDetail.schedule.email_logs"
+                :key="`detail-email-log-${index}`"
+                size="small"
+                color="info"
+                variant="tonal"
+              >
+                <v-icon start size="small">mdi-clock-outline</v-icon>
+                {{ formatDateString(log.sent_at) }}
+                <span v-if="log.sent_by?.name" class="ml-1 text-xs">by {{ log.sent_by?.name }}</span>
+              </v-chip>
+            </div>
+            <div v-else-if="showDetail.schedule.sent_at" class="text-sm">
+              Sent {{ formatDateString(showDetail.schedule.sent_at) }}
+              <span v-if="showDetail.schedule.sent_by?.name">by {{ showDetail.schedule.sent_by?.name }}</span>
+            </div>
+            <v-chip v-else size="small" color="orange" variant="tonal">No notification sent</v-chip>
+          </div>
+
+          <div class="mb-4">
+            <PaymentScheduleFiles :linePayScheduleId="showDetail.schedule.id" />
+          </div>
+
+          <div class="text-xs text-grey-darken-1 mb-1">Linked references</div>
           <div class="grid grid-cols-3 gap-2">
             <div class="font-bold"># Ref</div>
             <div class="font-bold">MBL</div>
@@ -185,12 +248,43 @@
             class="grid grid-cols-3 gap-2"
             :key="`sched-${index}`"
           >
-            <div>{{ ref.referencia?.reference_number }}</div>
+            <div>
+              <v-chip size="small" @click="showNewTabRef(ref)">
+                <v-icon>mdi-open-in-new</v-icon>{{ ref.referencia?.reference_number }}
+              </v-chip>
+            </div>
             <div>{{ ref.ref_master_bl?.name }}</div>
             <div>{{ formatToCurrency(ref.amount) }}</div>
           </div>
-          <div class="flex justify-end gap-2">
-            <v-btn color="primary" @click="closeScheduleDetail"> Close </v-btn>
+
+          <v-alert v-if="detailStatus === 'Paid'" type="info" variant="tonal" density="compact" class="mt-4">
+            This payment release cannot be cancelled because its linked invoices are already paid.
+          </v-alert>
+
+          <div class="flex justify-between items-center gap-2 mt-4">
+            <div class="flex gap-2">
+              <v-btn color="secondary" size="small" @click="downloadExcel(showDetail.schedule.id)">
+                <v-icon start>mdi-file-excel</v-icon> Download Excel
+              </v-btn>
+              <v-btn color="primary" size="small" @click="showNotyForm(showDetail.schedule)">
+                <v-icon start>mdi-email</v-icon> Send notification
+              </v-btn>
+              <ProcessAuthorizationWrapper
+                v-if="canDeleteSchedule && detailStatus !== 'Paid'"
+                processName="line-pay-schedules.cancel"
+                :requestKey="String(showDetail.schedule.id)"
+                label="Cancel Payment Release"
+                :displayName="`Payment Release #${showDetail.schedule.id}`"
+                @refresh="onScheduleCancelled"
+              >
+                <template #auth>
+                  <v-btn color="error" size="small" @click="onCancelSchedule(showDetail.schedule)">
+                    <v-icon start>mdi-cancel</v-icon> Cancel Payment Release
+                  </v-btn>
+                </template>
+              </ProcessAuthorizationWrapper>
+            </div>
+            <v-btn color="secondary" @click="closeScheduleDetail"> Close </v-btn>
           </div>
         </v-card-text>
       </v-card>
@@ -265,18 +359,24 @@
 </template>
 <script setup lang="ts">
 const count = 0;
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
+const confirm = $notifications.useConfirm()
+const { hasPermission } = useCheckUser()
 
 const loadingIndicator = useLoadingIndicator()
 const loadingStore = useLoadingStore()
 const usersStore = useUsersStore()
 
+const canDeleteSchedule = computed(() => hasPermission('line-payments-delete'))
+
 const showDetail = ref<any>({
   showDialog: false,
   schedule: {},
 })
+
+const detailStatus = computed(() => validatePaid(showDetail.value.schedule.schedule_refs))
 
 const notyDialog = ref<any>({
   showDialog: false,
@@ -388,6 +488,38 @@ const showScheduleDetail = (schedule: any) => {
 const closeScheduleDetail = () => {
   showDetail.value.showDialog = false
   showDetail.value.schedule = {}
+}
+
+const onCancelSchedule = async (schedule: any) => {
+  const ok = await confirm({
+    title: 'Are you sure?',
+    content: `Do you want to cancel Payment Release #${schedule.id}? It will be removed from the active list, but its history and files remain available for consultation.`,
+    confirmationText: 'Yes, cancel',
+    confirmationButtonProps: { color: 'error' },
+  })
+
+  if (!ok) return
+
+  try {
+    loadingIndicator.start()
+    loadingStore.loading = true
+    await $api.linePayments.cancelSchedule(schedule.id)
+    snackbar.add({ type: 'success', text: 'Payment Release cancelled successfully' })
+    closeScheduleDetail()
+    await getSchedules()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error cancelling the Payment Release' })
+  } finally {
+    setTimeout(() => {
+      loadingIndicator.finish()
+      loadingStore.loading = false
+    }, 200)
+  }
+}
+
+const onScheduleCancelled = async () => {
+  await getSchedules()
 }
 
 const showNewTabRef = (ref: any) => {

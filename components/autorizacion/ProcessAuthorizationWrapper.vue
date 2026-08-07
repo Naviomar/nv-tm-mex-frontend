@@ -1,5 +1,5 @@
 <template>
-  <div class="paw-root">
+  <div class="paw-root" :class="{ 'paw-root--block': block }">
     <!-- No request yet -->
     <v-btn
       v-if="!hasPendingRequest && !hasGrantedRequest"
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Granted -->
-    <div v-else-if="hasGrantedRequest" class="paw-granted">
+    <div v-else-if="hasGrantedRequest" class="paw-granted" :class="{ 'paw-granted--block': block }">
       <slot name="auth"></slot>
       <v-chip color="success" variant="tonal" size="small" class="paw-chip-granted">
         <v-icon start size="14">mdi-shield-check</v-icon>
@@ -187,6 +187,10 @@ const props = defineProps({
   processData: { type: Object, default: null },
   formFields: { type: Array as PropType<IFormField[]>, default: () => [] },
   fieldCatalogs: { type: Object as PropType<Record<string, { label: string; value: any }[]>>, default: () => ({}) },
+  // The default layout is inline-flex, sized for a small button/chip in the
+  // #auth slot. Set this when the slot renders large block content (forms,
+  // cards) so it isn't squeezed to fit an inline-flex row.
+  block: { type: Boolean, default: false },
 })
 
 const emit = defineEmits<{ refresh: [] }>()
@@ -385,6 +389,10 @@ watch(
   align-items: center;
 }
 
+.paw-root--block {
+  display: block;
+}
+
 .paw-btn {
   font-size: 12px;
   letter-spacing: 0.01em;
@@ -404,6 +412,15 @@ watch(
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.paw-granted--block {
+  display: block;
+}
+
+.paw-granted--block .paw-chip-granted {
+  display: inline-flex;
+  margin-top: 8px;
 }
 
 .paw-chip-granted {

@@ -214,6 +214,14 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/${id}/send-air-revalidation`, fetchOptions)
   }
 
+  async resendRevalidation(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/revalidation/resend`, fetchOptions)
+  }
+
   async addRevalidationOriginalPdf(id: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {

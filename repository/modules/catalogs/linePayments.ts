@@ -149,7 +149,9 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('DELETE', `${this.RESOURCE}/invoices/${id}`, fetchOptions)
   }
 
-
+  async cancelSchedule(id: string | number, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/schedules/${id}`, fetchOptions)
+  }
 }
 
 export default LinePaymentsModule

@@ -12,12 +12,12 @@
             </span>
             <span class="ms-2">Seleccione un nuevo PDF para sellar</span>
           </div>
-          <div class="flex">
+          <div class="flex flex-col gap-2">
             <FileDropzone @drop-files="(file) => (form.files = file)">
-              <v-file-input v-model="form.files" density="compact" counter label="File PDF" />
+              <v-file-input v-model="form.files" density="compact" counter label="File PDF" hide-details />
             </FileDropzone>
 
-            <v-btn color="primary" @click="process"> Upload pdf</v-btn>
+            <v-btn color="primary" class="align-self-start" @click="process">Upload pdf</v-btn>
           </div>
         </div>
         <div class="flex gap-4 border p-4" v-if="fileOriginal || fileSealed">

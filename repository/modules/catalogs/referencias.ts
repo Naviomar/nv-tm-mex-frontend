@@ -219,6 +219,16 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/send-revalidation`, fetchOptions)
   }
 
+  async resendRevalidation(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      method: 'POST',
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-import/${id}/revalidation/resend`, fetchOptions)
+  }
+
   /**
    * Delete a currency by id
    * @param currency
