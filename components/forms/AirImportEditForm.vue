@@ -563,6 +563,7 @@
             :requestKey="`${props.id}`"
             label="Update & resend revalidation"
             :displayName="values.reference_number ? `Ref. ${values.reference_number}` : `Ref. ID ${props.id}`"
+            :refresh="requestRefreshToggle"
           >
             <template #auth>
               <div class="flex justify-end gap-3 mt-2">
@@ -752,6 +753,16 @@ const onAgentChange = async (agentId: number | null) => {
 
 const revalidationTab = ref('checklist')
 const validateElectronicRevRef = ref<any>(null)
+
+// air-import-revalidation-resend is single-use: once Resend consumes it,
+// ProcessAuthorizationWrapper needs to re-fetch its granted status or it'll
+// keep showing the already-used grant (stale "Authorized" state).
+const requestRefreshToggle = ref(false)
+const bumpRequestRefreshToggle = async () => {
+  requestRefreshToggle.value = true
+  await nextTick()
+  requestRefreshToggle.value = false
+}
 
 const formRevalidation = ref<any>({
   show: false,
@@ -1115,6 +1126,7 @@ const onSendRevalidation = async () => {
     snackbar.add({ type: 'success', text: isResend ? 'Revalidation resent' : 'Revalidation sent' })
     await getData()
     await validateElectronicRevRef.value?.refresh()
+    if (isResend) await bumpRequestRefreshToggle()
 
     formRevalidation.value.show = false
   } catch (e) {

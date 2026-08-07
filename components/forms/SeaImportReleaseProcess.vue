@@ -191,6 +191,8 @@
                           :requestKey="`${reference.id}`"
                           label="Request to update & resend / redo revalidation"
                           :displayName="reference.reference_number ? `Ref. ${reference.reference_number}` : `Ref. ID ${reference.id}`"
+                          :refresh="requestRefreshToggle"
+                          block
                         >
                           <template #auth>
                             <div class="mb-4">
@@ -296,8 +298,16 @@ const hasGrantedAuthorization = computed(() => {
   return authProcessRef.value?.hasGrantedRequest ?? false
 })
 
-const refresh = () => {
+// sea-import-revalidation-resend is single-use: once Redo/Resend consumes
+// it, ProcessAuthorizationWrapper needs to re-fetch its granted status or
+// it'll keep showing the already-used grant (stale "Authorized" state).
+const requestRefreshToggle = ref(false)
+
+const refresh = async () => {
   emits('updateReference')
+  requestRefreshToggle.value = true
+  await nextTick()
+  requestRefreshToggle.value = false
 }
 
 const onClickRedoRevalidation = async () => {
@@ -336,7 +346,7 @@ const executeRedoRevalidation = async (skipCharge: boolean = false) => {
       }
     }
 
-    emits('updateReference')
+    await refresh()
   } catch (e) {
     console.error(e)
     const { isValidationError, bag } = useApiError(e as any)
