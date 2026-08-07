@@ -543,14 +543,36 @@
         </div>
 
         <AirImportValidateElectronicRev
+          v-if="!hasSentRevalidation"
           ref="validateElectronicRevRef"
           :reference-id="props.id"
           :reference-number="values.reference_number"
         >
           <div class="flex justify-end gap-3 mt-2">
-            <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation"> Send revalidation </v-btn>
+            <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation('send')"> Send revalidation </v-btn>
           </div>
         </AirImportValidateElectronicRev>
+
+        <div v-if="hasSentRevalidation">
+          <div class="text-body-2 text-grey-darken-1 mb-2">
+            Sent on {{ formatDateString(values.revalidation.sent_at) }}. To re-stamp the document above or update
+            the emails and resend it (without redoing the whole revalidation), request authorization below.
+          </div>
+          <ProcessAuthorizationWrapper
+            processName="air-import-revalidation-resend"
+            :requestKey="`${props.id}`"
+            label="Update & resend revalidation"
+            :displayName="values.reference_number ? `Ref. ${values.reference_number}` : `Ref. ID ${props.id}`"
+          >
+            <template #auth>
+              <div class="flex justify-end gap-3 mt-2">
+                <v-btn color="green" size="small" variant="tonal" @click="toggleRevalidation('resend')">
+                  Resend revalidation
+                </v-btn>
+              </div>
+            </template>
+          </ProcessAuthorizationWrapper>
+        </div>
 
         <!-- Past revalidations -->
         <div v-if="hasSentRevalidations" class="py-4">
@@ -600,7 +622,7 @@
 
     <v-dialog v-model="formRevalidation.show" max-width="800">
       <v-card>
-        <v-card-title>Send revalidation</v-card-title>
+        <v-card-title>{{ formRevalidation.mode === 'resend' ? 'Resend revalidation' : 'Send revalidation' }}</v-card-title>
         <v-card-text>
           <div class="grid grid-cols-1 gap-2">
             <div>
@@ -632,8 +654,8 @@
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-btn color="error" @click="toggleRevalidation">Cancel</v-btn>
-          <v-btn color="primary" @click="onSendRevalidation">Yes, send it</v-btn>
+          <v-btn color="error" @click="formRevalidation.show = false">Cancel</v-btn>
+          <v-btn color="primary" @click="onSendRevalidation">{{ formRevalidation.mode === 'resend' ? 'Yes, resend it' : 'Yes, send it' }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -733,6 +755,7 @@ const validateElectronicRevRef = ref<any>(null)
 
 const formRevalidation = ref<any>({
   show: false,
+  mode: 'send' as 'send' | 'resend',
   customer_emails: '',
   agent_emails: '',
 })
@@ -742,7 +765,8 @@ const toggleRoutes = () => {
   showRoutes.value = !showRoutes.value
 }
 
-const toggleRevalidation = () => {
+const toggleRevalidation = (mode: 'send' | 'resend' = 'send') => {
+  formRevalidation.value.mode = mode
   formRevalidation.value.show = !formRevalidation.value.show
 }
 const setCustomerEmails = (emails: string) => {
@@ -754,6 +778,10 @@ const setCustomsAgentEmails = (emails: string) => {
 
 const hasSentRevalidations = computed(() => {
   return values.sent_releases ? values.sent_releases.length > 0 : false
+})
+
+const hasSentRevalidation = computed(() => {
+  return !!values.revalidation?.sent_at
 })
 
 const departureAirports = (route: any) => {
@@ -1079,13 +1107,16 @@ const onSendRevalidation = async () => {
       customer_emails: formRevalidation.value.customer_emails,
       agent_emails: formRevalidation.value.agent_emails,
     }
-    const response = await $api.airImport.sendRevalidation(props.id, body)
+    const isResend = formRevalidation.value.mode === 'resend'
+    const response = isResend
+      ? await $api.airImport.resendRevalidation(props.id, body)
+      : await $api.airImport.sendRevalidation(props.id, body)
 
-    snackbar.add({ type: 'success', text: 'Revalidation sent' })
+    snackbar.add({ type: 'success', text: isResend ? 'Revalidation resent' : 'Revalidation sent' })
     await getData()
     await validateElectronicRevRef.value?.refresh()
 
-    toggleRevalidation()
+    formRevalidation.value.show = false
   } catch (e) {
     console.error(e)
   } finally {
