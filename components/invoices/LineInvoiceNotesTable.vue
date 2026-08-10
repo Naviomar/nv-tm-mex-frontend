@@ -119,7 +119,7 @@
                     
                     <ViewButton :item="item" @click="viewLineInvoice(item)" />
 
-                    <EditButton v-if="!isPaid(item)" :item="item" @click="editLineInvoice(item)" />
+                    <EditButton v-if="!isPaid(item) || canEditAfterPaid(item)" :item="item" @click="editLineInvoice(item)" />
 
                     <ProcessAuthorizationWrapper
                       v-if="!isPaid(item)"
@@ -133,7 +133,7 @@
                           icon
                           size="x-small"
                           color="red"
-                          variant="elevated" 
+                          variant="elevated"
                           @click="deleteLineInvoice(item)"
                         >
                           <v-icon color="white">mdi-delete</v-icon>
@@ -141,7 +141,16 @@
                       </template>
                     </ProcessAuthorizationWrapper>
 
-                    <v-icon v-if="isPaid(item)" color="green" size="small" title="Invoice Paid - Locked">
+                    <v-icon
+                      v-if="isPaid(item) && canEditAfterPaid(item)"
+                      color="orange"
+                      size="small"
+                      title="Invoice Paid - Folio/PDF edit still allowed for this line"
+                    >
+                        mdi-lock-open-variant
+                    </v-icon>
+
+                    <v-icon v-if="isPaid(item) && !canEditAfterPaid(item)" color="green" size="small" title="Invoice Paid - Locked">
                         mdi-lock-check
                     </v-icon>
 
@@ -280,6 +289,9 @@ const isPaid = (item: any) => {
         return ref.invoice?.is_paid == 1 || (ref.invoice?.amount_paid && parseFloat(ref.invoice.amount_paid) > 0)
     })
 }
+
+// Some freight lines are configured to allow the one-time free folio/PDF edit even after payment
+const canEditAfterPaid = (item: any) => !!item.line?.allow_folio_edit_after_payment
 
 const paymentStatusOptions = computed(() => [
   { value: 'paid', name: 'Paid' },

@@ -78,6 +78,18 @@
                   <ViewButton :item="line" @click="viewLine(line)" />
                   <EditButton :item="line" permission="lines-edit" @click="editLine(line)" />
                   <TrashButton :item="line" permission="lines-delete" @click="showConfirmDelete" />
+                  <v-tooltip v-if="canViewSystemConfig" text="System Config">
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        color="grey-darken-2"
+                        size="x-small"
+                        variant="elevated"
+                        v-bind="props"
+                        icon="mdi-cog-outline"
+                        @click="openSystemConfig(line)"
+                      ></v-btn>
+                    </template>
+                  </v-tooltip>
                 </div>
               </td>
               <td class="whitespace-nowrap">
@@ -110,15 +122,28 @@
         ></v-pagination>
       </v-card-text>
     </v-card>
+
+    <LineSystemConfigModal ref="systemConfigModalRef" @refresh="getLines" />
   </div>
 </template>
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
+import LineSystemConfigModal from '~/components/forms/LineSystemConfigModal.vue'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
+
+const systemConfigModalRef = ref<InstanceType<typeof LineSystemConfigModal> | null>(null)
+const canViewSystemConfig = computed(
+  () => hasPermission('lines-view-system-config') || hasPermission('lines-update-folio-edit-config')
+)
+
+const openSystemConfig = (line: any) => {
+  systemConfigModalRef.value?.openEdit(line)
+}
 
 const filters = ref({
   name: '',

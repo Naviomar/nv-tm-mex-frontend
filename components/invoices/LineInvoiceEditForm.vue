@@ -6,8 +6,11 @@
       <v-card-title class="d-flex align-center gap-2 text-body-1 font-weight-semibold pa-3 pb-0">
         <v-icon size="18">mdi-file-document-edit-outline</v-icon>
         Invoice data
-        <v-chip v-if="!folioEditUsed" size="x-small" color="green" variant="tonal" class="ml-1">
+        <v-chip v-if="!folioEditUsed && !folioEditBlocked" size="x-small" color="green" variant="tonal" class="ml-1">
           Free edit available
+        </v-chip>
+        <v-chip v-else-if="folioEditBlocked" size="x-small" color="orange" variant="tonal" class="ml-1">
+          Locked (paid)
         </v-chip>
         <v-chip v-else size="x-small" color="grey" variant="tonal" class="ml-1">
           Edited {{ formatDateString(lineInvoice.first_folio_edit_at) }}
@@ -15,8 +18,16 @@
       </v-card-title>
 
       <v-card-text>
+        <!-- ── Paid and this line does not allow post-payment edits ── -->
+        <template v-if="folioEditBlocked">
+          <v-alert type="warning" variant="tonal" density="compact" class="text-caption">
+            This invoice is already paid. Freight line "{{ lineInvoice.line?.name }}" is not configured to allow folio/PDF
+            edits after payment. Contact configuration to enable it if needed.
+          </v-alert>
+        </template>
+
         <!-- ── First free edit ── -->
-        <template v-if="!folioEditUsed">
+        <template v-else-if="!folioEditUsed">
           <v-alert type="info" variant="tonal" density="compact" class="mb-3 text-caption">
             You can edit the folio, serie, date and PDF once for free. After saving, any further changes will require authorization.
           </v-alert>
@@ -52,7 +63,7 @@
         </template>
 
         <!-- ── Already edited: read-only + history ── -->
-        <template v-else>
+        <template v-else-if="folioEditUsed">
           <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
               <div class="text-caption text-medium-emphasis">Freight line</div>
@@ -398,6 +409,17 @@ const hasActiveChargeAuth = computed(() =>
 // ── Computed ──────────────────────────────────────────────────────────────────
 
 const folioEditUsed = computed(() => !!lineInvoice.value?.first_folio_edit_at)
+
+const isInvoicePaid = computed(() =>
+  (lineInvoice.value?.refs ?? []).some(
+    (ref: any) => ref.invoice?.is_paid == 1 || (ref.invoice?.amount_paid && parseFloat(ref.invoice.amount_paid) > 0)
+  )
+)
+
+// Blocked = paid, free edit not used yet, and this freight line doesn't allow post-payment edits
+const folioEditBlocked = computed(
+  () => !folioEditUsed.value && isInvoicePaid.value && !lineInvoice.value?.line?.allow_folio_edit_after_payment
+)
 
 // ── Forms ─────────────────────────────────────────────────────────────────────
 
