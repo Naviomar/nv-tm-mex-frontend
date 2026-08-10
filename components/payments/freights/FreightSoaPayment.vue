@@ -280,6 +280,19 @@
         </div>
       </v-card-text>
     </v-card>
+    <v-dialog v-model="pdfViewerDialog.show" fullscreen>
+      <v-card>
+        <v-toolbar color="primary">
+          <v-btn icon @click="pdfViewerDialog.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>SOA PDF Viewer</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <object ref="pdfViewer" type="application/pdf" width="100%" height="100%"></object>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -317,6 +330,9 @@ const filters = ref<any>({
 const creditNotes = ref<any>([])
 const freightForwarders = ref<any>([])
 let containerTypes: any = []
+
+const pdfViewer = ref<any>(null)
+const pdfViewerDialog = ref<any>({ show: false })
 
 const columnClass = (note: any) => {
   if (note.note_payment != null) {
@@ -667,6 +683,7 @@ const uploadFfNoteAttachment = async (note: any) => {
 }
 
 const generatePdf = async () => {
+  pdfViewerDialog.value.show = true
   try {
     loadingStore.loading = true
     const body = {
@@ -676,7 +693,7 @@ const generatePdf = async () => {
 
     const blob = new Blob([response], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
-    window.open(url)
+    pdfViewer.value.data = url
     snackbar.add({ type: 'success', text: 'PDF generated.' })
   } catch (e) {
     console.error(e)
@@ -701,7 +718,12 @@ const generateExcel = async () => {
     snackbar.add({ type: 'success', text: 'Excel generated.' })
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
-    window.open(url)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ff-notes-soa.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   } catch (e) {
     console.error(e)
   } finally {
