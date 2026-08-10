@@ -230,6 +230,19 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="pdfViewerDialog.show" fullscreen>
+      <v-card>
+        <v-toolbar color="primary">
+          <v-btn icon @click="pdfViewerDialog.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>SOA PDF Viewer</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <object ref="pdfViewer" type="application/pdf" width="100%" height="100%"></object>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -277,6 +290,9 @@ const sendPayment = ref<any>({
   to: '',
   message: '',
 })
+
+const pdfViewer = ref<any>(null)
+const pdfViewerDialog = ref<any>({ show: false })
 
 const ffPayments = ref({
   data: [] as any,
@@ -470,12 +486,13 @@ const onClickPagination = async (page: number) => {
 }
 
 const downloadFfPaymentPdf = async (ffpayment: any) => {
+  pdfViewerDialog.value.show = true
   try {
     loadingStore.loading = true
     const response = await $api.ffNotes.downloadFfPaymentPdf(ffpayment.id)
     const blob = new Blob([response], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
-    window.open(url)
+    pdfViewer.value.data = url
   } catch (e) {
     console.error(e)
   } finally {
@@ -491,7 +508,12 @@ const downloadFfPaymentExel = async (ffpayment: any) => {
     const response = await $api.ffNotes.downloadFfPaymentExel(ffpayment.id)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
-    window.open(url)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ff-payment-${ffpayment.id}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   } catch (e) {
     console.error(e)
   } finally {
