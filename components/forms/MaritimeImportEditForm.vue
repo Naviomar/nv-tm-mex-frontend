@@ -267,6 +267,7 @@
                     <div class="">Service executive:</div>
                     <div class="font-bold">
                       <span v-if="!values.executive_id">No executive</span>
+                      <!-- TODO: Property 'name' does not exit on type '{}' -->
                       <span v-if="values.executive_id">{{ values.executive?.name }}</span>
                     </div>
                   </div>
@@ -510,6 +511,7 @@
                   >Go to demurrage calculations</v-btn
                 >
               </div>
+              <!-- TODO: different type -->
               <SeaImportContainersSmart
                 :referencia-id="values.id"
                 impoExpo="I"
@@ -531,6 +533,7 @@
             <div class="flex items-center">
               <v-icon size="x-small">mdi-abacus</v-icon>
               <div class="mx-2 font-bold">Rates</div>
+              <!-- TODO: property 'class_name' does not exit on type. -->
               <ServiceChargeLogs :id="values.id!" :service-class="values.class_name" />
             </div>
             <div>
@@ -684,7 +687,7 @@
         <div class="text-center font-bold flex justify-center p-2">Ref #<ServiceNumberLabel :service="values" /></div>
         <div class="flex justify-end items-center">
           <v-btn class="mr-4" color="error" to="/maritime/import"> Return </v-btn>
-          <v-btn color="primary" @click="onSaveSeaImportClick"> Save changes </v-btn>
+          <v-btn color="primary" :disabled="!isFormInitialized" @click="onSaveSeaImportClick"> Save changes </v-btn>
         </div>
       </DraggableDiv>
     </div>
@@ -933,6 +936,7 @@ const onConsigneeChange = async (value: any) => {
 }
 
 const getSellCharges = (callback: Function) => {
+  // sell_rate_breakdown does not exist on type
   callback((values.sell_rate_breakdown ?? []).concat(values.charges ?? []))
 }
 
@@ -965,6 +969,7 @@ addFormGuard() // Attach the form guard to the component
 //   }
 // })
 
+// TODO: voyage_discharge does not exist on type
 const vesselDepartureSailedColor = computed(() => {
   if (!values.voyage_discharge) {
     return ''
@@ -999,6 +1004,7 @@ const searchCustomers = async (search: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error);
     snackbar.add({
       type: 'error',
       text: 'Error fetching consignees',
@@ -1013,6 +1019,7 @@ const searchShippers = async (search: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching shippers',
@@ -1027,6 +1034,7 @@ const searchFfs = async (params: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching freight forwarders',
@@ -1041,6 +1049,7 @@ const searchSuppliers = async (params: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching suppliers',
@@ -1055,6 +1064,7 @@ const searchImportVoyages = async (search: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching voyages',
@@ -1081,6 +1091,7 @@ const searchDestinations = async (search: SearchParams, type: string) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching destinations',
@@ -1113,6 +1124,7 @@ const searchPolPorts = async (search: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching ports',
@@ -1145,6 +1157,7 @@ const searchPodPorts = async (search: SearchParams) => {
     })
     return response
   } catch (error) {
+    console.error(error)
     snackbar.add({
       type: 'error',
       text: 'Error fetching ports',
@@ -1303,7 +1316,23 @@ const creditDaysColor = computed(() => {
 })
 
 const onSuccess = async () => {
+  if (!isFormInitialized.value) {
+    snackbar.add({ type: 'warning', text: 'Form is initializing, please wait a moment' })
+    return
+  }
+
+  const originalContainerCount = referencia.value?.containers?.length || 0
+  const currentContainerCount = containers.value?.length || 0
+  if (originalContainerCount > 0 && currentContainerCount === 0) {
+    snackbar.add({
+      type: 'error',
+      text: 'Container data synchronization mismatch detected. Please refresh the page before saving.',
+    })
+    return
+  }
+
   try {
+    // TODO: etd y eta does not exist on type
     loadingStore.start()
     const body = {
       incident: values.incident ?? null,
