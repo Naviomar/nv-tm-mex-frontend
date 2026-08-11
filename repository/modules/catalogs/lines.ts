@@ -85,6 +85,14 @@ class LinesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}`, fetchOptions)
   }
 
+  async updateSystemConfig(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-system-config`, fetchOptions)
+  }
+
   async delete(id: string, fetchOptions?: FetchOptions) {
     fetchOptions = {
       method: 'DELETE',

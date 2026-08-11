@@ -133,6 +133,10 @@
           <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
             <PreviewTmInvoice service="air" :invoice="invoiceTm" />
             <div v-if="!isCancelled" class="flex flex-col gap-2">
+              <v-btn color="blue" size="small" @click="onSyncClientInfoClick"
+                ><v-icon>mdi-sync</v-icon>Sync client info</v-btn
+              >
+
               <v-btn v-if="isProforma" color="warning" size="small" @click="onEditProformaClick"
                 ><v-icon>mdi-pencil-outline</v-icon>Edit proforma</v-btn
               >
@@ -660,6 +664,22 @@ const onCancelClick = async () => {
 
 const onEditProformaClick = async () => {
   router.push(`/invoices/search/tmair-${props.id}-edit-proforma`)
+}
+
+const onSyncClientInfoClick = async () => {
+  try {
+    loadingStore.start()
+    await $api.tmAirInvoices.syncClientInfo(props.id)
+    snackbar.add({ type: 'success', text: 'Client info synced with consignee' })
+    await getData()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error syncing client info' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const onDeleteProformaClick = () => {
