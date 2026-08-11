@@ -91,6 +91,10 @@ class TmAirInvoicesModule extends FetchFactory<IPortPagination> {
     return this.call('GET', `${this.RESOURCE}/${id}/invoice-to-cancel`, fetchOptions)
   }
 
+  async syncClientInfo(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/sync-client-info`, fetchOptions)
+  }
+
   // async cancelInvoice(body: any, fetchOptions?: FetchOptions) {
   //   fetchOptions = {
   //     method: 'POST',

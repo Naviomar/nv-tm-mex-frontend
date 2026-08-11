@@ -111,6 +111,10 @@ class TmInvoicesModule extends FetchFactory<IPortPagination> {
     return this.call('DELETE', `${this.RESOURCE}/${id}`, fetchOptions)
   }
 
+  async syncClientInfo(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/${id}/sync-client-info`, fetchOptions)
+  }
+
   async getInvoiceToCancel(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/invoice-to-cancel`, fetchOptions)
   }
