@@ -109,6 +109,16 @@ interface LayoutItem {
   span: number
 }
 
+// Persisted shape: the visible items plus the set of registry keys that
+// existed at save time. Without knownKeys we can't tell "filter added to
+// the codebase after the user's last save" (should be appended) apart from
+// "filter the user explicitly hid" (should stay hidden) — both look
+// identical as "registry key missing from the saved items".
+interface SavedLayout {
+  items: LayoutItem[]
+  knownKeys: string[]
+}
+
 interface DropIndicator {
   index: number
   after: boolean
@@ -138,21 +148,42 @@ const clampSpan = (span: any): number => {
 const buildDefaults = (): LayoutItem[] =>
   props.filters.filter((f) => f.visible !== false).map((f) => ({ key: f.key, span: clampSpan(f.span ?? 2) }))
 
+// Normalize both the current { items, knownKeys } shape and the legacy
+// plain-array shape (pre-knownKeys) into a SavedLayout. Legacy data has no
+// record of which keys were known at save time, so we treat every current
+// registry key as already known — this stops the "hidden filter reappears"
+// bug for old saves; it just means a genuinely new registry filter won't
+// auto-append for those users until the layout is re-saved (they can still
+// add it from "Available filters").
+const normalizeSaved = (saved: any): SavedLayout | null => {
+  if (Array.isArray(saved)) {
+    return { items: saved, knownKeys: props.filters.map((f) => f.key) }
+  }
+  if (saved && Array.isArray(saved.items)) {
+    return { items: saved.items, knownKeys: Array.isArray(saved.knownKeys) ? saved.knownKeys : [] }
+  }
+  return null
+}
+
 // Merge a saved layout with the registry: keep saved order/spans for known
-// filters, and append registry filters that are visible by default but are
-// not in the saved layout (e.g. added to the codebase after the user saved)
-const mergeLayout = (saved: any): LayoutItem[] | null => {
-  if (!Array.isArray(saved)) return null
+// filters, and append registry filters that are new to the codebase since
+// the last save (i.e. not in knownKeys). A filter missing from saved.items
+// but present in knownKeys was explicitly hidden by the user and must stay
+// hidden.
+const mergeLayout = (rawSaved: any): LayoutItem[] | null => {
+  const saved = normalizeSaved(rawSaved)
+  if (!saved) return null
   const defaults = buildDefaults()
   const registryKeys = new Set(props.filters.map((f) => f.key))
-  const savedKeys = new Set(saved.map((s: LayoutItem) => s.key))
+  const savedKeys = new Set(saved.items.map((s: LayoutItem) => s.key))
+  const knownKeys = new Set(saved.knownKeys)
 
-  const merged = saved
+  const merged = saved.items
     .filter((s: LayoutItem) => registryKeys.has(s.key))
     .map((s: LayoutItem) => ({ key: s.key, span: clampSpan(s.span) }))
 
   for (const def of defaults) {
-    if (!savedKeys.has(def.key)) merged.push(def)
+    if (!savedKeys.has(def.key) && !knownKeys.has(def.key)) merged.push(def)
   }
 
   return merged.length > 0 ? merged : null
@@ -165,6 +196,13 @@ const items = ref<LayoutItem[]>(buildDefaults())
 const draggedKey = ref<string | null>(null)
 const dropIndicator = ref<DropIndicator | null>(null)
 
+// Wrap the current items with the registry keys known as of now, so a
+// future load can tell "new filter" apart from "user hid this on purpose".
+const toSavedLayout = (value: LayoutItem[]): SavedLayout => ({
+  items: value,
+  knownKeys: props.filters.map((f) => f.key),
+})
+
 onMounted(async () => {
   // 1) Fast first paint: apply the local cache immediately
   items.value = mergeLayout(readLocal()) ?? buildDefaults()
@@ -173,13 +211,13 @@ onMounted(async () => {
   if (serverValue) {
     items.value = mergeLayout(serverValue) ?? items.value
   } else {
-    persist(items.value)
+    persist(toSavedLayout(items.value))
   }
 })
 
 watch(
   items,
-  (value) => persist(value),
+  (value) => persist(toSavedLayout(value)),
   { deep: true }
 )
 
