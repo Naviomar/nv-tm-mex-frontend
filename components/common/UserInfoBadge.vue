@@ -57,7 +57,7 @@
                 </v-tooltip>
               </template>
               <template v-slot:subtitle="{ subtitle }">
-                <div>{{ subtitle }}</div>
+                <div v-if="subtitle">{{ subtitle }}</div>
                 <div class="italic text-xs font-bold">@ {{ formatDateString(item.updated_at) }}</div>
               </template>
             </v-list-item>
@@ -123,11 +123,18 @@ const createdBy = computed(() => {
 
 const updatedBy = computed(() => {
   const keyVal = props.item?.updated_by
+  if (keyVal === 1 || keyVal?.id === 1) {
+    return { name: 'System', email: '' }
+  }
   if (keyVal && typeof keyVal === 'object' && 'name' in keyVal) {
     return keyVal
   }
   if (props.item && 'updator' in props.item) {
-    return props.item.updator
+    const updator = props.item.updator
+    if (updator === 1 || updator?.id === 1) {
+      return { name: 'System', email: '' }
+    }
+    return updator
   }
   return usersStore.getUserById(keyVal)
 })

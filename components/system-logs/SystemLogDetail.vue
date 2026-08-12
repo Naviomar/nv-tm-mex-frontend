@@ -56,12 +56,12 @@
             <v-table density="compact" class="diff-table rounded-lg">
               <thead>
                 <tr class="bg-grey-lighten-4">
-                  <th class="text-left" style="width: 25%;">Field</th>
-                  <th class="text-left" style="width: 37%;">
+                  <th class="text-left dark:text-white" style="width: 25%;" id="field">Field</th>
+                  <th class="text-left dark:text-white" style="width: 37%;" id="before">
                     <v-icon size="14" color="red-darken-1" class="mr-1">mdi-minus-circle</v-icon>
                     Before
                   </th>
-                  <th class="text-left" style="width: 37%;">
+                  <th class="text-left dark:text-white" style="width: 37%;" id="after">
                     <v-icon size="14" color="green-darken-1" class="mr-1">mdi-plus-circle</v-icon>
                     After
                   </th>
@@ -228,12 +228,24 @@ const formattedPayload = computed(() => convertPayloadDates(props.log?.payload ?
 }
 
 .diff-old {
-  background-color: rgba(244, 67, 54, 0.06);
-  color: #c62828;
+  background-color: #ffebee;
+  color: #9c0006;
+}
+
+:deep(.v-theme--dark) .diff-old,
+.v-theme--dark .diff-old {
+  background-color: #3b1414;
+  color: #ffcdd2;
 }
 
 .diff-new {
-  background-color: rgba(76, 175, 80, 0.06);
-  color: #2e7d32;
+  background-color: #e8f5e9;
+  color: #006100;
+}
+
+:deep(.v-theme--dark) .diff-new,
+.v-theme--dark .diff-new {
+  background-color: #143b17;
+  color: #c8e6c9;
 }
 </style>
