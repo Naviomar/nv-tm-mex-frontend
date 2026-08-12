@@ -76,10 +76,7 @@ import { useCheckUser } from '~/composables/useCheckUser'
 const { hasPermission } = useCheckUser()
 
 const departments = computed(() =>
-  REPORT_DEPARTMENTS.filter((dept) => {
-    if (dept.reports.length === 0) return true
-    return dept.reports.some((r) => !r.permission || hasPermission(r.permission))
-  }),
+  REPORT_DEPARTMENTS.filter((dept) => dept.reports.some((r) => !r.permission || hasPermission(r.permission))),
 )
 
 const visibleReports = computed(

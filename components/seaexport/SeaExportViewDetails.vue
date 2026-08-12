@@ -50,7 +50,7 @@
           <v-card-text>
             <div class="grid grid-cols-2">
               <div>Consignee</div>
-              <div>{{ referencia.consignee?.name }}</div>
+              <div>{{ referencia.shipper?.name }}</div>
 
               <div>Executive</div>
               <div>{{ referencia.executive?.name || 'No executive' }}</div>
@@ -65,7 +65,7 @@
               <div>{{ formatDateString(referencia.created_at) }}</div>
 
               <div>Shipper</div>
-              <div>{{ referencia.shipper?.name }}</div>
+              <div>{{ referencia.consignee?.name }}</div>
 
               <div>Notify</div>
               <div>{{ referencia.notify }}</div>

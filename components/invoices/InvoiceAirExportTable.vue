@@ -82,7 +82,7 @@
             <tr>
               <th class="text-left" width="50">Actions</th>
               <th class="text-left"># Reference</th>
-              <th class="text-left">Consignee</th>
+              <th class="text-left">Customer</th>
               <th class="text-left">Master AWB</th>
               <th class="text-left">House AWB</th>
               <th class="text-left">Sell concepts</th>
