@@ -487,6 +487,14 @@ const saveEmails = async () => {
         type,
       }))
     
+    // Check for duplicates before sending
+    const existingEmails = (props.emails || []).map((e: any) => e.email.toLowerCase())
+    const duplicates = emailsToAdd.value.filter((e) => existingEmails.includes(e.toLowerCase()))
+    if (duplicates.length > 0) {
+      snackbar.add({ type: 'warning', text: `Email already registered: ${duplicates.join(', ')}. Use edit mode to modify it.` })
+      return
+    }
+    
     // Save each email
     for (const email of emailsToAdd.value) {
       const body = {
@@ -502,8 +510,14 @@ const saveEmails = async () => {
     closeAddDialog()
     emit('refresh')
   } catch (e: any) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: e.message || 'Error adding emails' })
+    const status = e?.response?.status || e?.statusCode
+    const message = e?.response?._data?.message || e?.message || 'Error adding emails'
+    if (status === 409) {
+      snackbar.add({ type: 'warning', text: message })
+    } else {
+      console.error(e)
+      snackbar.add({ type: 'error', text: message })
+    }
   } finally {
     loadingStore.stop()
   }

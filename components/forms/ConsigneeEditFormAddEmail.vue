@@ -142,6 +142,7 @@
       :email-data="selectedEmail"
       :catalogs="catalogs"
       :customer-id="id"
+      :existing-emails="emails"
       @refresh="emit('refresh')"
     />
     <ConsigneeNotificationsMatrix
