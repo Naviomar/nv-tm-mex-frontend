@@ -59,6 +59,16 @@
                   </v-chip>
                 </div>
                 <p v-else class="text-caption text-orange-darken-2 mt-1">No emails added yet.</p>
+                <v-alert
+                  v-if="duplicateWarning"
+                  type="warning"
+                  variant="tonal"
+                  density="compact"
+                  class="mt-2"
+                  closable
+                >
+                  {{ duplicateWarning }}
+                </v-alert>
               </template>
               <template v-else>
                 <v-text-field
@@ -329,6 +339,10 @@ const props = defineProps({
   preselectNotification: {
     type: Object as () => { id: number; short_name: string } | null,
     default: null
+  },
+  existingEmails: {
+    type: Array as () => any[],
+    default: () => []
   }
 })
 
@@ -351,11 +365,25 @@ const parseEmailsFromText = (text: string): string[] => {
     .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
 }
 
+const duplicateWarning = ref<string | null>(null)
+
+const findExistingEmail = (email: string): any | null => {
+  return props.existingEmails.find((e: any) => e.email.toLowerCase() === email.toLowerCase()) || null
+}
+
 const parseAndAddEmails = () => {
   const raw = emailPasteInput.value.trim()
   if (!raw) return
   const parsed = parseEmailsFromText(raw)
   if (parsed.length === 0) return
+
+  const duplicates = parsed.filter((e) => findExistingEmail(e))
+  if (duplicates.length > 0) {
+    duplicateWarning.value = `Email already registered: ${duplicates.join(', ')}. Use edit mode to modify it.`
+    return
+  }
+
+  duplicateWarning.value = null
   const unique = parsed.filter((e) => !emailsToCreate.value.includes(e))
   emailsToCreate.value = [...emailsToCreate.value, ...unique]
   emailPasteInput.value = ''
@@ -366,6 +394,11 @@ const onEmailPasteEvent = (e: ClipboardEvent) => {
   const parsed = parseEmailsFromText(text)
   if (parsed.length > 1) {
     e.preventDefault()
+    const duplicates = parsed.filter((em) => findExistingEmail(em))
+    if (duplicates.length > 0) {
+      duplicateWarning.value = `Email already registered: ${duplicates.join(', ')}. Use edit mode to modify it.`
+      return
+    }
     const unique = parsed.filter((em) => !emailsToCreate.value.includes(em))
     emailsToCreate.value = [...emailsToCreate.value, ...unique]
     emailPasteInput.value = ''
@@ -468,6 +501,7 @@ watch(() => props.show, (newVal) => {
     emailsToCreate.value = []
     emailPasteInput.value = ''
     selectedGroups.value = []
+    duplicateWarning.value = null
   }
 })
 
@@ -559,22 +593,32 @@ const onSuccess = async (formValues: any) => {
   if (props.warrantyLetterId) baseBody.warranty_letter_id = props.warrantyLetterId
   if (props.entrustLetterId) baseBody.entrust_letter_id = props.entrustLetterId
 
-  if (props.mode === 'create') {
-    await Promise.all(
-      emailsToCreate.value.map((email) =>
-        $api.consignees.upsertEmail(props.customerId, { ...baseBody, email })
+  try {
+    if (props.mode === 'create') {
+      await Promise.all(
+        emailsToCreate.value.map((email) =>
+          $api.consignees.upsertEmail(props.customerId, { ...baseBody, email })
+        )
       )
-    )
-    snackbar.add({
-      type: 'success',
-      text: `${emailsToCreate.value.length} email(s) saved successfully`,
-    })
-  } else {
-    await $api.consignees.upsertEmail(props.customerId, baseBody)
-    snackbar.add({ type: 'success', text: 'Email saved successfully' })
+      snackbar.add({
+        type: 'success',
+        text: `${emailsToCreate.value.length} email(s) saved successfully`,
+      })
+    } else {
+      await $api.consignees.upsertEmail(props.customerId, baseBody)
+      snackbar.add({ type: 'success', text: 'Email saved successfully' })
+    }
+    emit('refresh')
+    close()
+  } catch (e: any) {
+    const status = e?.response?.status || e?.statusCode
+    const message = e?.response?._data?.message || e?.message || 'Error saving email'
+    if (status === 409) {
+      snackbar.add({ type: 'warning', text: message })
+    } else {
+      snackbar.add({ type: 'error', text: message })
+    }
   }
-  emit('refresh')
-  close()
 }
 
 function onInvalidSubmit({ values, errors, results }: any) {
@@ -599,6 +643,7 @@ const close = () => {
   selectedGroups.value = []
   emailsToCreate.value = []
   emailPasteInput.value = ''
+  duplicateWarning.value = null
 }
 
 const submitForm = () => {
