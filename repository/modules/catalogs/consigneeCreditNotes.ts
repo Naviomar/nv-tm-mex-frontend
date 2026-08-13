@@ -2,6 +2,7 @@ import { type FetchOptions, type $Fetch } from 'ofetch'
 
 // locals
 import FetchFactory from '../../factory'
+import objectToFormData from '~/utils/toFormData'
 
 
 class ConsigneeCreditNotesModule extends FetchFactory<any> {
@@ -35,6 +36,24 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/create-note`, fetchOptions)
+  }
+
+  async createFiscalNote(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/create-fiscal-note`, fetchOptions)
+  }
+
+  async uploadFiscalCfdi(id: string, files: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(files)
+    fetchOptions = {
+      method: 'POST',
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/upload-fiscal-cfdi`, fetchOptions)
   }
 
   async updateNote(id: string, form: any, fetchOptions?: FetchOptions) {

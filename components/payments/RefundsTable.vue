@@ -85,10 +85,21 @@
                       {{ refundPay.payable?.serviceable?.reference_number }}
                     </v-chip>
                   </template>
+                  <template v-else-if="hasCreditNotePayments(refund)">
+                    <v-chip
+                      v-for="(refundPay, i) in refund.refund_payments"
+                      :key="`refund-pay-cn-${i}`"
+                      density="compact"
+                      color="teal"
+                      size="x-small"
+                    >
+                      Fiscal CN #{{ refundPay.payable?.id }}
+                    </v-chip>
+                  </template>
                   <v-chip v-else color="orange" size="x-small" class="mb-1">
                     Free Format
                   </v-chip>
-                  <div v-if="!hasServicePayments(refund)" class="text-xs text-gray-600">
+                  <div v-if="!hasServicePayments(refund) && !hasCreditNotePayments(refund)" class="text-xs text-gray-600">
                     {{ refund.refund_payments?.length || 0 }} payment(s)
                   </div>
                 </div>
@@ -205,6 +216,10 @@ const getTotalRefund = (refund: any) => {
 
 const hasServicePayments = (refund: any) => {
   return refund.refund_payments?.some((payment: any) => payment.payable?.serviceable?.reference_number)
+}
+
+const hasCreditNotePayments = (refund: any) => {
+  return refund.refund_payments?.some((payment: any) => payment.payable_type?.includes('CreditNote'))
 }
 
 const viewItem = (reqRefund: any) => {

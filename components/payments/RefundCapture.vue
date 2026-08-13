@@ -6,6 +6,7 @@
         <v-radio-group v-model="searchType" :inline="$vuetify.display.smAndUp">
           <v-radio label="By Service" value="service" />
           <v-radio label="Free Format (Without Service)" value="free-format" color="orange" />
+          <v-radio label="Credit Note Balance (Saldo a favor)" value="credit-note" color="teal" />
         </v-radio-group>
       </v-card-text>
     </v-card>
@@ -15,6 +16,20 @@
       </v-card-title>
       <v-card-text>
         <SearchGlobalReferences @update="setReferences" />
+      </v-card-text>
+    </v-card>
+    <v-card v-else-if="searchType === 'credit-note'" color="teal-lighten-4">
+      <v-card-title class="font-bold! text-base!">💳 Fiscal Credit Note Balance Search</v-card-title>
+      <v-card-text>
+        <v-alert type="info" variant="tonal" class="mb-4">
+          Search a customer's fiscal credit notes (CFDI Egreso) with an available saldo a favor to refund.
+        </v-alert>
+        <div class="mb-4">
+          <ACustomerSearch v-model="form.searchBeneficiaryId" label="Select Customer" />
+        </div>
+        <v-btn v-if="form.searchBeneficiaryId" color="primary" @click="searchCreditNoteBalances">
+          Search Credit Note Balances
+        </v-btn>
       </v-card-text>
     </v-card>
     <v-card v-else color="orange-lighten-4">
@@ -104,6 +119,9 @@
               </td>
               <td>
                 <span v-if="servicePayment.serviceable">#{{ servicePayment.serviceable?.reference_number }}</span>
+                <v-chip v-else-if="servicePayment.__isCreditNote" color="teal" size="x-small">
+                  Fiscal CN #{{ servicePayment.id }}<span v-if="servicePayment.folio"> - {{ servicePayment.folio }}</span>
+                </v-chip>
                 <v-chip v-else color="orange" size="x-small">Free Format</v-chip>
               </td>
               <td>{{ servicePayment.charge?.name }}</td>
@@ -343,7 +361,10 @@ const onClickRequestRefund = async () => {
     }
 
     const body = {
-      payments: selectedPayments.map((payment: any) => payment.id),
+      payments: selectedPayments.filter((payment: any) => !payment.__isCreditNote).map((payment: any) => payment.id),
+      credit_note_payments: selectedPayments
+        .filter((payment: any) => payment.__isCreditNote)
+        .map((payment: any) => ({ id: payment.id, amount: payment.amount })),
       beneficiary_type: form.value.beneficiary_type,
       beneficiary_id: form.value.beneficiaryId,
       bank_account_id: form.value.bank.id,
@@ -353,6 +374,50 @@ const onClickRequestRefund = async () => {
     const response: any = await $api.refunds.requestRefund(body)
     snackbar.add({ type: 'success', text: 'Refund requested' })
     router.push(`/refunds/view-${response.id}`)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const searchCreditNoteBalances = async () => {
+  try {
+    loadingStore.start()
+    if (!form.value.searchBeneficiaryId) {
+      snackbar.add({ type: 'warning', text: 'Select a customer first' })
+      return
+    }
+    const body = {
+      service_type: 'CN',
+      beneficiary_type: 'customer',
+      beneficiary_id: form.value.searchBeneficiaryId,
+    }
+    const response: any = await $api.refunds.searchByServices(body)
+    if (response.length <= 0) {
+      snackbar.add({ type: 'info', text: 'No fiscal credit notes with available balance found for this customer' })
+    }
+
+    // Normalize CreditNote records into the same shape the results table/selection logic expects.
+    servicePayments.value = response
+      .map((cn: any) => {
+        return {
+          id: cn.id,
+          amount: cn.amount_available,
+          currency_id: cn.currency_id,
+          created_at: cn.created_at,
+          folio: cn.folio,
+          charge: { name: 'Saldo a favor - Nota de crédito fiscal' },
+          serviceable: null,
+          __isCreditNote: true,
+          selected: false,
+        }
+      })
+      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    servicesResult.value.services = [{ id: 'credit-note' }]
   } catch (error) {
     console.error(error)
   } finally {

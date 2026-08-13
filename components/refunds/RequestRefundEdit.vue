@@ -159,7 +159,14 @@
                     </div>
                   </td>
                   <td>
-                    <div v-if="refundPayment.payable?.serviceable?.reference_number">
+                    <div v-if="refundPayment.payable_type?.includes('CreditNote')" class="flex flex-col gap-1">
+                      <v-chip color="teal" size="x-small">Fiscal CN #{{ refundPayment.payable?.id }}</v-chip>
+                      <span v-if="refundPayment.payable?.folio" class="text-xs">Folio: {{ refundPayment.payable.folio }}</span>
+                      <span v-if="refundPayment.payable?.consignee?.name" class="text-xs">
+                        Customer: {{ refundPayment.payable.consignee.name }}
+                      </span>
+                    </div>
+                    <div v-else-if="refundPayment.payable?.serviceable?.reference_number">
                       {{ refundPayment.payable?.serviceable?.reference_number }}
                     </div>
                     <div v-else class="flex flex-col gap-1">
@@ -176,7 +183,8 @@
                     </div>
                   </td>
                   <td>
-                    <div>{{ refundPayment.payable?.charge?.name }}</div>
+                    <div v-if="refundPayment.payable_type?.includes('CreditNote')">Saldo a favor (sobrepago)</div>
+                    <div v-else>{{ refundPayment.payable?.charge?.name }}</div>
                     <div v-if="refundPayment.payable?.container">
                       <div class="text-xs">Container: {{ refundPayment.payable.container.container_number }}</div>
                     </div>
