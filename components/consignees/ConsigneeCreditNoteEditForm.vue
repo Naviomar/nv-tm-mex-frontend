@@ -569,6 +569,16 @@ const getCustomerCreditNote = async () => {
   try {
     loadingStore.loading = true
     const response = await $api.consigneeCreditNotes.getCreditNoteById(props.id.toString())
+
+    // Este formulario asume cargos ligados a un invoice_charge_id (auto-aplicados);
+    // una nota de crédito fiscal no funciona así y el backend ya rechaza el guardado
+    // — se redirige antes de mostrar un formulario que de todos modos no serviría.
+    if (response?.is_fiscal) {
+      snackbar.add({ type: 'warning', text: 'Esta nota de crédito es fiscal y no se edita por aquí. Usa las acciones de aplicar/reembolsar desde su detalle.' })
+      router.replace(`/invoices/search/credit-notes/view-${props.id}`)
+      return
+    }
+
     consigneeCreditNote.value = response
     buildEditableCharges()
 
