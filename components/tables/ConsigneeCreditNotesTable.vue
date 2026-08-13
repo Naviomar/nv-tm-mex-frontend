@@ -229,7 +229,7 @@
             <td>
               <div class="flex gap-2">
                 <ViewButton :item="creditNote" @click="viewCreditNote(creditNote)" />
-                <EditButton :item="creditNote" @click="editCreditNote(creditNote)" />
+                <EditButton v-if="!creditNote.is_fiscal" :item="creditNote" @click="editCreditNote(creditNote)" />
                 <TrashButton :item="creditNote" @click="handleTrashButtonClick(creditNote)" />
               </div>
             </td>
