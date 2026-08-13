@@ -12,6 +12,12 @@
       </li>
       <li>Upload the zip file with the XML and PDF files.</li>
       <li>
+        Fiscal credit notes (CFDI Egreso) can be included in the same zip. Those are
+        matched instead by the original invoice's UUID referenced in the XML's
+        <code>CfdiRelacionados</code> — no folio needed, as long as the credit note was
+        already created in the system (Fiscal / Overpayment mode) and is pending its CFDI.
+      </li>
+      <li>
         The <strong>control</strong> excel is now optional and only used as a fallback when an invoice can't be matched
         by folio.
         <v-btn size="small" color="blue" variant="tonal" class="ml-2" @click="onClickDownloadLayout">
