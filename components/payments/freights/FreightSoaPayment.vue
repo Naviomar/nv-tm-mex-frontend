@@ -90,12 +90,12 @@
           <v-alert v-if="maxCreditNotesFound" type="warning" density="compact">
             <v-icon>mdi-alert-circle</v-icon> Warning - Too many notes found. (Max 2000 per request.)
           </v-alert>
-          <v-table density="compact" class="overflow-x-auto table-nowrap scroll-bold">
+          <div class="catalog-table-wrapper">
+            <v-table density="compact" class="soa-table table-nowrap">
             <thead>
               <tr>
                 <th class="text-left">Actions</th>
                 <th v-if="hasCheckedNotes" class="text-left min-w-48">Note #</th>
-                <th class="text-left">Payment request</th>
                 <th class="text-left">Vessel</th>
                 <th class="text-left">Date (ETD)</th>
                 <th class="text-left">DN / CN #</th>
@@ -140,21 +140,20 @@
                         <div>Missing:</div>
                         <div>{{ ffNoteMissingThings(note) }}</div>
                       </v-tooltip>
-                      <FileDropzone
-                        @drop-files="
-                          (file) => {
-                            note.file = file
-                            uploadFfNoteAttachment(note)
-                          }
-                        "
-                      >
-                        <v-file-input
-                          v-model="note.file"
-                          density="compact"
-                          label="Attachment"
-                          @update:model-value="uploadFfNoteAttachment(note)"
-                        />
-                      </FileDropzone>
+                      <v-tooltip location="top" text="Upload attachment">
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            v-bind="props"
+                            icon
+                            size="small"
+                            variant="text"
+                            color="primary"
+                            @click="openUploadDialog(note)"
+                          >
+                            <v-icon>mdi-paperclip</v-icon>
+                          </v-btn>
+                        </template>
+                      </v-tooltip>
                     </div>
                     <div v-if="isNotePending(note)">
                       <v-checkbox v-model="note.checked" density="compact" hide-details />
@@ -173,19 +172,6 @@
                     <span class="text-xs text-gray-500 dark:text-white">Observations</span>
                   </div>
                 </td>
-                <td>
-                  <div v-if="note.note_payment != null">
-                    <v-chip color="blue" size="small" @click="viewFfReqPayment(note.note_payment)">
-                      <div class="flex gap-2">
-                        <v-icon>mdi-eye-outline</v-icon>
-                        Payment request #{{ note.note_payment?.ff_payment_id }}
-                      </div>
-                    </v-chip>
-                  </div>
-                  <div v-if="note.note_payment == null">
-                    <v-chip color="orange" size="small">Pending</v-chip>
-                  </div>
-                </td>
                 <td class="whitespace-nowrap">
                   {{ getVesselFromServiceable(note) }}
                 </td>
@@ -195,12 +181,25 @@
                   </UserInfoBadge>
                 </td>
                 <td class="whitespace-nowrap font-bold">
-                  <v-chip color="blue" size="small" @click="viewFfNote(note.id)">
-                    <div class="flex gap-2">
-                      <v-icon>mdi-eye-outline</v-icon>
-                      #{{ note.folio }}
-                    </div>
-                  </v-chip>
+                  <div class="flex flex-col gap-1">
+                    <v-chip color="blue" size="small" @click="viewFfNote(note.id)">
+                      <div class="flex gap-1">
+                        <v-icon size="small">mdi-eye-outline</v-icon>
+                        #{{ note.folio }}
+                      </div>
+                    </v-chip>
+                    <v-chip
+                      v-if="note.note_payment != null"
+                      color="blue"
+                      size="x-small"
+                      @click="viewFfReqPayment(note.note_payment)"
+                    >
+                      <div class="flex gap-1">
+                        <v-icon size="small">mdi-eye-outline</v-icon>
+                        <span>PR #{{ note.note_payment?.ff_payment_id }}</span>
+                      </div>
+                    </v-chip>
+                  </div>
                 </td>
 
                 <td>
@@ -265,6 +264,7 @@
               </tr>
             </tbody>
           </v-table>
+          </div>
 
           <div class="flex justify-center p-4">
             <v-card>
@@ -291,6 +291,27 @@
         <v-card-text>
           <object ref="pdfViewer" type="application/pdf" width="100%" height="100%"></object>
         </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="uploadDialog.show" max-width="500">
+      <v-card>
+        <v-card-title>Upload attachment for note #{{ uploadNote?.folio }}</v-card-title>
+        <v-card-text>
+          <FileDropzone @drop-files="setUploadFile">
+            <v-file-input
+              v-model="uploadNote.file"
+              density="compact"
+              label="Attachment"
+              hide-details
+              @update:model-value="onUploadFileSelected"
+            />
+          </FileDropzone>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="secondary" @click="uploadDialog.show = false">Cancel</v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
   </div>
@@ -333,6 +354,29 @@ let containerTypes: any = []
 
 const pdfViewer = ref<any>(null)
 const pdfViewerDialog = ref<any>({ show: false })
+const uploadDialog = ref<any>({ show: false })
+const uploadNote = ref<any>({})
+
+const openUploadDialog = (note: any) => {
+  uploadNote.value = note
+  uploadNote.value.file = null
+  uploadDialog.value.show = true
+}
+
+const onUploadFileSelected = async () => {
+  if (!uploadNote.value || !uploadNote.value.file) {
+    return
+  }
+  await uploadFfNoteAttachment(uploadNote.value)
+  uploadDialog.value.show = false
+}
+
+const setUploadFile = (file: any) => {
+  if (uploadNote.value) {
+    uploadNote.value.file = file
+    onUploadFileSelected()
+  }
+}
 
 const columnClass = (note: any) => {
   if (note.note_payment != null) {
@@ -438,9 +482,10 @@ const maxCreditNotesFound = computed(() => {
   return creditNotes.value.length >= 2000
 })
 
-const sumUpToIndex = (index: number) => {
+const sumUpToIndex = (index: number | string) => {
+  const idx = typeof index === 'string' ? parseInt(index, 10) : index
   let sum = 0
-  for (let i = 0; i <= index; i++) {
+  for (let i = 0; i <= idx; i++) {
     if (isNotePending(creditNotes.value[i])) {
       sum += getRealAmount(creditNotes.value[i])
     }
@@ -521,8 +566,9 @@ const getEtdDate = (note: any) => {
     return 'No ETD'
   }
   if (serviceType.includes('AirReference')) {
-    if (note.serviceable?.transits?.first()?.departure_date) {
-      return formatDateString(note.serviceable?.transits?.first()?.departure_date)
+    const firstTransit = note.serviceable?.transits?.[0]
+    if (firstTransit?.departure_date) {
+      return formatDateString(firstTransit.departure_date)
     }
     return 'No ETD'
   }
@@ -883,3 +929,12 @@ onMounted(async () => {
   await getCatalogs()
 })
 </script>
+
+<style scoped>
+.soa-table :deep(td),
+.soa-table :deep(th) {
+  font-size: 0.75rem !important;
+  padding: 2px 6px !important;
+  white-space: nowrap;
+}
+</style>
