@@ -292,8 +292,6 @@ const addCharge = async () => {
       chargeable: null,
     }
 
-    response.is_con_iva = response.amount_iva > 0
-
     invoice.value.invoice_charges.push(response)
 
     snackbar.add({ type: 'success', text: 'Charge added successfully' })
@@ -311,10 +309,6 @@ watch(
   () => props.invoice,
   (value) => {
     invoice.value = JSON.parse(JSON.stringify(value))
-    // for each invoice charge add is_con_iva if amount_iva is greater than 0
-    invoice.value.invoice_charges.forEach((charge: any) => {
-      charge.is_con_iva = charge.amount_iva > 0
-    })
   },
   { immediate: true }
 )

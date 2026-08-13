@@ -4,12 +4,12 @@
       <v-card-title>Agents F.F. SOA - Credit / Debit notes</v-card-title>
       <v-card-subtitle>Check and send notes to pay</v-card-subtitle>
       <v-card-text>
-        <div class="mb-4" @keyup.enter="onClickFilters">
+        <div class="mb-2" @keyup.enter="onClickFilters">
           <!-- FUTURE: Party type selector (FF / Consignee) hidden until Consignee SOA payment flow is fully enabled.
                When re-enabling, restore the partyTypeFilter autocomplete, the v-if guards on FF fields, and the
                consignee AGlobalSearch block. Also restore the consignee branch in sendToPay / getFreightSoa validation.
           -->
-          <div class="grid grid-cols-3 md:grid-cols-5 gap-4">
+          <div class="grid grid-cols-3 md:grid-cols-5 gap-2">
             <div class="col-span-1">
               <v-autocomplete
                 v-model="filters.freightId"
@@ -50,7 +50,7 @@
               <v-text-field v-model="filters.folio" clearable density="compact" label="# Note" />
             </div>
           </div>
-          <div class="grid grid-cols-1">
+          <div class="grid grid-cols-1 mt-1">
             <div class="flex gap-2">
               <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
               <v-btn size="small" color="primary" @click="getFreightSoa"> Search </v-btn>
@@ -59,12 +59,12 @@
         </div>
 
         <div>
-          <div class="flex gap-2 mb-4">
-            <v-btn color="primary" size="small" variant="tonal" @click="checkAll"> Check all </v-btn>
-            <v-btn color="primary" size="small" variant="tonal" @click="uncheckAll"> Uncheck all </v-btn>
+          <div class="flex gap-2 mb-2">
+            <v-btn color="primary" size="x-small" variant="tonal" @click="checkAll"> Check all </v-btn>
+            <v-btn color="primary" size="x-small" variant="tonal" @click="uncheckAll"> Uncheck all </v-btn>
           </div>
 
-          <div v-if="hasCheckedNotes" class="flex gap-2 mb-4 border p-2">
+          <div v-if="hasCheckedNotes" class="flex gap-2 mb-2 border p-1">
             <v-btn v-if="false" color="green" size="small" variant="tonal" @click="checkNotes"> Check note</v-btn>
             <v-btn color="purple" size="small" variant="outlined" @click="generatePdf"> PDF </v-btn>
             <v-btn color="lime" size="small" variant="outlined" @click="generateExcel"> Excel </v-btn>
@@ -80,17 +80,23 @@
             </v-btn>
           </div>
 
-          <div class="font-bold">Labels color meaning</div>
-          <div class="flex gap-2 mb-4">
-            <v-chip color="orange"><span class="inline-block w-5 h-5 bg-yellow-600 mr-2"></span>Check note</v-chip>
-            <v-chip color="blue"><span class="inline-block w-5 h-5 bg-blue-600 mr-2"></span>Payment request</v-chip>
-            <v-chip color="red"><span class="inline-block w-5 h-5 bg-red-700 mr-2"></span>Cancelled note</v-chip>
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="font-bold text-xs">Labels:</span>
+            <v-chip color="orange" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-yellow-600 mr-1"></span>Check note</v-chip
+            >
+            <v-chip color="blue" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span>Payment request</v-chip
+            >
+            <v-chip color="red" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-red-700 mr-1"></span>Cancelled note</v-chip
+            >
           </div>
 
           <v-alert v-if="maxCreditNotesFound" type="warning" density="compact">
             <v-icon>mdi-alert-circle</v-icon> Warning - Too many notes found. (Max 2000 per request.)
           </v-alert>
-          <div class="catalog-table-wrapper">
+          <div class="catalog-table-wrapper" style="max-height: 60vh;">
             <v-table density="compact" class="soa-table table-nowrap">
             <thead>
               <tr>
