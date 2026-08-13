@@ -566,8 +566,9 @@ const getEtdDate = (note: any) => {
     return 'No ETD'
   }
   if (serviceType.includes('AirReference')) {
-    if (note.serviceable?.transits?.first()?.departure_date) {
-      return formatDateString(note.serviceable?.transits?.first()?.departure_date)
+    const firstTransit = note.serviceable?.transits?.[0]
+    if (firstTransit?.departure_date) {
+      return formatDateString(firstTransit.departure_date)
     }
     return 'No ETD'
   }
