@@ -53,6 +53,14 @@ class MaritimeDemurragesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/preview-notify-to-pay`, fetchOptions)
   }
 
+  async getOperationsReport(id: string, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/${id}/operations-report`, fetchOptions)
+  }
+
   async cancelDemurrageRequest(id: string, fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/${id}/cancel-demurrage-request`, fetchOptions)
   }

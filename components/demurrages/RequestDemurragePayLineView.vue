@@ -67,6 +67,9 @@
                 >
 
                 <v-btn color="lime-darken-2" size="small" @click="previewReqPdf">View PDF</v-btn>
+                <v-btn color="teal-darken-1" size="small" :loading="operationsReportLoading" @click="downloadOperationsReport">
+                  <v-icon start>mdi-file-excel-outline</v-icon> Operations report
+                </v-btn>
 
                 <div v-if="!isCancelled" class="flex justify-start gap-2">
                   <ReqDemurrageAttachments :req-demurrage="reqDemurrage" />
@@ -465,6 +468,7 @@ const sendForm = reactive({
 
 const previewDialog = ref({ showDialog: false, html: '' })
 const previewLoading = ref(false)
+const operationsReportLoading = ref(false)
 
 const formEditBank = reactive({
   show: false,
@@ -824,6 +828,25 @@ const previewReqPdf = async () => {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
+  }
+}
+
+const downloadOperationsReport = async () => {
+  try {
+    operationsReportLoading.value = true
+    const response = await $api.maritimeDemurrages.getOperationsReport(props.id.toString())
+
+    const blob = new Blob([response as any], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `reporte_operativo_demoras_${props.id}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    operationsReportLoading.value = false
   }
 }
 
