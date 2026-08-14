@@ -92,8 +92,17 @@
                       <td>{{ sell_charge.base_quantity || 1 }}</td>
                       <td>{{ formatToCurrency(sell_charge.amount) }} {{ getCurrencyName(sell_charge.currency_id) }}</td>
                       <td>
-                        <v-chip v-if="sell_charge.is_con_iva == 1" color="success" class="ml-2">Yes</v-chip>
-                        <v-chip v-else color="error" class="ml-2">No</v-chip>
+                        <v-checkbox
+                          v-model="sell_charge.is_con_iva"
+                          density="compact"
+                          color="primary"
+                          :disabled="
+                            sell_charge.invoice_charge != null ||
+                            (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0) ||
+                            sell_charge.absorbed_invoice_id != null
+                          "
+                          hide-details
+                        />
                       </td>
                       <td>
                         <v-chip v-if="sell_charge.invoice_charge || sell_charge.absorbed_invoice_id" color="success" class="ml-2">Yes</v-chip>
@@ -459,6 +468,7 @@ const clearSelectedCharges = () => {
     service.containers?.forEach((container: any) => {
       if (container.detention) {
         container.detention.selected = false
+        container.detention.is_con_iva = container.detention.is_con_iva ?? true
       }
     })
 

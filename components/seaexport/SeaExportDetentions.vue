@@ -35,6 +35,12 @@
             class="mb-4"
             :disabled="true"
           />
+          <v-checkbox
+            v-model="editDetentionForm.refContainer.is_con_iva"
+            label="Con IVA"
+            density="compact"
+            class="mb-4"
+          />
           <div class="flex gap-2">
             <v-btn color="red" size="small" @click="cancelEditDetention"> Cancel </v-btn>
             <v-btn color="primary" size="small" @click="updateDetention"> Update detention</v-btn>
@@ -50,6 +56,7 @@
               <th class="font-bold!">Days</th>
               <th class="font-bold!">Line amount</th>
               <th class="font-bold!">Customer amount</th>
+              <th class="font-bold!">Con IVA</th>
             </tr>
           </thead>
           <tbody>
@@ -103,6 +110,9 @@
                   type="number"
                   label="Customer amount"
                 />
+              </td>
+              <td>
+                <v-checkbox v-model="refContainer.is_con_iva" density="compact" hide-details />
               </td>
             </tr>
           </tbody>
@@ -177,6 +187,7 @@ const updateDetention = async () => {
       days: editDetentionForm.value.refContainer.days,
       amount_line: editDetentionForm.value.refContainer.amount_line,
       amount_customer: editDetentionForm.value.refContainer.amount_customer,
+      is_con_iva: editDetentionForm.value.refContainer.is_con_iva,
     }
     const response = await $api.referenciasExport.updateDetention(
       props.id.toString(),
@@ -209,6 +220,7 @@ const onClickSaveDetentions = async () => {
         days: container.days,
         amount_line: container.amount_line,
         amount_customer: container.amount_customer,
+        is_con_iva: container.is_con_iva,
       })),
     }
     const response = await $api.referenciasExport.saveDetentions(props.id.toString(), body)
@@ -237,6 +249,7 @@ const getSeaExportDetails = async () => {
       days: container.detention?.days || 0,
       amount_line: container.detention?.amount_line || 0,
       amount_customer: container.detention?.amount_customer || 0,
+      is_con_iva: container.detention?.is_con_iva ?? true,
     }))
   } catch (e) {
     console.error(e)
