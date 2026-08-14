@@ -487,7 +487,7 @@ const setServicios = (servicios: any) => {
 const getServiceSellCharges = (service: any) => {
   // Exportacion maritima
   if (serviciosFound.value.serviceType === 'EM') {
-    const allowCollectInvoicing = !!form.value.customer?.allow_collect_export_invoicing
+    const allowCollectInvoicing = !!service.consignee?.allow_collect_export_invoicing
     const exportCharges =
       service.export_charges?.filter((charge: any) => {
         return (
