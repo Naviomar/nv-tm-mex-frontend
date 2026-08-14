@@ -100,40 +100,6 @@
             </template>
           </v-list-item>
 
-          <v-divider />
-
-          <v-list-item>
-            <template v-slot:prepend>
-              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
-                <v-icon icon="mdi-ferry" />
-              </v-avatar>
-            </template>
-
-            <v-list-item-title>Allow collect charges on export invoicing</v-list-item-title>
-            <v-list-item-subtitle class="text-wrap">
-              Lets billing capture Sea Export invoices using charges manifested as collect, not just prepaid.
-            </v-list-item-subtitle>
-
-            <template v-slot:append>
-              <v-switch
-                v-if="hasPermission('customers-allow-collect-export-invoicing')"
-                v-model="form.allow_collect_export_invoicing"
-                color="primary"
-                density="compact"
-                hide-details
-                inset
-              />
-              <v-chip
-                v-else
-                size="small"
-                variant="tonal"
-                :color="form.allow_collect_export_invoicing ? 'success' : 'default'"
-              >
-                {{ form.allow_collect_export_invoicing ? 'Enabled' : 'Disabled' }}
-              </v-chip>
-            </template>
-          </v-list-item>
-
           <v-list-item v-if="form.auto_invoicing">
             <template v-slot:prepend>
               <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
@@ -169,6 +135,40 @@
             <v-list-item-subtitle class="text-wrap">
               Proformas for this customer will stay as proforma until someone converts them manually.
             </v-list-item-subtitle>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-ferry" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Allow collect charges on export invoicing</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Lets billing capture Sea Export invoices using charges manifested as collect, not just prepaid.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-allow-collect-export-invoicing')"
+                v-model="form.allow_collect_export_invoicing"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.allow_collect_export_invoicing ? 'success' : 'default'"
+              >
+                {{ form.allow_collect_export_invoicing ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
           </v-list-item>
         </v-list>
 
