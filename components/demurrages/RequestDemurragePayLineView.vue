@@ -386,7 +386,36 @@
         </v-card-text>
         <v-card-actions>
           <v-btn color="primary" @click="sendForm.showDialog = false">Cancel</v-btn>
+          <v-btn color="secondary" variant="tonal" :loading="previewLoading" @click="previewEmail">
+            <v-icon start>mdi-eye-outline</v-icon> Preview email
+          </v-btn>
           <v-btn color="success" @click="sendNotyPay">Send</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="previewDialog.showDialog" max-width="900">
+      <v-card>
+        <v-card-title class="flex items-center justify-between">
+          <span>Email preview</span>
+          <v-btn icon variant="text" @click="previewDialog.showDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <v-alert density="compact" type="info" variant="outlined" class="mb-2">
+            This is an approximate preview of how the email body will look. Actual rendering may vary slightly by email
+            client.
+          </v-alert>
+          <iframe
+            v-if="previewDialog.html"
+            :srcdoc="previewDialog.html"
+            style="width: 100%; height: 70vh; border: 1px solid #e0e0e0"
+          ></iframe>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="secondary" @click="previewDialog.showDialog = false"> Close </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -433,6 +462,9 @@ const sendForm = reactive({
   emails: '',
   body: '',
 })
+
+const previewDialog = ref({ showDialog: false, html: '' })
+const previewLoading = ref(false)
 
 const formEditBank = reactive({
   show: false,
@@ -733,6 +765,24 @@ const showSendNotyPay = async () => {
   }
 
   sendForm.emails = emails.join(',')
+}
+
+const previewEmail = async () => {
+  try {
+    previewLoading.value = true
+    const body = {
+      req_demurrage_id: props.id,
+      emails: sendForm.emails,
+      body: sendForm.body,
+    }
+    const response: any = await $api.maritimeDemurrages.previewNotifyToPay(props.id.toString(), body)
+    previewDialog.value.html = response.html
+    previewDialog.value.showDialog = true
+  } catch (e) {
+    console.error(e)
+  } finally {
+    previewLoading.value = false
+  }
 }
 
 const sendNotyPay = async () => {

@@ -45,6 +45,14 @@ class MaritimeDemurragesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/send-notify-to-pay`, fetchOptions)
   }
 
+  async previewNotifyToPay(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/preview-notify-to-pay`, fetchOptions)
+  }
+
   async cancelDemurrageRequest(id: string, fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/${id}/cancel-demurrage-request`, fetchOptions)
   }
