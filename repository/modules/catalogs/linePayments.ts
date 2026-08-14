@@ -79,6 +79,14 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/schedules/send-email`, fetchOptions)
   }
 
+  async previewScheduleEmail(id: string | number, data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/schedules/${id}/preview-email`, fetchOptions)
+  }
+
   async searchSeaReferences(data: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(data),
