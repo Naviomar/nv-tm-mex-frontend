@@ -213,6 +213,8 @@ const canViewSystemConfig = computed(
     hasPermission('customers-update-credit-legend') ||
     hasPermission('customers-skip-hbl-validation') ||
     hasPermission('customers-skip-air-invoice-validation') ||
+    hasPermission('customers-skip-sea-invoice-validation') ||
+    hasPermission('customers-allow-collect-export-invoicing') ||
     hasPermission('customers-update-notification-config')
 )
 

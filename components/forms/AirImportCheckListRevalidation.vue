@@ -119,6 +119,32 @@
             </v-icon>
           </td>
         </tr>
+
+        <tr>
+          <td class="p-2 font-medium">Facturas marítimas pendientes</td>
+          <td class="p-2">
+            <div v-if="checklist.skip_sea_invoice_validation">
+              <span class="text-green-600 font-bold"> OMITIDO </span>
+            </div>
+            <div v-else>
+              <span
+                :class="
+                  checklist.unpaid_sea_invoices?.length > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'
+                "
+              >
+                {{ checklist.unpaid_sea_invoices?.length }} factura(s)
+              </span>
+              <v-icon
+                v-if="checklist.unpaid_sea_invoices?.length"
+                class="ml-2 cursor-pointer"
+                size="18"
+                @click="dialog.unpaidSeaInvoices = true"
+              >
+                mdi-information-outline
+              </v-icon>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
 
@@ -236,6 +262,46 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="dialog.unpaidSeaInvoices" max-width="700">
+      <v-card>
+        <v-card-title class="text-lg font-semibold"> Facturas marítimas pendientes de pago </v-card-title>
+        <v-card-text>
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th>Referencia</th>
+                <th>Número</th>
+                <th>Monto</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="invoice in checklist.unpaid_sea_invoices" :key="`sea-inv-${invoice.id}`">
+                <td>
+                  {{
+                    invoice.invoiceable.services
+                      .map((service: any) => service.referencia?.reference_number)
+                      .join(', ')
+                  }}
+                </td>
+                <td>{{ invoice.invoice_number ?? '—' }}</td>
+                <td>{{ getCurrencyName(invoice.currency_id) }} {{ formatToCurrency(invoice.total) }}</td>
+                <td>
+                  <UserInfoBadge :item="invoice">
+                    {{ formatDateString(invoice.created_at) }}
+                  </UserInfoBadge>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="flat" color="primary" @click="dialog.unpaidSeaInvoices = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="showPdfDialog" fullscreen>
       <v-card>
         <v-toolbar color="primary" dark>
@@ -313,6 +379,7 @@ const pdfUrl = ref<string | null>(null)
 const dialog = ref({
   unpaidFacturas: false,
   unpaidOtherAirInvoices: false,
+  unpaidSeaInvoices: false,
 })
 
 const checklist = ref<any>({
@@ -322,6 +389,8 @@ const checklist = ref<any>({
   sell_charges_pending_invoice: [],
   unpaid_invoices_by_referencia: [],
   unpaid_air_invoices_other_references: [],
+  unpaid_sea_invoices: [],
+  skip_sea_invoice_validation: false,
 })
 
 const form = ref({
@@ -408,6 +477,9 @@ const save = async () => {
           ? 'CRÉDITO'
           : `${checklist.value.unpaid_invoices_by_referencia?.length || 0} factura(s)`,
         unpaid_air_invoices_other_references: `${checklist.value.unpaid_air_invoices_other_references?.length || 0} factura(s)`,
+        unpaid_sea_invoices: checklist.value.skip_sea_invoice_validation
+          ? 'OMITIDO'
+          : `${checklist.value.unpaid_sea_invoices?.length || 0} factura(s)`,
       },
     }
 

@@ -100,6 +100,40 @@
             </template>
           </v-list-item>
 
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-ferry" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Allow collect charges on export invoicing</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Lets billing capture Sea Export invoices using charges manifested as collect, not just prepaid.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-allow-collect-export-invoicing')"
+                v-model="form.allow_collect_export_invoicing"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.allow_collect_export_invoicing ? 'success' : 'default'"
+              >
+                {{ form.allow_collect_export_invoicing ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
           <v-list-item v-if="form.auto_invoicing">
             <template v-slot:prepend>
               <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
@@ -200,6 +234,40 @@
                 :color="form.skip_air_invoice_validation ? 'success' : 'default'"
               >
                 {{ form.skip_air_invoice_validation ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-ferry" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Skip sea invoice validation</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Allows revalidation to proceed even if the customer has unpaid sea invoices.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-skip-sea-invoice-validation')"
+                v-model="form.skip_sea_invoice_validation"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.skip_sea_invoice_validation ? 'success' : 'default'"
+              >
+                {{ form.skip_sea_invoice_validation ? 'Enabled' : 'Disabled' }}
               </v-chip>
             </template>
           </v-list-item>
@@ -305,6 +373,8 @@ const form = reactive({
   invoice_trigger: 'deadline',
   skip_hbl_validation: false,
   skip_air_invoice_validation: false,
+  skip_sea_invoice_validation: false,
+  allow_collect_export_invoicing: false,
   send_arrival_proforma_wm: true,
   send_arrival_proforma_tm: false,
 })
@@ -320,6 +390,8 @@ const resetForm = () => {
   form.invoice_trigger = 'deadline'
   form.skip_hbl_validation = false
   form.skip_air_invoice_validation = false
+  form.skip_sea_invoice_validation = false
+  form.allow_collect_export_invoicing = false
   form.send_arrival_proforma_wm = true
   form.send_arrival_proforma_tm = false
 }
@@ -333,6 +405,8 @@ const openEdit = async (consignee: any) => {
   form.invoice_trigger = consignee.invoice_trigger ?? 'deadline'
   form.skip_hbl_validation = !!consignee.skip_hbl_validation
   form.skip_air_invoice_validation = !!consignee.skip_air_invoice_validation
+  form.skip_sea_invoice_validation = !!consignee.skip_sea_invoice_validation
+  form.allow_collect_export_invoicing = !!consignee.allow_collect_export_invoicing
   form.send_arrival_proforma_wm = consignee.send_arrival_proforma_wm === undefined ? true : !!consignee.send_arrival_proforma_wm
   form.send_arrival_proforma_tm = !!consignee.send_arrival_proforma_tm
   dialog.show = true

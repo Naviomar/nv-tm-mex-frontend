@@ -487,12 +487,14 @@ const setServicios = (servicios: any) => {
 const getServiceSellCharges = (service: any) => {
   // Exportacion maritima
   if (serviciosFound.value.serviceType === 'EM') {
+    const allowCollectInvoicing = !!form.value.customer?.allow_collect_export_invoicing
     const exportCharges =
       service.export_charges?.filter((charge: any) => {
-        console.log('charge', charge)
         return (
           // TODO verificar que cuando no sea sell charge venga nulo
-          charge.sell_type === 'P' && charge.sell_amount != null && charge.sell_currency_id == form.value.currency_id
+          (charge.sell_type === 'P' || (allowCollectInvoicing && charge.sell_type === 'C')) &&
+          charge.sell_amount != null &&
+          charge.sell_currency_id == form.value.currency_id
         )
       }) || []
 
