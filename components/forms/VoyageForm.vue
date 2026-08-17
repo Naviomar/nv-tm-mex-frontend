@@ -22,10 +22,8 @@
             name="impoExpo"
             density="compact"
             label="Is import or export? *"
-            :items="[
-              { id: 'I', name: 'Import' },
-              { id: 'E', name: 'Export' },
-            ]"
+            :items="impoExpoOptions"
+            :disabled="impoExpoOptions.length === 1"
             item-value="id"
             item-title="name"
             @update:model-value="clearDestinationProt"
@@ -124,6 +122,16 @@ const route = useRoute()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { allowedVoyageImpoExpo } = useCheckUser()
+
+const allImpoExpoOptions = [
+  { id: 'I', name: 'Import' },
+  { id: 'E', name: 'Export' },
+]
+const impoExpoOptions = computed(() => {
+  if (!allowedVoyageImpoExpo.value) return allImpoExpoOptions
+  return allImpoExpoOptions.filter((o) => allowedVoyageImpoExpo.value!.includes(o.id))
+})
 
 const catalogs = ref({
   vessels: [],
@@ -322,6 +330,9 @@ onMounted(async () => {
   await getVoyageCatalogs()
   if (route.query.vessel_id) {
     setValues({ vessel_id: parseInt(route.query.vessel_id as string) })
+  }
+  if (impoExpoOptions.value.length === 1) {
+    setValues({ impoExpo: impoExpoOptions.value[0].id })
   }
 })
 </script>
