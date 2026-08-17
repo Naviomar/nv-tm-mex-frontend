@@ -4,7 +4,11 @@ type User = {
     email: string
     permissions: []
     roles: []
+    departments?: { name: string }[]
 }
+
+const MARITIME_IMPORT_DEPARTMENT = 'Maritime Import'
+const MARITIME_EXPORT_DEPARTMENT = 'Maritime Export'
 
 // Module-scoped (not per-call) so concurrent mounts (e.g. MainMenu + a catalog
 // table on the same page) share one in-flight request instead of firing one each.
@@ -113,11 +117,25 @@ export function useCheckUser() {
         return hasDirectPermission || hasRolePermission
     }
 
+    // Voyages catalog: IMPO-only users manage 'I' voyages, EXPO-only users manage 'E'
+    // voyages; users in both (or neither) maritime department keep seeing everything.
+    // Mirrors the backend's VoyageDepartmentScopeService::allowedImpoExpo().
+    const allowedVoyageImpoExpo = computed<string[] | null>(() => {
+        const departmentNames = (user.value?.departments ?? []).map((d: any) => d.name?.trim())
+        const isImport = departmentNames.includes(MARITIME_IMPORT_DEPARTMENT)
+        const isExport = departmentNames.includes(MARITIME_EXPORT_DEPARTMENT)
+
+        if (isImport && !isExport) return ['I']
+        if (isExport && !isImport) return ['E']
+        return null
+    })
+
     return {
         isCurrentUser,
         checkUserAndNotify,
         checkUserAndExecute,
         user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole,
-        isRestricted, fetchIsRestricted, resetIsRestricted, canViewReference
+        isRestricted, fetchIsRestricted, resetIsRestricted, canViewReference,
+        allowedVoyageImpoExpo
     };
 }

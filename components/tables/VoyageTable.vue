@@ -245,7 +245,10 @@
                 >
               </td>
               <td>
-                {{ voyageDest.total_references }}
+                <div class="flex items-center gap-1">
+                  {{ voyageDest.total_references }}
+                  <VoyageReferencesInfoDialog v-if="voyageDest.total_references > 0" :voyageDest="voyageDest" />
+                </div>
               </td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="voyageDest">

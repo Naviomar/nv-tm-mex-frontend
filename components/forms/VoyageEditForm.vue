@@ -25,10 +25,8 @@
           name="impoExpo"
           density="compact"
           label="Import / Export"
-          :items="[
-            { id: 'I', name: 'Import' },
-            { id: 'E', name: 'Export' },
-          ]"
+          :items="impoExpoOptions"
+          :disabled="impoExpoOptions.length === 1"
           item-value="id"
           item-title="name"
         />
@@ -49,6 +47,16 @@ const route = useRoute()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { allowedVoyageImpoExpo } = useCheckUser()
+
+const allImpoExpoOptions = [
+  { id: 'I', name: 'Import' },
+  { id: 'E', name: 'Export' },
+]
+const impoExpoOptions = computed(() => {
+  if (!allowedVoyageImpoExpo.value) return allImpoExpoOptions
+  return allImpoExpoOptions.filter((o) => allowedVoyageImpoExpo.value!.includes(o.id))
+})
 
 const props = defineProps({
   id: {
