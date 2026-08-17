@@ -128,6 +128,7 @@
                     <InputText name="aba" label="ABA" density="compact" type="number" />
                     <InputText name="swift" label="Swift" density="compact" type="text" />
                     <InputText name="iban" label="IBAN" density="compact" type="number" />
+                    <InputText name="referencia" label="Reference" density="compact" type="text" />
                     <div class="flex justify-end gap-2">
                       <v-btn color="primary" @click="closeEditBankInfo">Cancel</v-btn>
                       <v-btn type="submit" color="success">Save</v-btn>
@@ -162,6 +163,10 @@
                   <div class="grid grid-cols-3 gap-2">
                     <div class="font-bold">IBAN:</div>
                     <div class="col-span-2">{{ reqDemurrage.iban }}</div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="font-bold">Reference:</div>
+                    <div class="col-span-2">{{ reqDemurrage.referencia }}</div>
                   </div>
                 </div>
               </v-card-text>
@@ -560,6 +565,7 @@ const showEditBankInfo = () => {
       aba: reqDemurrage.value.aba,
       swift: reqDemurrage.value.swift,
       iban: reqDemurrage.value.iban,
+      referencia: reqDemurrage.value.referencia,
     })
   }
 }
@@ -711,7 +717,7 @@ const onSaveBankInfoClick = async (values: any) => {
   try {
     loadingStore.start()
     // only send the fields that are being updated
-    const { bank, beneficiary_name, account_number, aba, swift, iban, clabe } = values
+    const { bank, beneficiary_name, account_number, aba, swift, iban, clabe, referencia } = values
 
     const body = {
       req_refund_id: props.id,
@@ -722,6 +728,7 @@ const onSaveBankInfoClick = async (values: any) => {
       aba,
       swift,
       iban,
+      referencia,
     }
     const response = (await $api.maritimeDemurrages.updateBankInfo(props.id.toString(), body)) as any
 
