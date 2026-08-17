@@ -54,7 +54,7 @@
               <tr>
                 <th class="font-bold! w-10">Actions</th>
                 <th class="font-bold!">Port</th>
-                <th class="font-bold!">ETA</th>
+                <th class="font-bold!">{{ etaLabel }}</th>
                 <th class="font-bold!">ATA</th>
                 <th class="font-bold!">Sailed</th>
                 <th class="font-bold!">Linked services</th>
@@ -122,6 +122,9 @@ const props = defineProps({
 })
 
 const voyage = ref<any>({})
+
+// Export voyages track ETD (departure) at this same checkpoint, not ETA (arrival).
+const etaLabel = computed(() => (voyage.value?.impoExpo === 'E' ? 'ETD' : 'ETA'))
 
 const dialogForm = ref<any>({
   show: false,

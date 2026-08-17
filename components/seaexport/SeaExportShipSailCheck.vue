@@ -60,7 +60,7 @@
                   <div class="text-overline mb-1">Export</div>
                   <div class="text-overline mb-1">POL</div>
                   <div class="text-h6 mb-1">{{ referencia.voyage_discharge?.pod?.country_port }}</div>
-                  <div class="text-overline mb-1">ETA</div>
+                  <div class="text-overline mb-1">ETD</div>
                   <div class="text-h6 mb-1">{{ formatDateOnlyString(referencia.voyage_discharge?.eta_date) }}</div>
                   <div class="text-overline mb-1">ATD</div>
                   <div class="text-h6 mb-1">{{ referencia.voyage_discharge?.arrival_date || 'TBC' }}</div>
@@ -69,7 +69,7 @@
               <v-card density="compact" color="blue-lighten-5">
                 <v-card-text>
                   <v-btn color="secondary" size="small" @click="goToUpdateEta">
-                    <v-icon class="mr-2">mdi-open-in-new</v-icon> Update ETA
+                    <v-icon class="mr-2">mdi-open-in-new</v-icon> Update ETD
                   </v-btn>
 
                   <div v-if="isPendingSyncToCl" class="mt-4">

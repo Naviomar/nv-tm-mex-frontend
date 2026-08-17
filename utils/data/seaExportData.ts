@@ -225,8 +225,10 @@ const finalAlertBody = {
     `,
 }
 
+// Import tracks ETA (arrival to port); export tracks ETD (departure from port) at
+// this same checkpoint — the wording needs to match which one is being updated.
 const updateEtaBody = {
-    bodyEs: `<h2>Le informamos que el barco {vessel} actualizó su ETA. La nueva fecha de arribo al puerto de {port} será el {new_eta_date}.</h2>
+    bodyEs: (isImport: boolean) => `<h2>Le informamos que el barco {vessel} actualizó su ${isImport ? 'ETA' : 'ETD'}. La nueva fecha de ${isImport ? 'arribo al puerto de' : 'salida del puerto de'} {port} será el {new_eta_date}.</h2>
     <p>Le solicitamos considerar esta información para cualquier ajuste en sus operaciones.</p>
     <p>NOTA: Para dar seguimiento a su carga, le agradecemos mantenerse en contacto con su ejecutivo.</p>
     <p>IMPORTANTE:</p>

@@ -23,10 +23,10 @@
             <!-- Agregar Impo Expo -->
           </div>
           <div class="bg-green-lighten-4 p-5 font-bold text-lg flex items-center">
-            <v-icon>mdi-update</v-icon>Current ETA: {{ formatDateOnlyString(voyageDestination?.eta_date) }}
+            <v-icon>mdi-update</v-icon>Current {{ etaLabel }}: {{ formatDateOnlyString(voyageDestination?.eta_date) }}
           </div>
           <div class="bg-green-lighten-3 p-5">
-            <InputText name="new_eta_date" type="date" label="Select new ETA" @change="resetNewEtaOnBody" />
+            <InputText name="new_eta_date" type="date" :label="`Select new ${etaLabel}`" @change="resetNewEtaOnBody" />
           </div>
           <div>
             <InputTextArea name="emails_internal" density="compact" label="Additional emails" />
@@ -66,7 +66,7 @@
           </div>
           <div>
             <v-btn color="primary" @click="confirmUpdateEtaClick" :disabled="loadingStore.loading"
-              >Update ETA & Notify</v-btn
+              >Update {{ etaLabel }} & Notify</v-btn
             >
           </div>
         </div>
@@ -104,15 +104,15 @@
           </v-card>
           <v-card density="compact" color="light-blue-lighten-5" class="mb-4">
             <v-card-title>
-              <div>ETA previous notification(s)</div>
+              <div>{{ etaLabel }} previous notification(s)</div>
             </v-card-title>
             <v-card-text>
               <div v-if="voyageDestination.change_etas.length <= 0">No notifications</div>
               <v-table v-if="voyageDestination.change_etas" density="compact">
                 <thead>
                   <tr>
-                    <th class="text-left">Prev ETA</th>
-                    <th class="text-left">New ETA</th>
+                    <th class="text-left">Prev {{ etaLabel }}</th>
+                    <th class="text-left">New {{ etaLabel }}</th>
                     <th class="text-left">Notes</th>
                     <th class="text-left">Date</th>
                     <th class="text-left">User</th>
@@ -171,6 +171,9 @@ const isImport = computed(() => {
   return voyageDestination.value?.voyage?.impoExpo === 'I'
 })
 
+// Export voyages track ETD (departure) at this same checkpoint, not ETA (arrival).
+const etaLabel = computed(() => (isImport.value ? 'ETA' : 'ETD'))
+
 const selectAll = () => {
   referencias.value = referencias.value.map((ref: any) => {
     ref.selected = !ref.selected
@@ -180,11 +183,11 @@ const selectAll = () => {
 
 const resetNewEtaOnBody = () => {
   if (!voyageDestUpdateEtaFormRef.value?.values.new_eta_date) {
-    snackbar.add({ type: 'error', text: 'Please select a new ETA date' })
+    snackbar.add({ type: 'error', text: `Please select a new ${etaLabel.value} date` })
     return
   }
   const newEta = voyageDestUpdateEtaFormRef.value?.values.new_eta_date
-  const tmp = JSON.parse(JSON.stringify(updateEtaBody.bodyEs))
+  const tmp = updateEtaBody.bodyEs(isImport.value)
   const body = tmp
     .replace('{vessel}', voyageDestination.value.short_name)
     .replace('{port}', voyageDestination.value.pod?.name)
@@ -209,7 +212,7 @@ const updateEtaClick = async (values: any) => {
     body.referencias = selectedRefs.map((ref: any) => ref.id) || []
 
     await $api.voyages.updateDestinationEtaById(route.params.id!.toString(), body)
-    snackbar.add({ type: 'success', text: 'ETA updated' })
+    snackbar.add({ type: 'success', text: `${etaLabel.value} updated` })
     router.push('/configuration/voyages')
   } catch (e) {
     console.error(e)
@@ -227,9 +230,9 @@ const confirmUpdateEtaClick = async () => {
     return
   }
   const result = await confirm({
-    title: 'Confirm update ETA',
-    confirmationText: 'Yes update ETA and notify',
-    content: 'Please confirm you want to update the ETA of this voyage destination.',
+    title: `Confirm update ${etaLabel.value}`,
+    confirmationText: `Yes update ${etaLabel.value} and notify`,
+    content: `Please confirm you want to update the ${etaLabel.value} of this voyage destination.`,
     dialogProps: {
       persistent: true,
       maxWidth: 500,
@@ -281,7 +284,7 @@ const getReferencias = async () => {
 await getData()
 
 const fillBodyWithData = () => {
-  const tmp = JSON.parse(JSON.stringify(updateEtaBody.bodyEs))
+  const tmp = updateEtaBody.bodyEs(isImport.value)
   const body = tmp
     .replace('{vessel}', voyageDestination.value.short_name)
     .replace('{port}', voyageDestination.value.pod?.name)
@@ -291,7 +294,7 @@ const fillBodyWithData = () => {
 
 onMounted(() => {
   voyageDestUpdateEtaFormRef.value?.setValues({
-    subject: `Update ETA ${voyageDestination.value.short_name}`,
+    subject: `Update ${etaLabel.value} ${voyageDestination.value.short_name}`,
   })
 })
 </script>
