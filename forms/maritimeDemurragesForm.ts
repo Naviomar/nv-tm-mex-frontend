@@ -10,6 +10,7 @@ const schemaBankInfo = toTypedSchema(
     aba: yup.string().nullable(),
     swift: yup.string().nullable(),
     iban: yup.string().nullable(),
+    referencia: yup.string().nullable(),
   })
 )
 

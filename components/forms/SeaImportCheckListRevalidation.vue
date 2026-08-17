@@ -199,6 +199,9 @@
         <tr>
           <td class="p-2 font-medium">Otras facturas marítimas pendientes</td>
           <td class="p-2">
+            <div v-if="checklist.skip_sea_invoice_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <span
               :class="
                 checklist.unpaid_non_demurrage_invoices?.length > 0
@@ -583,6 +586,7 @@ const checklist = ref<any>({
   has_entrust_letter: null,
   unpaid_air_invoices: [],
   skip_air_invoice_validation: false,
+  skip_sea_invoice_validation: false,
   warranty_letter_applies: true,
 })
 
