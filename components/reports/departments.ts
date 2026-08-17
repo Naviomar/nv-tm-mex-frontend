@@ -79,6 +79,20 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     color: 'cyan',
     reports: [
       {
+        key: 'export-repo',
+        title: 'General Export Report',
+        icon: 'mdi-sail-boat',
+        component: 'ExportRepoReport',
+        permission: 'reports-maritime-export-repo-view',
+      },
+      {
+        key: 'account-statement',
+        title: 'Account Statement',
+        icon: 'mdi-card-account-details-outline',
+        component: 'ExportAccountStatementReport',
+        permission: 'reports-maritime-export-account-statement-view',
+      },
+      {
         key: 'comparative-teus-export',
         title: 'Comparative TEUs Export',
         icon: 'mdi-chart-timeline-variant-shimmer',
