@@ -432,7 +432,9 @@
                   </div>
                 </td>
                 <td v-else-if="col.key === 'etd'">{{ item.etd_date }}</td>
-                <td v-else-if="col.key === 'eta'">{{ item.eta_date }}</td>
+                <td v-else-if="col.key === 'eta'">
+                  {{ item.voyage_discharge?.eta_date || item.eta_date || '-' }}
+                </td>
                 <td v-else-if="col.key === 'ata'">
                   <div v-if="item.voyage_discharge == null">No data</div>
                   <v-chip v-if="item.voyage_discharge != null" size="small">{{
