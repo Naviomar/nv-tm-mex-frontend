@@ -93,9 +93,9 @@
             prepend-icon="mdi-file-chart-outline"
             variant="tonal"
             color="green-darken-2"
-            @click="generateTodayReport"
+            @click="reportModalOpen = true"
           >
-            Generar reporte de hoy
+            Generar reporte
           </v-btn>
           <v-spacer />
           <v-btn
@@ -117,6 +117,8 @@
         </v-col>
       </v-row>
     </v-card-text>
+
+    <MailLogReportModal v-model="reportModalOpen" @generate="onGenerateReport" />
   </v-card>
 </template>
 
@@ -168,21 +170,10 @@ const activeFilterCount = computed(() => {
   return Object.values(localFilters).filter((v) => v !== '').length
 })
 
-const todayInMexico = () => {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' })
-}
+const reportModalOpen = ref(false)
 
-const generateTodayReport = () => {
-  const today = todayInMexico()
-  localFilters.date_from = today
-  localFilters.date_to = today
-
-  const clean: Record<string, string> = {}
-  Object.entries(localFilters).forEach(([k, v]) => {
-    if (v) clean[k] = v
-  })
-  emit('apply', clean)
-  emit('generate-report', clean)
+const onGenerateReport = (filters: Record<string, string>) => {
+  emit('generate-report', filters)
 }
 </script>
 
