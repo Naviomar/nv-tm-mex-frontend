@@ -204,7 +204,7 @@
               <td>
                 <div class="flex flex-col justify-center items-center">
                   <div v-if="!voyageDest.eta_date">
-                    <v-chip color="warning">NO ETA</v-chip>
+                    <v-chip color="warning">NO {{ etaLabel(voyageDest) }}</v-chip>
                   </div>
                   <div v-if="voyageDest.eta_date">
                     <v-chip v-if="voyageDest.prev_eta_date" size="small"
@@ -224,7 +224,7 @@
                         @click="changeVoyageDestEtaClick(voyageDest)"
                       >
                         <v-icon icon="mdi-calendar" start></v-icon>
-                        UPDATE ETA
+                        UPDATE {{ etaLabel(voyageDest) }}
                       </v-chip>
                   </div>
                 </div>
@@ -276,6 +276,10 @@ const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
 const loadingStore = useLoadingStore()
+
+// For export voyages this checkpoint date is operationally the ETD (departure),
+// not the ETA (arrival) — same underlying eta_date field, different label per impoExpo.
+const etaLabel = (voyageDest: any) => (voyageDest?.voyage?.impoExpo === 'E' ? 'ETD' : 'ETA')
 
 const filters = ref<any>({
   text: '',
