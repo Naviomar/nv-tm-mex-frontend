@@ -7,18 +7,18 @@ export interface IMailLogAddress {
 }
 
 export interface IMailLog {
-  id: number
+  id: number | string
   mailable_class: string | null
   mailable_short: string | null
-  notification_class: string | null
-  notification_short: string | null
+  notification_class?: string | null
+  notification_short?: string | null
   subject: string | null
   to: IMailLogAddress[]
   cc: IMailLogAddress[]
   bcc: IMailLogAddress[]
   from: IMailLogAddress[]
-  has_recipient: boolean
-  status: 'sent' | 'no_recipient'
+  has_recipient: boolean | null
+  status: 'sent' | 'no_recipient' | null
   message_id: string | null
   triggered_by: { id: number; name: string } | null
   related_type: string | null
@@ -26,6 +26,10 @@ export interface IMailLog {
   payload?: Record<string, any> | null
   occurred_at: string
   created_at: string
+  // true solo en entradas deducidas (ver MailLogService::deriveArrivalProformaEntry) —
+  // no corresponden a una fila real de mail_logs, sino a una correlación
+  // heurística para facturas anteriores a que existiera el enlace directo.
+  is_inferred?: boolean
 }
 
 export interface IMailLogMetrics {
@@ -50,6 +54,10 @@ class MailLogsModule extends FetchFactory<any> {
 
   async metrics(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/metrics`, fetchOptions)
+  }
+
+  async invoiceHistory(invoiceId: number, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/invoice-history/${invoiceId}`, fetchOptions)
   }
 
   async exportExcel(params?: Record<string, any>, fetchOptions?: FetchOptions) {
