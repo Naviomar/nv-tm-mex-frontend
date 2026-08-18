@@ -59,6 +59,27 @@
             </v-col>
           </v-row>
 
+          <v-row class="mt-2">
+            <v-col cols="12">
+              <div class="format-label mb-2">Invoice Format</div>
+              <div class="format-toggles">
+                <button
+                  v-for="option in formatOptions"
+                  :key="option.value"
+                  type="button"
+                  class="format-chip"
+                  :class="{ 'format-chip--active': filters.formats.includes(option.value) }"
+                  @click="toggleFormat(option.value)"
+                >
+                  <v-icon size="18" class="mr-1">
+                    {{ filters.formats.includes(option.value) ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                  </v-icon>
+                  {{ option.label }}
+                </button>
+              </div>
+            </v-col>
+          </v-row>
+
           <v-row class="mt-4">
             <v-col cols="12" class="d-flex justify-end gap-2">
               <v-btn variant="outlined" color="grey" @click="clearFilters" prepend-icon="mdi-filter-off">
@@ -98,12 +119,29 @@ const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
 // Last day of current month
 const lastDayCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 
+// Invoice format options (TM/WM enabled by default)
+const formatOptions = [
+  { label: 'TM', value: 'tm' },
+  { label: 'WM', value: 'wm' },
+  { label: 'Free Format', value: 'free_format' },
+]
+
 // Initialize the filters with the date range
 const filters = ref<any>({
   fromDate: firstDayLastMonth,
   toDate: lastDayCurrentMonth,
   customer_id: null,
+  formats: ['tm', 'wm'],
 })
+
+const toggleFormat = (value: string) => {
+  const idx = filters.value.formats.indexOf(value)
+  if (idx === -1) {
+    filters.value.formats.push(value)
+  } else {
+    filters.value.formats.splice(idx, 1)
+  }
+}
 
 // Function to apply filters and fetch data
 const applyFilters = async () => {
@@ -115,6 +153,7 @@ const applyFilters = async () => {
       customer_id: filters.value.customer_id,
       from: formatDate(filters.value.fromDate),
       to: formatDate(filters.value.toDate),
+      formats: filters.value.formats,
     }
 
     // Send request to the API
@@ -146,6 +185,7 @@ const clearFilters = () => {
   filters.value.fromDate = firstDayLastMonth
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
+  filters.value.formats = ['tm', 'wm']
 }
 </script>
 
@@ -231,5 +271,44 @@ const clearFilters = () => {
   color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.format-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.format-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.format-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  background: rgb(var(--v-theme-surface));
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.format-chip:hover {
+  border-color: #8b5cf6;
+}
+
+.format-chip--active {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: #8b5cf6;
+  color: #7c3aed;
+  font-weight: 600;
 }
 </style>
