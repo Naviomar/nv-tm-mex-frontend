@@ -657,7 +657,7 @@
           ></v-list-item>
         </template>
 
-        <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" to="/system/admin-department" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" :to="isSuperAdminRole() ? '/system/departments' : '/system/admin-department'" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemUsers)" title="Users" prepend-icon="mdi-account-group" to="/system/users" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemRolesPermissions)" title="Roles and permissions" prepend-icon="mdi-shield-account-outline" to="/system/role-permissions" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemBankAccounts)" title="Bank accounts" prepend-icon="mdi-bank-outline" to="/system/bank-accounts" rounded="xl" class="mb-1"></v-list-item>
@@ -690,7 +690,7 @@ import { ref, watch } from 'vue'
 import { menuPermissions } from '~/utils/data/system'
 
 const { logout } = useSanctumAuth()
-const { hasPermission, isRestricted, fetchIsRestricted, resetIsRestricted } = useCheckUser()
+const { hasPermission, isRestricted, fetchIsRestricted, resetIsRestricted, isSuperAdminRole } = useCheckUser()
 const route = useRoute()
 const opened = ref<string[]>([])
 
