@@ -32,10 +32,12 @@ export interface ExportAccountStatementReportItem {
   transshipment: string
   dateTB: string
   etd: string
-  eta: string
   reference: string
   origin: string
+  /** Export's billing customer — called "Shipper" in the UI even though the
+   * underlying relation is Referencia.consignee_id / legacy CAT_SCNF. */
   shipper: string
+  /** The actual foreign consignee — Referencia.shipper_id / legacy id_consignee. */
   customer: string
   bl_master: string
   bl_house: string
