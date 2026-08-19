@@ -109,12 +109,12 @@
 
             <v-col cols="12" md="6">
               <v-autocomplete
-                v-model="filters.consignee_id"
-                :items="filteredConsignees"
-                @update:search="onConsigneeSearch"
+                v-model="filters.shipper_id"
+                :items="filteredShippers"
+                @update:search="onShipperSearch"
                 item-title="name"
                 item-value="id"
-                label="Customer"
+                label="Shipper"
                 density="compact"
                 hide-details
                 clearable
@@ -123,9 +123,45 @@
                 auto-select-first
               >
                 <template #no-data>
+                  <div v-if="loadingShippers" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
+                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                    <span>Loading shippers...</span>
+                  </div>
+                  <div v-else class="text-center py-2 text-caption text-grey">
+                    No data available
+                  </div>
+                </template>
+                <template #append-item>
+                  <div
+                    v-if="hasMoreShippers"
+                    v-intersect="onShipperIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.consignee_id"
+                :items="filteredConsignees"
+                @update:search="onConsigneeSearch"
+                item-title="name"
+                item-value="id"
+                label="Consignee"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account-outline"
+                auto-select-first
+              >
+                <template #no-data>
                   <div v-if="loadingConsignees" class="d-flex align-center justify-center py-3 text-caption text-grey gap-2">
                     <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
-                    <span>Loading customers...</span>
+                    <span>Loading consignees...</span>
                   </div>
                   <div v-else class="text-center py-2 text-caption text-grey">
                     No data available
@@ -444,6 +480,7 @@ const filters = ref<ExportRepoFilters>({
   fromDate: fromDate,
   toDate: toDate,
   voyage_id: null,
+  shipper_id: null,
   consignee_id: null,
   ff_id: null,
   line_id: null,
@@ -458,16 +495,19 @@ const filters = ref<ExportRepoFilters>({
 })
 
 // Catalog data
+const loadingShippers = ref(true)
 const loadingConsignees = ref(true)
 const voyages = ref<CatalogOption[]>([])
 const lines = ref<CatalogOption[]>([])
 const executives = ref<CatalogOption[]>([])
 const ports = ref<CatalogOption[]>([])
+const shippers = ref<CatalogOption[]>([])
 const consignees = ref<CatalogOption[]>([])
 const freightForwarders = ref<CatalogOption[]>([])
 const traffics = ref<CatalogOption[]>([])
 
 const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
+const { onSearch: onShipperSearch, filteredItems: filteredShippers, hasMore: hasMoreShippers, onIntersect: onShipperIntersect } = useAutocompleteFilter(shippers, () => filters.value.shipper_id)
 const { onSearch: onConsigneeSearch, filteredItems: filteredConsignees, hasMore: hasMoreConsignees, onIntersect: onConsigneeIntersect } = useAutocompleteFilter(consignees, () => filters.value.consignee_id)
 const { onSearch: onFfSearch, filteredItems: filteredFreightForwarders, hasMore: hasMoreFreightForwarders, onIntersect: onFfIntersect } = useAutocompleteFilter(freightForwarders, () => filters.value.ff_id)
 const { onSearch: onLineSearch, filteredItems: filteredLines, hasMore: hasMoreLines, onIntersect: onLineIntersect } = useAutocompleteFilter(lines, () => filters.value.line_id)
@@ -492,6 +532,7 @@ const applyFilters = async () => {
           formatDate(filters.value.toDate),
         ],
         voyage: filters.value.voyage_id,
+        shipper: filters.value.shipper_id,
         consignee: filters.value.consignee_id,
         ff: filters.value.ff_id,
         line: filters.value.line_id,
@@ -548,6 +589,7 @@ const clearFilters = () => {
   filters.value.fromDate = fromDate
   filters.value.toDate = toDate
   filters.value.voyage_id = null
+  filters.value.shipper_id = null
   filters.value.consignee_id = null
   filters.value.ff_id = null
   filters.value.line_id = null
@@ -564,12 +606,14 @@ const clearFilters = () => {
 // Load catalog data on mount
 onMounted(async () => {
   try {
+    loadingShippers.value = true
     loadingConsignees.value = true
-    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData, trafficsData] = await Promise.all([
+    const [voyagesData, linesData, executivesData, portsData, shippersData, consigneesData, freightForwardersData, trafficsData] = await Promise.all([
       $api.exportRepo.getVoyages(),
       $api.exportRepo.getLines(),
       $api.exportRepo.getExecutives(),
       $api.exportRepo.getPorts(),
+      $api.exportRepo.getShippers(),
       $api.exportRepo.getConsignees(),
       $api.exportRepo.getFreightForwarders(),
       $api.exportRepo.getTraffics(),
@@ -579,12 +623,14 @@ onMounted(async () => {
     lines.value = linesData.data || []
     executives.value = executivesData.data || []
     ports.value = portsData.data || []
+    shippers.value = shippersData.data || []
     consignees.value = consigneesData.data || []
     freightForwarders.value = freightForwardersData.data || []
     traffics.value = trafficsData.data || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   } finally {
+    loadingShippers.value = false
     loadingConsignees.value = false
   }
 })

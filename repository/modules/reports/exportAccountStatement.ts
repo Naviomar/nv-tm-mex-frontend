@@ -6,8 +6,12 @@ export interface ExportAccountStatementFilters {
   voyage?: number | null
   line?: number | null
   executive?: number | null
+  /** Billing customer — CAT_SCNF legacy id, called "Shipper" in the UI. */
+  shipper?: number | null
+  /** Foreign receiving party — CAT_CLIENTE legacy id (same catalog import uses). */
   consignee?: number | null
   ff?: number | null
+  traffic?: number | null
   originPort?: number | null
   loadingPort?: number | null
   dischargePort?: number | null

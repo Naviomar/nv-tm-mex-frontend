@@ -70,6 +70,7 @@ export interface ExportRepoFilters {
   fromDate: DateOrString
   toDate: DateOrString
   voyage_id: number | null
+  shipper_id: number | null
   consignee_id: number | null
   ff_id: number | null
   line_id: number | null
@@ -87,10 +88,12 @@ export interface ExportAccountStatementFilters {
   fromDate: DateOrString
   toDate: DateOrString
   voyage_id: number | null
+  shipper_id: number | null
   consignee_id: number | null
   ff_id: number | null
   line_id: number | null
   executive_id: number | null
+  traffic_id: number | null
   transportType: string | null
   originPort_id: number | null
   loadingPort_id: number | null
