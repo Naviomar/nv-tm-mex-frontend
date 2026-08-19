@@ -25,6 +25,20 @@
             density="compact"
             :readonly="dialog.mode === 'view'"
           />
+          <v-autocomplete
+            v-model="form.freight_ids"
+            label="Freight forwarders"
+            variant="outlined"
+            density="compact"
+            :items="allFreightForwarders"
+            item-value="id"
+            item-title="name"
+            multiple
+            chips
+            closable-chips
+            :readonly="dialog.mode === 'view'"
+            :loading="loadingFreights"
+          />
         </div>
 
         <!-- Similar items search -->
@@ -114,6 +128,7 @@ const dialog = reactive({
 const form = reactive({
   name: '',
   code: '',
+  freight_ids: [] as number[],
 })
 
 const errors = reactive({
@@ -124,28 +139,47 @@ const similarItems = ref<any[]>([])
 const historyItems = ref<any[]>([])
 const searching = ref(false)
 const saving = ref(false)
+const allFreightForwarders = ref<any[]>([])
+const loadingFreights = ref(false)
 
-const openCreate = () => {
+const loadAllFreightForwarders = async () => {
+  try {
+    loadingFreights.value = true
+    const response = await $api.freightForwarders.getAllFreightForwarders()
+    allFreightForwarders.value = Array.isArray(response) ? response : (response?.data ?? [])
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingFreights.value = false
+  }
+}
+
+const openCreate = async () => {
   dialog.mode = 'create'
   dialog.itemId = null
   resetForm()
   dialog.show = true
+  await loadAllFreightForwarders()
 }
 
 const openEdit = async (id: number) => {
   dialog.mode = 'edit'
   dialog.itemId = id
-  await loadFreightGroup(id)
-  await loadHistory(id)
   dialog.show = true
+  await loadAllFreightForwarders()
+  await loadFreightGroup(id)
+  await loadGroupFreights(id)
+  await loadHistory(id)
 }
 
 const openView = async (id: number) => {
   dialog.mode = 'view'
   dialog.itemId = id
-  await loadFreightGroup(id)
-  await loadHistory(id)
   dialog.show = true
+  await loadAllFreightForwarders()
+  await loadFreightGroup(id)
+  await loadGroupFreights(id)
+  await loadHistory(id)
 }
 
 const closeDialog = () => {
@@ -158,6 +192,7 @@ const closeDialog = () => {
 const resetForm = () => {
   form.name = ''
   form.code = ''
+  form.freight_ids = []
   errors.name = ''
 }
 
@@ -171,6 +206,16 @@ const loadFreightGroup = async (id: number) => {
     snackbar.add({ type: 'error', text: 'Error loading freight group' })
   } finally {
     setTimeout(() => loadingStore.stop(), 250)
+  }
+}
+
+const loadGroupFreights = async (id: number) => {
+  try {
+    const response = await $api.freightForwardersGroups.getFreightForwardersInAGroup(id.toString())
+    const freights = Array.isArray(response) ? response : (response?.freightForwarders ?? [])
+    form.freight_ids = freights.map((ff: any) => ff.id)
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -239,10 +284,14 @@ const save = async () => {
     loadingStore.start()
 
     if (dialog.mode === 'create') {
-      await $api.freightForwardersGroups.create(form)
+      const created: any = await $api.freightForwardersGroups.create(form)
+      if (created?.id) {
+        await $api.freightForwardersGroups.assignFreights(created.id.toString(), form.freight_ids)
+      }
       snackbar.add({ type: 'success', text: 'Freight group created' })
     } else if (dialog.mode === 'edit' && dialog.itemId) {
       await $api.freightForwardersGroups.update(dialog.itemId.toString(), form)
+      await $api.freightForwardersGroups.assignFreights(dialog.itemId.toString(), form.freight_ids)
       snackbar.add({ type: 'success', text: 'Freight group updated' })
     }
 

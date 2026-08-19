@@ -46,6 +46,14 @@ class FreightForwardersGroupModule extends FetchFactory<IFreightForwarderGroupPa
     return this.call('GET', `${this.RESOURCE}/freights/${id}`, fetchOptions)
   }
 
+  async assignFreights(id: string, freightIds: number[], fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify({ freight_ids: freightIds }),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/assign-freights`, fetchOptions)
+  }
+
   async getById(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}`, fetchOptions)
   }

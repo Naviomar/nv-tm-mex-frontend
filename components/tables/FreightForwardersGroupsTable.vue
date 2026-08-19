@@ -3,7 +3,7 @@
     <div class="mb-4">
       <div class="grid grid-cols-6">
         <div class="col-span-3">
-          <v-text-field density="compact" label="Name" />
+          <v-text-field density="compact" label="Name" v-model="filters.name" />
         </div>
       </div>
       <div class="grid grid-cols-1">
@@ -166,7 +166,9 @@ const getFreightForwardersGroups = async () => {
   }
 }
 
-await getFreightForwardersGroups()
+onMounted(() => {
+  getFreightForwardersGroups()
+})
 
 const clearFilters = async () => {
   filters.value = {
