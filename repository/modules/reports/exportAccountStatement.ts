@@ -37,8 +37,8 @@ export interface ExportAccountStatementReportItem {
   /** Export's billing customer — called "Shipper" in the UI even though the
    * underlying relation is Referencia.consignee_id / legacy CAT_SCNF. */
   shipper: string
-  /** The actual foreign consignee — Referencia.shipper_id / legacy id_consignee. */
-  customer: string
+  /** The actual foreign receiving party — Referencia.shipper_id / legacy id_consignee. */
+  consignee: string
   bl_master: string
   bl_house: string
   date: string
