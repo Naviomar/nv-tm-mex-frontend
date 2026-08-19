@@ -157,9 +157,14 @@
             <!-- ── Invoice row ───────────── -->
             <template v-if="row._record_type === 'invoice'">
               <td>
-                <div class="flex flex-col items-center gap-1">
+                <div class="flex flex-col items-center gap-1 my-2">
                   <ViewButton :item="row" @click="viewInvoice(row)" />
                   <PreviewPartyInvoice :invoice="row" size="small" />
+                  <InvoiceSendHistoryButton
+                    v-if="row.invoice?.id"
+                    :invoice-id="row.invoice.id"
+                    :invoice-number="row.invoice.invoice_number"
+                  />
                 </div>
               </td>
               <td><v-chip size="x-small" color="blue-darken-2">{{ row.is_proforma == 1 ? 'Proforma' : 'Invoice' }}</v-chip></td>
@@ -225,7 +230,7 @@
             <!-- ── Credit Note row ────────── -->
             <template v-else-if="row._record_type === 'credit_note'">
               <td>
-                <div class="flex flex-col items-center gap-1">
+                <div class="flex flex-col items-center gap-1 my-2">
                   <ViewButton :item="row" @click="viewCreditNote(row)" />
                 </div>
               </td>

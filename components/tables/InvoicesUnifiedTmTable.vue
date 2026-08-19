@@ -218,9 +218,14 @@
         <tbody>
           <tr v-for="(invoiceTm, index) in tmInvoices.data" :key="`invoice-${index}`" :class="rowClass(invoiceTm)">
             <td>
-              <div class="flex flex-col items-center gap-2">
+              <div class="flex flex-col items-center gap-2 my-2">
                 <ViewButton :item="invoiceTm" @click="viewInvoice(invoiceTm)" />
                 <PreviewTmInvoice :service="invoiceTm.service_type || 'sea'" :invoice="invoiceTm" size="small" />
+                <InvoiceSendHistoryButton
+                  v-if="invoiceTm.invoice?.id"
+                  :invoice-id="invoiceTm.invoice.id"
+                  :invoice-number="invoiceTm.invoice.invoice_number"
+                />
               </div>
             </td>
             <td>

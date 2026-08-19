@@ -198,9 +198,14 @@
         <tbody>
           <tr v-for="(invoiceWm, index) in wmInvoices.data" :key="`invoice-${index}`" :class="rowClass(invoiceWm)">
             <td>
-              <div class="flex flex-col items-center gap-2">
+              <div class="flex flex-col items-center gap-2 my-2">
                 <ViewButton :item="invoiceWm" @click="viewInvoice(invoiceWm)" />
                 <PreviewWmInvoice :service="invoiceWm.service_type || 'sea'" :invoice="invoiceWm" size="small" />
+                <InvoiceSendHistoryButton
+                  v-if="invoiceWm.invoice?.id"
+                  :invoice-id="invoiceWm.invoice.id"
+                  :invoice-number="invoiceWm.invoice.invoice_number"
+                />
               </div>
             </td>
             <td>
