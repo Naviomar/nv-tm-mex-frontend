@@ -64,20 +64,118 @@
                 </thead>
                 <tbody>
                   <template v-for="(service, index) in servicesWithCharges" :key="`service-${index}`">
+                    <template v-for="(group, gIndex) in getOceanFreightGroups(service)" :key="`of-group-${index}-${gIndex}`">
+                      <!-- Ocean Freight group parent row -->
+                      <tr
+                        :class="[
+                          group.mode === 'absorb' ? 'bg-amber-lighten-5' : 'bg-blue-grey-lighten-5',
+                          isGroupDisabled(group.items) ? 'opacity-60' : '',
+                        ]"
+                      >
+                        <td>
+                          <v-checkbox
+                            :model-value="isGroupSelected(group.items)"
+                            :indeterminate="isGroupIndeterminate(group.items)"
+                            density="compact"
+                            color="primary"
+                            :disabled="isGroupDisabled(group.items)"
+                            hide-details
+                            @update:model-value="(val) => toggleGroup(group.items, !!val)"
+                          />
+                        </td>
+                        <td>{{ service.consignee?.name }}</td>
+                        <td>{{ service.reference_number }}</td>
+                        <td colspan="5">
+                          <div class="flex items-center gap-2">
+                            <v-icon size="small">mdi-ferry</v-icon>
+                            <span class="font-bold">{{ group.main.charge?.name }}</span>
+                            <v-chip v-if="group.mode === 'breakdown'" size="small" color="blue-grey">
+                              <v-icon start size="small">mdi-call-split</v-icon>
+                              Breakdown × {{ group.items.length }}
+                            </v-chip>
+                            <v-chip v-else size="small" color="amber-darken-2">
+                              <v-icon start size="small">mdi-merge</v-icon>
+                              Absorbs {{ group.items.length - 1 }} charge{{ group.items.length - 1 > 1 ? 's' : '' }}
+                            </v-chip>
+                            <v-tooltip location="top">
+                              <template #activator="{ props: tooltipProps }">
+                                <v-icon v-bind="tooltipProps" size="small" class="text-medium-emphasis"
+                                  >mdi-information-outline</v-icon
+                                >
+                              </template>
+                              <span v-if="group.mode === 'breakdown'"
+                                >Each charge below will be invoiced as its own line.</span
+                              >
+                              <span v-else
+                                >Selecting Ocean Freight selects and merges these charges into a single line — no
+                                breakdown.</span
+                              >
+                            </v-tooltip>
+                            <span class="ml-auto font-bold"
+                              >{{ formatToCurrency(getGroupTotal(group.items)) }} {{ getCurrencyName(group.items[0].currency_id) }}</span
+                            >
+                            <InvoicedChip :charge="group.main" :get-route="getInvoiceDetailRoute" />
+                          </div>
+                        </td>
+                      </tr>
+                      <tr
+                        v-for="(sell_charge, i2) in group.items"
+                        :key="`of-item-${index}-${gIndex}-${i2}`"
+                        :class="['bg-grey-lighten-5', isChargeInvoiced(sell_charge) ? 'opacity-60' : '']"
+                      >
+                        <td>
+                          <v-checkbox
+                            v-model="sell_charge.selected"
+                            density="compact"
+                            color="primary"
+                            :disabled="group.mode === 'absorb' || isChargeInvoiced(sell_charge)"
+                            hide-details
+                          />
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td class="pl-8">
+                          <v-icon size="x-small" class="mr-1 text-medium-emphasis">mdi-subdirectory-arrow-right</v-icon>
+                          <span :class="group.mode === 'absorb' ? 'text-medium-emphasis' : ''">{{
+                            sell_charge.charge?.name
+                          }}</span>
+                          <v-chip
+                            v-if="group.mode === 'absorb' && sell_charge !== group.main"
+                            size="x-small"
+                            variant="tonal"
+                            color="amber-darken-2"
+                            class="ml-2"
+                          >
+                            included
+                          </v-chip>
+                        </td>
+                        <td>{{ sell_charge.base_quantity || 1 }}</td>
+                        <td>{{ formatToCurrency(sell_charge.amount) }} {{ getCurrencyName(sell_charge.currency_id) }}</td>
+                        <td>
+                          <v-checkbox
+                            v-model="sell_charge.is_con_iva"
+                            density="compact"
+                            color="primary"
+                            :disabled="isChargeInvoiced(sell_charge)"
+                            hide-details
+                          />
+                        </td>
+                        <td>
+                          <InvoicedChip :charge="sell_charge" :get-route="getInvoiceDetailRoute" />
+                        </td>
+                      </tr>
+                    </template>
                     <tr
-                      v-for="(sell_charge, index2) in getServiceSellCharges(service)"
+                      v-for="(sell_charge, index2) in getNonGroupedCharges(service)"
                       :key="`service-${index}-sell-charge-${index2}`"
+                      :class="isChargeInvoiced(sell_charge) ? 'opacity-60' : ''"
                     >
                       <td>
                         <v-checkbox
                           v-model="sell_charge.selected"
                           density="compact"
                           color="primary"
-                          :disabled="
-                            sell_charge.invoice_charge != null ||
-                            (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0) ||
-                            sell_charge.absorbed_invoice_id != null
-                          "
+                          :disabled="isChargeInvoiced(sell_charge)"
                           hide-details
                         />
                       </td>
@@ -96,17 +194,12 @@
                           v-model="sell_charge.is_con_iva"
                           density="compact"
                           color="primary"
-                          :disabled="
-                            sell_charge.invoice_charge != null ||
-                            (sell_charge.invoice_charges && sell_charge.invoice_charges.length > 0) ||
-                            sell_charge.absorbed_invoice_id != null
-                          "
+                          :disabled="isChargeInvoiced(sell_charge)"
                           hide-details
                         />
                       </td>
                       <td>
-                        <v-chip v-if="sell_charge.invoice_charge || sell_charge.absorbed_invoice_id" color="success" class="ml-2">Yes</v-chip>
-                        <v-chip v-else color="error" class="ml-2">Pending invoice</v-chip>
+                        <InvoicedChip :charge="sell_charge" :get-route="getInvoiceDetailRoute" />
                       </td>
                     </tr>
                   </template>
@@ -245,6 +338,9 @@
                     >
                       <td>{{ service.reference_number }}</td>
                       <td>
+                        <v-icon v-if="charge.is_ocean_freight && charge.has_desglose" size="x-small" class="mr-1"
+                          >mdi-ferry</v-icon
+                        >
                         {{ charge.charge?.name }}
                         <span v-if="charge.class_name.includes('ContainerDetention')" class="ml-2">{{
                           charge.reference_container.container_number
@@ -558,6 +654,71 @@ const getServiceSellCharges = (service: any) => {
   }
 
   return []
+}
+
+const isChargeInvoiced = (charge: any) => {
+  return (
+    charge.invoice_charge != null ||
+    (charge.invoice_charges && charge.invoice_charges.length > 0) ||
+    charge.absorbed_invoice_id != null
+  )
+}
+
+const getOceanFreightGroups = (service: any) => {
+  if (!(serviciosFound.value.serviceType === 'IM' && form.value.charge_type === 'no_demurrages')) {
+    return []
+  }
+  const sellCharges =
+    service.sell_rate_breakdown?.filter((sell_charge: any) => sell_charge.currency_id == form.value.currency_id) || []
+
+  const groups: { mode: 'breakdown' | 'absorb'; inv_type: string; main: any; items: any[] }[] = []
+  const oceanFreightItems = sellCharges.filter((c: any) => c.is_ocean_freight)
+  const byInvType: Record<string, any[]> = {}
+  oceanFreightItems.forEach((item: any) => {
+    const key = item.inv_type || 'default'
+    if (!byInvType[key]) byInvType[key] = []
+    byInvType[key].push(item)
+  })
+
+  Object.entries(byInvType).forEach(([inv_type, oceanItems]) => {
+    // Broken down into several sell-rate lines: each becomes its own invoice line
+    if (oceanItems.length > 1 && oceanItems.every((c: any) => c.has_desglose)) {
+      groups.push({ mode: 'breakdown', inv_type, main: oceanItems[0], items: oceanItems })
+      return
+    }
+
+    // Lump-sum Ocean Freight: other sell-rate charges of the same currency/inv_type
+    // get absorbed into it (merged amount, single invoice line) when selected together
+    const main = oceanItems.find((c: any) => !c.has_desglose)
+    if (!main) return
+    const siblings = sellCharges.filter((c: any) => c !== main && !c.is_ocean_freight && c.inv_type === inv_type)
+    if (siblings.length === 0) return
+    groups.push({ mode: 'absorb', inv_type, main, items: [main, ...siblings] })
+  })
+
+  return groups
+}
+
+const getNonGroupedCharges = (service: any) => {
+  const all = getServiceSellCharges(service)
+  const grouped = getOceanFreightGroups(service).flatMap((g: any) => g.items)
+  return all.filter((c: any) => !grouped.includes(c))
+}
+
+const getGroupTotal = (items: any[]) => {
+  return items.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0)
+}
+
+const isGroupSelected = (items: any[]) => items.every((i) => i.selected)
+const isGroupIndeterminate = (items: any[]) => items.some((i) => i.selected) && !items.every((i) => i.selected)
+const isGroupDisabled = (items: any[]) => items.every((i) => isChargeInvoiced(i))
+
+const toggleGroup = (items: any[], value: boolean) => {
+  items.forEach((item) => {
+    if (!isChargeInvoiced(item)) {
+      item.selected = value
+    }
+  })
 }
 
 const findServicesPendingCharges = async () => {

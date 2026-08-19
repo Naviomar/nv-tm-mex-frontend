@@ -285,10 +285,20 @@ const save = async () => {
 
     if (dialog.mode === 'create') {
       const created: any = await $api.freightForwardersGroups.create(form)
-      if (created?.id) {
-        await $api.freightForwardersGroups.assignFreights(created.id.toString(), form.freight_ids)
-      }
+      // Switch to edit mode right away so a retry (e.g. if the assignment
+      // below fails) updates this group instead of creating a duplicate.
+      dialog.mode = 'edit'
+      dialog.itemId = created.id
       snackbar.add({ type: 'success', text: 'Freight group created' })
+
+      try {
+        await $api.freightForwardersGroups.assignFreights(created.id.toString(), form.freight_ids)
+      } catch (e) {
+        console.error(e)
+        snackbar.add({ type: 'warning', text: 'Group created, but freight forwarders could not be assigned. Please edit the group and try again.' })
+        emit('refresh')
+        return
+      }
     } else if (dialog.mode === 'edit' && dialog.itemId) {
       await $api.freightForwardersGroups.update(dialog.itemId.toString(), form)
       await $api.freightForwardersGroups.assignFreights(dialog.itemId.toString(), form.freight_ids)
