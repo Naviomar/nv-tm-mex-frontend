@@ -18,19 +18,12 @@
             :readonly="dialog.mode === 'view'"
             :error-messages="errors.name"
           />
-          <v-text-field
-            v-model="form.code"
-            label="Code"
-            variant="outlined"
-            density="compact"
-            :readonly="dialog.mode === 'view'"
-          />
           <v-autocomplete
             v-model="form.freight_ids"
             label="Freight forwarders"
             variant="outlined"
             density="compact"
-            :items="allFreightForwarders"
+            :items="freightForwarderOptions"
             item-value="id"
             item-title="name"
             multiple
@@ -38,7 +31,19 @@
             closable-chips
             :readonly="dialog.mode === 'view'"
             :loading="loadingFreights"
-          />
+          >
+            <template v-slot:item="{ item, props: itemProps }">
+              <v-list-item v-bind="itemProps" :title="item.raw.name">
+                <template v-if="item.raw.otherGroupName" v-slot:subtitle>
+                  <span class="text-warning">Currently in: {{ item.raw.otherGroupName }}</span>
+                </template>
+              </v-list-item>
+            </template>
+          </v-autocomplete>
+          <div v-if="reassignedFreights.length" class="text-caption text-warning">
+            <v-icon size="small">mdi-alert</v-icon>
+            The following will be moved out of their current group: {{ reassignedFreights.map((f) => f.name).join(', ') }}
+          </div>
         </div>
 
         <!-- Bank accounts for view/edit mode -->
@@ -80,30 +85,10 @@
             class="pa-2"
           >
             <div class="text-sm font-medium">{{ item.name }}</div>
-            <div class="text-xs text-grey-darken-1">#{{ item.id }} · Code: {{ item.code || '—' }}</div>
+            <div class="text-xs text-grey-darken-1">#{{ item.id }}</div>
           </v-card>
         </div>
 
-        <!-- History section for edit mode -->
-        <div v-if="dialog.mode === 'edit' && historyItems.length > 0" class="mt-4">
-          <v-divider class="mb-3" />
-          <div class="text-sm font-medium text-grey-darken-1 mb-2">History (deleted records):</div>
-          <div class="space-y-2 max-h-64 overflow-y-auto">
-            <v-card
-              v-for="item in historyItems"
-              :key="item.id"
-              variant="tonal"
-              color="error"
-              density="compact"
-              class="pa-2"
-            >
-              <div class="text-sm font-medium">{{ item.name }}</div>
-              <div class="text-xs text-grey-darken-1">
-                #{{ item.id }} · Code: {{ item.code || '—' }} · Deleted: {{ formatDateString(item.deleted_at) }}
-              </div>
-            </v-card>
-          </div>
-        </div>
       </v-card-text>
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
@@ -135,7 +120,6 @@ const dialog = reactive({
 
 const form = reactive({
   name: '',
-  code: '',
   freight_ids: [] as number[],
 })
 
@@ -144,11 +128,27 @@ const errors = reactive({
 })
 
 const similarItems = ref<any[]>([])
-const historyItems = ref<any[]>([])
 const searching = ref(false)
 const saving = ref(false)
 const allFreightForwarders = ref<any[]>([])
 const loadingFreights = ref(false)
+
+// Items for the multiselect, annotated with the group each FF currently
+// belongs to (if any other than this one) so picking it makes the
+// reassignment obvious instead of silently stealing it on save.
+const freightForwarderOptions = computed(() =>
+  allFreightForwarders.value.map((ff: any) => ({
+    ...ff,
+    otherGroupName:
+      ff.freight_group_id && ff.freight_group_id !== dialog.itemId ? ff.freight_group?.name : null,
+  }))
+)
+
+const reassignedFreights = computed(() =>
+  freightForwarderOptions.value.filter(
+    (ff: any) => form.freight_ids.includes(ff.id) && ff.otherGroupName
+  )
+)
 
 const loadAllFreightForwarders = async () => {
   try {
@@ -177,7 +177,6 @@ const openEdit = async (id: number) => {
   await loadAllFreightForwarders()
   await loadFreightGroup(id)
   await loadGroupFreights(id)
-  await loadHistory(id)
 }
 
 const openView = async (id: number) => {
@@ -187,19 +186,16 @@ const openView = async (id: number) => {
   await loadAllFreightForwarders()
   await loadFreightGroup(id)
   await loadGroupFreights(id)
-  await loadHistory(id)
 }
 
 const closeDialog = () => {
   dialog.show = false
   resetForm()
   similarItems.value = []
-  historyItems.value = []
 }
 
 const resetForm = () => {
   form.name = ''
-  form.code = ''
   form.freight_ids = []
   errors.name = ''
 }
@@ -221,30 +217,12 @@ const loadGroupFreights = async (id: number) => {
   try {
     const response = await $api.freightForwardersGroups.getFreightForwardersInAGroup(id.toString())
     const freights = Array.isArray(response) ? response : (response?.freightForwarders ?? [])
-    form.freight_ids = freights.map((ff: any) => ff.id)
+    // Deleted FFs aren't offered as options in the multiselect, so exclude
+    // them here too - otherwise their id would sit in freight_ids without a
+    // matching chip, and saving would silently keep them tied to the group.
+    form.freight_ids = freights.filter((ff: any) => !ff.deleted_at).map((ff: any) => ff.id)
   } catch (e) {
     console.error(e)
-  }
-}
-
-const loadHistory = async (id: number) => {
-  try {
-    loadingStore.start()
-    // Fetch deleted records for this group using soft delete
-    const response = await $api.freightForwardersGroups.getFreightForwardersGroups({
-      query: {
-        deleted_status: 'deleted',
-        page: 1,
-        perPage: 100,
-      },
-    })
-    // Filter to show only history of the current group (by name similarity or other criteria)
-    // Since we can't directly query by ID with soft deleted records, we'll show all deleted groups
-    historyItems.value = Array.isArray(response?.data) ? response.data : []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => loadingStore.stop(), 250)
   }
 }
 
@@ -322,11 +300,6 @@ const save = async () => {
     saving.value = false
     setTimeout(() => loadingStore.stop(), 250)
   }
-}
-
-const formatDateString = (date: string) => {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString()
 }
 
 const emit = defineEmits(['refresh'])
