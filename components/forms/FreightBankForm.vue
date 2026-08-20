@@ -85,6 +85,9 @@
         <div>
           <InputSwitch density="compact" name="is_default" label="Is default" class="mx-4" />
         </div>
+        <div class="col-span-2">
+          <InputTextArea name="notes" density="compact" label="Notes" />
+        </div>
 
         <div class="col-span-2">
           <div class="flex justify-end items-center">
@@ -107,6 +110,7 @@
             <th class="text-left">currency</th>
             <th class="text-left">beneficiary email</th>
             <th class="text-left">beneficiary phone</th>
+            <th class="text-left">notes</th>
           </tr>
         </thead>
         <tbody>
@@ -131,6 +135,7 @@
             <td>{{ item.currency.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
+            <td>{{ item.notes }}</td>
           </tr>
         </tbody>
       </v-table>
@@ -198,6 +203,7 @@ const toggle = () => {
         iban: '',
         beneficiary_email: '',
         beneficiary_phone: '',
+        notes: '',
         is_default: false,
       },
     })
@@ -223,6 +229,7 @@ const editItem = (item: any) => {
     iban: item.iban,
     beneficiary_email: item.beneficiary_email,
     beneficiary_phone: item.beneficiary_phone,
+    notes: item.notes,
     is_default: item.is_default,
   })
 }

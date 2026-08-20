@@ -19,6 +19,7 @@ const schema = toTypedSchema(
     iban: yup.string().nullable(),
     beneficiary_email: yup.string().nullable(),
     beneficiary_phone: yup.string().nullable(),
+    notes: yup.string().nullable(),
     is_default: yup.boolean().nullable(),
 
   })
