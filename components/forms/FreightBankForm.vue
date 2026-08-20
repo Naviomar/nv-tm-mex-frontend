@@ -15,12 +15,12 @@
       <div v-if="showForm" class="mb-4 grid grid-cols-2 gap-2">
         <div class="font-bold col-span-2">New bank account</div>
         <div class="col-span-2">
-          <InputText name="name" density="compact" label="Alias" />
+          <InputText name="name" density="compact" label="Alias *" />
         </div>
         <div class="col-span-2">
           <InputAutocomplete
             name="bank_id"
-            label="Bank"
+            label="Bank *"
             :items="catalogs.banks"
             item-value="id"
             item-title="name"
@@ -28,10 +28,10 @@
           />
         </div>
         <div class="col-span-2">
-          <InputText name="beneficiary_name" density="compact" label="Beneficiary name" />
+          <InputText name="beneficiary_name" density="compact" label="Beneficiary name *" />
         </div>
         <div class="">
-          <InputText name="account_number" density="compact" label="Account number" />
+          <InputText name="account_number" density="compact" label="Account number *" />
         </div>
         <div class="">
           <InputText name="clabe" density="compact" label="CLABE" type="number" />
@@ -39,7 +39,7 @@
         <div class="">
           <InputAutocomplete
             name="currency_id"
-            label="Currency"
+            label="Currency *"
             :items="catalogs.currencies"
             item-value="id"
             item-title="name"
@@ -47,13 +47,13 @@
           />
         </div>
         <div class="">
-          <InputText name="beneficiary_address" density="compact" label="Beneficiary address" />
+          <InputText name="beneficiary_address" density="compact" label="Beneficiary address *" />
         </div>
         <div class="">
-          <InputText name="beneficiary_zip_code" density="compact" label="Zip code" />
+          <InputText name="beneficiary_zip_code" density="compact" label="Zip code *" />
         </div>
         <div class="">
-          <InputText name="beneficiary_city" density="compact" label="City" />
+          <InputText name="beneficiary_city" density="compact" label="City *" />
         </div>
         <div class="">
           <InputAutocomplete
@@ -91,8 +91,8 @@
 
         <div class="col-span-2">
           <div class="flex justify-end items-center">
-            <v-btn class="mr-4" color="secondary" @click="toggle"> Cancel </v-btn>
-            <v-btn color="primary" @click="save"> Save </v-btn>
+            <v-btn class="mr-4" color="secondary" :disabled="saving" @click="toggle"> Cancel </v-btn>
+            <v-btn color="primary" :loading="saving" :disabled="saving" @click="save"> Save </v-btn>
           </div>
         </div>
       </div>
@@ -177,6 +177,7 @@ const { handleSubmit, values, errors, setValues, resetForm } = useForm({
 })
 
 const showForm = ref(false)
+const saving = ref(false)
 const catalogs = ref<any>({
   banks: [],
   countries: [],
@@ -235,7 +236,14 @@ const editItem = (item: any) => {
 }
 
 const onSuccess = async (values: any) => {
+  // Guards against double submission - a slow response plus an impatient
+  // double-click on Save (no visual feedback that a save was in flight)
+  // is exactly how a production user ended up with the same bank account
+  // registered four times.
+  if (saving.value) return
+
   try {
+    saving.value = true
     loadingStore.start()
 
     const body = {
@@ -250,7 +258,9 @@ const onSuccess = async (values: any) => {
     await getData()
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error saving bank account' })
   } finally {
+    saving.value = false
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
