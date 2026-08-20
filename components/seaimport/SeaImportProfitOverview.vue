@@ -223,6 +223,28 @@
               <div class="bg-slate-200 text-right">
                 <TotalsInUsd :amounts="getSupplierInvoices" />
               </div>
+              <div class="bg-slate-300 text-center font-bold">
+                <v-tooltip location="top" open-delay="300">
+                  <template #activator="{ props }">
+                    <span v-bind="props"
+                      >(-) Pending buy
+                      <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
+                    </span>
+                  </template>
+                  <span>
+                    Estimated cost of <b>buy concepts</b> not yet covered by a Supplier invoice for the same
+                    charge.<br /><br />
+                    <b>Formula (per charge):</b><br />
+                    <code>Buy amount (+ IVA if applicable) - Supplier invoice amount for that charge</code><br />
+                    <br />
+                    Only the positive difference is counted (a charge fully or over-covered by its Supplier
+                    invoice contributes $0).
+                  </span>
+                </v-tooltip>
+              </div>
+              <div class="bg-slate-200 text-right">
+                <TotalsInUsd :amounts="getRemainingBuy" />
+              </div>
               <div class="bg-slate-300 text-center font-bold">(-) Rebate</div>
               <div class="bg-slate-200 text-right">
                 <TotalsInUsd :amounts="getRebate" :is-negative="true" />
@@ -378,6 +400,20 @@
                     </span>
                   </span>
                 </v-tooltip>
+                <v-tooltip location="top" open-delay="300">
+                  <template #activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      color="secondary"
+                      size="small"
+                      class="ml-1 cursor-pointer"
+                      @click="profitBreakdownDialog = true"
+                    >
+                      mdi-calculator-variant
+                    </v-icon>
+                  </template>
+                  <span>See step-by-step breakdown with real amounts</span>
+                </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
                 <TotalsInUsd :amounts="getTotalProfitWithDemurrages" />
@@ -385,6 +421,35 @@
             </div>
           </div>
         </div>
+
+        <v-dialog v-model="profitBreakdownDialog" max-width="550px">
+          <v-card>
+            <v-card-title class="text-h6">Profit Total - Step by step</v-card-title>
+            <v-card-text>
+              <v-list density="compact">
+                <v-list-subheader inset>Operating Profit</v-list-subheader>
+                <v-list-item><v-list-item-title>+ Total sell: {{ formatToCurrency(profitBreakdown.totalSell) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>+ Credit notes: {{ formatToCurrency(profitBreakdown.creditNotes) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>+ Debit notes: {{ formatToCurrency(profitBreakdown.debitNotes) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>- Warranty deposit: {{ formatToCurrency(profitBreakdown.warrantyDeposit) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>- Supplier invoice: {{ formatToCurrency(profitBreakdown.supplierInvoices) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>- Pending buy: {{ formatToCurrency(profitBreakdown.remainingBuy) }}</v-list-item-title></v-list-item>
+                <v-list-item><v-list-item-title>- Rebate: {{ formatToCurrency(profitBreakdown.rebate) }}</v-list-item-title></v-list-item>
+                <v-list-item>
+                  <v-list-item-title class="font-bold">= Operating Profit: {{ formatToCurrency(profitBreakdown.operatingProfit) }}</v-list-item-title>
+                </v-list-item>
+                <v-list-subheader inset>Demurrages</v-list-subheader>
+                <v-list-item><v-list-item-title>+ Demurrages Profit: {{ formatToCurrency(profitBreakdown.demurragesProfit) }}</v-list-item-title></v-list-item>
+                <v-list-item>
+                  <v-list-item-title class="font-bold text-primary">= Profit Total: {{ formatToCurrency(profitBreakdown.profitTotal) }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn @click="profitBreakdownDialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-card-text>
     </v-card>
   </div>
@@ -392,10 +457,13 @@
 <script setup lang="ts">
 import { permissions } from '@/utils/data/system'
 import { currencies } from '~/utils/data/systemData'
+import { formatToCurrency } from '~/utils/formatters'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { hasPermission } = useCheckUser()
+const exchangeRatesStore = useExchangeRatesStore()
+const usdCurrencyId = 2
 
 const props = defineProps({
   referenciaId: {
@@ -742,20 +810,21 @@ const getRemainingBuy = computed(() => {
   const buyBreakdown = profitSeaImportRef.value.referencia?.buy_rate_breakdown || []
   const supplierInvoices = profitSeaImportRef.value.supplierInvoices || []
 
-  // Group invoices by charge_id and currency_id
-  const invoicedByConcept: Record<string, number> = {}
-  supplierInvoices.forEach((si: any) => {
-    const key = `${si.charge_id}-${si.currency_id}`
-    invoicedByConcept[key] = (invoicedByConcept[key] || 0) + parseFloat(si.amount_total || 0)
-  })
-
   buyBreakdown.forEach((buyCharge: any) => {
-    const key = `${buyCharge.charge_id}-${buyCharge.currency_id}`
     const baseAmount = parseFloat(buyCharge.amount || 0)
     const ivaAmount = buyCharge.is_con_iva === 1 ? baseAmount * 0.16 : 0
     const buyTotalAmount = baseAmount + ivaAmount
 
-    const invoicedAmount = invoicedByConcept[key] || 0
+    // A Supplier invoice covers the same charge_id even when captured in a different
+    // currency than the buy rate — convert it to the buy charge's currency (not a raw
+    // sum) so only the equivalent amount is deducted, never the full foreign-currency figure.
+    const invoicedAmount = supplierInvoices
+      .filter((si: any) => si.charge_id === buyCharge.charge_id)
+      .reduce((sum: number, si: any) => {
+        const siAmount = parseFloat(si.amount_total || 0)
+        const rate = exchangeRatesStore.getExchangeRate(si.currency_id, buyCharge.currency_id)
+        return sum + siAmount * rate
+      }, 0)
 
     if (buyTotalAmount > invoicedAmount) {
       const remaining = buyTotalAmount - invoicedAmount
@@ -919,6 +988,67 @@ const profitSeaImportRef = ref<any>({
   refunds: [],
 })
 // const referencia = ref<any>({})
+
+const profitBreakdownDialog = ref(false)
+const profitBreakdown = ref<Record<string, number>>({
+  totalSell: 0,
+  creditNotes: 0,
+  debitNotes: 0,
+  warrantyDeposit: 0,
+  supplierInvoices: 0,
+  remainingBuy: 0,
+  rebate: 0,
+  operatingProfit: 0,
+  demurragesProfit: 0,
+  profitTotal: 0,
+})
+
+// Same currency-conversion logic as components/common/TotalsInUsd.vue, so the
+// step-by-step breakdown matches exactly what each row on screen displays.
+const convertToUsd = async (amounts: Record<number, number> | null | undefined) => {
+  let total = 0
+  for (const [currencyId, amount] of Object.entries(amounts || {})) {
+    const originCurrencyId = Number(currencyId)
+    if (originCurrencyId === usdCurrencyId) {
+      total += amount
+    } else {
+      const exchangeRate = await exchangeRatesStore.getExchangeRate(originCurrencyId, usdCurrencyId)
+      total += amount * exchangeRate
+    }
+  }
+  return parseFloat(total.toFixed(2))
+}
+
+const computeProfitBreakdown = async () => {
+  const totalSell = await convertToUsd(getProfitSell.value)
+  const creditNotes = await convertToUsd(getCreditFfNotes.value)
+  const debitNotes = await convertToUsd(getDebitFfNotes.value)
+  const warrantyDeposit = await convertToUsd(getWarrantyDepositConcepts.value)
+  const supplierInvoices = await convertToUsd(getSupplierInvoices.value)
+  const remainingBuy = await convertToUsd(getRemainingBuy.value)
+  const rebate = await convertToUsd(getRebate.value)
+  const demurragesProfit = await convertToUsd(getDemurragesProfitTotal.value)
+
+  const operatingProfit = parseFloat(
+    (totalSell + creditNotes + debitNotes - warrantyDeposit - supplierInvoices - remainingBuy - rebate).toFixed(2)
+  )
+  const profitTotal = parseFloat((operatingProfit + demurragesProfit).toFixed(2))
+
+  profitBreakdown.value = {
+    totalSell,
+    creditNotes,
+    debitNotes,
+    warrantyDeposit,
+    supplierInvoices,
+    remainingBuy,
+    rebate,
+    operatingProfit,
+    demurragesProfit,
+    profitTotal,
+  }
+}
+
+watch(() => profitSeaImportRef.value, computeProfitBreakdown, { deep: true })
 
 const syncRef = async () => {
   await getSeaImportProfit()

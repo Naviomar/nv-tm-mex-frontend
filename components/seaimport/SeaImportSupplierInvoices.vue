@@ -9,6 +9,7 @@
           <th class="text-left">Supplier</th>
           <th class="text-left">Amount</th>
           <th class="text-left">Invoice date</th>
+          <th class="text-left">Charges</th>
         </tr>
       </thead>
       <tbody>
@@ -70,6 +71,12 @@
             </div>
           </td>
           <td class="p-2">{{ formatDateOnlyString(cfdi.created_at) }}</td>
+          <td class="p-2">
+            <v-btn size="small" color="secondary" variant="outlined" @click="openChargesDialog(cfdi)">
+              <v-icon start>mdi-format-list-bulleted</v-icon>
+              View charges
+            </v-btn>
+          </td>
         </tr>
       </tbody>
     </v-table>
@@ -102,6 +109,54 @@
         </tr>
       </tbody>
     </v-table>
+
+    <v-dialog v-model="chargesDialog" max-width="800px">
+      <v-card v-if="selectedCfdi">
+        <v-card-title class="text-h6">
+          Charges captured - Folio {{ selectedCfdi.folio }} ({{ selectedCfdi.supplier?.name }})
+        </v-card-title>
+        <v-card-text>
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th class="text-left">Charge</th>
+                <th class="text-left">Invoice amount</th>
+                <th class="text-left">IVA / ISR / IVA Ret</th>
+                <th class="text-left">Total</th>
+                <th class="text-left">Linked reference charge</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="invoice in selectedCfdi.invoices" :key="invoice.id">
+                <td class="p-2">{{ invoice.charge?.name || `Charge #${invoice.charge_id}` }}</td>
+                <td class="p-2">{{ formatToCurrency(invoice.amount) }} {{ getCurrencyName(invoice.currency_id) }}</td>
+                <td class="p-2 text-xs">
+                  IVA: {{ formatToCurrency(invoice.amount_iva) }}<br />
+                  ISR: -{{ formatToCurrency(invoice.amount_ret_isr) }}<br />
+                  IVA Ret: -{{ formatToCurrency(invoice.amount_ret_iva) }}
+                </td>
+                <td class="p-2 font-bold">{{ formatToCurrency(invoice.amount_total) }}</td>
+                <td class="p-2">
+                  <div v-if="invoice.chargeable">
+                    <div>{{ invoice.chargeable.charge_name || invoice.charge?.name || `Charge #${invoice.charge_id}` }}</div>
+                    <div class="text-xs">
+                      {{ invoice.chargeable_type?.split('\\').pop() }} #{{ invoice.chargeable_id }} -
+                      {{ formatToCurrency(invoice.chargeable.amount) }}
+                      {{ getCurrencyName(invoice.chargeable.currency_id) }}
+                      <span v-if="invoice.chargeable.type"> ({{ invoice.chargeable.type }})</span>
+                    </div>
+                  </div>
+                  <v-chip v-else color="warning" size="small">Not linked to a captured charge</v-chip>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn @click="chargesDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -118,6 +173,14 @@ const props = defineProps({
 
 const invoiceCfdis = ref<any>([])
 const serviceAdvPayments = ref<any>([])
+
+const chargesDialog = ref(false)
+const selectedCfdi = ref<any>(null)
+
+const openChargesDialog = (cfdi: any) => {
+  selectedCfdi.value = cfdi
+  chargesDialog.value = true
+}
 
 const hasFirstInvoiceReqPay = (cfdi: any) => {
   if (cfdi.invoices.length === 0) {
