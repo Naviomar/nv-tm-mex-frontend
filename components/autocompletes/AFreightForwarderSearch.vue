@@ -55,14 +55,6 @@ watch(searchQuery, (newSearch) => {
   // a valid selection with a "not found" state.
   if (lastSelectedTitle.value && newSearch === lastSelectedTitle.value) return
 
-  // User is typing something different from the currently selected item's
-  // title: the old selection no longer applies, so clear it and let a new
-  // search happen instead of silently freezing on the previous value.
-  if (selectedItem.value && newSearch !== lastSelectedTitle.value) {
-    selectedItem.value = null
-    onSelect(null)
-  }
-
   if (!newSearch || newSearch.length < 3) return
   onSearch(newSearch)
 })

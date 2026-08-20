@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog.show" max-width="600" scrollable persistent>
+  <v-dialog v-model="dialog.show" max-width="900" scrollable persistent>
     <v-card rounded="xl">
       <v-toolbar color="primary" density="comfortable">
         <v-toolbar-title>
@@ -40,6 +40,14 @@
             :loading="loadingFreights"
           />
         </div>
+
+        <!-- Bank accounts for view/edit mode -->
+        <FreightBankForm
+          v-if="dialog.mode !== 'create' && dialog.itemId"
+          :id="dialog.itemId.toString()"
+          owner-type="freight_group"
+          :readonly="dialog.mode === 'view'"
+        />
 
         <!-- Similar items search -->
         <v-card variant="tonal" color="info" class="mt-3">
