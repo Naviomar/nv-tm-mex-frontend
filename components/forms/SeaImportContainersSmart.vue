@@ -218,7 +218,7 @@ const customContainerTypes = computed(() => {
 })
 
 const hasCargoType = computed(() => {
-  return props.cargoType != null || props.cargoType !== ''
+  return props.cargoType != null && props.cargoType !== ''
 })
 
 // watch
