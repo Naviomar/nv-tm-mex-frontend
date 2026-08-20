@@ -996,7 +996,6 @@ const onSuccess = async () => {
     const body = {
       ...valuesWithoutTransits,
       routes: routes.value,
-      charges: charges.value,
       confirm_duplicate: confirmDuplicate,
     }
     const response = await $api.airImport.updateReference(props.id, body)

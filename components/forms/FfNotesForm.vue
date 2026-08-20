@@ -1075,7 +1075,6 @@ const saveFfNotes = async () => {
       credit_debit_notes: creditDebitNotes.value,
       service_id: props.referenciaId,
       service_type: props.serviceType,
-      containers: props.containers,
     }
     const response = await $api.ffNotes.saveFfNotes(body)
     snackbar.add({
@@ -1166,7 +1165,6 @@ const autoRecalculateUnlockedNotes = async (newContainerCount: number) => {
         credit_debit_notes: updatedNotes,
         service_id: props.referenciaId,
         service_type: props.serviceType,
-        containers: props.containers,
       }
       await $api.ffNotes.saveFfNotes(body)
       await fetchServiceFfNotes()

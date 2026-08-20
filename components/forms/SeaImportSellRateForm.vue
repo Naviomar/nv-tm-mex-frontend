@@ -353,11 +353,17 @@ const addCharge = () => {
     return
   }
 
+  // 'inv_type' es el nombre de columna en el backend; el form solo maneja 'tm_wm'.
+  // Se manda explícito para que el tipo TM/WM viaje correcto tanto al crear como al editar.
+  const chargeData = { ...form, inv_type: form.tm_wm ? String(form.tm_wm).toLowerCase() : null }
+
   if (isNewCharge.value) {
-    sellRateCharges.value.push({ ...form })
+    sellRateCharges.value.push(chargeData)
   } else {
     const index = sellRateCharges.value.findIndex((charge: any) => charge.id == form.id)
-    sellRateCharges.value[index] = { ...form }
+    // Merge en vez de reemplazar el objeto completo: preserva campos del cargo original
+    // (p.ej. relaciones cargadas) que no forman parte del form reactive.
+    sellRateCharges.value[index] = { ...sellRateCharges.value[index], ...chargeData }
   }
 
   form.id = null

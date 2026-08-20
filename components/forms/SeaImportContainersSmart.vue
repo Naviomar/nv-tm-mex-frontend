@@ -40,8 +40,8 @@
         </div>
 
         <div class="grid grid-cols-4 gap-2">
-          <div>Total containers: {{ containers.length }}</div>
-          <div>Total Teus: {{ checkParcialPaid(containers) }}</div>
+          <div>Total containers: {{ visibleContainers.length }}</div>
+          <div>Total Teus: {{ checkParcialPaid(visibleContainers) }}</div>
         </div>
         <div v-if="pendingSaveChanges">
           <v-alert type="warning" density="compact">
@@ -64,7 +64,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in containers" :key="`mbl-${index}`">
+            <tr v-for="(item, index) in visibleContainers" :key="`mbl-${index}`">
               <td>
                 <div class="flex gap-2">
                   <ProcessAuthorizationWrapper
@@ -210,6 +210,10 @@ const pendingSaveChanges = computed(() => {
   return containers.value.some((c) => c.id == null) || hasPendingChanges.value
 })
 
+// containers() on the backend eager-loads soft-deleted rows too (withTrashed),
+// so filter them out here instead of showing ghost/duplicate rows in the UI.
+const visibleContainers = computed(() => containers.value.filter((c) => !c.deleted_at))
+
 const isFcl = computed(() => props.cargoType === 'FCL')
 const isLcl = computed(() => props.cargoType === 'LCL')
 
@@ -256,7 +260,7 @@ const closeContainerForm = () => {
 
 const addContainer = (container: any) => {
   // if container_number already in containers do not add
-  if (containers.value.some((c) => c.container_number === container.container_number)) {
+  if (visibleContainers.value.some((c) => c.container_number === container.container_number)) {
     snackbar.add({ type: 'warning', text: 'Container already on list of containers.' })
     return
   }
@@ -347,7 +351,17 @@ const removeContainer = (container: any, index: number) => {
     tryDeleteContainer(container, index)
   }
   if (container.id == null) {
-    containers.value.splice(index, 1)
+    // index viene de visibleContainers (filtrada), no de containers.value: nunca usarlo
+    // como fallback o se puede borrar la fila equivocada si hay contenedores borrados
+    // antes en el arreglo. Sin uuid no hay forma segura de ubicar el contenedor.
+    const realIndex = container.uuid
+      ? containers.value.findIndex((c) => c.uuid === container.uuid)
+      : -1
+    if (realIndex === -1) {
+      console.warn('removeContainer: no se pudo ubicar el contenedor sin guardar por uuid, se omite el borrado', container)
+      return
+    }
+    containers.value.splice(realIndex, 1)
     hasPendingChanges.value = true
   }
 }
