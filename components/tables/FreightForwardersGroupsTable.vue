@@ -1,9 +1,19 @@
 <template>
   <div>
     <div class="mb-4">
-      <div class="grid grid-cols-6">
+      <div class="grid grid-cols-6 gap-3">
         <div class="col-span-3">
           <v-text-field density="compact" label="Name" v-model="filters.name" />
+        </div>
+        <div class="col-span-3">
+          <v-autocomplete
+            density="compact"
+            label="Status"
+            v-model="filters.deleted_status"
+            :items="deletedStatus"
+            item-title="name"
+            item-value="value"
+          />
         </div>
       </div>
       <div class="grid grid-cols-1">
@@ -72,6 +82,7 @@
 </template>
 <script setup lang="ts">
 import FreightGroupModal from '~/components/freight-forwarders/FreightGroupModal.vue'
+import { deletedStatus } from '@/utils/data/systemData'
 
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -85,6 +96,7 @@ const freightGroupModalRef = ref<InstanceType<typeof FreightGroupModal> | null>(
 
 const filters = ref({
   name: '',
+  deleted_status: 'active',
 })
 
 const freightForwardersGroups = ref({
@@ -173,6 +185,7 @@ onMounted(() => {
 const clearFilters = async () => {
   filters.value = {
     name: '',
+    deleted_status: 'active',
   }
   await getFreightForwardersGroups()
 }

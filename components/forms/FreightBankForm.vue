@@ -153,7 +153,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  ownerType: {
+    type: String as () => 'freight_forwarder' | 'freight_group',
+    default: 'freight_forwarder',
+  },
 })
+
+const api = computed(() => (props.ownerType === 'freight_group' ? $api.freightGroupBanks : $api.freightBanks))
+const ownerIdField = computed(() => (props.ownerType === 'freight_group' ? 'freight_group_id' : 'freight_forwarder_id'))
 
 const bankAccounts = ref<any>([])
 
@@ -226,10 +233,10 @@ const onSuccess = async (values: any) => {
 
     const body = {
       ...values,
-      freight_forwarder_id: Number(props.id),
+      [ownerIdField.value]: Number(props.id),
     }
 
-    await $api.freightBanks.upsert(body)
+    await api.value.upsert(body)
 
     snackbar.add({ type: 'success', text: 'Bank account updated' })
     toggle()
@@ -264,7 +271,7 @@ const showConfirmDelete = async (item: any) => {
   if (result) {
     try {
       loadingStore.start()
-      await $api.freightBanks.delete(item.id)
+      await api.value.delete(item.id)
 
       snackbar.add({ type: 'success', text: 'Bank Account deleted' })
       await getData()
@@ -283,7 +290,10 @@ const save = handleSubmit(onSuccess, onInvalidSubmit)
 const getData = async () => {
   try {
     loadingStore.start()
-    const response = await $api.freightBanks.getFreightBanks(props.id!)
+    const response =
+      props.ownerType === 'freight_group'
+        ? await $api.freightGroupBanks.getFreightGroupBanks(props.id!.toString())
+        : await $api.freightBanks.getFreightBanks(props.id!.toString())
     bankAccounts.value = response
   } catch (e) {
     console.error(e)
@@ -297,7 +307,7 @@ const getData = async () => {
 const getCatalogs = async () => {
   try {
     loadingStore.start()
-    const response = await $api.freightBanks.formCatalogs()
+    const response = await api.value.formCatalogs()
     catalogs.value = response
   } catch (e) {
     console.error(e)

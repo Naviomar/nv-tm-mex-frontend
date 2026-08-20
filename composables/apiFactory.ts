@@ -67,6 +67,7 @@ import AirReferenceModule from '~/repository/modules/catalogs/airReferences'
 import RefundModule from '~/repository/modules/catalogs/refunds'
 import AdvancePaymentModule from '~/repository/modules/catalogs/advancepayments'
 import FreightBanksModule from '~/repository/modules/catalogs/freightBanks'
+import FreightGroupBanksModule from '~/repository/modules/catalogs/freightGroupBanks'
 import CustomerBanksModule from '~/repository/modules/catalogs/customerBanks'
 import SupplierInvoicesModule from '~/repository/modules/catalogs/supplierInvoices'
 import SupplierReqPaymentsModule from '~/repository/modules/catalogs/supplierReqPayments'
@@ -129,6 +130,7 @@ interface IApiInstance {
   executives: ExecutivesModule
   freightForwarders: FreightForwardersModule
   freightBanks: FreightBanksModule
+  freightGroupBanks: FreightGroupBanksModule
   ports: PortsModule
   countries: CountriesModule
   containers: ContainersModule
@@ -289,6 +291,7 @@ export function useApiFactory() {
     refunds: new RefundModule(client),
     advancePayments: new AdvancePaymentModule(client),
     freightBanks: new FreightBanksModule(client),
+    freightGroupBanks: new FreightGroupBanksModule(client),
     supplierInvoices: new SupplierInvoicesModule(client),
     supplierReqPayments: new SupplierReqPaymentsModule(client),
     freeFormatInvoices: new FreeFormatInvoicesModule(client),
