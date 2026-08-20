@@ -158,7 +158,7 @@ const applyFilters = async () => {
 
     // Send request to the API
     const response = await $api.reports.getCustomerInvoices({
-      query: queryFilters,
+      query: flattenArraysToCommaSeparatedString(queryFilters),
     })
 
     // Download the Excel report
