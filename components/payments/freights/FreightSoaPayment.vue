@@ -99,7 +99,7 @@
                 <td>
                   <div class="flex flex-col gap-1">
                     <div class="flex gap-2 items-center">
-                      <div v-if="!isNotePending(note)">
+                      <div v-if="!isNotePending(note) && !note.deleted_at">
                         <v-tooltip location="top" text="Upload attachment">
                           <template v-slot:activator="{ props }">
                             <v-btn
@@ -125,7 +125,13 @@
                         >
                       </div>
                     </div>
-                    <v-chip v-if="!isNotePending(note)" size="x-small" color="warning" variant="tonal" class="w-fit">
+                    <v-chip
+                      v-if="!isNotePending(note)"
+                      size="x-small"
+                      :color="note.deleted_at ? 'white' : 'warning'"
+                      :variant="note.deleted_at ? 'outlined' : 'tonal'"
+                      class="w-fit"
+                    >
                       {{ ffNoteMissingThings(note) }}
                     </v-chip>
                   </div>
@@ -415,11 +421,12 @@ const searchFfGroups = async (params: any) => {
 
 const ffNoteMissingThings = (note: any) => {
   const missing = []
-  if (note.inbound === 1 && note.attachment == null) {
-    missing.push('No file attached')
-  }
   if (note.deleted_at != null) {
     missing.push('Cancelled')
+    return missing.join(', ')
+  }
+  if (note.inbound === 1 && note.attachment == null) {
+    missing.push('No file attached')
   }
   if (note.note_payment != null) {
     missing.push('Payment request')
