@@ -72,7 +72,8 @@ export const pagePermissions: PagePermissionEntry[] = [
   { path: '/air/import', permissions: [menuPermissions.AirImport] },
   { path: '/air/export', permissions: [menuPermissions.AirExport] },
 
-  { path: '/tracking', permissions: [menuPermissions.Tracking] },
+  { path: '/tracking/sea', permissions: [menuPermissions.Tracking] },
+  { path: '/tracking/air', permissions: [menuPermissions.Tracking] },
   { path: '/reports', permissions: [menuPermissions.Reports] },
 
   { path: '/configuration/airlines', permissions: [menuPermissions.ConfigurationAirlines] },

@@ -576,14 +576,35 @@
         </template>
       </v-list-group>
 
-      <v-list-item
-        v-if="canAccess(menuPermissions.Tracking)"
-        prepend-icon="mdi-radar"
-        title="Tracking"
-        to="/tracking"
-        rounded="xl"
-        class="mb-1"
-      ></v-list-item>
+      <v-list-group v-if="canAccess(menuPermissions.Tracking)" value="tracking">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            prepend-icon="mdi-radar"
+            :append-icon="getChevronIcon('tracking')"
+            title="Tracking"
+            rounded="xl"
+            class="mb-1"
+            :active="route.path.startsWith('/tracking')"
+          ></v-list-item>
+        </template>
+
+        <v-list-item
+          prepend-icon="mdi-ferry"
+          title="Maritime tracking"
+          to="/tracking/sea"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+
+        <v-list-item
+          prepend-icon="mdi-airplane"
+          title="Air tracking"
+          to="/tracking/air"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+      </v-list-group>
       <v-list-item
         v-if="canAccess(menuPermissions.Reports)"
         prepend-icon="mdi-finance"
@@ -877,6 +898,10 @@ const getDefaultOpenedGroups = (path: string) => {
 
   if (path.startsWith('/air')) {
     groups.push('air')
+  }
+
+  if (path.startsWith('/tracking')) {
+    groups.push('tracking')
   }
 
   if (path.startsWith('/maritime/import/demurrages') || path.startsWith('/invoices/lines/demurrage-detentions') || path.startsWith('/invoices/suppliers/cfdis/create')) {
