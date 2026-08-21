@@ -352,6 +352,92 @@
                       @click="openLiveTracking(item)"
                       title="Live Carrier Tracking"
                     ></v-btn>
+
+                    <v-tooltip location="right" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
+                      <template v-slot:activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          :color="item.applied_warranty_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
+                          icon="mdi-shield-check"
+                          variant="text"
+                          density="compact"
+                        ></v-btn>
+                      </template>
+                      <div v-if="item.applied_warranty_letter_info?.is_applied" class="flex flex-col gap-1 p-2 letter-text">
+                        <div class="font-bold text-sm">Carta Garantía Aplicada</div>
+                        <div class="flex gap-2">
+                          <v-chip size="x-small" :color="item.applied_warranty_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold w-fit" variant="flat">
+                            {{ item.applied_warranty_letter_info?.source === 'consignee' ? 'Global' : 'Específica' }}
+                          </v-chip>
+                          <v-chip v-if="item.applied_warranty_letter_info?.is_expired" size="x-small" color="error" class="font-bold w-fit" variant="flat">
+                            Vencida
+                          </v-chip>
+                        </div>
+                        <div class="text-xs max-w-[200px] leading-tight text-muted mt-1">
+                          {{ item.applied_warranty_letter_info?.source === 'consignee'
+                              ? 'Aplica para todos los embarques de este cliente.'
+                              : 'Aplica únicamente para este embarque.'
+                          }}
+                        </div>
+                        <div class="text-xs mt-2" v-if="item.applied_warranty_letter_info?.custom_agent !== 'N/A'">
+                          <strong>Agente:</strong> {{ item.applied_warranty_letter_info?.custom_agent }}
+                        </div>
+                        <div class="text-xs" v-if="item.applied_warranty_letter_info?.port !== 'N/A'">
+                          <strong>Puerto:</strong> {{ item.applied_warranty_letter_info?.port }}
+                        </div>
+                        <div class="text-xs" v-if="item.applied_warranty_letter_info?.valid_to !== 'N/A'">
+                          <strong>Vigencia:</strong> {{ item.applied_warranty_letter_info?.valid_from }} a {{ item.applied_warranty_letter_info?.valid_to }}
+                        </div>
+                        <div class="text-[10px] text-disabled-custom mt-2">
+                          Reg: {{ item.applied_warranty_letter_info?.registered_by }}<br />
+                          Fecha: {{ item.applied_warranty_letter_info?.registered_at }}
+                        </div>
+                      </div>
+                      <div v-else class="letter-text">Carta Garantía Pendiente</div>
+                    </v-tooltip>
+
+                    <v-tooltip location="right" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
+                      <template v-slot:activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          :color="item.applied_entrust_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
+                          icon="mdi-file-document-check"
+                          variant="text"
+                          density="compact"
+                        ></v-btn>
+                      </template>
+                      <div v-if="item.applied_entrust_letter_info?.is_applied" class="flex flex-col gap-1 p-2 letter-text">
+                        <div class="font-bold text-sm">Carta Encomienda Aplicada</div>
+                        <div class="flex gap-2">
+                          <v-chip size="x-small" :color="item.applied_entrust_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold w-fit" variant="flat">
+                            {{ item.applied_entrust_letter_info?.source === 'consignee' ? 'Global' : 'Específica' }}
+                          </v-chip>
+                          <v-chip v-if="item.applied_entrust_letter_info?.is_expired" size="x-small" color="error" class="font-bold w-fit" variant="flat">
+                            Vencida
+                          </v-chip>
+                        </div>
+                        <div class="text-xs max-w-[200px] leading-tight text-muted mt-1">
+                          {{ item.applied_entrust_letter_info?.source === 'consignee'
+                              ? 'Aplica para todos los embarques de este cliente.'
+                              : 'Aplica únicamente para este embarque.'
+                          }}
+                        </div>
+                        <div class="text-xs mt-2" v-if="item.applied_entrust_letter_info?.custom_agent !== 'N/A'">
+                          <strong>Agente:</strong> {{ item.applied_entrust_letter_info?.custom_agent }}
+                        </div>
+                        <div class="text-xs" v-if="item.applied_entrust_letter_info?.port !== 'N/A'">
+                          <strong>Puerto:</strong> {{ item.applied_entrust_letter_info?.port }}
+                        </div>
+                        <div class="text-xs" v-if="item.applied_entrust_letter_info?.valid_to !== 'N/A'">
+                          <strong>Vigencia:</strong> {{ item.applied_entrust_letter_info?.valid_from }} a {{ item.applied_entrust_letter_info?.valid_to }}
+                        </div>
+                        <div class="text-[10px] text-disabled-custom mt-2">
+                          Reg: {{ item.applied_entrust_letter_info?.registered_by }}<br />
+                          Fecha: {{ item.applied_entrust_letter_info?.registered_at }}
+                        </div>
+                      </div>
+                      <div v-else class="letter-text">Carta Encomienda Pendiente</div>
+                    </v-tooltip>
                   </div>
                 </td>
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
@@ -959,3 +1045,36 @@ onMounted(() => {
   getSeaImportReferences()
 })
 </script>
+
+<style>
+/* Tooltip theme */
+/* Light Mode (Default) */
+.letter-tooltip {
+  background-color: rgb(255, 255, 255) !important;
+  color: #0f172a !important;
+}
+.letter-tooltip .letter-text {
+  color: #0f172a !important;
+}
+.letter-tooltip .text-muted {
+  color: rgba(15, 23, 42, 0.7) !important;
+}
+.letter-tooltip .text-disabled-custom {
+  color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* Dark Mode (when html has .dark class) */
+.dark .letter-tooltip {
+  background-color: rgb(15, 23, 42) !important;
+  color: #f8fafc !important;
+}
+.dark .letter-tooltip .letter-text {
+  color: #f8fafc !important;
+}
+.dark .letter-tooltip .text-muted {
+  color: rgba(248, 250, 252, 0.7) !important;
+}
+.dark .letter-tooltip .text-disabled-custom {
+  color: rgba(248, 250, 252, 0.5) !important;
+}
+</style>
