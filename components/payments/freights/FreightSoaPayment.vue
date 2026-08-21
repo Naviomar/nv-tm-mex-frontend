@@ -1,68 +1,19 @@
 <template>
   <div>
     <v-card>
-      <v-card-title class="d-flex align-center justify-space-between">
-        <div class="d-flex align-center gap-2">
-          <span>Agents F.F. SOA - Credit / Debit notes</span>
-          <span class="text-caption text-medium-emphasis">Check and send notes to pay</span>
-        </div>
-        <v-btn size="small" variant="text" @click="showFilters = !showFilters">
-          <v-icon>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-          {{ showFilters ? 'Hide filters' : 'Show filters' }}
-        </v-btn>
+      <v-card-title class="d-flex align-center gap-2">
+        <span>Agents F.F. SOA - Credit / Debit notes</span>
+        <span class="text-caption text-medium-emphasis">Check and send notes to pay</span>
       </v-card-title>
       <v-card-text>
-        <div v-show="showFilters" class="mb-2" @keyup.enter="onClickFilters">
-          <!-- FUTURE: Party type selector (FF / Consignee) hidden until Consignee SOA payment flow is fully enabled.
-               When re-enabling, restore the partyTypeFilter autocomplete, the v-if guards on FF fields, and the
-               consignee AGlobalSearch block. Also restore the consignee branch in sendToPay / getFreightSoa validation.
-          -->
-          <div class="grid grid-cols-3 md:grid-cols-6 gap-2 items-center">
-            <div class="col-span-1">
-              <v-autocomplete
-                v-model="filters.freightId"
-                clearable
-                :items="freightForwarders"
-                item-title="name"
-                item-value="id"
-                density="compact"
-                label="Freight forwarder"
-              />
-            </div>
-            <div class="col-span-1">
-              <AGlobalSearch
-                v-model="filters.freightGroupId"
-                :onSearch="searchFfGroups"
-                validate-key="freightGroupId"
-                label="Freight Forwarder Group"
-              />
-            </div>
-            <div class="col-span-1">
-              <v-text-field v-model="filters.startDate" clearable type="date" density="compact" label="Start date" />
-            </div>
-            <div class="col-span-1">
-              <v-text-field v-model="filters.endDate" clearable type="date" density="compact" label="End date" />
-            </div>
-            <div class="col-span-1">
-              <v-autocomplete
-                v-model="filters.currencyId"
-                clearable
-                :items="currencies"
-                item-title="name"
-                item-value="id"
-                density="compact"
-                label="Currency"
-              />
-            </div>
-            <div class="col-span-1 flex gap-2">
-              <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-              <v-btn size="small" color="primary" @click="getFreightSoa"> Search </v-btn>
-            </div>
-            <div v-if="false" class="col-span-1">
-              <v-text-field v-model="filters.folio" clearable density="compact" label="# Note" />
-            </div>
-          </div>
-        </div>
+        <FreightSoaFilters
+          :filters="filters"
+          :freight-forwarders="freightForwarders"
+          :currencies="currencies"
+          :search-ff-groups="searchFfGroups"
+          @search="getFreightSoa"
+          @clear="clearFilters"
+        />
 
         <div>
           <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -139,7 +90,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(note, index) in creditNotes" :key="`note-${index}`" :class="columnClass(note)">
+              <tr
+                v-for="(note, index) in creditNotes"
+                :key="`note-${index}`"
+                :class="columnClass(note)"
+                v-memo="[note.checked_at, note.notes, note.attachment, checkedSignature, runningBalances[index]]"
+              >
                 <td>
                   <div class="flex flex-col gap-1">
                     <div class="flex gap-2 items-center">
@@ -226,7 +182,7 @@
                 <td>
                   {{ getDebitAmountLogic(note) }}
                 </td>
-                <td class="bg-orange-500!">{{ formatToCurrency(sumUpToIndex(index)) }}</td>
+                <td class="bg-orange-500!">{{ formatToCurrency(runningBalances[index]) }}</td>
                 <td>
                   <div v-if="!note.serviceable">
                     <v-chip size="small" color="primary"> No Ref# linked </v-chip>
@@ -375,7 +331,6 @@ const router = useRouter()
 const loadingStore = useLoadingStore()
 const clipboard = useCopyToClipboard()
 
-const showFilters = ref(true)
 const partyTypeFilter = ref<string | null>(null)
 
 const onPartyTypeFilterChange = () => {
@@ -536,16 +491,20 @@ const maxCreditNotesFound = computed(() => {
   return creditNotes.value.length >= 2000
 })
 
-const sumUpToIndex = (index: number | string) => {
-  const idx = typeof index === 'string' ? parseInt(index, 10) : index
+const runningBalances = computed(() => {
   let sum = 0
-  for (let i = 0; i <= idx; i++) {
-    if (isNotePending(creditNotes.value[i])) {
-      sum += getRealAmount(creditNotes.value[i])
+  return creditNotes.value.map((note: any) => {
+    if (isNotePending(note)) {
+      sum += getRealAmount(note)
     }
-  }
-  return sum
-}
+    return sum
+  })
+})
+
+// Signature of every note's checked state, so table rows can skip re-rendering
+// (via v-memo) on unrelated changes (e.g. toggling the filters panel) while
+// still updating whenever a checkbox changes the running balance for later rows.
+const checkedSignature = computed(() => creditNotes.value.map((note: any) => (note.checked ? '1' : '0')).join(''))
 
 const getRealAmount = (note: any) => {
   // if From Agent and Debit rest amount
@@ -899,10 +858,6 @@ const sendToPay = async () => {
   }
 }
 
-const onClickFilters = async () => {
-  await getFreightSoa()
-}
-
 const getFreightSoa = async () => {
   try {
     // if not freightId, freightGroupId or consigneeId
@@ -989,6 +944,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.catalog-table-wrapper {
+  /* Isolates this (potentially huge, table-layout:auto) table from layout
+     recalculation whenever something outside it changes size — e.g. toggling
+     the filters panel above it — which was otherwise forcing the browser to
+     re-run the auto column-width algorithm over every cell on every toggle. */
+  contain: layout paint;
+}
 .soa-table {
   width: auto !important;
 }
