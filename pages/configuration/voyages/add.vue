@@ -101,8 +101,9 @@
                 <tr
                   v-for="(item, idx) in trackingVoyages"
                   :key="`tracking-dlg-${idx}`"
-                  class="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/35 transition-colors duration-200 cursor-pointer"
-                  @click="selectTrackingVoyage(item)"
+                  class="transition-colors duration-200"
+                  :class="!item.already_registered ? 'hover:bg-zinc-50/80 dark:hover:bg-zinc-900/35 cursor-pointer' : 'opacity-80 bg-zinc-50/50 dark:bg-zinc-900/20'"
+                  @click="!item.already_registered ? selectTrackingVoyage(item) : null"
                 >
                   <!-- Barco -->
                   <td class="py-3 px-4">
@@ -121,6 +122,9 @@
                   <!-- ETA -->
                   <td class="py-3 px-4 font-mono">
                     <span v-if="item.eta" class="text-zinc-700 dark:text-zinc-300 font-semibold">{{ item.eta }}</span>
+                    <span v-else-if="item.already_registered" class="inline-flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded border border-blue-200/30 font-bold">
+                      <v-icon size="10">mdi-account-check</v-icon> Creado por {{ item.creator_name || 'Usuario' }}
+                    </span>
                     <span v-else class="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-200/30 font-bold">
                       <v-icon size="10">mdi-clock-alert-outline</v-icon> Requerido
                     </span>
@@ -147,14 +151,16 @@
                   </td>
                   
                   <!-- Acciones -->
-                  <td class="py-3 px-4 text-right" @click.stop>
+                  <td class="py-3 px-4 text-right">
                     <button
-                      class="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-[#09090b] hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all duration-200 flex items-center gap-1 inline-flex border border-zinc-800 dark:border-transparent"
-                      @click="selectTrackingVoyage(item)"
+                      v-if="!item.already_registered"
+                      type="button"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold rounded-lg shadow-sm hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900/50 dark:focus:ring-white/50"
+                      @click.stop="selectTrackingVoyage(item)"
                     >
-                      <v-icon size="12">mdi-arrow-down-bold</v-icon>
-                      Cargar
+                      <v-icon size="14">mdi-download</v-icon> Cargar
                     </button>
+                    <span v-else class="text-[10px] font-bold text-zinc-400">Ya Registrado</span>
                   </td>
                 </tr>
               </tbody>
