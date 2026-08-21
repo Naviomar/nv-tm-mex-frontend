@@ -63,6 +63,18 @@ const schemaEdit = toTypedSchema(
     tracker_ref: yup.object().nullable(),
     tracker_sync_alerts: yup.array().nullable(),
     rebate_total_amount: yup.number().nullable(),
+    applied_warranty_letter_info: yup.object().shape({
+      is_applied: yup.boolean(),
+      source: yup.string(),
+      registered_by: yup.string(),
+      registered_at: yup.string()
+    }).nullable(),
+    applied_entrust_letter_info: yup.object().shape({
+      is_applied: yup.boolean(),
+      source: yup.string(),
+      registered_by: yup.string(),
+      registered_at: yup.string()
+    }).nullable(),
   })
 )
 
