@@ -1,15 +1,23 @@
 <template>
   <div>
     <v-card>
-      <v-card-title>Agents F.F. SOA - Credit / Debit notes</v-card-title>
-      <v-card-subtitle>Check and send notes to pay</v-card-subtitle>
+      <v-card-title class="d-flex align-center justify-space-between">
+        <div class="d-flex align-center gap-2">
+          <span>Agents F.F. SOA - Credit / Debit notes</span>
+          <span class="text-caption text-medium-emphasis">Check and send notes to pay</span>
+        </div>
+        <v-btn size="small" variant="text" @click="showFilters = !showFilters">
+          <v-icon>{{ showFilters ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          {{ showFilters ? 'Hide filters' : 'Show filters' }}
+        </v-btn>
+      </v-card-title>
       <v-card-text>
-        <div class="mb-2" @keyup.enter="onClickFilters">
+        <div v-show="showFilters" class="mb-2" @keyup.enter="onClickFilters">
           <!-- FUTURE: Party type selector (FF / Consignee) hidden until Consignee SOA payment flow is fully enabled.
                When re-enabling, restore the partyTypeFilter autocomplete, the v-if guards on FF fields, and the
                consignee AGlobalSearch block. Also restore the consignee branch in sendToPay / getFreightSoa validation.
           -->
-          <div class="grid grid-cols-3 md:grid-cols-5 gap-2">
+          <div class="grid grid-cols-3 md:grid-cols-6 gap-2 items-center">
             <div class="col-span-1">
               <v-autocomplete
                 v-model="filters.freightId"
@@ -46,22 +54,31 @@
                 label="Currency"
               />
             </div>
-            <div v-if="false" class="col-span-1">
-              <v-text-field v-model="filters.folio" clearable density="compact" label="# Note" />
-            </div>
-          </div>
-          <div class="grid grid-cols-1 mt-1">
-            <div class="flex gap-2">
+            <div class="col-span-1 flex gap-2">
               <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
               <v-btn size="small" color="primary" @click="getFreightSoa"> Search </v-btn>
+            </div>
+            <div v-if="false" class="col-span-1">
+              <v-text-field v-model="filters.folio" clearable density="compact" label="# Note" />
             </div>
           </div>
         </div>
 
         <div>
-          <div class="flex gap-2 mb-2">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
             <v-btn color="primary" size="x-small" variant="tonal" @click="checkAll"> Check all </v-btn>
             <v-btn color="primary" size="x-small" variant="tonal" @click="uncheckAll"> Uncheck all </v-btn>
+
+            <span class="font-bold text-xs ml-2">Labels:</span>
+            <v-chip color="orange" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-yellow-600 mr-1"></span>Check note</v-chip
+            >
+            <v-chip color="blue" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span>Payment request</v-chip
+            >
+            <v-chip color="red" size="x-small"
+              ><span class="inline-block w-3 h-3 bg-red-700 mr-1"></span>Cancelled note</v-chip
+            >
           </div>
 
           <div v-if="hasCheckedNotes" class="flex gap-2 mb-2 border p-1">
@@ -78,19 +95,6 @@
             <v-btn color="green" size="small" variant="elevated" @click="sendToPay">
               Request payment for {{ countCheckedNotes }} notes
             </v-btn>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2 mb-2">
-            <span class="font-bold text-xs">Labels:</span>
-            <v-chip color="orange" size="x-small"
-              ><span class="inline-block w-3 h-3 bg-yellow-600 mr-1"></span>Check note</v-chip
-            >
-            <v-chip color="blue" size="x-small"
-              ><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span>Payment request</v-chip
-            >
-            <v-chip color="red" size="x-small"
-              ><span class="inline-block w-3 h-3 bg-red-700 mr-1"></span>Cancelled note</v-chip
-            >
           </div>
 
           <v-alert v-if="maxCreditNotesFound" type="warning" density="compact">
@@ -137,39 +141,37 @@
             <tbody>
               <tr v-for="(note, index) in creditNotes" :key="`note-${index}`" :class="columnClass(note)">
                 <td>
-                  <div class="flex gap-2 items-center">
-                    <div v-if="!isNotePending(note)">
-                      <v-tooltip location="top">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" class="ml-1 cursor-pointer">mdi-alert-outline</v-icon>
-                        </template>
-                        <div>Missing:</div>
-                        <div>{{ ffNoteMissingThings(note) }}</div>
-                      </v-tooltip>
-                      <v-tooltip location="top" text="Upload attachment">
-                        <template v-slot:activator="{ props }">
-                          <v-btn
-                            v-bind="props"
-                            icon
-                            size="small"
-                            variant="text"
-                            color="primary"
-                            @click="openUploadDialog(note)"
-                          >
-                            <v-icon>mdi-paperclip</v-icon>
-                          </v-btn>
-                        </template>
-                      </v-tooltip>
+                  <div class="flex flex-col gap-1">
+                    <div class="flex gap-2 items-center">
+                      <div v-if="!isNotePending(note)">
+                        <v-tooltip location="top" text="Upload attachment">
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              v-bind="props"
+                              icon
+                              size="small"
+                              variant="text"
+                              color="primary"
+                              @click="openUploadDialog(note)"
+                            >
+                              <v-icon>mdi-paperclip</v-icon>
+                            </v-btn>
+                          </template>
+                        </v-tooltip>
+                      </div>
+                      <div v-if="isNotePending(note)">
+                        <v-checkbox v-model="note.checked" density="compact" hide-details />
+                      </div>
+                      <div v-if="!note.deleted_at">
+                        <v-icon v-if="note.checked_at == null" color="orange">mdi-lock-open-outline</v-icon>
+                        <v-icon v-if="note.checked_at != null" color="green" @click="confirmUnlockNote(note)"
+                          >mdi-lock-outline</v-icon
+                        >
+                      </div>
                     </div>
-                    <div v-if="isNotePending(note)">
-                      <v-checkbox v-model="note.checked" density="compact" hide-details />
-                    </div>
-                    <div v-if="!note.deleted_at">
-                      <v-icon v-if="note.checked_at == null" color="orange">mdi-lock-open-outline</v-icon>
-                      <v-icon v-if="note.checked_at != null" color="green" @click="confirmUnlockNote(note)"
-                        >mdi-lock-outline</v-icon
-                      >
-                    </div>
+                    <v-chip v-if="!isNotePending(note)" size="x-small" color="warning" variant="tonal" class="w-fit">
+                      {{ ffNoteMissingThings(note) }}
+                    </v-chip>
                   </div>
                 </td>
                 <td v-if="hasCheckedNotes">
@@ -178,7 +180,7 @@
                     <span class="text-xs text-gray-500 dark:text-white">Observations</span>
                   </div>
                 </td>
-                <td class="whitespace-nowrap">
+                <td class="max-w-[110px] whitespace-normal! break-words!">
                   {{ getVesselFromServiceable(note) }}
                 </td>
                 <td class="whitespace-nowrap">
@@ -187,13 +189,23 @@
                   </UserInfoBadge>
                 </td>
                 <td class="whitespace-nowrap font-bold">
-                  <div class="flex flex-col gap-1">
-                    <v-chip color="blue" size="small" @click="viewFfNote(note.id)">
-                      <div class="flex gap-1">
-                        <v-icon size="small">mdi-eye-outline</v-icon>
-                        #{{ note.folio }}
-                      </div>
-                    </v-chip>
+                  <div class="flex flex-col gap-1 w-full">
+                    <div class="flex items-center gap-1 w-full">
+                      <v-chip color="blue" size="small" class="flex-1" @click="viewFfNote(note.id)">
+                        <div class="flex gap-1 w-full justify-center">
+                          <v-icon size="small">mdi-eye-outline</v-icon>
+                          #{{ note.folio }}
+                        </div>
+                      </v-chip>
+                      <v-icon
+                        size="small"
+                        class="cursor-pointer"
+                        title="Copy note #"
+                        @click.stop="clipboard.copyToClipboard(String(note.folio))"
+                      >
+                        mdi-content-copy
+                      </v-icon>
+                    </div>
                     <v-chip
                       v-if="note.note_payment != null"
                       color="blue"
@@ -224,9 +236,9 @@
                   </div>
                 </td>
                 <td>{{ getMasterBlFromServiceable(note) }}</td>
-                <td class="whitespace-nowrap">{{ note.serviceable?.consignee?.name }}</td>
+                <td class="max-w-[110px] whitespace-normal! break-words!">{{ note.serviceable?.consignee?.name }}</td>
 
-                <td class="whitespace-nowrap">
+                <td class="max-w-[100px] whitespace-normal! break-words!">
                   {{ note.forwarder?.name }}
                   <!-- FUTURE: When Consignee notes are enabled in SOA, restore party chip + name:
                   <v-chip size="x-small" :color="note.party_type?.includes('Consignee') ? 'purple' : 'teal'" class="mr-1">
@@ -235,7 +247,7 @@
                   {{ note.party?.name ?? note.forwarder?.name }}
                   -->
                 </td>
-                <td class="whitespace-nowrap">{{ note.forwarder?.freight_group?.name }}</td>
+                <td class="max-w-[100px] whitespace-normal! break-words!">{{ note.forwarder?.freight_group?.name }}</td>
 
                 <td class="whitespace-nowrap">
                   {{ note.inbound == 1 ? 'From Agent' : 'From TM' }} / {{ note.type === 'C' ? 'Credit' : 'Debit' }}
@@ -258,11 +270,15 @@
                   {{ getTotalContainersByType(note.serviceable, containerType) }}
                 </td>
 
-                <td>
-                  <div v-if="note.deleted_at" class="flex gap-2">
-                    <v-icon color="">mdi-delete</v-icon>
-                    <span>Notes: {{ note.cancelled_reason }}</span>
-                  </div>
+                <td class="max-w-[220px] whitespace-normal! break-words!">
+                  <v-tooltip v-if="note.deleted_at" location="top" :text="`Notes: ${note.cancelled_reason}`">
+                    <template v-slot:activator="{ props }">
+                      <div v-bind="props" class="flex gap-2 items-start cursor-help">
+                        <v-icon color="red">mdi-delete</v-icon>
+                        <span class="line-clamp-2">Notes: {{ note.cancelled_reason }}</span>
+                      </div>
+                    </template>
+                  </v-tooltip>
                   <div v-if="!note.deleted_at">
                     <v-icon color="green">mdi-check</v-icon>
                   </div>
@@ -300,6 +316,34 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="noteViewDialog.show" fullscreen>
+      <v-card>
+        <v-toolbar color="primary">
+          <v-btn icon @click="noteViewDialog.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>F.F. Note #{{ noteViewDialog.noteId }}</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <FfAgentInvoiceNoteDetails v-if="noteViewDialog.show" :id="String(noteViewDialog.noteId)" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="paymentViewDialog.show" fullscreen>
+      <v-card>
+        <v-toolbar color="primary">
+          <v-btn icon @click="paymentViewDialog.show = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>Payment Request #{{ paymentViewDialog.paymentId }}</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <FreightRequestPaymentDetails v-if="paymentViewDialog.show" :id="String(paymentViewDialog.paymentId)" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="uploadDialog.show" max-width="500">
       <v-card>
         <v-card-title>Upload attachment for note #{{ uploadNote?.folio }}</v-card-title>
@@ -329,7 +373,9 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
 const loadingStore = useLoadingStore()
+const clipboard = useCopyToClipboard()
 
+const showFilters = ref(true)
 const partyTypeFilter = ref<string | null>(null)
 
 const onPartyTypeFilterChange = () => {
@@ -362,6 +408,8 @@ const pdfViewer = ref<any>(null)
 const pdfViewerDialog = ref<any>({ show: false })
 const uploadDialog = ref<any>({ show: false })
 const uploadNote = ref<any>({})
+const noteViewDialog = ref<any>({ show: false, noteId: null })
+const paymentViewDialog = ref<any>({ show: false, paymentId: null })
 
 const openUploadDialog = (note: any) => {
   uploadNote.value = note
@@ -387,12 +435,12 @@ const setUploadFile = (file: any) => {
 const columnClass = (note: any) => {
   if (note.note_payment != null) {
     return {
-      'bg-blue-100': true,
+      'bg-blue-600/10! dark:bg-blue-600/25!': true,
     }
   }
   return {
     'dark:hover:bg-gray-700 hover:bg-slate-300': true,
-    'bg-red-100! dark:bg-red-900!': note.deleted_at,
+    'bg-red-700/30! dark:bg-red-700/45!': note.deleted_at,
   }
 }
 
@@ -413,7 +461,7 @@ const searchFfGroups = async (params: any) => {
 const ffNoteMissingThings = (note: any) => {
   const missing = []
   if (note.inbound === 1 && note.attachment == null) {
-    missing.push('Attachment')
+    missing.push('No file attached')
   }
   if (note.deleted_at != null) {
     missing.push('Cancelled')
@@ -534,11 +582,11 @@ const getServiceType = (item: any) => {
 }
 
 const viewFfReqPayment = (notePayment: any) => {
-  router.push(`/payments/agents/payments/view-${notePayment.ff_payment_id}`)
+  paymentViewDialog.value = { show: true, paymentId: notePayment.ff_payment_id }
 }
 
 const viewFfNote = (noteId: number) => {
-  router.push(`/invoices/ffagents/notes/view-${noteId}`)
+  noteViewDialog.value = { show: true, noteId }
 }
 
 const getVesselFromServiceable = (note: any) => {
@@ -560,6 +608,10 @@ const getVesselFromServiceable = (note: any) => {
   }
 }
 
+const formatDateOnly = (dateString: string) => {
+  return formatDateString(dateString).replace(/\s+\d{1,2}:\d{2}\s+[AP]M$/, '')
+}
+
 const getEtdDate = (note: any) => {
   if (!note.serviceable) {
     return 'No service linked'
@@ -567,14 +619,14 @@ const getEtdDate = (note: any) => {
   const serviceType = note.serviceable_type
   if (serviceType.includes('Referencia')) {
     if (note.serviceable?.etd_date) {
-      return formatDateString(note.serviceable?.etd_date)
+      return formatDateOnly(note.serviceable?.etd_date)
     }
     return 'No ETD'
   }
   if (serviceType.includes('AirReference')) {
     const firstTransit = note.serviceable?.transits?.[0]
     if (firstTransit?.departure_date) {
-      return formatDateString(firstTransit.departure_date)
+      return formatDateOnly(firstTransit.departure_date)
     }
     return 'No ETD'
   }
@@ -937,6 +989,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.soa-table {
+  width: auto !important;
+}
+.soa-table :deep(table) {
+  width: auto !important;
+}
 .soa-table :deep(td),
 .soa-table :deep(th) {
   font-size: 0.75rem !important;
