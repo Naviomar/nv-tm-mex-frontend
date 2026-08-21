@@ -343,6 +343,15 @@
                       density="compact"
                       @click="viewDetails(item)"
                     ></v-btn>
+                    <v-btn
+                      v-if="isLiveTrackable(item)"
+                      variant="text"
+                      icon="mdi-earth"
+                      :color="getLiveCarrierColor(item)"
+                      density="compact"
+                      @click="openLiveTracking(item)"
+                      title="Live Carrier Tracking"
+                    ></v-btn>
                   </div>
                 </td>
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
@@ -351,6 +360,15 @@
                   </UserInfoBadge>
                   <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip><br>
                   <v-alert v-if="item.reason_deleted" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold" v-html="splitText(item.reason_deleted)"></v-alert>
+                  <v-chip
+                    v-if="isLiveTrackable(item)"
+                    size="x-small"
+                    :color="getLiveCarrierColor(item)"
+                    variant="elevated"
+                    class="font-bold"
+                  >
+                    {{ getLiveCarrierLabel(item) }}
+                  </v-chip>
                 </td>
                 <td v-else-if="col.key === 'masterBls'">
                   <div class="flex flex-col gap-1">
@@ -464,12 +482,20 @@
         />
       </v-card-text>
     </v-card>
+
+    <PremiumLiveTrackingModal
+      v-if="showLiveTrackingModal"
+      v-model="showLiveTrackingModal"
+      :referencia-id="selectedReferenciaForTracking?.id"
+      :referencia="selectedReferenciaForTracking"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { sourceSystems, deletedStatus } from '~/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
+import PremiumLiveTrackingModal from '@/components/tracking/PremiumLiveTrackingModal.vue'
 
 const { $api } = useNuxtApp()
 const router = useRouter()
@@ -671,6 +697,35 @@ provide('catalogBackUrl', backUrl)
 
 const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
+}
+
+const showLiveTrackingModal = ref(false)
+const selectedReferenciaForTracking = ref<any>(null)
+
+const isLiveTrackable = (item: any) => {
+  if (!item || !item.line) return false
+  const name = (item.line.name || '').toLowerCase()
+  const comm = (item.line.commercial_name || '').toLowerCase()
+  const code = (item.line.code || '').toUpperCase()
+
+  return (
+    name.includes('hapag') || comm.includes('hapag') || name.includes('lloyd') || code === 'HLCU' || code === 'HLAG'
+  )
+}
+
+const getLiveCarrierLabel = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'Live COSCO' : 'Live Hapag'
+}
+
+const getLiveCarrierColor = (item: any) => {
+  const name = (item.line?.name || '').toLowerCase()
+  return name.includes('cosco') ? 'teal-darken-1' : 'deep-orange-darken-1'
+}
+
+const openLiveTracking = (item: any) => {
+  selectedReferenciaForTracking.value = item
+  showLiveTrackingModal.value = true
 }
 
 interface SearchParams {
