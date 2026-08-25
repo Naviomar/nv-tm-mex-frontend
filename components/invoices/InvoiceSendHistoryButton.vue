@@ -110,17 +110,18 @@ const fetchHistory = async () => {
   }
 }
 
-// Se resuelve una sola vez al montar la fila (decide ícono vs. "NOT SENT");
-// abrir el modal reutiliza el mismo resultado en vez de volver a pedirlo.
+// Se resuelve al montar la fila solo para decidir ícono vs. "NOT SENT" antes
+// de que el usuario interactúe. Abrir el modal siempre vuelve a pedir el
+// historial (no reutiliza este resultado): puede haber envíos manuales
+// posteriores al montaje (p.ej. desde la pantalla de detalle) que este
+// primer fetch no vio.
 onMounted(fetchHistory)
 
 const open = async () => {
   dialogVisible.value = true
-  if (hasHistory.value === null) {
-    loading.value = true
-    await fetchHistory()
-    loading.value = false
-  }
+  loading.value = true
+  await fetchHistory()
+  loading.value = false
 }
 
 const docType = (log: IMailLog): 'proforma' | 'invoice' | 'cfdi' | null => {
