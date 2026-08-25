@@ -139,7 +139,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(bankMovement, index) in bankMovements.data" :key="`bofa-${index}`" class="hover:bg-yellow-500/25">
+          <tr
+            v-for="(bankMovement, index) in bankMovements.data"
+            :key="`bofa-${index}`"
+            :class="['hover:bg-yellow-500/25', getRowStatusClass(bankMovement)]"
+          >
             <td>
               <div class="flex flex-col items-center gap-2 my-4">
                 <v-btn
@@ -224,7 +228,7 @@
             <td class="whitespace-nowrap">
               {{ getCurrencyName(bankMovement.bank_account?.currency_id) }} {{ formatToCurrency(bankMovement.amount) }}
             </td>
-            <td class="whitespace-nowrap bg-yellow-500/50">
+            <td class="whitespace-nowrap bg-yellow-200!">
               {{ getCurrencyName(bankMovement.bank_account?.currency_id) }}
               {{ formatToCurrency(bankMovement.amount_available) }}
             </td>
@@ -478,6 +482,15 @@ const clearFilters = async () => {
 
 const isUsable = (bankMovement: any) => {
   return bankMovement.is_usable == 1
+}
+
+const getRowStatusClass = (bankMovement: any) => {
+  const amount = Math.abs(bankMovement.amount || 0)
+  const available = Math.abs(bankMovement.amount_available || 0)
+  if (amount <= 0) return ''
+  if (available <= 0) return 'bg-green-50!'
+  if (available < amount) return 'bg-orange-50!'
+  return ''
 }
 
 const onClickPagination = async (page: number) => {
