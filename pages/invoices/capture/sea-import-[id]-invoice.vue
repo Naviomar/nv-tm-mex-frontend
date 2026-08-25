@@ -182,11 +182,6 @@ const hasInvoiceWm = computed(() => {
   return referencia.value.invoice_wms_all.length > 0
 })
 
-const hasUnlinkedCharges = computed(() => {
-  if (!referencia.value) return false
-  return referencia.value.charges.some((charge: any) => !charge.invoice_charge)
-})
-
 const unlinkedCharges = computed(() => {
   if (!referencia.value) return []
   const refCharges = referencia.value.charges.filter((charge: any) => !charge.invoice_charge)
@@ -196,6 +191,8 @@ const unlinkedCharges = computed(() => {
 
   return [...refCharges, ...sellCharges]
 })
+
+const hasUnlinkedCharges = computed(() => unlinkedCharges.value.length > 0)
 
 const canCreateInvoice = computed(() => {
   return unlinkedCharges.value.length > 0
