@@ -574,7 +574,7 @@ const getCustomerCreditNote = async () => {
     // una nota de crédito fiscal no funciona así y el backend ya rechaza el guardado
     // — se redirige antes de mostrar un formulario que de todos modos no serviría.
     if (response?.is_fiscal) {
-      snackbar.add({ type: 'warning', text: 'Esta nota de crédito es fiscal y no se edita por aquí. Usa las acciones de aplicar/reembolsar desde su detalle.' })
+      snackbar.add({ type: 'warning', text: 'This credit note is fiscal and cannot be edited here. Use the apply/refund actions from its detail page.' })
       router.replace(`/invoices/search/credit-notes/view-${props.id}`)
       return
     }

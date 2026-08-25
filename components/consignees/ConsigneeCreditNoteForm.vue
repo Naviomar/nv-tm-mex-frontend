@@ -13,9 +13,9 @@
               <v-btn v-if="hasPermission('customer-credit-notes-create-fiscal')" value="fiscal">Fiscal (Overpayment)</v-btn>
             </v-btn-toggle>
             <v-alert v-if="cnMode === 'fiscal'" density="compact" type="info" variant="outlined" class="mt-2">
-              Genera una nota de crédito fiscal (CFDI Egreso) por un sobrepago sobre una factura ya liquidada.
-              El monto queda como saldo a favor — no reduce ningún cargo de la factura seleccionada. Después de
-              crearla, deberás subir el XML/PDF ya timbrado desde el detalle de la nota.
+              Generates a fiscal credit note (CFDI Egreso) for an overpayment on an already-settled invoice.
+              The amount becomes a saldo a favor (credit balance) — it does not reduce any charge on the
+              selected invoice. After creating it, you'll need to upload the stamped XML/PDF from the note's detail page.
             </v-alert>
           </v-card-text>
         </v-card>

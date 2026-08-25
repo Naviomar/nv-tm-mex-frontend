@@ -409,7 +409,7 @@ const searchCreditNoteBalances = async () => {
           currency_id: cn.currency_id,
           created_at: cn.created_at,
           folio: cn.folio,
-          charge: { name: 'Saldo a favor - Nota de crédito fiscal' },
+          charge: { name: 'Credit balance - Fiscal credit note' },
           serviceable: null,
           __isCreditNote: true,
           selected: false,
