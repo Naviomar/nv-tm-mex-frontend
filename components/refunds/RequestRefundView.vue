@@ -154,7 +154,7 @@
                     </div>
                   </td>
                   <td>
-                    <div v-if="refundPayment.payable_type?.includes('CreditNote')">Saldo a favor (sobrepago)</div>
+                    <div v-if="refundPayment.payable_type?.includes('CreditNote')">Credit balance (overpayment)</div>
                     <div v-else>{{ refundPayment.payable?.charge?.name }}</div>
                     <div v-if="refundPayment.payable?.container">
                       <div class="text-xs">Container: {{ refundPayment.payable.container.container_number }}</div>
