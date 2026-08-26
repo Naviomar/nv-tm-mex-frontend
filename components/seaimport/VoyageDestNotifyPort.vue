@@ -209,7 +209,7 @@ const updateEtaClick = async (values: any) => {
 
     await $api.voyages.notifyPortByDestinationId(route.params.id!.toString(), body)
     snackbar.add({ type: 'success', text: 'Notification sent.' })
-    router.push('/configuration/voyages')
+    router.push({ path: '/configuration/voyages', query: { notified: route.params.id!.toString() } })
   } catch (e) {
     console.error(e)
   } finally {

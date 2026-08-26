@@ -130,8 +130,8 @@
           </thead>
           <tbody>
             <tr
-              v-for="(voyageDest, index) in voyageDestinations.data"
-              :key="`voyage-${index}`"
+              v-for="voyageDest in voyageDestinations.data"
+              :key="voyageDest.id"
               :class="{
                 '!bg-red-100 dark:!bg-red-900/80 dark:text-white opacity-70': voyageDest.deleted_at, // Deleted/cancelled — takes priority over import/export coloring
                 '!bg-orange-100 dark:!bg-orange-900/80 dark:text-white': !voyageDest.deleted_at && voyageDest.voyage?.impoExpo === 'I', // Import (I)
@@ -243,7 +243,10 @@
                   @click="goToNotifyPort(voyageDest)"
                   >Notify Port</v-btn
                 >
-                <VoyageNotifyPortHistory :voyage-dest-id="voyageDest.id" />
+                <VoyageNotifyPortHistory
+                  :voyage-dest-id="voyageDest.id"
+                  :just-sent="String(voyageDest.id) === justNotifiedId"
+                />
               </td>
               <td>
                 <div class="flex items-center gap-1">
@@ -276,6 +279,11 @@ const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
+const route = useRoute()
+// Al volver del formulario de Notify Port, marca esa fila para que su
+// historial haga polling corto en vez de mostrar "sin historial" mientras
+// el envío (encolado, async) todavía no se refleja en mail_logs.
+const justNotifiedId = computed(() => (route.query.notified ? String(route.query.notified) : null))
 const loadingStore = useLoadingStore()
 
 // For export voyages this checkpoint date is operationally the ETD (departure),
