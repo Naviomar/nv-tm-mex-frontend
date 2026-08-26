@@ -144,6 +144,7 @@
               <tr>
                 <th id="mbl-name">Name</th>
                 <th id="mbl-type">Type</th>
+                <th id="mbl-consignee">Consignee</th>
                 <th id="mbl-comments">Comments</th>
                 <th id="mbl-updated-at">Updated at</th>
               </tr>
@@ -152,6 +153,7 @@
               <tr v-for="(mblLog, index) in masterBlDetails.masterBl.logs" :key="`mbl-log-${index}`">
                 <td>{{ mblLog.name }}</td>
                 <td>{{ mblLog.type }}</td>
+                <td>{{ mblLog.consignee_mbl?.name }}</td>
                 <td>{{ mblLog.comments }}</td>
                 <td>
                   <UserInfoBadge :item="mblLog">
