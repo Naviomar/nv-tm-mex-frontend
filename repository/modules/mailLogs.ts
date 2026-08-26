@@ -60,6 +60,10 @@ class MailLogsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/invoice-history/${invoiceId}`, fetchOptions)
   }
 
+  async voyageDestinationHistory(voyageDestinationId: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/voyage-destination-history/${voyageDestinationId}`, fetchOptions)
+  }
+
   async exportExcel(params?: Record<string, any>, fetchOptions?: FetchOptions) {
     const query = params ? '?' + new URLSearchParams(params).toString() : ''
     return this.call('GET', `${this.RESOURCE}/export${query}`, {

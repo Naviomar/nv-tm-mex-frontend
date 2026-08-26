@@ -243,6 +243,7 @@
                   @click="goToNotifyPort(voyageDest)"
                   >Notify Port</v-btn
                 >
+                <VoyageNotifyPortHistory :voyage-dest-id="voyageDest.id" />
               </td>
               <td>
                 <div class="flex items-center gap-1">
