@@ -236,12 +236,28 @@
                     <span class="text-sm text-gray-600">Available balance: </span>
                     <span class="font-bold">{{ formatToCurrency(bankMovement.amount_available) }}</span>
                   </div>
+                  <v-text-field
+                    v-model.number="withdrawalCommissionAmount"
+                    type="number"
+                    density="compact"
+                    label="Commission amount"
+                    style="max-width: 200px"
+                    :rules="[
+                      (v: any) => !!v || 'Required',
+                      (v: any) => v >= 0.01 || 'Must be at least $0.01',
+                      (v: any) => v <= bankMovement.amount_available || 'Exceeds available balance',
+                    ]"
+                    min="0.01"
+                    :max="bankMovement.amount_available"
+                    step="0.01"
+                  />
                   <v-btn
                     color="orange-darken-2"
                     :loading="loadingStore.loading"
-                    @click="confirmApplyCommission"
+                    :disabled="!isWithdrawalCommissionValid"
+                    @click="confirmApplyWithdrawalCommission"
                   >
-                    Apply {{ formatToCurrency(bankMovement.amount_available) }} to commission
+                    Apply {{ formatToCurrency(withdrawalCommissionAmount) }} to commission
                   </v-btn>
                 </div>
               </template>
@@ -436,6 +452,7 @@
                         <th class="font-bold!">Amount</th>
                         <th class="font-bold!">Pending balance</th>
                         <th class="font-bold!">Pay amount</th>
+                        <th v-if="hasForeignCurrencyCharges" class="font-bold!">Bank amount (FX)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -457,7 +474,10 @@
                           {{ getInvoiceableName(invoiceToPay) }} #{{ getInvoiceableGlobalNumberId(invoiceToPay) }}
                         </td>
                         <td>{{ charge.charge?.name }}</td>
-                        <td>{{ formatToCurrency(parseFloat(charge.amount) + parseFloat(charge.amount_iva)) }}</td>
+                        <td>
+                          {{ formatToCurrency(parseFloat(charge.amount) + parseFloat(charge.amount_iva)) }}
+                          <v-chip v-if="isForeignCurrencyCharge(charge)" size="x-small" color="orange-darken-2" class="ml-1">{{ charge.currency?.code }}</v-chip>
+                        </td>
                         <td>{{ formatToCurrency(charge.pending_balance) }}</td>
                         <td>
                           <v-text-field
@@ -468,12 +488,31 @@
                             @update:model-value="checkMaxAmountToPay($event, charge)"
                           />
                         </td>
+                        <td v-if="hasForeignCurrencyCharges">
+                          <template v-if="isForeignCurrencyCharge(charge)">
+                            <div class="text-sm font-medium">
+                              ≈ {{ formatToCurrency(chargeBankAmount(charge)) }} {{ bankMovement.bank_account?.currency?.code }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                              @ {{ charge.exchange_rate_preview }} (Banxico {{ formatDateOnlyString(bankMovement.movement_date) }})
+                            </div>
+                          </template>
+                        </td>
                       </tr>
                     </tbody>
                   </v-table>
                 </div>
+                <v-alert v-if="hasForeignCurrencyCharges" density="compact" type="info" variant="tonal" class="mb-2">
+                  <template v-slot:text>
+                    <div class="text-sm">
+                      Some charges are in a different currency than this bank account. The bank amount shown is only a preview
+                      using Banxico's rate for this movement's date ({{ formatDateOnlyString(bankMovement.movement_date) }}) -
+                      it's recalculated on the server when you submit. Any leftover balance can be applied afterwards as a bank commission below.
+                    </div>
+                  </template>
+                </v-alert>
                 <v-btn color="primary" :loading="loadingStore.loading" @click="payInvoices"
-                  >Set payment to {{ entityTermPlural }} {{ formatToCurrency(amountToPayTotal) }}</v-btn
+                  >Set payment to {{ entityTermPlural }} {{ formatToCurrency(amountToPayTotal) }}{{ hasForeignCurrencyCharges ? ` ${bankMovement.bank_account?.currency?.code} (approx.)` : '' }}</v-btn
                 >
               </div>
 
@@ -887,13 +926,85 @@ const eligibleChargesForCommission = computed(() => {
 
 const showCommissionSection = computed(() => {
   if (movementType.value === 'withdrawal') {
-    return bankMovement.value.amount_available >= 0.01 && bankMovement.value.amount_available <= 100
+    // Sin tope superior: un remanente por diferencia cambiaria (ver
+    // hasForeignCurrencyCharges) puede ser mucho mayor a los $100 que tenía
+    // sentido para un simple redondeo bancario.
+    return bankMovement.value.amount_available >= 0.01
   }
   if (movementType.value === 'deposit') {
     return eligibleChargesForCommission.value.length > 0
   }
   return false
 })
+
+const isForeignCurrencyCharge = (charge: any) => {
+  return charge.currency_id && charge.currency_id !== bankMovement.value.bank_account?.currency_id
+}
+
+const hasForeignCurrencyCharges = computed(() => {
+  return invoicesFoundSelected.value.some((invoice: any) =>
+    invoice.charges.some((charge: any) => isForeignCurrencyCharge(charge))
+  )
+})
+
+const chargeBankAmount = (charge: any) => {
+  const amountToPay = parseFloat(charge.amount_to_pay)
+  if (isNaN(amountToPay) || !charge.exchange_rate_preview) return 0
+  return Math.round(amountToPay * charge.exchange_rate_preview * 100) / 100
+}
+
+const withdrawalCommissionAmount = ref<number | null>(null)
+
+watch(
+  () => bankMovement.value?.amount_available,
+  (newVal) => {
+    if (movementType.value === 'withdrawal') {
+      withdrawalCommissionAmount.value = newVal ?? null
+    }
+  },
+  { immediate: true }
+)
+
+const isWithdrawalCommissionValid = computed(() => {
+  const amount = withdrawalCommissionAmount.value
+  if (!amount || amount < 0.01) return false
+  if (amount > bankMovement.value.amount_available) return false
+  return true
+})
+
+const confirmApplyWithdrawalCommission = async () => {
+  if (!isWithdrawalCommissionValid.value) return
+
+  const result = await confirm({
+    title: 'Apply amount to commission?',
+    confirmationText: 'Apply',
+    content: `${formatToCurrency(withdrawalCommissionAmount.value)} will be applied as a bank commission, out of the ${formatToCurrency(bankMovement.value.amount_available)} available.`,
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'orange-darken-2',
+    },
+  })
+
+  if (result) {
+    try {
+      loadingStore.start()
+      await $api.bankMovements.applyCommissionRetention(bankMovement.value.id, {
+        commission_amount: withdrawalCommissionAmount.value,
+      })
+      snackbar.add({ type: 'success', text: 'Commission applied' })
+      await getBankMovement()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+  }
+}
 
 const commissionFormData = reactive<Record<number, { commission_amount: number | null; retention_percentage: number | null }>>({})
 
@@ -1024,36 +1135,6 @@ const searchInvoices = async () => {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
-  }
-}
-
-const confirmApplyCommission = async () => {
-  const result = await confirm({
-    title: 'Apply remaining balance to commission?',
-    confirmationText: 'Apply',
-    content: `The remaining balance of ${formatToCurrency(bankMovement.value.amount_available)} will be applied as a bank commission.`,
-    dialogProps: {
-      persistent: true,
-      maxWidth: 500,
-    },
-    confirmationButtonProps: {
-      color: 'orange-darken-2',
-    },
-  })
-
-  if (result) {
-    try {
-      loadingStore.start()
-      await $api.bankMovements.applyRemainingToCommission(bankMovement.value.id)
-      snackbar.add({ type: 'success', text: 'Remaining balance applied to commission' })
-      await getBankMovement()
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setTimeout(() => {
-        loadingStore.stop()
-      }, 250)
-    }
   }
 }
 
