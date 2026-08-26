@@ -104,6 +104,7 @@
             <th class="text-left">beneficiary address</th>
             <th class="text-left">country</th>
             <th class="text-left">account number</th>
+            <th class="text-left">CLABE</th>
             <th class="text-left">currency</th>
             <th class="text-left">beneficiary email</th>
             <th class="text-left">beneficiary phone</th>
@@ -128,6 +129,7 @@
             <td>{{ item.beneficiary_address }}</td>
             <td>{{ item.country?.name }}</td>
             <td>{{ item.account_number }}</td>
+            <td>{{ item.clabe }}</td>
             <td>{{ item.currency.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
@@ -177,6 +179,7 @@ const toggle = () => {
         bank_id: null,
         beneficiary_name: '',
         account_number: '',
+        clabe: '',
         currency_id: null,
         beneficiary_address: '',
         beneficiary_zip_code: '',
