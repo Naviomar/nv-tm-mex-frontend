@@ -174,9 +174,10 @@
 </template>
 <script setup lang="ts">
 import { schemaHouseBl } from '~~/forms/maritimeReferenceForm'
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -189,7 +190,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:houseBls'])
+const emit = defineEmits(['update:houseBls', 'refresh'])
 
 const { handleSubmit, values, setValues, resetForm, handleReset } = useForm({
   validationSchema: schemaHouseBl,
@@ -450,7 +451,48 @@ const onCancelDuplicate = () => {
   pendingSave.value = null
 }
 
+const tryDeleteHouseBl = async (houseBl: any, index: number) => {
+  const result = await confirm({
+    title: 'Are you sure?',
+    confirmationText: `Yes, delete house BL ${houseBl.name}`,
+    content: `Please confirm you want to delete house BL ${houseBl.name}. This action cannot be undone.`,
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'red',
+    },
+  })
+
+  if (result) {
+    deleteHouseBl(houseBl)
+  }
+}
+
+const deleteHouseBl = async (houseBl: any) => {
+  try {
+    loadingStore.start()
+    await $api.referencias.removeHouseBl(props.referenciaId!.toString(), { house_bl_id: houseBl.id })
+    snackbar.add({ type: 'success', text: 'House BL deleted' })
+    emit('refresh')
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
 const removeHouseBl = (houseBl: any, index: number) => {
+  // Un house bl ya guardado (id != null) solo se borra via el endpoint
+  // dedicado: quitarlo aqui solo del arreglo local y guardar el form completo
+  // despues es lo que causaba bajas masivas por payload desactualizado.
+  if (houseBl.id != null) {
+    tryDeleteHouseBl(houseBl, index)
+    return
+  }
   houseBls.value.splice(index, 1)
 }
 
