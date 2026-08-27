@@ -80,9 +80,10 @@
   </div>
 </template>
 <script setup lang="ts">
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -165,6 +166,20 @@ const removeContainer = async (index: number) => {
   // causaba bajas masivas por payload desactualizado (mismo patron ya
   // corregido en el resto de entidades).
   if (container?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: 'Yes, delete booking container',
+      content: 'Please confirm you want to delete this booking container. This action cannot be undone.',
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
     try {
       loadingStore.start()
       await $api.referenciasExport.removeBkgContainer((props.referenciaId as any).toString(), { container_id: container.id })

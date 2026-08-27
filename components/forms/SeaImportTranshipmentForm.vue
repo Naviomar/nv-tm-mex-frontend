@@ -48,9 +48,10 @@
   </div>
 </template>
 <script setup lang="ts">
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -133,6 +134,20 @@ const removeTranshipment = async (index: number) => {
   // bajas masivas por payload desactualizado (mismo patron ya corregido
   // en el resto de entidades).
   if (tranship?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: 'Yes, delete transhipment',
+      content: 'Please confirm you want to delete this transhipment. This action cannot be undone.',
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
     try {
       loadingStore.start()
       const api = props.isExport ? $api.referenciasExport : $api.referencias

@@ -63,9 +63,10 @@
 </template>
 <script setup lang="ts">
 import { schemaExportMasterBl } from '~~/forms/maritimeReferenceForm'
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -193,6 +194,20 @@ const removeMasterBl = async (masterBl: any, index: number) => {
   // bajas masivas por payload desactualizado (mismo patron ya corregido
   // para house bls y el resto de entidades).
   if (masterBl?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: `Yes, delete master BL ${masterBl.name}`,
+      content: `Please confirm you want to delete master BL ${masterBl.name}. This action cannot be undone.`,
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
     try {
       loadingStore.start()
       await $api.referenciasExport.removeMasterBl(props.referenciaId!.toString(), { master_bl_id: masterBl.id })
