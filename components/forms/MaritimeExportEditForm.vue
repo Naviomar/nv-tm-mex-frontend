@@ -214,6 +214,7 @@
               :referenciaId="values.id"
               :currentMasterBls="values.master_bls"
               @update:masterBls="masterBls = $event"
+              @refresh="getData"
             />
           </div>
           <div class="col-span-1">
@@ -472,9 +473,11 @@
             />
 
             <SeaExportBkgContainersSmart
+              :referenciaId="values.id"
               :catalogs="catalogs"
               :current-containers="values.bkg_containers"
               @update:containers="booking_containers = $event"
+              @refresh="getData"
             />
 
             <InputTextArea

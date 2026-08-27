@@ -80,7 +80,9 @@
   </div>
 </template>
 <script setup lang="ts">
+const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+const loadingStore = useLoadingStore()
 
 const props = defineProps({
   referenciaId: {
@@ -96,7 +98,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:containers'])
+const emit = defineEmits(['update:containers', 'refresh'])
 
 const showForm = ref(false)
 const container = ref<any>({
@@ -155,7 +157,29 @@ const addContainer = (container: any) => {
   toggleForm()
 }
 
-const removeContainer = (index: number) => {
+const removeContainer = async (index: number) => {
+  const container = containers.value[index]
+
+  // Un booking container ya guardado (id != null) solo se borra via el
+  // endpoint dedicado: depender del guardado completo del form es lo que
+  // causaba bajas masivas por payload desactualizado (mismo patron ya
+  // corregido en el resto de entidades).
+  if (container?.id != null) {
+    try {
+      loadingStore.start()
+      await $api.referenciasExport.removeBkgContainer((props.referenciaId as any).toString(), { container_id: container.id })
+      snackbar.add({ type: 'success', text: 'Booking container deleted' })
+      emit('refresh')
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   containers.value.splice(index, 1)
 }
 

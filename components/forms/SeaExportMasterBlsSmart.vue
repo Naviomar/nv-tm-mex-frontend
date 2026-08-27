@@ -78,7 +78,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:masterBls'])
+const emit = defineEmits(['update:masterBls', 'refresh'])
 
 const { handleSubmit, values, setValues, resetForm } = useForm({
   validationSchema: schemaExportMasterBl,
@@ -187,7 +187,27 @@ const editMasterBl = (masterBl: any, index: number) => {
   }
 }
 
-const removeMasterBl = (masterBl: any, index: number) => {
+const removeMasterBl = async (masterBl: any, index: number) => {
+  // Un master bl ya guardado (id != null) solo se borra via el endpoint
+  // dedicado: depender del guardado completo del form es lo que causaba
+  // bajas masivas por payload desactualizado (mismo patron ya corregido
+  // para house bls y el resto de entidades).
+  if (masterBl?.id != null) {
+    try {
+      loadingStore.start()
+      await $api.referenciasExport.removeMasterBl(props.referenciaId!.toString(), { master_bl_id: masterBl.id })
+      snackbar.add({ type: 'success', text: 'Master BL deleted' })
+      emit('refresh')
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   masterBls.value.splice(index, 1)
 }
 
