@@ -118,6 +118,10 @@ class FfNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/preview-ffs-xlsx`, fetchOptions)
   }
 
+  async getPaymentRequestDefaultEmails(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/payment-request/default-emails`, fetchOptions)
+  }
+
   async sendEmailFfPayment(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

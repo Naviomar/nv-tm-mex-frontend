@@ -221,7 +221,19 @@
           <div v-if="agentHasToPay">
             <v-text-field v-model="sendPayment.subject" label="Email Subject" density="compact" />
           </div>
-          <v-textarea v-model="sendPayment.to" label="TO" rows="2" density="compact" />
+          <v-textarea v-model="sendPayment.to" label="TO (destinatarios adicionales, opcional)" rows="2" density="compact" />
+          <div class="mb-3">
+            <div class="text-caption text-medium-emphasis mb-1">Además, este correo llegará por configuración del sistema a:</div>
+            <v-chip
+              v-for="email in defaultToEmails"
+              :key="email"
+              size="small"
+              class="mr-1 mb-1"
+            >
+              {{ email }}
+            </v-chip>
+            <span v-if="!defaultToEmails.length" class="text-caption text-medium-emphasis">Sin destinatarios configurados</span>
+          </div>
           <v-textarea v-model="sendPayment.message" label="Message" :rows="7" density="compact" />
         </v-card-text>
         <v-card-actions>
@@ -291,6 +303,8 @@ const sendPayment = ref<any>({
   message: '',
 })
 
+const defaultToEmails = ref<string[]>([])
+
 const pdfViewer = ref<any>(null)
 const pdfViewerDialog = ref<any>({ show: false })
 
@@ -346,9 +360,20 @@ const searchFfGroups = async (params: any) => {
   }
 }
 
+const loadDefaultToEmails = async () => {
+  try {
+    const response = await $api.ffNotes.getPaymentRequestDefaultEmails()
+    defaultToEmails.value = response?.emails || []
+  } catch (error) {
+    console.error(error)
+    defaultToEmails.value = []
+  }
+}
+
 const showSendPaymentRequest = async (ffPayment: any) => {
   sendPayment.value.ffPayment = ffPayment
   sendPayment.value.show = true
+  loadDefaultToEmails()
   const agente = ffPayment.forwarderable?.name || '-'
   // replace {agente} {monto} with selected notes
   // TODO falta mostrar los datos para pago en el mensaje, si es TM son los de WM ya se sabe y si es del agente se debe mostrar
