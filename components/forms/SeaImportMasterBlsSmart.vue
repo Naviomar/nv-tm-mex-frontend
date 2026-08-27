@@ -173,9 +173,10 @@
 </template>
 <script setup lang="ts">
 import { schemaMasterBl } from '~~/forms/maritimeReferenceForm'
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -318,7 +319,44 @@ function onInvalidSubmit({ values, errors, results }: any) {
 
 const save = handleSubmit(onSuccess, onInvalidSubmit)
 
-const removeMasterBl = (masterBl: any, index: number) => {
+const removeMasterBl = async (masterBl: any, index: number) => {
+  // Un master bl ya guardado (id != null) solo se borra via el endpoint
+  // dedicado: depender del guardado completo del form es lo que causaba
+  // bajas masivas por payload desactualizado (mismo patron ya corregido
+  // para house bls).
+  if (masterBl?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: `Yes, delete master BL ${masterBl.name}`,
+      content: `Please confirm you want to delete master BL ${masterBl.name}. This action cannot be undone.`,
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
+    try {
+      loadingStore.start()
+      await $api.referencias.removeMasterBl(props.referenciaId!.toString(), { master_bl_id: masterBl.id })
+      snackbar.add({ type: 'success', text: 'Master BL deleted' })
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = masterBls.value.findIndex((m) => m.id === masterBl.id)
+      if (realIndex !== -1) masterBls.value.splice(realIndex, 1)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   masterBls.value.splice(index, 1)
 }
 

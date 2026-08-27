@@ -48,9 +48,10 @@
   </div>
 </template>
 <script setup lang="ts">
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -60,6 +61,11 @@ const props = defineProps({
   currentTranshipments: {
     type: Array,
     required: false,
+  },
+  isExport: {
+    type: Boolean,
+    required: false,
+    default: false,
   },
 })
 
@@ -120,7 +126,47 @@ const addTranshipment = () => {
   })
 }
 
-const removeTranshipment = (index: number) => {
+const removeTranshipment = async (index: number) => {
+  const tranship = transhipments.value[index]
+
+  // Un tranship ya guardado (id != null) solo se borra via el endpoint
+  // dedicado: depender del guardado completo del form es lo que causaba
+  // bajas masivas por payload desactualizado (mismo patron ya corregido
+  // en el resto de entidades).
+  if (tranship?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: 'Yes, delete transhipment',
+      content: 'Please confirm you want to delete this transhipment. This action cannot be undone.',
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
+    try {
+      loadingStore.start()
+      const api = props.isExport ? $api.referenciasExport : $api.referencias
+      await api.removeTranshipment(props.referenciaId!.toString(), { transhipment_id: tranship.id })
+      snackbar.add({ type: 'success', text: 'Transhipment deleted' })
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = transhipments.value.findIndex((t) => t.id === tranship.id)
+      if (realIndex !== -1) transhipments.value.splice(realIndex, 1)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   transhipments.value.splice(index, 1)
 }
 </script>

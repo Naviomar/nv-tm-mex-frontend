@@ -80,7 +80,10 @@
   </div>
 </template>
 <script setup lang="ts">
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
+const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
 
 const props = defineProps({
   referenciaId: {
@@ -155,7 +158,46 @@ const addContainer = (container: any) => {
   toggleForm()
 }
 
-const removeContainer = (index: number) => {
+const removeContainer = async (index: number) => {
+  const container = containers.value[index]
+
+  // Un booking container ya guardado (id != null) solo se borra via el
+  // endpoint dedicado: depender del guardado completo del form es lo que
+  // causaba bajas masivas por payload desactualizado (mismo patron ya
+  // corregido en el resto de entidades).
+  if (container?.id != null) {
+    const result = await confirm({
+      title: 'Are you sure?',
+      confirmationText: 'Yes, delete booking container',
+      content: 'Please confirm you want to delete this booking container. This action cannot be undone.',
+      dialogProps: {
+        persistent: true,
+        maxWidth: 500,
+      },
+      confirmationButtonProps: {
+        color: 'red',
+      },
+    })
+    if (!result) return
+
+    try {
+      loadingStore.start()
+      await $api.referenciasExport.removeBkgContainer((props.referenciaId as any).toString(), { container_id: container.id })
+      snackbar.add({ type: 'success', text: 'Booking container deleted' })
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = containers.value.findIndex((c: any) => c.id === container.id)
+      if (realIndex !== -1) containers.value.splice(realIndex, 1)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   containers.value.splice(index, 1)
 }
 

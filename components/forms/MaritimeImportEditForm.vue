@@ -229,7 +229,6 @@
               :referenciaId="values.id"
               :currentHouseBls="values.house_bls"
               @update:houseBls="houseBls = $event"
-              @refresh="getData"
             />
           </div>
         </v-card-text>

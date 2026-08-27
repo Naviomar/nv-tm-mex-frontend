@@ -178,6 +178,7 @@
         <SeaImportTranshipmentForm
           :referenciaId="values.id"
           :currentTranshipments="values.tranships"
+          :is-export="true"
           @update:transhipments="transhipments = $event"
         />
 
@@ -472,6 +473,7 @@
             />
 
             <SeaExportBkgContainersSmart
+              :referenciaId="values.id"
               :catalogs="catalogs"
               :current-containers="values.bkg_containers"
               @update:containers="booking_containers = $event"

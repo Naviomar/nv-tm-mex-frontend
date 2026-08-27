@@ -132,6 +132,33 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-export/${id}/upload-house-bl`, fetchOptions)
   }
 
+  async removeMasterBl(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/remove-master-bl`, fetchOptions)
+  }
+
+  async removeTranshipment(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/remove-transhipment`, fetchOptions)
+  }
+
+  async removeBkgContainer(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-export/${id}/remove-bkg-container`, fetchOptions)
+  }
+
   async getFormCatalogs(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-export/form-catalogs`, fetchOptions)
   }

@@ -190,7 +190,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:houseBls', 'refresh'])
+const emit = defineEmits(['update:houseBls'])
 
 const { handleSubmit, values, setValues, resetForm, handleReset } = useForm({
   validationSchema: schemaHouseBl,
@@ -466,16 +466,23 @@ const tryDeleteHouseBl = async (houseBl: any, index: number) => {
   })
 
   if (result) {
-    deleteHouseBl(houseBl)
+    deleteHouseBl(houseBl, index)
   }
 }
 
-const deleteHouseBl = async (houseBl: any) => {
+const deleteHouseBl = async (houseBl: any, index: number) => {
   try {
     loadingStore.start()
     await $api.referencias.removeHouseBl(props.referenciaId!.toString(), { house_bl_id: houseBl.id })
     snackbar.add({ type: 'success', text: 'House BL deleted' })
-    emit('refresh')
+    // Splice local en vez de emit('refresh'): un refresh completo del form
+    // (getData -> setValues) descartaria cualquier edicion sin guardar que
+    // el usuario tenga en otros campos del mismo formulario. El borrado ya
+    // es un hecho consumado en el backend, no hace falta refetch para
+    // reflejarlo. Se busca por id (no por el index capturado) por si el
+    // arreglo cambio mientras la llamada estaba en curso.
+    const realIndex = houseBls.value.findIndex((h) => h.id === houseBl.id)
+    if (realIndex !== -1) houseBls.value.splice(realIndex, 1)
   } catch (e) {
     console.error(e)
   } finally {
