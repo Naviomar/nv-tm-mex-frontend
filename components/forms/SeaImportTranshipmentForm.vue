@@ -61,9 +61,14 @@ const props = defineProps({
     type: Array,
     required: false,
   },
+  isExport: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update:transhipments'])
+const emit = defineEmits(['update:transhipments', 'refresh'])
 
 const transhipments = ref<any[]>([])
 
@@ -120,7 +125,30 @@ const addTranshipment = () => {
   })
 }
 
-const removeTranshipment = (index: number) => {
+const removeTranshipment = async (index: number) => {
+  const tranship = transhipments.value[index]
+
+  // Un tranship ya guardado (id != null) solo se borra via el endpoint
+  // dedicado: depender del guardado completo del form es lo que causaba
+  // bajas masivas por payload desactualizado (mismo patron ya corregido
+  // en el resto de entidades).
+  if (tranship?.id != null) {
+    try {
+      loadingStore.start()
+      const api = props.isExport ? $api.referenciasExport : $api.referencias
+      await api.removeTranshipment(props.referenciaId!.toString(), { transhipment_id: tranship.id })
+      snackbar.add({ type: 'success', text: 'Transhipment deleted' })
+      emit('refresh')
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
+    return
+  }
+
   transhipments.value.splice(index, 1)
 }
 </script>

@@ -178,7 +178,9 @@
         <SeaImportTranshipmentForm
           :referenciaId="values.id"
           :currentTranshipments="values.tranships"
+          :is-export="true"
           @update:transhipments="transhipments = $event"
+          @refresh="getData"
         />
 
         <div class="grid grid-cols-3 gap-2">
