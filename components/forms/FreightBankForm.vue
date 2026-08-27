@@ -341,4 +341,19 @@ onMounted(async () => {
     await getData()
   }
 })
+
+// FreightForwarderModal reuses a single instance of this component across every
+// row's Edit/View click, so onMounted alone only fires for the first freight
+// forwarder opened in the session — later clicks just change `id` without
+// remounting. Without this watcher the table below keeps showing whatever was
+// loaded the first time (e.g. permanently empty if that FF had no accounts).
+watch(
+  () => props.id,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      await getCatalogs()
+      await getData()
+    }
+  }
+)
 </script>
