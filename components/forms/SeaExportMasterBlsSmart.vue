@@ -79,7 +79,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:masterBls', 'refresh'])
+const emit = defineEmits(['update:masterBls'])
 
 const { handleSubmit, values, setValues, resetForm } = useForm({
   validationSchema: schemaExportMasterBl,
@@ -212,7 +212,10 @@ const removeMasterBl = async (masterBl: any, index: number) => {
       loadingStore.start()
       await $api.referenciasExport.removeMasterBl(props.referenciaId!.toString(), { master_bl_id: masterBl.id })
       snackbar.add({ type: 'success', text: 'Master BL deleted' })
-      emit('refresh')
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = masterBls.value.findIndex((m) => m.id === masterBl.id)
+      if (realIndex !== -1) masterBls.value.splice(realIndex, 1)
     } catch (e) {
       console.error(e)
     } finally {

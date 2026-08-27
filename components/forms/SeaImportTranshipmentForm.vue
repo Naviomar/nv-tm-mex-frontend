@@ -69,7 +69,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:transhipments', 'refresh'])
+const emit = defineEmits(['update:transhipments'])
 
 const transhipments = ref<any[]>([])
 
@@ -153,7 +153,10 @@ const removeTranshipment = async (index: number) => {
       const api = props.isExport ? $api.referenciasExport : $api.referencias
       await api.removeTranshipment(props.referenciaId!.toString(), { transhipment_id: tranship.id })
       snackbar.add({ type: 'success', text: 'Transhipment deleted' })
-      emit('refresh')
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = transhipments.value.findIndex((t) => t.id === tranship.id)
+      if (realIndex !== -1) transhipments.value.splice(realIndex, 1)
     } catch (e) {
       console.error(e)
     } finally {

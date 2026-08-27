@@ -195,7 +195,6 @@
             :referenciaId="values.id"
             :currentTranshipments="values.tranships"
             @update:transhipments="transhipments = $event"
-            @refresh="getData"
           />
 
           <div class="grid grid-cols-3 gap-2">
@@ -224,14 +223,12 @@
               :currentMasterBls="values.master_bls"
               :consigneesmbls="catalogs.consignee_mbls"
               @update:masterBls="masterBls = $event"
-              @refresh="getData"
             />
 
             <SeaImportHouseBlsSmart
               :referenciaId="values.id"
               :currentHouseBls="values.house_bls"
               @update:houseBls="houseBls = $event"
-              @refresh="getData"
             />
           </div>
         </v-card-text>

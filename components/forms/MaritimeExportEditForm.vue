@@ -180,7 +180,6 @@
           :currentTranshipments="values.tranships"
           :is-export="true"
           @update:transhipments="transhipments = $event"
-          @refresh="getData"
         />
 
         <div class="grid grid-cols-3 gap-2">
@@ -216,7 +215,6 @@
               :referenciaId="values.id"
               :currentMasterBls="values.master_bls"
               @update:masterBls="masterBls = $event"
-              @refresh="getData"
             />
           </div>
           <div class="col-span-1">
@@ -479,7 +477,6 @@
               :catalogs="catalogs"
               :current-containers="values.bkg_containers"
               @update:containers="booking_containers = $event"
-              @refresh="getData"
             />
 
             <InputTextArea

@@ -99,7 +99,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:containers', 'refresh'])
+const emit = defineEmits(['update:containers'])
 
 const showForm = ref(false)
 const container = ref<any>({
@@ -184,7 +184,10 @@ const removeContainer = async (index: number) => {
       loadingStore.start()
       await $api.referenciasExport.removeBkgContainer((props.referenciaId as any).toString(), { container_id: container.id })
       snackbar.add({ type: 'success', text: 'Booking container deleted' })
-      emit('refresh')
+      // Splice local en vez de emit('refresh'): un refresh completo del
+      // form descartaria ediciones sin guardar en otros campos.
+      const realIndex = containers.value.findIndex((c: any) => c.id === container.id)
+      if (realIndex !== -1) containers.value.splice(realIndex, 1)
     } catch (e) {
       console.error(e)
     } finally {
