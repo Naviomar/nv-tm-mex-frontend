@@ -290,8 +290,15 @@
                 :class="columnClass(cfdi)"
               >
                 <td>
+                  <!-- State 0: Already linked to a payment request - locked regardless of block/expiry status -->
+                  <div v-if="isLinkedToReqPayment(cfdi)" class="flex justify-center gap-2 mb-2">
+                    <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                    <v-chip size="small" color="deep-orange" variant="flat">
+                      <v-icon size="small" start>mdi-lock</v-icon>Req payment linked
+                    </v-chip>
+                  </div>
                   <!-- State 1: Invoice blocked due to late entry into Factra -->
-                  <div v-if="isBlockedAtEntry(cfdi)" class="text-sm text-red-600 dark:text-red-300">
+                  <div v-else-if="isBlockedAtEntry(cfdi)" class="text-sm text-red-600 dark:text-red-300">
                     <v-icon size="small">mdi-lock</v-icon>
                     <small>{{ cfdi.blocked_at_entry_reason || 'This invoice is blocked because it was entered into Factra past the deadline.' }}</small>
                     <ProcessAuthorizationWrapper 
@@ -323,7 +330,7 @@
                             <div class="mx-auto">
                               <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                             </div>
-                            <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
+                            <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
                               <v-btn
                                 size="x-small"
                                 color="indigo"
@@ -376,7 +383,7 @@
                             <div class="mx-auto">
                               <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                             </div>
-                            <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
+                            <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
                               <v-btn
                                 size="x-small"
                                 color="indigo"
@@ -394,12 +401,7 @@
                   <div v-else>
                     <div class="flex justify-center gap-2 mb-2">
                       <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
-                      <template v-if="isLinkedToReqPayment(cfdi)">
-                        <v-chip size="small" color="deep-orange" variant="flat">
-                          <v-icon size="small" start>mdi-lock</v-icon>Req payment linked
-                        </v-chip>
-                      </template>
-                      <template v-else-if="hasSupplierLinked(cfdi)">
+                      <template v-if="hasSupplierLinked(cfdi)">
                         <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                         <ProcessAuthorizationWrapper
                           :processName="cfdi.deleted_at ? 'supplier-cfdi-restore' : 'supplier-cfdi-delete'"
@@ -418,10 +420,10 @@
                         </v-btn>
                       </template>
                     </div>
-                    <div v-if="!isLinkedToReqPayment(cfdi)" class="mx-auto">
+                    <div class="mx-auto">
                       <LinkDeleteSupplierInvoice :supplierCfdi="cfdi" @refresh="getSupplierCfdis" />
                     </div>
-                    <div v-if="cfdi.uuid && canValidateSat && !isLinkedToReqPayment(cfdi)" class="flex justify-center mt-2">
+                    <div v-if="cfdi.uuid && canValidateSat" class="flex justify-center mt-2">
                       <v-btn
                         size="x-small"
                         color="indigo"
