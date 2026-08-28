@@ -5,7 +5,14 @@
       <div @keyup.enter="onClickFilters">
         <div class="grid grid-cols-4 gap-2">
           <div>
-            <v-text-field v-model="filters.id" type="text" density="compact" label="By Id" hide-details />
+            <v-text-field
+              v-model="filters.id"
+              type="text"
+              density="compact"
+              label="By Id"
+              placeholder="e.g. 1439 1440, 1442"
+              hide-details
+            />
           </div>
           <div>
             <v-text-field v-model="filters.search" type="text" density="compact" label="Text" hide-details />
