@@ -1,5 +1,12 @@
 <template>
-  <v-dialog v-model="dialog.show" max-width="900" scrollable persistent>
+  <v-dialog
+    v-model="dialog.show"
+    width="95%"
+    max-width="1800"
+    scrollable
+    persistent
+    :fullscreen="$vuetify.display.smAndDown"
+  >
     <v-card rounded="xl">
       <v-toolbar color="primary" density="comfortable">
         <v-toolbar-title>
@@ -98,6 +105,7 @@
           color="primary"
           prepend-icon="mdi-content-save"
           :loading="saving"
+          :disabled="saving"
           @click="save"
         >
           Save
@@ -157,6 +165,7 @@ const loadAllFreightForwarders = async () => {
     allFreightForwarders.value = Array.isArray(response) ? response : (response?.data ?? [])
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading freight forwarders catalog' })
   } finally {
     loadingFreights.value = false
   }
@@ -173,19 +182,27 @@ const openCreate = async () => {
 const openEdit = async (id: number) => {
   dialog.mode = 'edit'
   dialog.itemId = id
-  dialog.show = true
   await loadAllFreightForwarders()
-  await loadFreightGroup(id)
-  await loadGroupFreights(id)
+  const loaded = await loadFreightGroup(id)
+  const freightsLoaded = loaded && (await loadGroupFreights(id))
+  if (freightsLoaded) {
+    dialog.show = true
+  } else {
+    dialog.itemId = null
+  }
 }
 
 const openView = async (id: number) => {
   dialog.mode = 'view'
   dialog.itemId = id
-  dialog.show = true
   await loadAllFreightForwarders()
-  await loadFreightGroup(id)
-  await loadGroupFreights(id)
+  const loaded = await loadFreightGroup(id)
+  const freightsLoaded = loaded && (await loadGroupFreights(id))
+  if (freightsLoaded) {
+    dialog.show = true
+  } else {
+    dialog.itemId = null
+  }
 }
 
 const closeDialog = () => {
@@ -205,9 +222,11 @@ const loadFreightGroup = async (id: number) => {
     loadingStore.start()
     const response = await $api.freightForwardersGroups.getById(id.toString())
     Object.assign(form, response)
+    return true
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error loading freight group' })
+    return false
   } finally {
     setTimeout(() => loadingStore.stop(), 250)
   }
@@ -221,8 +240,11 @@ const loadGroupFreights = async (id: number) => {
     // them here too - otherwise their id would sit in freight_ids without a
     // matching chip, and saving would silently keep them tied to the group.
     form.freight_ids = freights.filter((ff: any) => !ff.deleted_at).map((ff: any) => ff.id)
+    return true
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading freight forwarders assigned to this group' })
+    return false
   }
 }
 
@@ -261,6 +283,8 @@ const validate = () => {
 }
 
 const save = async () => {
+  if (saving.value) return
+
   if (!validate()) {
     return
   }

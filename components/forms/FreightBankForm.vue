@@ -114,6 +114,9 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="bankAccounts.length === 0">
+            <td colspan="11" class="text-center">No bank accounts found</td>
+          </tr>
           <tr v-for="(item, index) in bankAccounts" :key="`bank-${index}`">
             <td>
               <div class="flex items-center gap-2">
