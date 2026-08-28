@@ -14,12 +14,12 @@
     <v-card-text>
       <div v-if="showForm" class="p-4 mb-4 grid grid-cols-2 gap-2">
         <div class="col-span-2">
-          <InputText name="email" density="compact" variant="solo-filled" label="Email address" />
+          <InputText name="email" density="compact" variant="solo-filled" label="Email address *" />
         </div>
         <div class="col-span-2">
           <div class="flex justify-end items-center">
-            <v-btn class="mr-4" color="secondary" @click="toggle"> Cancel </v-btn>
-            <v-btn color="primary" @click="save"> Save </v-btn>
+            <v-btn class="mr-4" color="secondary" :disabled="saving" @click="toggle"> Cancel </v-btn>
+            <v-btn color="primary" :loading="saving" :disabled="saving" @click="save"> Save </v-btn>
           </div>
         </div>
       </div>
@@ -84,6 +84,7 @@ const { handleSubmit } = useForm({
 })
 
 const showForm = ref(false)
+const saving = ref(false)
 
 const toggle = () => {
   showForm.value = !showForm.value
@@ -94,7 +95,10 @@ const hasEmails = computed(() => {
 })
 
 const onSuccess = async (values: any) => {
+  if (saving.value) return
+
   try {
+    saving.value = true
     loadingStore.loading = true
     const body = {
       ...values,
@@ -108,7 +112,9 @@ const onSuccess = async (values: any) => {
     emit('refresh')
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error saving email address' })
   } finally {
+    saving.value = false
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
@@ -146,6 +152,7 @@ const showConfirmDelete = async (ffEmail: any) => {
       emit('refresh')
     } catch (e) {
       console.error(e)
+      snackbar.add({ type: 'error', text: 'Error deleting email address' })
     } finally {
       setTimeout(() => {
         loadingStore.stop()

@@ -1,5 +1,12 @@
 <template>
-  <v-dialog v-model="dialog.show" :max-width="dialog.mode === 'view' ? 1200 : 1400" scrollable persistent>
+  <v-dialog
+    v-model="dialog.show"
+    width="95%"
+    max-width="1800"
+    scrollable
+    persistent
+    :fullscreen="$vuetify.display.smAndDown"
+  >
     <v-card rounded="xl">
       <v-toolbar :color="dialog.mode === 'view' ? 'info' : 'primary'" density="comfortable">
         <v-toolbar-title>
@@ -191,6 +198,7 @@
           color="primary"
           prepend-icon="mdi-content-save"
           :loading="saving"
+          :disabled="saving"
           @click="save"
         >
           Save
@@ -248,15 +256,23 @@ const openCreate = () => {
 const openEdit = async (id: number) => {
   dialog.mode = 'edit'
   dialog.itemId = id
-  await loadFreightForwarder(id)
-  dialog.show = true
+  const loaded = await loadFreightForwarder(id)
+  if (loaded) {
+    dialog.show = true
+  } else {
+    dialog.itemId = null
+  }
 }
 
 const openView = async (id: number) => {
   dialog.mode = 'view'
   dialog.itemId = id
-  await loadFreightForwarder(id)
-  dialog.show = true
+  const loaded = await loadFreightForwarder(id)
+  if (loaded) {
+    dialog.show = true
+  } else {
+    dialog.itemId = null
+  }
 }
 
 const closeDialog = () => {
@@ -285,9 +301,11 @@ const loadFreightForwarder = async (id: number) => {
     loadingStore.start()
     const response = await $api.freightForwarders.getById(id.toString())
     Object.assign(form, response)
+    return true
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error loading freight forwarder' })
+    return false
   } finally {
     setTimeout(() => loadingStore.stop(), 250)
   }
@@ -340,6 +358,8 @@ const validate = () => {
 }
 
 const save = async () => {
+  if (saving.value) return
+
   if (!validate()) {
     return
   }

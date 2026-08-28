@@ -59,6 +59,9 @@
             </tr>
           </thead>
           <tbody>
+            <tr v-if="freightForwarders.data.length === 0">
+              <td colspan="11" class="text-center">No freight forwarders found</td>
+            </tr>
             <tr
               v-for="(ff, index) in freightForwarders.data"
               :key="`ff-${index}`"
@@ -205,6 +208,7 @@ const showConfirmDelete = async (freightf: any) => {
       await getFreightForwarders()
     } catch (e) {
       console.error(e)
+      snackbar.add({ type: 'error', text: 'Error updating freight forwarder status' })
     } finally {
       setTimeout(() => {
         loadingStore.stop()
@@ -228,6 +232,7 @@ const getFreightForwarders = async () => {
     freightForwarders.value.current_page = currentPage.value
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading freight forwarders' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()

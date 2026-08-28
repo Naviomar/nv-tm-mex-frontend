@@ -35,6 +35,9 @@
             </tr>
           </thead>
           <tbody>
+            <tr v-if="freightForwardersGroups.data.length === 0">
+              <td colspan="4" class="text-center">No freight forwarder groups found</td>
+            </tr>
             <tr
               v-for="(ffg, index) in freightForwardersGroups.data"
               :key="`ffg-${index}`"
@@ -146,6 +149,7 @@ const showConfirmDelete = async (freightForwardersGroup: any) => {
       await getFreightForwardersGroups()
     } catch (e) {
       console.error(e)
+      snackbar.add({ type: 'error', text: 'Error updating freight forwarders group status' })
     } finally {
       setTimeout(() => {
         loadingStore.stop()
@@ -169,6 +173,7 @@ const getFreightForwardersGroups = async () => {
     freightForwardersGroups.value = response as any
   } catch (e) {
     console.error(e)
+    snackbar.add({ type: 'error', text: 'Error loading freight forwarders groups' })
   } finally {
     // timeout 1 second
     setTimeout(() => {
