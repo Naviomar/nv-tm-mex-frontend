@@ -896,16 +896,25 @@ const goToModule = (bankMovementId: number) => {
   router.push(`/transfers/global/bank-movement-${bankMovementId}/pay-bl-schedule`)
 }
 
+// Total en la moneda del banco, no en la moneda nativa de cada charge: una
+// factura en GBP no se puede sumar tal cual a una en USD y mostrarla con la
+// etiqueta "USD" (eso fue el bug reportado). Para charges en otra moneda se
+// usa el mismo monto convertido que ya se muestra en la columna "Bank amount
+// (FX)", para que este total y esa columna nunca se contradigan.
 const amountToPayTotal = computed(() => {
   let total = 0
   invoicesFoundSelected.value.forEach((invoice: any) => {
     invoice.charges.forEach((charge: any) => {
-      let amountToPay = parseFloat(charge.amount_to_pay)
-      if (isNaN(amountToPay)) amountToPay = 0
-      total += amountToPay
+      if (isForeignCurrencyCharge(charge)) {
+        total += chargeBankAmount(charge)
+      } else {
+        let amountToPay = parseFloat(charge.amount_to_pay)
+        if (isNaN(amountToPay)) amountToPay = 0
+        total += amountToPay
+      }
     })
   })
-  return total
+  return Math.round(total * 100) / 100
 })
 
 const hasBankMovAmountAvailable = computed(() => {
