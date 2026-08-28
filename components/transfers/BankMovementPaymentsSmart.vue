@@ -926,10 +926,15 @@ const eligibleChargesForCommission = computed(() => {
 
 const showCommissionSection = computed(() => {
   if (movementType.value === 'withdrawal') {
-    // Sin tope superior: un remanente por diferencia cambiaria (ver
-    // hasForeignCurrencyCharges) puede ser mucho mayor a los $100 que tenía
+    // No mostrar esto hasta que ya se haya aplicado al menos un pago real
+    // sobre el movimiento (Used > 0) - si no, invita a mandar TODO un
+    // retiro nuevo a "comisión" en vez de pagar la factura/solicitud
+    // correspondiente. Sin tope superior una vez que ya hay un pago real,
+    // porque un remanente por diferencia cambiaria (ver
+    // hasForeignCurrencyCharges) puede ser mayor a los $100 que tenía
     // sentido para un simple redondeo bancario.
-    return bankMovement.value.amount_available >= 0.01
+    const usedAmount = bankMovement.value.amount - bankMovement.value.amount_available
+    return usedAmount > 0 && bankMovement.value.amount_available >= 0.01
   }
   if (movementType.value === 'deposit') {
     return eligibleChargesForCommission.value.length > 0
