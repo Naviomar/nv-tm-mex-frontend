@@ -896,16 +896,25 @@ const goToModule = (bankMovementId: number) => {
   router.push(`/transfers/global/bank-movement-${bankMovementId}/pay-bl-schedule`)
 }
 
+// Total en la moneda del banco, no en la moneda nativa de cada charge: una
+// factura en GBP no se puede sumar tal cual a una en USD y mostrarla con la
+// etiqueta "USD" (eso fue el bug reportado). Para charges en otra moneda se
+// usa el mismo monto convertido que ya se muestra en la columna "Bank amount
+// (FX)", para que este total y esa columna nunca se contradigan.
 const amountToPayTotal = computed(() => {
   let total = 0
   invoicesFoundSelected.value.forEach((invoice: any) => {
     invoice.charges.forEach((charge: any) => {
-      let amountToPay = parseFloat(charge.amount_to_pay)
-      if (isNaN(amountToPay)) amountToPay = 0
-      total += amountToPay
+      if (isForeignCurrencyCharge(charge)) {
+        total += chargeBankAmount(charge)
+      } else {
+        let amountToPay = parseFloat(charge.amount_to_pay)
+        if (isNaN(amountToPay)) amountToPay = 0
+        total += amountToPay
+      }
     })
   })
-  return total
+  return Math.round(total * 100) / 100
 })
 
 const hasBankMovAmountAvailable = computed(() => {
@@ -926,10 +935,15 @@ const eligibleChargesForCommission = computed(() => {
 
 const showCommissionSection = computed(() => {
   if (movementType.value === 'withdrawal') {
-    // Sin tope superior: un remanente por diferencia cambiaria (ver
-    // hasForeignCurrencyCharges) puede ser mucho mayor a los $100 que tenía
+    // No mostrar esto hasta que ya se haya aplicado al menos un pago real
+    // sobre el movimiento (Used > 0) - si no, invita a mandar TODO un
+    // retiro nuevo a "comisión" en vez de pagar la factura/solicitud
+    // correspondiente. Sin tope superior una vez que ya hay un pago real,
+    // porque un remanente por diferencia cambiaria (ver
+    // hasForeignCurrencyCharges) puede ser mayor a los $100 que tenía
     // sentido para un simple redondeo bancario.
-    return bankMovement.value.amount_available >= 0.01
+    const usedAmount = bankMovement.value.amount - bankMovement.value.amount_available
+    return usedAmount > 0 && bankMovement.value.amount_available >= 0.01
   }
   if (movementType.value === 'deposit') {
     return eligibleChargesForCommission.value.length > 0
