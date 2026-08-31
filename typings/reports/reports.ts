@@ -110,4 +110,5 @@ export interface ComparativeTeusFilters {
   ejecutivo_id: number | null
   client_id: number | null
   include_offices: boolean
+  etaMode: string
 }

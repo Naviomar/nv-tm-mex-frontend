@@ -54,6 +54,8 @@
             </div>
           </div>
 
+          <EtaModeSelector v-model="filters.etaMode" />
+
           <v-row>
             <!-- Report Type (Yearly vs Monthly) -->
             <v-col cols="12" md="3">
@@ -203,15 +205,21 @@
           </template>
           Comparative TEUs Report will download an Excel workbook containing:
           <ul class="pl-4 mt-1">
-            <li v-if="filters.report_type === 'yearly'">
-              <strong>Clientes:</strong> Annual TEU summary per client/executive.
+            <li>
+              <strong>Ejecutivo:</strong> base sheet — TEU summary per executive/client, based on ETA.
             </li>
-            <li v-if="filters.report_type === 'yearly'">
-              <strong>OFFICE:</strong> Destination and discharge port annual TEU statistics.
+            <li>
+              <strong>Clientes:</strong> TEU summary per client/executive, based on ETA.
+            </li>
+            <li>
+              <strong>OFFICE:</strong> Destination and discharge port TEU statistics, based on ETA.
             </li>
             <li v-if="filters.report_type === 'monthly'">
-              <strong>Monthly Distribution:</strong> Client and Destination TEUs distributed across months by Capture
-              Date, ETD (Departure), and ETA (Arrival).
+              <strong>ETD:</strong> Client TEUs distributed across months by ETD (Departure) date.
+            </li>
+            <li>
+              References with no ETA yet are not dropped nor guessed into a period — their TEUs are shown in an
+              <strong>ADICIONALES (SIN ETA)</strong> column instead.
             </li>
             <li v-if="filters.include_offices">
               <strong>Comparativo Oficinas:</strong> TEU distribution comparison by office (Mexico, Guadalajara,
@@ -244,6 +252,7 @@ const filters = ref<ComparativeTeusFilters>({
   ejecutivo_id: null,
   client_id: null,
   include_offices: false,
+  etaMode: 'ambos',
 })
 
 const loadingConsignees = ref(true)
@@ -280,6 +289,8 @@ const applyFilters = async () => {
         ejecutivo_id: filters.value.ejecutivo_id,
         client_id: filters.value.client_id,
         include_offices: filters.value.include_offices,
+        baseEtaSinEta: filters.value.etaMode === 'ambos',
+        onlyWithoutEta: filters.value.etaMode === 'sin_eta',
       },
     }
 
@@ -334,6 +345,7 @@ const clearFilters = () => {
   filters.value.ejecutivo_id = null
   filters.value.client_id = null
   filters.value.include_offices = false
+  filters.value.etaMode = 'ambos'
   useLegacyData.value = true
   useNewData.value = true
 }
