@@ -52,6 +52,8 @@
             </div>
           </div>
 
+          <EtaModeSelector v-model="filters.etaMode" />
+
           <v-row>
             <!-- Report Type (Yearly vs Monthly) -->
             <v-col cols="12" md="6">
@@ -154,15 +156,21 @@
           </template>
           Comparative TEUs Export Report will download an Excel workbook containing:
           <ul class="pl-4 mt-1">
-            <li v-if="filters.report_type === 'yearly'">
-              <strong>Clientes:</strong> Annual TEU summary per client/executive.
+            <li>
+              <strong>Ejecutivo:</strong> base sheet — TEU summary per executive/shipper, based on ETA.
             </li>
-            <li v-if="filters.report_type === 'yearly'">
-              <strong>OFFICE:</strong> Origin and loading port annual TEU statistics.
+            <li>
+              <strong>Clientes:</strong> TEU summary per shipper/executive, based on ETA.
+            </li>
+            <li>
+              <strong>OFFICE:</strong> Origin and loading port TEU statistics, based on ETA.
             </li>
             <li v-if="filters.report_type === 'monthly'">
-              <strong>Monthly Distribution:</strong> Client and Origin TEUs distributed across months by Capture Date
-              and ETD (Departure).
+              <strong>ETD:</strong> Shipper TEUs distributed across months by ETD (Departure) date.
+            </li>
+            <li>
+              References with no ETA yet are not dropped nor guessed into a period — their TEUs are shown in an
+              <strong>ADICIONALES (SIN ETA)</strong> column instead.
             </li>
           </ul>
         </v-alert>
@@ -187,6 +195,7 @@ const filters = ref({
   end_year: currentYear,
   year: currentYear,
   ejecutivo_id: null as number | null,
+  etaMode: 'ambos',
 })
 
 const executives = ref<any[]>([])
@@ -212,6 +221,8 @@ const applyFilters = async () => {
         end_year: filters.value.end_year,
         year: filters.value.year,
         ejecutivo_id: filters.value.ejecutivo_id,
+        baseEtaSinEta: filters.value.etaMode === 'ambos',
+        onlyWithoutEta: filters.value.etaMode === 'sin_eta',
       },
     }
 
@@ -263,6 +274,7 @@ const clearFilters = () => {
   filters.value.end_year = currentYear
   filters.value.year = currentYear
   filters.value.ejecutivo_id = null
+  filters.value.etaMode = 'ambos'
   useLegacyData.value = true
   useNewData.value = true
 }

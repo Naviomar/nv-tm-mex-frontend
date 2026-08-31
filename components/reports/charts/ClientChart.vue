@@ -109,7 +109,13 @@ const options = computed(() => apexBaseOptions({
   labels: donutLabels.value,
   colors: donutColors.value,
   legend: { position: 'bottom', fontSize: '11px' },
-  dataLabels: { enabled: true, formatter: (val: number) => `${val.toFixed(1)}%` },
+  dataLabels: {
+    enabled: true,
+    formatter: (val: number) => `${val.toFixed(1)}%`,
+    style: { colors: ['#1e293b'] },
+    background: { enabled: false },
+    dropShadow: { enabled: false },
+  },
   plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: () => formatInt(totalTeus.value) } } } } },
   tooltip: { theme: 'dark', y: { formatter: (v: number) => `${formatInt(v)} TEUs` } },
 }))
