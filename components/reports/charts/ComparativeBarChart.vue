@@ -226,16 +226,9 @@ const options = computed(() => {
         return opts.seriesIndex === topNonZeroIdx && total > 0 ? formatInt(total) : ''
       },
       offsetY: -8,
-      style: { fontSize: '10px', fontWeight: 700, colors: ['#334155'] },
-      background: {
-        enabled: true,
-        foreColor: '#ffffff',
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        borderRadius: 3,
-        opacity: 0.92,
-        padding: 3,
-      },
+      style: { fontSize: '10px', fontWeight: 700, colors: ['#1e293b'] },
+      background: { enabled: false },
+      dropShadow: { enabled: false },
     },
     legend: {
       position: 'top',
