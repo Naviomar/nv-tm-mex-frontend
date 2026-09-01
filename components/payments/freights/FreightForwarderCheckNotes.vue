@@ -152,7 +152,7 @@
                 <div v-if="ffNote.note_payment">
                   <v-chip color="blue" text-color="white" small @click="viewFfRequestPayment(ffNote.note_payment)">
                     <div class="flex gap-2">
-                      <v-icon>mdi-eye-outline</v-icon>Req. payment #{{ ffNote.note_payment.ff_payment_id }}
+                      <v-icon>mdi-eye-outline</v-icon>Req. payment {{ ffNote.note_payment.payment?.folio || '#' + ffNote.note_payment.ff_payment_id }}
                     </div>
                   </v-chip>
                 </div>

@@ -125,7 +125,7 @@
                   </v-btn>
                 </div>
               </td>
-              <td>Req. Pay#{{ ffpayment.id }}</td>
+              <td>{{ ffpayment.folio || 'Req. Pay#' + ffpayment.id }}</td>
               <td>{{ ffpayment.forwarderable?.name }} {{ getForwarderableType(ffpayment) }}</td>
               <td>{{ getCurrencyName(ffpayment.currency_id) }} {{ formatToCurrency(ffpayment.amount) }}</td>
               <td>

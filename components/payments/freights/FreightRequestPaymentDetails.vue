@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card>
-      <v-card-title> Request payment #{{ props.id }} - Freight forwarder notes </v-card-title>
+      <v-card-title> Request payment {{ ffPayment.folio || '#' + props.id }} - Freight forwarder notes </v-card-title>
       <v-card-text>
         <div class="grid grid-cols-2 gap-2 mb-4">
           <div>
