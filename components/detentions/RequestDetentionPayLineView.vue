@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card>
-      <v-card-title>Request pay line detention #{{ props.id }}</v-card-title>
+      <v-card-title>Request pay line detention {{ reqDetention.folio || '#' + props.id }}</v-card-title>
       <v-card-text>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <v-card>

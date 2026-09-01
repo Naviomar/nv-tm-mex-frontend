@@ -52,7 +52,7 @@
                 </div>
               </div>
             </td>
-            <td>{{ advPayment.id }}</td>
+            <td>{{ advPayment.folio || '#' + advPayment.id }}</td>
             <td>{{ advPayment.supplier?.name }}</td>
             <td>
               <div class="flex flex-col items-center gap-1 py-2">

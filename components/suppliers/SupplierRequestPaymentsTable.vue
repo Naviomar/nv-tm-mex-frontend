@@ -3,7 +3,7 @@
     <div @keyup.enter="onClickFilters">
       <div class="font-bold mb-2">Filters</div>
       <div class="grid grid-cols-5 gap-5">
-        <div><v-text-field v-model="filters.id" type="number" density="compact" label="Folio" /></div>
+        <div><v-text-field v-model="filters.id" type="text" density="compact" label="Folio" /></div>
         <div>
           <ASupplierSearch v-model="filters.supplier_id" />
         </div>
@@ -64,7 +64,7 @@
                   processName="supplier-request-cancel-payment"
                   :requestKey="`${supReqPayment.id}`"
                   label="Request cancellation"
-                  :displayName="`Payment Request #${supReqPayment.id}`"
+                  :displayName="`Payment Request ${supReqPayment.folio || '#' + supReqPayment.id}`"
                 >
                   <template #auth>
                     <TrashButton :item="supReqPayment" @click="showFormCancelReq(supReqPayment)" />
@@ -72,7 +72,7 @@
                 </ProcessAuthorizationWrapper>
               </div>
             </td>
-            <td>{{ supReqPayment.id }}</td>
+            <td>{{ supReqPayment.folio || '#' + supReqPayment.id }}</td>
             <td>{{ supReqPayment.supplier?.name }}</td>
             <td>
               <div class="flex flex-col items-center gap-1 py-2">
@@ -145,7 +145,7 @@
     <v-dialog v-model="formCancelReq.show" max-width="500">
       <v-card>
         <v-card-title>
-          <span class="text-h5">Cancel payment request #{{ formCancelReq.supReqPayment?.id }}</span>
+          <span class="text-h5">Cancel payment request {{ formCancelReq.supReqPayment?.folio || '#' + formCancelReq.supReqPayment?.id }}</span>
         </v-card-title>
         <v-card-text>
           <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
