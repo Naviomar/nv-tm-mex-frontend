@@ -135,26 +135,19 @@ const getInvoiceableGlobalNumberId = (invoice: any) => {
   if (invoiceableType.includes('InvoiceAirWm')) {
     return invoice.invoice_number
   }
-  if (invoiceableType.includes('FfPayment')) {
-    return invoice.invoiceable_id
-  }
   if (invoiceableType.includes('LineInvoiceRef')) {
-    return invoice.invoiceable_id
-  }
-  if (invoiceableType.includes('SupplierReqPayment')) {
-    return invoice.invoiceable_id
-  }
-  if (invoiceableType.includes('ReqAdvancePayment')) {
-    return invoice.invoiceable_id
-  }
-  if (invoiceableType.includes('ReqRefund')) {
     return invoice.invoiceable_id
   }
   if (invoiceableType.includes('PartyInvoice')) {
     return invoice.invoice_number
   }
+  // FfPayment, SupplierReqPayment, ReqAdvancePayment, ReqRefund, ReqDemurrage,
+  // ReqDetention: usan folio (PR-/LN-/DM-/DT-/AP-/RF-/FF-) en vez de invoice_number.
+  if (invoiceableType.includes('FfPayment') || invoiceableType.includes('SupplierReqPayment') || invoiceableType.includes('ReqAdvancePayment') || invoiceableType.includes('ReqRefund')) {
+    return invoice.invoiceable?.folio || invoice.invoiceable_id
+  }
 
-  return invoice.invoiceable_id
+  return invoice.invoiceable?.folio || invoice.invoiceable_id
 }
 
 

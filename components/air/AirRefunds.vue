@@ -27,7 +27,7 @@
           <td class="p-2">
             <v-btn size="small" color="lime" variant="outlined" @click="goToReqRefund(refund)">
               <v-icon>mdi-open-in-new</v-icon>
-              Req. refund #{{ refund.id }}
+              Req. refund {{ refund.folio || '#' + refund.id }}
             </v-btn>
           </td>
           <td class="p-2">{{ refund.beneficiary?.name }}</td>

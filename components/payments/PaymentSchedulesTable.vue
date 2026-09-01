@@ -274,7 +274,7 @@
                 processName="line-pay-schedules.cancel"
                 :requestKey="String(showDetail.schedule.id)"
                 label="Cancel Payment Release"
-                :displayName="`Payment Release #${showDetail.schedule.id}`"
+                :displayName="`Payment Release ${showDetail.schedule.folio || '#' + showDetail.schedule.id}`"
                 @refresh="onScheduleCancelled"
               >
                 <template #auth>

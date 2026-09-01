@@ -9,7 +9,7 @@
     <v-dialog v-model="form.showDialog" max-width="600">
       <v-card>
         <v-card-title>
-          <span class="headline">Notification form - Request Refund #{{ reqRefundId }}</span>
+          <span class="headline">Notification form - Request Refund {{ reqRefundId }}</span>
         </v-card-title>
         <div v-if="!hasAttachments">
           <v-card-text>
@@ -62,7 +62,7 @@ const props = defineProps({
   },
 })
 
-const reqRefundId = computed(() => props.reqRefund?.id)
+const reqRefundId = computed(() => props.reqRefund?.folio || '#' + props.reqRefund?.id)
 
 const form = reactive({
   showDialog: false,
