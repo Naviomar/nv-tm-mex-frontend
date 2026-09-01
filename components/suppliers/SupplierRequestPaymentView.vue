@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card :class="isDeleted ? 'bg-red-200 dark:bg-red-800!' : ''">
-      <v-card-title>Supplier - Request payment #{{ props.id }}</v-card-title>
+      <v-card-title>Supplier - Request payment {{ supReqPayment.folio || '#' + props.id }}</v-card-title>
       <v-card-text>
         <div class="grid grid-cols-2 gap-4 mb-4">
           <v-card>

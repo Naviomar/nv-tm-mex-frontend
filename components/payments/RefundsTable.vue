@@ -67,7 +67,7 @@
                   
                 </div>
               </td>
-              <td>{{ refund.id }}</td>
+              <td>{{ refund.folio || '#' + refund.id }}</td>
               <td>
                 {{ refund.beneficiary?.name }}
                 <span v-if="refund.beneficiary?.deleted_at"> (Eliminado)</span>

@@ -21,13 +21,23 @@
               </div>
             </v-card-title>
             <v-card-text>
-              <v-btn
-                :to="`/maritime/import/service-details-${referencia.id}`"
-                variant="outlined"
-                size="small"
-                class="mb-4"
-                ><v-icon>mdi-open-in-new</v-icon>View reference</v-btn
-              >
+              <div class="flex gap-2 mb-4">
+                <v-btn
+                  :to="`/maritime/import/service-details-${referencia.id}`"
+                  variant="outlined"
+                  size="small"
+                  ><v-icon>mdi-open-in-new</v-icon>View reference</v-btn
+                >
+                <v-btn
+                  size="small"
+                  :variant="hasDemurrageInvoices ? 'flat' : 'outlined'"
+                  color="green"
+                  @click="showInvoicesDialog = !showInvoicesDialog"
+                >
+                  <v-icon>{{ hasDemurrageInvoices ? 'mdi-link' : 'mdi-link-off' }}</v-icon>
+                  View invoice
+                </v-btn>
+              </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <div class="grid grid-cols-3 items-center gap-2">
@@ -744,6 +754,77 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="showInvoicesDialog" max-width="750px">
+      <v-card>
+        <v-card-title>
+          <div class="flex items-center gap-2">
+            <v-icon>mdi-receipt-text-check-outline</v-icon>
+            Ref #{{ referencia.reference_number }} - Demurrage invoices
+          </div>
+        </v-card-title>
+        <v-card-text>
+          <v-alert
+            v-if="!hasDemurrageInvoices"
+            type="info"
+            variant="tonal"
+            text="This reference has generated demurrages but they have not been invoiced yet."
+          />
+          <v-table v-else density="compact">
+            <thead>
+              <tr>
+                <th class="text-left">Pay status</th>
+                <th class="text-left">Invoice #</th>
+                <th class="text-left">Customer</th>
+                <th class="text-left">Demurrage amount</th>
+                <th class="text-left">Invoice date</th>
+                <th class="text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(invoice, index) in demurrageInvoices" :key="`demurrage-invoice-${index}`">
+                <td>
+                  <v-chip :color="invoice.is_paid ? 'success' : 'warning'" size="small">
+                    {{ invoice.is_paid ? 'Paid' : 'Pending' }}
+                  </v-chip>
+                </td>
+                <td>
+                  <div class="flex items-center gap-1">
+                    <v-chip size="x-small" :color="isInvoiceTm(invoice) ? 'blue' : 'teal'" variant="flat">
+                      {{ isInvoiceTm(invoice) ? 'TM' : 'WM' }}
+                    </v-chip>
+                    <span class="font-bold">{{ invoice.invoice_number }}</span>
+                  </div>
+                </td>
+                <td>{{ invoice.consignee_name }}</td>
+                <td>
+                  <div
+                    v-for="(amount, amountIndex) in invoice.amounts"
+                    :key="`demurrage-inv-amount-${index}-${amountIndex}`"
+                  >
+                    {{ formatToCurrency(amount.total) }} {{ getCurrencyName(amount.currency_id) }}
+                  </div>
+                </td>
+                <td>{{ formatDateOnlyString(invoice.issue_date || invoice.created_at) }}</td>
+                <td>
+                  <v-btn
+                    variant="text"
+                    icon="mdi-open-in-new"
+                    color="blue-lighten-2"
+                    density="compact"
+                    title="View invoice"
+                    @click="viewInvoice(invoice)"
+                  ></v-btn>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn @click="showInvoicesDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -794,8 +875,25 @@ const showEditFreeDays = ref(false)
 const referencia = ref<any>({})
 const containerCalcs = ref<any>([])
 const showDiscountDialog = ref(false)
+const showInvoicesDialog = ref(false)
 const refreshAuthReqs = ref(false)
 const freeDaysConfig = ref<any>(null)
+
+const demurrageInvoices = computed(() => {
+  return referencia.value?.demurrage_invoices || []
+})
+
+const hasDemurrageInvoices = computed(() => {
+  return demurrageInvoices.value.length > 0
+})
+
+const isInvoiceTm = (invoice: any) => {
+  return invoice.invoiceable_type?.includes('InvoiceSeaTm') ?? false
+}
+
+const viewInvoice = (invoice: any) => {
+  router.push(`/invoices/search/${isInvoiceTm(invoice) ? 'tm' : 'wm'}-view-${invoice.invoiceable_id}`)
+}
 
 const canUpdateRates = computed(() => {
   return hasPermission(permissions.DemurragesUpdateSellRates)

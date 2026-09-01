@@ -53,7 +53,7 @@
         <thead>
           <tr>
             <th>Actions</th>
-            <th>Req #</th>
+            <th>Folio</th>
             <th>Freight line</th>
             <th>Service(s) #</th>
             <th>MBL</th>
@@ -74,7 +74,7 @@
             <td>
               <ViewButton :item="reqDemurrage" @click="viewReqDemurrage(reqDemurrage)" />
             </td>
-            <td>{{ reqDemurrage.id }}</td>
+            <td>{{ reqDemurrage.folio || '#' + reqDemurrage.id }}</td>
             <td>{{ reqDemurrage.line?.name }}</td>
             <td>
               <div class="flex flex-col gap-1">

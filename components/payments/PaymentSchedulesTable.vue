@@ -116,7 +116,7 @@
               <td>
                 <v-btn color="blue-lighten-4" size="small" @click="showScheduleDetail(schedule)">
                   <v-icon>mdi-eye-outline</v-icon>
-                  #{{ schedule.id }}
+                  {{ schedule.folio || '#' + schedule.id }}
                 </v-btn>
               </td>
               <td>{{ schedule.line?.name }}</td>
@@ -172,7 +172,7 @@
     <v-dialog v-model="showDetail.showDialog" max-width="900">
       <v-card>
         <v-card-title class="flex items-center justify-between">
-          <h1 class="text-xl font-bold">Payment schedule detail #{{ showDetail.schedule.id }}</h1>
+          <h1 class="text-xl font-bold">Payment schedule detail {{ showDetail.schedule.folio || '#' + showDetail.schedule.id }}</h1>
           <v-chip v-if="detailStatus === 'Paid'" color="success">Paid</v-chip>
           <v-chip v-if="detailStatus === 'Pending'" color="warning">Pending</v-chip>
         </v-card-title>

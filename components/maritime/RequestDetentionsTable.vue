@@ -53,7 +53,7 @@
         <thead>
           <tr>
             <th>Actions</th>
-            <th>Req #</th>
+            <th>Folio</th>
             <th>Freight line</th>
             <th>Service(s) #</th>
             <th>MBL</th>
@@ -74,7 +74,7 @@
             <td>
               <ViewButton :item="reqDetention" @click="viewReqDemurrage(reqDetention)" />
             </td>
-            <td>{{ reqDetention.id }}</td>
+            <td>{{ reqDetention.folio || '#' + reqDetention.id }}</td>
             <td>{{ reqDetention.line?.name }}</td>
             <td>
               <div class="flex flex-col gap-1">
