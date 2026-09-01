@@ -176,7 +176,7 @@
                     >
                       <div class="flex gap-1">
                         <v-icon size="small">mdi-eye-outline</v-icon>
-                        <span>PR #{{ note.note_payment?.ff_payment_id }}</span>
+                        <span>{{ note.note_payment?.payment?.folio || 'PR #' + note.note_payment?.ff_payment_id }}</span>
                       </div>
                     </v-chip>
                   </div>

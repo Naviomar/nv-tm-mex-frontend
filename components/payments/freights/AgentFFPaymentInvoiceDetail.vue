@@ -4,7 +4,7 @@
       <div>
         <v-card class="mb-4">
           <v-card-title>
-            <div class="font-bold">Agent F.F. Payment request #{{ ffPayment.id }}</div>
+            <div class="font-bold">Agent F.F. Payment request {{ ffPayment.folio || '#' + ffPayment.id }}</div>
             <div>
               <v-chip :color="isPaid ? 'green' : 'warning'" text-color="white" small class="capitalize">
                 {{ isPaid ? "Paid" : "Payment pending" }}
