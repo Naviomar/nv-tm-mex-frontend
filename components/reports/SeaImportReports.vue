@@ -318,6 +318,36 @@ const loadAll = async () => {
   }
 }
 
+const groupLineRows = (rows: any[]) => {
+  const byKey = new Map<string, { year: number, name: string, teus: number, references: number, maxTeus: number }>()
+
+  for (const r of rows) {
+    const code = String(r.line_code || r.line_name || r.name || '').trim().toUpperCase()
+    if (!code) continue
+
+    const year = Number(r.year)
+    const teus = Number(r.total_teus ?? 0)
+    const references = Number(r.references ?? 0)
+    const key = `${year}|${code}`
+
+    if (!byKey.has(key)) {
+      byKey.set(key, { year, name: r.line_name ?? r.name ?? code, teus, references, maxTeus: teus })
+    } else {
+      const group = byKey.get(key)!
+      group.teus += teus
+      group.references += references
+      if (teus > group.maxTeus) {
+        group.maxTeus = teus
+        group.name = r.line_name ?? r.name ?? group.name
+      }
+    }
+  }
+
+  return Array.from(byKey.values())
+    .map(g => ({ year: g.year, name: g.name, teus: g.teus, references: g.references }))
+    .sort((a, b) => b.teus - a.teus)
+}
+
 const loadBreakdowns = async () => {
   loadingBreakdowns.value = true
   try {
@@ -328,7 +358,7 @@ const loadBreakdowns = async () => {
       $api.reports.getReferencesByDischargePort(baseParams()),
     ])
     clientRows.value = (clients?.data ?? []).map((c: any) => ({ year: c.year, name: c.client_name, teus: Number(c.total_teus) || 0 }))
-    lineRows.value = (lines?.data ?? []).map((l: any) => ({ year: l.year, name: l.line_name, teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 }))
+    lineRows.value = groupLineRows((lines?.data ?? []).map((l: any) => ({ year: l.year, line_code: l.line_code, line_name: l.line_name, teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 })))
     loadingPortRows.value = (loadingPorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
     dischargePortRows.value = (dischargePorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
   } catch (error) {
