@@ -61,7 +61,7 @@
                   processName="supplier-request-cancel-payment"
                   :requestKey="props.id.toString()"
                   label="Request cancellation"
-                  :displayName="`Payment Request #${props.id}`"
+                  :displayName="`Payment Request ${supReqPayment.folio || '#' + props.id}`"
                 >
                   <template #auth>
                     <v-btn color="red" size="small" @click="showConfirmCancelReq">

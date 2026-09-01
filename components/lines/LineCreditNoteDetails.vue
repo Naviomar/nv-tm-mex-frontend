@@ -211,7 +211,7 @@
                       append-icon="mdi-plus"
                       @click="addInvoiceToPay(invoice)"
                     >
-                      {{ getInvoiceableName(invoice) }} #{{ invoice.invoiceable_id }}
+                      {{ getInvoiceableName(invoice) }} #{{ invoice.invoiceable?.folio || invoice.invoiceable_id }}
                     </v-chip>
                   </div>
                   <div v-if="invoicesFoundSelected.length > 0" class="py-4">
@@ -243,7 +243,7 @@
                                 <v-icon>mdi-close</v-icon>
                               </v-btn>
                             </td>
-                            <td>{{ getInvoiceableName(invoiceToPay) }} #{{ invoiceToPay.invoiceable_id }}</td>
+                            <td>{{ getInvoiceableName(invoiceToPay) }} #{{ invoiceToPay.invoiceable?.folio || invoiceToPay.invoiceable_id }}</td>
                             <td>{{ charge.charge?.name }}</td>
                             <td>{{ formatToCurrency(parseFloat(charge.amount) + parseFloat(charge.amount_iva)) }}</td>
                             <td>{{ formatToCurrency(charge.pending_balance) }}</td>

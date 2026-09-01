@@ -9,7 +9,7 @@
     <v-dialog v-model="form.showDialog" max-width="600">
       <v-card>
         <v-card-title>
-          <span class="headline">Attachments - Request demurrage #{{ serviceName }}</span>
+          <span class="headline">Attachments - Request demurrage {{ serviceName }}</span>
         </v-card-title>
         <v-card-text>
           <v-table density="compact">
@@ -63,7 +63,7 @@ const props = defineProps({
   },
 })
 
-const serviceName = computed(() => props.reqDemurrage?.id)
+const serviceName = computed(() => props.reqDemurrage?.folio || '#' + props.reqDemurrage?.id)
 
 const form = reactive({
   showDialog: false,

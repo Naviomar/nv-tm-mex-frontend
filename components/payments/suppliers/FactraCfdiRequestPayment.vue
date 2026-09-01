@@ -182,7 +182,7 @@
                 density="compact"
               >
                 <v-card-title>
-                  Advance payment #{{ advPayment.id }}
+                  Advance payment {{ advPayment.folio || '#' + advPayment.id }}
                   <v-chip 
                     v-if="isAdvanceUnpaid(advPayment)" 
                     color="orange" 

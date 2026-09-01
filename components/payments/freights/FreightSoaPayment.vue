@@ -298,7 +298,7 @@
           <v-btn icon @click="paymentViewDialog.show = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-          <v-toolbar-title>Payment Request #{{ paymentViewDialog.paymentId }}</v-toolbar-title>
+          <v-toolbar-title>Payment Request {{ paymentViewDialog.folio || '#' + paymentViewDialog.paymentId }}</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
           <FreightRequestPaymentDetails v-if="paymentViewDialog.show" :id="String(paymentViewDialog.paymentId)" />
@@ -548,7 +548,7 @@ const getServiceType = (item: any) => {
 }
 
 const viewFfReqPayment = (notePayment: any) => {
-  paymentViewDialog.value = { show: true, paymentId: notePayment.ff_payment_id }
+  paymentViewDialog.value = { show: true, paymentId: notePayment.ff_payment_id, folio: notePayment.payment?.folio }
 }
 
 const viewFfNote = (noteId: number) => {

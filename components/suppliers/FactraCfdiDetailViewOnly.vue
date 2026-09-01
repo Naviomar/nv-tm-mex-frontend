@@ -103,7 +103,7 @@
                     <td>
                       <v-chip :to="`/invoices/search/lines/demurrages/req-pay-view-${reqDemurrage.id}`" color="primary">
                         <v-icon>mdi-open-in-new</v-icon>
-                        Req. Demurrage #{{ reqDemurrage.id }}
+                        Req. Demurrage {{ reqDemurrage.folio || '#' + reqDemurrage.id }}
                       </v-chip>
                     </td>
                     <td>{{ formatToCurrency(reqDemurrage.amount) }}</td>
@@ -127,7 +127,7 @@
                     <td>
                       <v-chip :to="`/invoices/search/lines/detentions/req-pay-view-${reqDetention.id}`" color="primary">
                         <v-icon>mdi-open-in-new</v-icon>
-                        Req. Detention #{{ reqDetention.id }}
+                        Req. Detention {{ reqDetention.folio || '#' + reqDetention.id }}
                       </v-chip>
                     </td>
                     <td>{{ formatToCurrency(reqDetention.amount) }}</td>

@@ -134,7 +134,7 @@
                   class="bg-blue-200! dark:bg-amber-900!"
                   density="compact"
                 >
-                  <v-card-title>Schedule BL Payment#{{ linePaySchedule.id }}</v-card-title>
+                  <v-card-title>Schedule BL Payment {{ linePaySchedule.folio || '#' + linePaySchedule.id }}</v-card-title>
                   <v-card-text>
                     <v-table density="compact">
                       <thead>

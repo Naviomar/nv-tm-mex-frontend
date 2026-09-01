@@ -9,7 +9,7 @@
     <v-dialog v-model="form.showDialog" max-width="600">
       <v-card>
         <v-card-title>
-          <span class="headline">Attachments - Supplier Req. Payment #{{ serviceName }}</span>
+          <span class="headline">Attachments - Supplier Req. Payment {{ serviceName }}</span>
         </v-card-title>
         <v-card-text>
           <v-table density="compact">
@@ -63,7 +63,7 @@ const props = defineProps({
   },
 })
 
-const serviceName = computed(() => props.supReqPayment?.id)
+const serviceName = computed(() => props.supReqPayment?.folio || '#' + props.supReqPayment?.id)
 
 const form = reactive({
   showDialog: false,

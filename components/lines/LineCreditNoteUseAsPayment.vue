@@ -86,7 +86,7 @@
                           >
                             <td>
                               {{ getInvoiceableName(lineInvoiceRef.invoice) }} #{{
-                                lineInvoiceRef.invoice.invoiceable_id
+                                lineInvoiceRef.invoice.invoiceable?.folio || lineInvoiceRef.invoice.invoiceable_id
                               }}
                             </td>
                             <td>{{ charge.charge?.name }}</td>

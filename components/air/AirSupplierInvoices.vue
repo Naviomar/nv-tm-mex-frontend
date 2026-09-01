@@ -91,7 +91,7 @@
           <td class="p-2">
             <v-btn size="small" color="lime" variant="outlined" @click="goToReqAdvPayment(reqAdvPayment)">
               <v-icon>mdi-open-in-new</v-icon>
-              Req. Adv. Payment #{{ reqAdvPayment.id }}
+              Req. Adv. Payment {{ reqAdvPayment.folio || '#' + reqAdvPayment.id }}
             </v-btn>
           </td>
           <td class="p-2">{{ reqAdvPayment.supplier?.name }}</td>

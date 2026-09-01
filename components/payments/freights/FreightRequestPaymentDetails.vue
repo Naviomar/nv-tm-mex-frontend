@@ -341,7 +341,7 @@ const downloadFfPaymentExel = async (ffpayment: any) => {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `ff-payment-${ffPayment.value.id}.xlsx`
+    a.download = `ff-payment-${ffPayment.value.folio || ffPayment.value.id}.xlsx`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
