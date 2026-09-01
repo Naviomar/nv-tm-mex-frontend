@@ -145,6 +145,33 @@
 
             <v-col cols="12" md="6">
               <v-autocomplete
+                v-model="filters.consignee_group_id"
+                :items="filteredConsigneeGroups"
+                @update:search="onConsigneeGroupSearch"
+                item-title="name"
+                item-value="id"
+                label="Consignee Group"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account-group"
+                auto-select-first
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreConsigneeGroups"
+                    v-intersect="onConsigneeGroupIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
                 v-model="filters.ff_id"
                 :items="filteredFreightForwarders"
                 @update:search="onFfSearch"
@@ -162,6 +189,33 @@
                   <div
                     v-if="hasMoreFreightForwarders"
                     v-intersect="onFfIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
+                v-model="filters.ff_group_id"
+                :items="filteredFfGroups"
+                @update:search="onFfGroupSearch"
+                item-title="name"
+                item-value="id"
+                label="Freight Forwarder Group"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-account-group"
+                auto-select-first
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreFfGroups"
+                    v-intersect="onFfGroupIntersect"
                     class="text-center py-2 text-caption text-grey"
                   >
                     Loading more...
@@ -451,7 +505,9 @@ const filters = ref<ImportRepoFilters>({
   toDate: toDate,
   voyage_id: null,
   consignee_id: null,
+  consignee_group_id: null,
   ff_id: null,
+  ff_group_id: null,
   line_id: null,
   executive_id: null,
   release: null,
@@ -471,11 +527,15 @@ const executives = ref<CatalogOption[]>([])
 const ports = ref<CatalogOption[]>([])
 const consignees = ref<CatalogOption[]>([])
 const freightForwarders = ref<CatalogOption[]>([])
+const consigneeGroups = ref<CatalogOption[]>([])
+const ffGroups = ref<CatalogOption[]>([])
 
 
 const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
 const { onSearch: onConsigneeSearch, filteredItems: filteredConsignees, hasMore: hasMoreConsignees, onIntersect: onConsigneeIntersect } = useAutocompleteFilter(consignees, () => filters.value.consignee_id)
+const { onSearch: onConsigneeGroupSearch, filteredItems: filteredConsigneeGroups, hasMore: hasMoreConsigneeGroups, onIntersect: onConsigneeGroupIntersect } = useAutocompleteFilter(consigneeGroups, () => filters.value.consignee_group_id)
 const { onSearch: onFfSearch, filteredItems: filteredFreightForwarders, hasMore: hasMoreFreightForwarders, onIntersect: onFfIntersect } = useAutocompleteFilter(freightForwarders, () => filters.value.ff_id)
+const { onSearch: onFfGroupSearch, filteredItems: filteredFfGroups, hasMore: hasMoreFfGroups, onIntersect: onFfGroupIntersect } = useAutocompleteFilter(ffGroups, () => filters.value.ff_group_id)
 const { onSearch: onLineSearch, filteredItems: filteredLines, hasMore: hasMoreLines, onIntersect: onLineIntersect } = useAutocompleteFilter(lines, () => filters.value.line_id)
 const { onSearch: onExecutiveSearch, filteredItems: filteredExecutives, hasMore: hasMoreExecutives, onIntersect: onExecutiveIntersect } = useAutocompleteFilter(executives, () => filters.value.executive_id)
 const { onSearch: onOriginPortSearch, filteredItems: filteredOriginPorts, hasMore: hasMoreOriginPorts, onIntersect: onOriginPortIntersect } = useAutocompleteFilter(ports, () => filters.value.originPort_id)
@@ -499,7 +559,9 @@ const applyFilters = async () => {
         ],
         voyage: filters.value.voyage_id,
         consignee: filters.value.consignee_id,
+        consignee_group: filters.value.consignee_group_id,
         ff: filters.value.ff_id,
+        ff_group: filters.value.ff_group_id,
         line: filters.value.line_id,
         executive: filters.value.executive_id,
         release: filters.value.release,
@@ -555,7 +617,9 @@ const clearFilters = () => {
   filters.value.toDate = toDate
   filters.value.voyage_id = null
   filters.value.consignee_id = null
+  filters.value.consignee_group_id = null
   filters.value.ff_id = null
+  filters.value.ff_group_id = null
   filters.value.line_id = null
   filters.value.executive_id = null
   filters.value.release = null
@@ -571,13 +635,15 @@ const clearFilters = () => {
 onMounted(async () => {
   try {
     loadingConsignees.value = true
-    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData] = await Promise.all([
+    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData, consigneeGroupsData, ffGroupsData] = await Promise.all([
       $api.importRepo.getVoyages(),
       $api.importRepo.getLines(),
       $api.importRepo.getExecutives(),
       $api.importRepo.getPorts(),
       $api.importRepo.getConsignees(),
       $api.importRepo.getFreightForwarders(),
+      $api.importRepo.getConsigneeGroups(),
+      $api.importRepo.getFreightForwarderGroups(),
     ])
 
     voyages.value = voyagesData.data || []
@@ -586,6 +652,8 @@ onMounted(async () => {
     ports.value = portsData.data || []
     consignees.value = consigneesData.data || []
     freightForwarders.value = freightForwardersData.data || []
+    consigneeGroups.value = consigneeGroupsData.data || []
+    ffGroups.value = ffGroupsData.data || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   } finally {

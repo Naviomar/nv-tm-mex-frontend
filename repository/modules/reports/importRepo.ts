@@ -7,7 +7,9 @@ export interface ImportRepoFilters {
   line?: number | null
   executive?: number | null
   consignee?: number | null
+  consignee_group?: number | null
   ff?: number | null
+  ff_group?: number | null
   originPort?: number | null
   loadingPort?: number | null
   dischargePort?: number | null
@@ -106,6 +108,14 @@ class ImportRepoModule extends FetchFactory<any> {
 
   async getPorts(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/catalogs/ports`, fetchOptions)
+  }
+
+  async getConsigneeGroups(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/catalogs/consignee-groups`, fetchOptions)
+  }
+
+  async getFreightForwarderGroups(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/catalogs/freight-forwarder-groups`, fetchOptions)
   }
 }
 
