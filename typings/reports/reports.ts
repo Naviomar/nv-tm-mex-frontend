@@ -54,7 +54,9 @@ export interface ImportRepoFilters {
   toDate: DateOrString
   voyage_id: number | null
   consignee_id: number | null
+  consignee_group_id: number | null
   ff_id: number | null
+  ff_group_id: number | null
   line_id: number | null
   executive_id: number | null
   release: string | null
