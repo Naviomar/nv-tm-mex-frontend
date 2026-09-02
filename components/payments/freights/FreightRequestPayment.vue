@@ -219,9 +219,9 @@
             <p>Please review the following information.</p>
           </div>
           <v-alert v-if="agentBankMissing" color="error" density="compact" class="mb-3">
-            El agente no tiene datos bancarios completos registrados en su catálogo
-            (banco, beneficiario, cuenta y CLABE/SWIFT/ABA/IBAN según la moneda). No se puede
-            enviar la solicitud de pago hasta completar su información bancaria.
+            This agent does not have complete bank details on file
+            (bank, beneficiary, account number, and CLABE/SWIFT/ABA/IBAN depending on the currency).
+            The payment request cannot be sent until their bank information is complete.
           </v-alert>
           <div v-if="agentHasToPay">
             <v-text-field v-model="sendPayment.subject" label="Email Subject" density="compact" />
