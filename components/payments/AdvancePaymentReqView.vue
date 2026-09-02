@@ -358,13 +358,19 @@ const closeEditBankInfo = () => {
 }
 
 const getLinkName = (serviceLink: any) => {
-  if (serviceLink.chargeable_type.includes('ReferenceSellRateCharge')) {
+  if (serviceLink.chargeable_type.includes('ReferenceSellrateCharge')) {
     return serviceLink.chargeable?.charge?.name
   }
-  if (serviceLink.chargeable_type.includes('ReferenceCharge')) {
+  if (serviceLink.chargeable_type.includes('ReferenceBuyrateCharge')) {
+    return serviceLink.chargeable?.charge?.name
+  }
+  if (serviceLink.chargeable_type.includes('AirReferenceCharge')) {
     return serviceLink.chargeable?.charge?.name
   }
   if (serviceLink.chargeable_type.includes('ReferenceExportCharge')) {
+    return serviceLink.chargeable?.charge?.name
+  }
+  if (serviceLink.chargeable_type.includes('ReferenceCharge')) {
     return serviceLink.chargeable?.charge?.name
   }
   if (serviceLink.chargeable_type.includes('FfNote')) {
