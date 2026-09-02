@@ -480,7 +480,7 @@ const mailNotifications = [
     "name": "App\\Mail\\Mexico\\SeaVoyageDestUpdatedEtaConfirmed",
     "short_name": "SeaVoyageDestUpdatedEtaConfirmed",
     "description": "Sea Voyage Destination Updated ETA Confirmation",
-    "is_for_consignee": true
+    "is_for_consignee": false
   },
   {
     "id": 44,

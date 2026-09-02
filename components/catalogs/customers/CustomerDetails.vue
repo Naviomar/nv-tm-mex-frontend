@@ -189,7 +189,7 @@
                       {{ cnn.executive?.name ?? 'Deleted executive' }}
                     </div>
                     <div class="text-xs text-gray-500">
-                      Created by {{ cnn.executive?.creator?.name ?? '—' }}
+                      Created by {{ cnn.creator?.name ?? '—' }}
                       <span v-if="cnn.executive?.deleted_at">
                         · Deleted by {{ cnn.executive?.deletor?.name ?? '—' }}
                       </span>

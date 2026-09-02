@@ -9,8 +9,8 @@
               <div class="flex justify-between gap-2">
                 <div>Details</div>
                 <div>
-                  <v-chip :color="lineCreditNote.amount_available <= 0 ? 'success' : 'warning'" size="small">
-                    {{ lineCreditNote.amount_available <= 0 ? 'Used' : 'Pending to use' }}
+                  <v-chip :color="statusChipColor" size="small">
+                    {{ statusChipLabel }}
                   </v-chip>
                 </div>
               </div>
@@ -50,7 +50,10 @@
                 </div>
                 <div>Attachment:</div>
                 <div>
-                  <ButtonDownloadS3Object :s3Path="lineCreditNote.attachment" />
+                  <div class="flex items-center gap-2">
+                    <v-icon color="green" @click="showAttachmentDialog">mdi-pencil-outline</v-icon>
+                    <ButtonDownloadS3Object :s3Path="lineCreditNote.attachment" />
+                  </div>
                 </div>
               </div>
 
@@ -195,6 +198,21 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="editAttachmentForm.showDialog" max-width="500">
+      <v-card>
+        <v-toolbar color="primary">
+          <v-btn icon @click="closeAttachmentDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>Update Credit Note Attachment</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <v-file-input v-model="editAttachmentForm.file" label="Attachment" density="compact" />
+          <v-btn color="primary" :disabled="!editAttachmentForm.file" @click="updateAttachment">Update</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -236,6 +254,34 @@ const showDialog = () => {
 const closeDialog = () => {
   editFolioForm.showDialog = false
 }
+
+const editAttachmentForm = reactive({
+  showDialog: false,
+  file: null as File | null,
+})
+
+const showAttachmentDialog = () => {
+  editAttachmentForm.file = null
+  editAttachmentForm.showDialog = true
+}
+
+const closeAttachmentDialog = () => {
+  editAttachmentForm.showDialog = false
+}
+
+const statusChipColor = computed(() => {
+  if (lineCreditNote.value.status === 'cancelled') {
+    return 'error'
+  }
+  return lineCreditNote.value.amount_available <= 0 ? 'success' : 'warning'
+})
+
+const statusChipLabel = computed(() => {
+  if (lineCreditNote.value.status === 'cancelled') {
+    return 'Cancelled'
+  }
+  return lineCreditNote.value.amount_available <= 0 ? 'Used' : 'Pending to use'
+})
 
 const lineInvoice = computed(() => {
   return lineCreditNote.value.line_invoice
@@ -307,6 +353,23 @@ const updateFolio = async () => {
 
     snackbar.add({ type: 'success', text: 'Folio updated' })
     editFolioForm.showDialog = false
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
+const updateAttachment = async () => {
+  try {
+    loadingStore.start()
+    await $api.lineCreditNotes.updateAttachment(props.id.toString(), { file: editAttachmentForm.file })
+
+    snackbar.add({ type: 'success', text: 'Attachment updated' })
+    editAttachmentForm.showDialog = false
+    await getLineCreditNote()
   } catch (e) {
     console.error(e)
   } finally {

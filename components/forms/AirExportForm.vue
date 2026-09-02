@@ -108,6 +108,8 @@
           </div>
         </div>
 
+        <ConsigneeStatusAlert :consignee-info="consigneeInfo" />
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div>
             <InputText name="shipper" density="compact" label="Consignee *" variant="solo-filled" />
@@ -666,13 +668,6 @@ const onConsigneeChange = async (value: any) => {
     const response = await $api.consignees.getDetailsForExportReference(value)
 
     consigneeInfo.value = response
-
-    if (!consigneeInfo.value.executive_active) {
-      snackbar.add({
-        type: 'warning',
-        text: 'Shipper does not have an active executive',
-      })
-    }
   } catch (e) {
     console.error(e)
   } finally {
