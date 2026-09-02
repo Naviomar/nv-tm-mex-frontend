@@ -109,7 +109,7 @@
                 </div>
               </td>
               <td>
-                <v-btn color="grey-lighten-2" size="small" @click="downloadExcel(schedule.id)">
+                <v-btn color="grey-lighten-2" size="small" @click="downloadExcel(schedule)">
                   <v-icon color="black">mdi-file-excel</v-icon>
                 </v-btn>
               </td>
@@ -263,7 +263,7 @@
 
           <div class="flex justify-between items-center gap-2 mt-4">
             <div class="flex gap-2">
-              <v-btn color="secondary" size="small" @click="downloadExcel(showDetail.schedule.id)">
+              <v-btn color="secondary" size="small" @click="downloadExcel(showDetail.schedule)">
                 <v-icon start>mdi-file-excel</v-icon> Download Excel
               </v-btn>
               <v-btn color="primary" size="small" @click="showNotyForm(showDetail.schedule)">
@@ -567,16 +567,16 @@ const closeRefDialog = () => {
   refDialog.value.referencia = null
 }
 
-const downloadExcel = async (id: string) => {
+const downloadExcel = async (schedule: any) => {
   try {
     loadingIndicator.start()
     loadingStore.loading = true
-    const response = await $api.linePayments.downloadExcel(id)
+    const response = await $api.linePayments.downloadExcel(schedule.id)
     const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `schedule-${id}.xlsx`)
+    link.setAttribute('download', `schedule-${schedule.folio || schedule.id}.xlsx`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
