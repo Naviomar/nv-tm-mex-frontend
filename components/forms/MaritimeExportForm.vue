@@ -319,11 +319,9 @@
               <v-card-text>
                 <div v-if="!consigneeInfo">Select a shipper to see more information</div>
                 <div v-if="consigneeInfo">
+                  <ConsigneeStatusAlert :consignee-info="consigneeInfo" />
                   <div class="font-bold mb-2">
                     <v-chip>{{ consigneeInfo.export_credit_days }} credit days</v-chip>
-                  </div>
-                  <div v-if="!consigneeInfo.executive_active">
-                    <div class="font-bold">No executive active</div>
                   </div>
                 </div>
               </v-card-text>

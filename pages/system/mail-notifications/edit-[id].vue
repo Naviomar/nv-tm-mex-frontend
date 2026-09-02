@@ -68,6 +68,27 @@
               </v-tooltip>
             </div>
           </v-col>
+          <v-col cols="12">
+            <div class="d-flex align-center ga-1">
+              <v-switch
+                v-model="isForConsignee"
+                color="primary"
+                density="compact"
+                hide-details
+                label="Customer-facing notification"
+              />
+              <v-tooltip location="top" max-width="320">
+                <template v-slot:activator="{ props }">
+                  <v-icon v-bind="props" icon="mdi-information-outline" size="18" color="medium-emphasis" />
+                </template>
+                <span>
+                  When enabled, this notification is expected to reach an external customer email.
+                  A missing TO email will raise the "Customer missing TO email" alert. Disable it for
+                  internal-only notifications, so a missing TO here never raises that alert.
+                </span>
+              </v-tooltip>
+            </div>
+          </v-col>
         </v-row>
       </v-card-text>
     </v-card>
@@ -566,6 +587,7 @@ const { setValues, handleSubmit } = useForm({
 const { value: shortName } = useField<string>('short_name')
 const { value: description, errorMessage: descriptionError, setValue: setDescription } = useField<string>('description')
 const { value: includeCreatorAsTo } = useField<boolean>('include_creator_as_to')
+const { value: isForConsignee } = useField<boolean>('is_for_consignee')
 
 // El fallback "creador como TO" solo está implementado en el backend para
 // estos 3 mailables de factura — el switch no debe verse en el resto,
@@ -589,6 +611,7 @@ watch(
         short_name: response.short_name ?? response.name ?? '',
         description: response.description ?? '',
         include_creator_as_to: response.include_creator_as_to ?? true,
+        is_for_consignee: response.is_for_consignee ?? true,
       })
       linkedUsers.value = response.users ?? []
       linkedDepartments.value = response.departments ?? []

@@ -105,6 +105,7 @@
               <th class="text-left">Name</th>
               <th class="text-left">Contacto</th>
               <th class="text-left">Executive</th>
+              <th class="text-left">Emails</th>
               <th class="text-left">RFC</th>
               <th class="text-left">C. Encomienda</th>
               <th class="text-left">C. Garantia</th>
@@ -142,7 +143,16 @@
               <td>{{ consignee.name }}</td>
               <td>{{ consignee.contact_name }}</td>
               <td>
-                {{ getFirstExecutive(consignee) }}
+                <v-chip v-if="!consignee.executive_active" color="error" variant="tonal" size="small">
+                  No executive
+                </v-chip>
+                <span v-else>{{ consignee.executive_active.executive?.name }}</span>
+              </td>
+              <td>
+                <v-chip v-if="!consignee.has_emails" color="error" variant="tonal" size="small">
+                  Missing emails
+                </v-chip>
+                <v-chip v-else color="success" variant="tonal" size="small">OK</v-chip>
               </td>
               <td>{{ consignee.tax_number }}</td>
               <td>{{ consignee.entrust_letters?.length > 0 ? 'Si tiene' : 'No tiene' }}</td>
@@ -272,12 +282,6 @@ const onClickFilters = async () => {
   await getConsignees()
 }
 
-const getFirstExecutive = (consignee: any) => {
-  if (consignee.consignee_executives.length > 0) {
-    return consignee.consignee_executives[0].executive?.name
-  }
-  return 'No executive'
-}
 
 const viewCustomer = (consignee: any) => {
   router.push(`/configuration/customers/view-${consignee.id}`)

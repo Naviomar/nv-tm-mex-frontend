@@ -271,6 +271,7 @@
                 <v-card-text>
                   <div v-if="!consigneeInfo">Select a customer to see more information</div>
                   <div v-if="consigneeInfo">
+                    <ConsigneeStatusAlert :consignee-info="consigneeInfo" />
                     <div class="font-bold mb-2">
                       <v-chip>{{ consigneeInfo.import_credit_days }} credit days</v-chip>
                       <v-chip :color="creditDaysColor">{{ consigneeCreditFinalDate }}</v-chip>
