@@ -217,9 +217,12 @@
             <li v-if="filters.report_type === 'monthly'">
               <strong>ETD:</strong> Client TEUs distributed across months by ETD (Departure) date.
             </li>
+            <li v-if="filters.report_type === 'monthly'">
+              <strong>ETA:</strong> Client TEUs distributed across months by ETA (Arrival) date.
+            </li>
             <li>
-              References with no ETA yet are not dropped nor guessed into a period — their TEUs are shown in an
-              <strong>ADICIONALES (SIN ETA)</strong> column instead.
+              References with no value in the date a given sheet is based on (ETA or ETD) are not dropped — their
+              TEUs are shown in an <strong>ADICIONALES</strong> column instead.
             </li>
             <li v-if="filters.include_offices">
               <strong>Comparativo Oficinas:</strong> TEU distribution comparison by office (Mexico, Guadalajara,
