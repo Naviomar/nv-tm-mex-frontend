@@ -218,6 +218,11 @@
           <div class="text-sm">
             <p>Please review the following information.</p>
           </div>
+          <v-alert v-if="agentBankMissing" color="error" density="compact" class="mb-3">
+            El agente no tiene datos bancarios completos registrados en su catálogo
+            (banco, beneficiario, cuenta y CLABE/SWIFT/ABA/IBAN según la moneda). No se puede
+            enviar la solicitud de pago hasta completar su información bancaria.
+          </v-alert>
           <div v-if="agentHasToPay">
             <v-text-field v-model="sendPayment.subject" label="Email Subject" density="compact" />
           </div>
@@ -240,7 +245,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn color="secondary" @click="closeSendPaymentRequest"> Cancel </v-btn>
-          <v-btn color="primary" @click="sendPaymentRequest"> Send payment request</v-btn>
+          <v-btn color="primary" :disabled="agentBankMissing" @click="sendPaymentRequest"> Send payment request</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -344,6 +349,23 @@ const agentHasToPay = computed(() => {
   return parseFloat(sendPayment.value.ffPayment?.amount) > 0
 })
 
+const isAgentBankComplete = (bankData: any) => {
+  if (!bankData || !bankData.bank_id || !bankData.beneficiary_name || !bankData.account_number) {
+    return false
+  }
+  if (getCurrencyName(bankData.currency_id) === 'MXN') {
+    return !!bankData.clabe
+  }
+  return !!(bankData.swift || bankData.aba || bankData.iban)
+}
+
+const agentBankMissing = computed(() => {
+  const ffPayment = sendPayment.value.ffPayment
+  if (!ffPayment || parseFloat(ffPayment.amount) >= 0) return false
+  const bankData = ffPayment.forwarderable?.banks?.[0]
+  return !isAgentBankComplete(bankData)
+})
+
 const hasCheckedNotes = computed(() => {
   return ffPayments.value.data.some((note: any) => note.checked_email)
 })
@@ -385,13 +407,13 @@ const showSendPaymentRequest = async (ffPayment: any) => {
 
   // Cuando es negativo es por que hay que pagarle al agente
   if (parseFloat(ffPayment.amount) < 0) {
-    const bankData = ffPayment.forwarderable?.banks[0] || {}
+    const bankData = ffPayment.forwarderable?.banks?.[0] || {}
     const bank = `
       Banco: ${bankData.bank?.name || ''}
       Nombre del beneficiario: ${bankData.beneficiary_name || ''}
       Dirección del beneficiario: ${bankData.beneficiary_address || ''}${
       bankData.beneficiary_city ? ', ' + bankData.beneficiary_city : ''
-    }${bankData.beneficiary_zip_code ? ', ' + bankData.beneficiary_zip_code : ''}${bankData.country?.name}
+    }${bankData.beneficiary_zip_code ? ', ' + bankData.beneficiary_zip_code : ''}${bankData.country?.name || ''}
       Cuenta: ${bankData.account_number || ''}
       CLABE: ${bankData.clabe || ''}
       ABA: ${bankData.aba || ''}
@@ -481,8 +503,9 @@ const sendPaymentRequest = async () => {
       message: '',
     }
     await getFreightPayments()
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    snackbar.add({ type: 'error', text: e?.data?.message || 'Error sending payment request.' })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
