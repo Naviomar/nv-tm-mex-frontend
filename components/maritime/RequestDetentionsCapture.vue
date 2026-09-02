@@ -141,6 +141,15 @@
             />
           </div>
 
+          <div class="grid grid-cols-3 gap-2">
+            <v-text-field
+              v-model="reqForm.referencia"
+              label="Reference"
+              density="compact"
+              hide-details
+            />
+          </div>
+
           <div class="grid grid-cols-1 gap-2 mt-4">
             <v-text-field
               v-model="reqForm.notification_emails"
@@ -240,6 +249,7 @@ const reqForm = ref<any>({
   line_bank: null,
   origin_bank: null,
   inv_type: null,
+  referencia: '',
   serie: null,
   folio: null,
   invoice_date: null,
