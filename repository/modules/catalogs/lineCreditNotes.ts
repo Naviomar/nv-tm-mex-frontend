@@ -20,6 +20,15 @@ class LineCreditNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/update-folio`, fetchOptions)
   }
 
+  async updateAttachment(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-attachment`, fetchOptions)
+  }
+
   async searchLineInvoicesToPay(id: string, body: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(body),
