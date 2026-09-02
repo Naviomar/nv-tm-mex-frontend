@@ -170,12 +170,12 @@
     <v-dialog v-model="previewDialog.show" max-width="1200" persistent>
       <v-card>
         <v-card-title class="bg-blue-darken-1 text-white">
-          Confirm BofA payments to upload
+          {{ previewDialog.isBofa ? 'Confirm BofA payments to upload' : 'Confirm bank movements to upload' }}
         </v-card-title>
         <v-card-text class="pt-4">
           <v-skeleton-loader v-if="previewDialog.loading" type="table" />
           <div v-if="!previewDialog.loading">
-            <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
+            <v-alert v-if="previewDialog.isBofa" type="warning" variant="tonal" density="compact" class="mb-4">
               <div class="font-weight-medium">Please verify that the Reference column is correct for each payment before uploading.</div>
               <div class="text-caption mt-1">If this file was created from a CSV export, we recommend uploading it in Excel (.xlsx) format instead to avoid reference parsing issues.</div>
             </v-alert>
@@ -185,6 +185,10 @@
                 <v-icon color="green" class="mr-1">mdi-check-circle</v-icon>
                 Valid payments ({{ previewDialog.movements.length }})
               </h3>
+              <div v-if="possibleDuplicateCount > 0" class="text-caption text-orange-darken-3 mb-2">
+                <v-icon size="small" color="orange-darken-3">mdi-alert</v-icon>
+                "Select all" excludes {{ possibleDuplicateCount }} possible duplicate(s) — check them individually if you still want to upload them.
+              </div>
               <v-table density="compact" class="border">
                 <thead>
                   <tr class="bg-green-lighten-4">
@@ -196,12 +200,13 @@
                         @update:model-value="onToggleSelectAll"
                       />
                     </th>
+                    <th class="text-left" style="width: 90px">Duplicate?</th>
                     <th class="text-left" style="min-width: 140px">Date</th>
                     <th class="text-left">Amount</th>
                     <th class="text-left">Direction</th>
-                    <th class="text-left">Account Name</th>
-                    <th class="text-left">Data Type</th>
-                    <th class="text-left">BAI Code</th>
+                    <th v-if="previewDialog.isBofa" class="text-left">Account Name</th>
+                    <th v-if="previewDialog.isBofa" class="text-left">Data Type</th>
+                    <th v-if="previewDialog.isBofa" class="text-left">BAI Code</th>
                     <th class="text-left">Description</th>
                     <th class="text-left bg-yellow-lighten-3">Reference</th>
                     <th class="text-left w-64">Text</th>
@@ -211,6 +216,7 @@
                   <tr
                     v-for="movement in previewDialog.movements"
                     :key="`prev-mov-${movement.row_index}`"
+                    :class="{ 'bg-orange-lighten-4': movement.possible_duplicate }"
                   >
                     <td>
                       <v-checkbox
@@ -219,6 +225,20 @@
                         density="compact"
                         @update:model-value="onToggleRow(movement.row_index, $event)"
                       />
+                    </td>
+                    <td>
+                      <v-tooltip v-if="movement.possible_duplicate" location="top">
+                        <template #activator="{ props: tooltipProps }">
+                          <v-chip v-bind="tooltipProps" color="orange" size="small" variant="tonal">
+                            <v-icon start size="small">mdi-alert</v-icon>
+                            Possible
+                          </v-chip>
+                        </template>
+                        <div v-for="match in movement.duplicate_matches" :key="`dup-${match.id}`">
+                          Movement #{{ match.id }} · ref: {{ match.reference || '-' }}
+                          · {{ formatDateString(match.created_at) }} · by {{ match.created_by || '-' }}
+                        </div>
+                      </v-tooltip>
                     </td>
                     <td>{{ formatDateOnlyString(movement.movement_date) }}</td>
                     <td>{{ formatToCurrency(movement.amount) }}</td>
@@ -231,9 +251,9 @@
                         {{ movement.movement }}
                       </v-chip>
                     </td>
-                    <td class="text-caption">{{ movement.account_name || '-' }}</td>
-                    <td class="text-caption">{{ movement.data_type || '-' }}</td>
-                    <td class="text-caption">{{ movement.bai_code || '-' }}</td>
+                    <td v-if="previewDialog.isBofa" class="text-caption">{{ movement.account_name || '-' }}</td>
+                    <td v-if="previewDialog.isBofa" class="text-caption">{{ movement.data_type || '-' }}</td>
+                    <td v-if="previewDialog.isBofa" class="text-caption">{{ movement.bai_code || '-' }}</td>
                     <td>{{ movement.description }}</td>
                     <td class="bg-yellow-lighten-4 font-weight-medium">{{ movement.reference }}</td>
                     <td class="text-truncate" style="max-width: 200px">{{ movement.text }}</td>
@@ -241,7 +261,7 @@
                 </tbody>
                 <tfoot>
                   <tr class="bg-green-lighten-4">
-                    <td colspan="8" class="text-right font-weight-bold">
+                    <td :colspan="previewDialog.isBofa ? 9 : 6" class="text-right font-weight-bold">
                       Selected: {{ previewDialog.selectedIndices.length }} / {{ previewDialog.movements.length }}
                     </td>
                     <td colspan="2" class="font-weight-bold">
@@ -332,6 +352,7 @@ const results = ref<any>({
 const previewDialog = ref({
   show: false,
   loading: false,
+  isBofa: false,
   movements: [] as any[],
   errors: [] as any[],
   selectedIndices: [] as number[],
@@ -342,6 +363,16 @@ const selectedTotalAmount = computed(() => {
   return previewDialog.value.movements
     .filter((m: any) => previewDialog.value.selectedIndices.includes(m.row_index))
     .reduce((sum: number, m: any) => sum + Number(m.amount), 0)
+})
+
+const possibleDuplicateCount = computed(() => {
+  return previewDialog.value.movements.filter((m: any) => m.possible_duplicate).length
+})
+
+// "Select all" never auto-includes possible duplicates - the user has to check
+// those rows individually if they still want to upload them.
+const selectableMovements = computed(() => {
+  return previewDialog.value.movements.filter((m: any) => !m.possible_duplicate)
 })
 
 const onClickStartImport = async () => {
@@ -442,16 +473,24 @@ const previewUpload = async () => {
     }
     const response = await $api.bankMovements.previewUpload(body)
     const data = response as any
+    const movements = data.movements || []
+    const hasPossibleDuplicates = movements.some((m: any) => m.possible_duplicate)
 
-    if (data.is_bofa) {
-      previewDialog.value.movements = data.movements || []
-      previewDialog.value.errors = data.errors || []
-      previewDialog.value.selectedIndices = []
-      previewDialog.value.selectAll = false
-      previewDialog.value.show = true
-    } else {
+    // BofA always goes through the confirmation modal (reference verification + row
+    // selection). The standard flow only needs to interrupt the user when there's
+    // something to actually warn about - if nothing looks like a duplicate, upload
+    // straight through like before this modal existed.
+    if (!data.is_bofa && !hasPossibleDuplicates) {
       await uploadBankMovements()
+      return
     }
+
+    previewDialog.value.isBofa = !!data.is_bofa
+    previewDialog.value.movements = movements
+    previewDialog.value.errors = data.errors || []
+    previewDialog.value.selectedIndices = []
+    previewDialog.value.selectAll = false
+    previewDialog.value.show = true
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error previewing file' })
@@ -462,7 +501,7 @@ const previewUpload = async () => {
 
 const onToggleSelectAll = (checked: boolean) => {
   if (checked) {
-    previewDialog.value.selectedIndices = previewDialog.value.movements.map((m: any) => m.row_index)
+    previewDialog.value.selectedIndices = selectableMovements.value.map((m: any) => m.row_index)
   } else {
     previewDialog.value.selectedIndices = []
   }
@@ -477,7 +516,8 @@ const onToggleRow = (rowIndex: number, checked: boolean) => {
     previewDialog.value.selectedIndices = previewDialog.value.selectedIndices.filter((idx: number) => idx !== rowIndex)
   }
   previewDialog.value.selectAll =
-    previewDialog.value.selectedIndices.length === previewDialog.value.movements.length
+    selectableMovements.value.length > 0 &&
+    selectableMovements.value.every((m: any) => previewDialog.value.selectedIndices.includes(m.row_index))
 }
 
 const onCancelPreview = () => {

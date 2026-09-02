@@ -358,7 +358,7 @@ const loadBreakdowns = async () => {
       $api.reports.getReferencesByDischargePort(baseParams()),
     ])
     clientRows.value = (clients?.data ?? []).map((c: any) => ({ year: c.year, name: c.client_name, teus: Number(c.total_teus) || 0 }))
-    lineRows.value = groupLineRows((lines?.data ?? []).map((l: any) => ({ year: l.year, line_code: l.line_code, line_name: l.line_name, teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 })))
+    lineRows.value = groupLineRows((lines?.data ?? []).map((l: any) => ({ year: l.year, line_code: l.line_code, line_name: l.line_name, total_teus: Number(l.total_teus) || 0, references: Number(l.references) || 0 })))
     loadingPortRows.value = (loadingPorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
     dischargePortRows.value = (dischargePorts?.data ?? []).map((p: any) => ({ year: p.year, name: p.port_name, teus: Number(p.total_teus) || 0, references: Number(p.references) || 0 }))
   } catch (error) {

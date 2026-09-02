@@ -156,7 +156,7 @@
                           <td>{{ scheduleRef.ref_master_bl?.name }}</td>
                           <td>
                             <v-chip
-                              v-for="(lineInvoiceRef, index3) in scheduleRef.line_invoice_refs"
+                              v-for="(lineInvoiceRef, index3) in scheduleRef.lineInvoiceRefs"
                               :key="`invoice-ref-${index}-${index2}-${index3}`"
                               color="purple"
                               size="small"
@@ -446,7 +446,7 @@ const totalFreightNotesSelected = (linePaySchedule: any) => {
 
 const getLinkedLineInvoicesTotalPaid = (scheduleRef: any) => {
   let total = 0
-  scheduleRef.line_invoice_refs.forEach((lineInvoiceRef: any) => {
+  scheduleRef.lineInvoiceRefs.forEach((lineInvoiceRef: any) => {
     const invoiceTotal = parseFloat(lineInvoiceRef.invoice?.total || 0)
     const totalPaidCharges = lineInvoiceRef.invoice?.charges.reduce((acc: any, charge: any) => {
       return acc + parseFloat(charge.amount_paid || 0)
