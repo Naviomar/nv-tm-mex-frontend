@@ -446,7 +446,7 @@
                   <ButtonDownloadS3Object2 :s3Path="cfdi.pdf_attachment" />
                 </td>
                 <td>
-                  <template v-for="reqPayId in getUniqueReqPayments(cfdi)" :key="reqPayId">
+                  <template v-for="reqPayId in getUniqueReqPayments(cfdi)" :key="`pay-${reqPayId}`">
                     <v-chip
                       size="small"
                       color="deep-orange"
@@ -454,6 +454,26 @@
                       :to="`/invoices/suppliers/cfdis/request-payment/view-${reqPayId}`"
                     >
                       Req #{{ reqPayId }}
+                    </v-chip>
+                  </template>
+                  <template v-for="reqDem in cfdi.req_demurrages || []" :key="`dem-${reqDem.id}`">
+                    <v-chip
+                      size="small"
+                      color="purple"
+                      variant="flat"
+                      :to="`/invoices/search/lines/demurrages/req-pay-view-${reqDem.id}`"
+                    >
+                      Demurrage #{{ reqDem.id }}
+                    </v-chip>
+                  </template>
+                  <template v-for="reqDet in cfdi.req_detentions || []" :key="`det-${reqDet.id}`">
+                    <v-chip
+                      size="small"
+                      color="indigo"
+                      variant="flat"
+                      :to="`/invoices/search/lines/detentions/req-pay-view-${reqDet.id}`"
+                    >
+                      Detention #{{ reqDet.id }}
                     </v-chip>
                   </template>
                 </td>
@@ -758,7 +778,11 @@ const isTouched = (cfdi: any) => {
 }
 
 const isLinkedToReqPayment = (cfdi: any): boolean => {
-  return (cfdi.invoices || []).some((inv: any) => inv.req_pay_invoice?.supplier_req_pay != null)
+  return (
+    (cfdi.invoices || []).some((inv: any) => inv.req_pay_invoice?.supplier_req_pay != null) ||
+    (cfdi.req_demurrages || []).length > 0 ||
+    (cfdi.req_detentions || []).length > 0
+  )
 }
 
 const getUniqueReqPayments = (cfdi: any): number[] => {
