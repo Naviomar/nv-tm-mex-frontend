@@ -465,6 +465,7 @@ const getFreightNotesSelected = (scheduleRef: any) => {
       lineRef.invoice.charges.forEach((charge: any) => {
         if (
           scheduleRef.referencia_id == lineRef.referencia_id &&
+          scheduleRef.ref_mbl_id == lineRef.ref_mbl_id &&
           charge.line_pay_schedule_id === scheduleRef.line_pay_schedule_id
         ) {
           total += parseFloat(charge.amount_to_pay || 0)
@@ -519,6 +520,7 @@ const areValidAmountsToPay = () => {
               lineRef.invoice.charges.reduce((acc3: any, charge: any) => {
                 if (
                   lineRef.referencia_id === scheduleRef.referencia_id &&
+                  lineRef.ref_mbl_id === scheduleRef.ref_mbl_id &&
                   charge.line_pay_schedule_id === scheduleRef.line_pay_schedule_id
                 ) {
                   const val = Number(charge.amount_to_pay)
