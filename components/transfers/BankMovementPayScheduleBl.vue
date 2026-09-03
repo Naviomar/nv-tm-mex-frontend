@@ -141,7 +141,7 @@
                         <tr>
                           <th class="font-bold!">Reference #</th>
                           <th class="font-bold!">Master BL</th>
-                          <th class="font-bold!">Linked Line Invoices</th>
+                          <th class="font-bold!">Freight Notes</th>
                           <th class="font-bold!">Amount</th>
                           <th class="font-bold!">Pending balance</th>
                           <th class="font-bold!">$ Selected Freight notes</th>
@@ -156,13 +156,21 @@
                           <td>{{ scheduleRef.ref_master_bl?.name }}</td>
                           <td>
                             <v-chip
-                              v-for="(lineInvoiceRef, index3) in scheduleRef.line_invoice_refs"
-                              :key="`invoice-ref-${index}-${index2}-${index3}`"
-                              color="purple"
+                              v-for="(freightNote, index3) in scheduleRef.existing_freight_notes"
+                              :key="`freight-note-${index}-${index2}-${index3}`"
+                              :color="freightNote.is_paid ? 'success' : 'purple'"
                               size="small"
                               class="mr-2"
                             >
-                              #{{ lineInvoiceRef.line_invoice?.serie }}{{ lineInvoiceRef.line_invoice?.folio }}
+                              #{{ freightNote.serie_folio }} {{ freightNote.is_paid ? '(Paid)' : '' }}
+                            </v-chip>
+                            <v-chip
+                              v-if="!scheduleRef.existing_freight_notes?.length"
+                              color="grey"
+                              variant="tonal"
+                              size="small"
+                            >
+                              No freight note yet
                             </v-chip>
                           </td>
                           <td>{{ formatToCurrency(parseFloat(scheduleRef.amount)) }}</td>
