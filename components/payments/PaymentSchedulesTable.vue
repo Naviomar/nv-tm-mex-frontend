@@ -480,17 +480,18 @@ const validatePaid = (paramRef: any): string => {
   const scheduleRefs = paramRef || []
   if (scheduleRefs.length === 0) return 'Pending'
 
-  const charges = getScheduleLinkedCharges(scheduleRefs)
-  if (charges.length === 0) return 'Pending'
-
-  const totalCharge = charges.reduce(
-    (acc: number, charge: any) => acc + parseFloat(charge.amount || 0) + parseFloat(charge.amount_iva || 0),
+  // El total a justificar es el monto programado por CADA scheduleRef (schedule_ref.amount),
+  // no solo el de las que ya tienen freight note ligada. Una referencia sin line_invoice_refs
+  // todavia (line_pay_schedule_ref_id se llena solo hasta que se le aplica pago) sigue contando
+  // como pendiente — de lo contrario un schedule con 7/8 referencias pagadas salia "Paid".
+  const totalScheduled = scheduleRefs.reduce((acc: number, ref: any) => acc + parseFloat(ref.amount || 0), 0)
+  const totalPaid = getScheduleLinkedCharges(scheduleRefs).reduce(
+    (acc: number, charge: any) => acc + parseFloat(charge.amount_paid || 0),
     0
   )
-  const totalPaid = charges.reduce((acc: number, charge: any) => acc + parseFloat(charge.amount_paid || 0), 0)
 
   if (totalPaid <= 0) return 'Pending'
-  if (totalCharge > 0 && totalPaid >= totalCharge - 0.01) return 'Paid'
+  if (totalScheduled > 0 && totalPaid >= totalScheduled - 0.01) return 'Paid'
   return 'Partial'
 }
 

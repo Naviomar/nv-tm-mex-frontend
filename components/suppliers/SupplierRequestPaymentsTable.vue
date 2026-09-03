@@ -114,13 +114,8 @@
             </td>
             <td>
               <div class="flex flex-col items-center gap-1 mb-2">
-                <v-chip
-                  size="small"
-                  :color="supReqPayment.deleted_at ? 'grey' : supReqPayment.invoice?.is_paid == 1 ? 'green' : 'red'"
-                >
-                  {{
-                    supReqPayment.deleted_at ? 'Cancelled' : supReqPayment.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
-                  }}
+                <v-chip size="small" :color="getPayStatusColor(supReqPayment)">
+                  {{ getPayStatusLabel(supReqPayment) }}
                 </v-chip>
 
                 <InvoiceChargePaymentsView v-if="!supReqPayment.deleted_at" size="x-small" :invoice="supReqPayment.invoice" />
@@ -218,6 +213,26 @@ const confirmCancelReq = async () => {
     }, 250)
   }
 }
+
+// Invoice trae amount_paid y total ya calculados (accessors del modelo), por lo que
+// aqui si es confiable comparar amount_paid vs total: es una unica factura generada
+// completa desde el inicio, no fragmentada como en LinePaySchedule.
+const getPayStatus = (supReqPayment: any): string => {
+  if (supReqPayment.deleted_at) return 'Cancelled'
+  if (supReqPayment.invoice?.is_paid == 1) return 'Paid'
+  const amountPaid = parseFloat(supReqPayment.invoice?.amount_paid || 0)
+  return amountPaid > 0 ? 'Partial' : 'Unpaid'
+}
+
+const getPayStatusColor = (supReqPayment: any): string => {
+  const status = getPayStatus(supReqPayment)
+  if (status === 'Cancelled') return 'grey'
+  if (status === 'Paid') return 'green'
+  if (status === 'Partial') return 'info'
+  return 'red'
+}
+
+const getPayStatusLabel = (supReqPayment: any): string => getPayStatus(supReqPayment)
 
 const getUniqueServices = (supReqPayment: any) => {
   let services: any = []
