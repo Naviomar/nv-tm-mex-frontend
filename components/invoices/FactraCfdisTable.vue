@@ -290,8 +290,22 @@
                 :class="columnClass(cfdi)"
               >
                 <td>
+                  <!-- State -1: Cancelled (soft-deleted) - only View and Restore, no other action or blocked/expired messaging -->
+                  <div v-if="cfdi.deleted_at != null" class="flex justify-center gap-2 mb-2">
+                    <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                    <ProcessAuthorizationWrapper
+                      processName="supplier-cfdi-restore"
+                      :requestKey="`${cfdi.id}`"
+                      label="Restore CFDI"
+                      :displayName="cfdi.serie_folio || `CFDI ${cfdi.id}`"
+                    >
+                      <template #auth>
+                        <TrashButton :item="cfdi" @click="showConfirmDelete" />
+                      </template>
+                    </ProcessAuthorizationWrapper>
+                  </div>
                   <!-- State 0: Already linked to a payment request - locked regardless of block/expiry status -->
-                  <div v-if="isLinkedToReqPayment(cfdi)" class="flex justify-center gap-2 mb-2">
+                  <div v-else-if="isLinkedToReqPayment(cfdi)" class="flex justify-center gap-2 mb-2">
                     <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                     <v-chip size="small" color="deep-orange" variant="flat">
                       <v-icon size="small" start>mdi-lock</v-icon>Req payment linked
@@ -675,11 +689,16 @@ const supplierCfdis = ref({
 const canValidateSat = computed(() => hasPermission(permissions.SupplierCfdiValidateSat))
 
 const columnClass = (note: any) => {
-  return {
-    '': note.deleted_at == null,
-    'bg-red-100! dark:bg-red-900!': note.deleted_at != null,
-    'bg-yellow-100! dark:bg-yellow-900!': rfcReceptorNotTM(note),
+  if (note.deleted_at != null) {
+    return 'bg-red-100! dark:bg-red-900!'
   }
+  if (note.is_manual) {
+    return 'bg-gray-100! dark:bg-gray-800!'
+  }
+  if (rfcReceptorNotTM(note)) {
+    return 'bg-yellow-100! dark:bg-yellow-900!'
+  }
+  return ''
 }
 
 const validateCfdiSatRow = async (cfdi: any) => {
