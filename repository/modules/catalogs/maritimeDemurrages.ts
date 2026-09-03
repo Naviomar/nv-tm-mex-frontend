@@ -138,6 +138,22 @@ class MaritimeDemurragesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/unlink-supplier-cfdi`, fetchOptions)
   }
 
+  async unlinkContainer(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/unlink-container`, fetchOptions)
+  }
+
+  async updateOriginBank(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update-origin-bank`, fetchOptions)
+  }
+
   async getNotificationCcEmails(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/notification-cc-emails`, fetchOptions)
   }
