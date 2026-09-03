@@ -201,6 +201,11 @@
                             </div>
 
                             <div class="mb-4">
+                              <div class="font-bold mb-1">MBL Files</div>
+                              <SeaImportElectronicRevForm :referenceId="reference.id" mbl-files-only @update-reference="refresh" />
+                            </div>
+
+                            <div class="mb-4">
                               <div class="font-bold mb-1">Update & resend</div>
                               <div class="mb-2 text-sm">
                                 Update the consignee emails/notes and resend, without redoing the whole revalidation.

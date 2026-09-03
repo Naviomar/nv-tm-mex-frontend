@@ -57,10 +57,10 @@
         </div>
       </div>
     </div>
-    <div class="grid grid-cols-1 pb-4">
+    <div v-if="!mblFilesOnly" class="grid grid-cols-1 pb-4">
       <Stamp :reference="reference" @updateReference="getReferencia" />
     </div>
-    <div class="grid grid-cols-1 px-4 pb-4">
+    <div v-if="!mblFilesOnly" class="grid grid-cols-1 px-4 pb-4">
       <div v-if="!hasElectronicRevalidation">
         <div class="text-lg font-bold">
           <span
@@ -117,6 +117,10 @@ const props = defineProps({
   referenceId: {
     type: [String, Number],
     required: true,
+  },
+  mblFilesOnly: {
+    type: Boolean,
+    default: false,
   },
 })
 
