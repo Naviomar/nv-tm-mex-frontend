@@ -144,31 +144,35 @@
                 </UserInfoBadge>
               </td>
               <td>
-                <v-chip 
-                  v-if="ffpayment.invoice?.is_paid == 0" 
-                  color="orange" 
-                  variant="tonal" 
-                  size="small"
-                  prepend-icon="mdi-clock-outline"
-                >
-                  Pending payment
-                </v-chip>
-                <v-chip 
-                  v-else-if="ffpayment.invoice?.is_paid == 1" 
-                  color="green" 
-                  variant="tonal" 
-                  size="small"
-                  prepend-icon="mdi-check-circle-outline"
-                >
-                  Paid
-                </v-chip>
-                <div v-for="(charge, index) in ffpayment.invoice?.charges" :key="`ffpay-${idx}-c-${index}`">
-                  <div v-for="(payment, index2) in charge.payments" :key="`ffpay-${idx}-c-${index}-p-${index2}`">
-                    <v-chip color="blue" text-color="white" small @click="viewPayment(payment)"
-                      ><v-icon>mdi-eye-outline</v-icon>Payment #{{ payment.id }}
-                      {{ formatToCurrency(payment.amount) }}</v-chip
-                    >
-                  </div>
+                <div class="flex flex-col items-center gap-1">
+                  <v-chip
+                    v-if="getFfPaymentStatus(ffpayment) === 'Pending'"
+                    color="orange"
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="mdi-clock-outline"
+                  >
+                    Pending payment
+                  </v-chip>
+                  <v-chip
+                    v-else-if="getFfPaymentStatus(ffpayment) === 'Partial'"
+                    color="info"
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="mdi-progress-clock"
+                  >
+                    Partial
+                  </v-chip>
+                  <v-chip
+                    v-else-if="getFfPaymentStatus(ffpayment) === 'Paid'"
+                    color="green"
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="mdi-check-circle-outline"
+                  >
+                    Paid
+                  </v-chip>
+                  <InvoiceChargePaymentsView v-if="ffpayment.invoice" size="x-small" :invoice="ffpayment.invoice" />
                 </div>
               </td>
               <td>
@@ -604,13 +608,21 @@ const viewFfReqPayment = (ffpayment: any) => {
   router.push(`/payments/agents/payments/view-${ffpayment.id}`)
 }
 
-const viewPayment = (payment: any) => {
-  // console.log('payment', payment)
-  if (payment.paymentable_type.includes('BankMovement')) {
-    router.push(`/transfers/global/view-${payment.paymentable_id}?focusPayable=${payment.id}`)
-    return
-  }
-  console.error('Unknown payment type')
+// Status granular basado en lo realmente pagado en los charges (amount_paid), en vez de
+// solo invoice.is_paid (que nunca refleja un pago parcial).
+const getFfPaymentStatus = (ffpayment: any): string => {
+  const charges = ffpayment.invoice?.charges || []
+  if (charges.length === 0) return ffpayment.invoice?.is_paid == 1 ? 'Paid' : 'Pending'
+
+  const totalCharge = charges.reduce(
+    (acc: number, c: any) => acc + parseFloat(c.amount || 0) + parseFloat(c.amount_iva || 0),
+    0
+  )
+  const totalPaid = charges.reduce((acc: number, c: any) => acc + parseFloat(c.amount_paid || 0), 0)
+
+  if (totalPaid <= 0) return 'Pending'
+  if (totalCharge > 0 && totalPaid >= totalCharge - 0.01) return 'Paid'
+  return 'Partial'
 }
 
 const deleteFfPayment = async (ffpayment: any) => {

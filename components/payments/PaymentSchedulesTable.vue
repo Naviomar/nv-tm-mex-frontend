@@ -48,7 +48,7 @@
               <th class="text-left">Bank Info</th>
               <th class="text-left">Amount</th>
               <th class="text-left">Linked Ref(s)</th>
-              <th class="text-left">Staus</th>
+              <th class="text-left">Status</th>
               <th class="text-left">Date added</th>
             </tr>
           </thead>
@@ -149,8 +149,16 @@
                 </div>
               </td>
               <td>
-                <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Paid'" color="success"> Paid </v-chip>
-                <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Pending'" color="warning"> Pending </v-chip>
+                <div class="flex flex-col items-center gap-1">
+                  <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Paid'" color="success"> Paid </v-chip>
+                  <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Partial'" color="info"> Partial </v-chip>
+                  <v-chip v-if="validatePaid(schedule.schedule_refs) === 'Pending'" color="warning"> Pending </v-chip>
+                  <InvoiceChargePaymentsView
+                    v-if="getScheduleLinkedCharges(schedule.schedule_refs).length > 0"
+                    size="x-small"
+                    :invoice="{ charges: getScheduleLinkedCharges(schedule.schedule_refs) }"
+                  />
+                </div>
               </td>
               <td class="whitespace-nowrap">
                 <UserInfoBadge :item="schedule">
@@ -173,8 +181,16 @@
       <v-card>
         <v-card-title class="flex items-center justify-between">
           <h1 class="text-xl font-bold">Payment schedule detail {{ showDetail.schedule.folio || '#' + showDetail.schedule.id }}</h1>
-          <v-chip v-if="detailStatus === 'Paid'" color="success">Paid</v-chip>
-          <v-chip v-if="detailStatus === 'Pending'" color="warning">Pending</v-chip>
+          <div class="flex items-center gap-2">
+            <v-chip v-if="detailStatus === 'Paid'" color="success">Paid</v-chip>
+            <v-chip v-if="detailStatus === 'Partial'" color="info">Partial</v-chip>
+            <v-chip v-if="detailStatus === 'Pending'" color="warning">Pending</v-chip>
+            <InvoiceChargePaymentsView
+              v-if="getScheduleLinkedCharges(showDetail.schedule.schedule_refs).length > 0"
+              size="small"
+              :invoice="{ charges: getScheduleLinkedCharges(showDetail.schedule.schedule_refs) }"
+            />
+          </div>
         </v-card-title>
         <v-card-text>
           <div class="grid grid-cols-2 gap-4 mb-4">
@@ -446,21 +462,37 @@ const schedules = ref<any>({
   last_page: 1,
 })
 
+// Junta los charges de todas las freight notes ligadas a este schedule (a través de
+// schedule_refs.line_invoice_refs.invoice.charges), para poder mostrar sus pagos
+// aplicados con InvoiceChargePaymentsView y para calcular el status Paid/Partial/Pending.
+const getScheduleLinkedCharges = (paramRef: any): any[] => {
+  const scheduleRefs = paramRef || []
+  const charges: any[] = []
+  scheduleRefs.forEach((ref: any) => {
+    ;(ref.line_invoice_refs || []).forEach((lir: any) => {
+      charges.push(...(lir.invoice?.charges || []))
+    })
+  })
+  return charges
+}
+
 const validatePaid = (paramRef: any): string => {
   const scheduleRefs = paramRef || []
   if (scheduleRefs.length === 0) return 'Pending'
 
-  // Cada scheduleRef (referencia dentro de ESTE schedule) debe tener al menos una
-  // factura de línea ligada y todas las ligadas deben estar pagadas. Antes se recorría
-  // referencia.line_pay_schedules (el historial COMPLETO de esa referencia en TODOS los
-  // schedules), lo que mezclaba pagos de otros batches al validar este — una misma
-  // referencia puede aparecer en más de un schedule (pagos parciales en distintas fechas).
-  const allPaid = scheduleRefs.every((ref: any) => {
-    const linkedInvoiceRefs = ref.line_invoice_refs || []
-    return linkedInvoiceRefs.length > 0 && linkedInvoiceRefs.every((lir: any) => lir.invoice?.is_paid == 1)
-  })
+  // El total a justificar es el monto programado por CADA scheduleRef (schedule_ref.amount),
+  // no solo el de las que ya tienen freight note ligada. Una referencia sin line_invoice_refs
+  // todavia (line_pay_schedule_ref_id se llena solo hasta que se le aplica pago) sigue contando
+  // como pendiente — de lo contrario un schedule con 7/8 referencias pagadas salia "Paid".
+  const totalScheduled = scheduleRefs.reduce((acc: number, ref: any) => acc + parseFloat(ref.amount || 0), 0)
+  const totalPaid = getScheduleLinkedCharges(scheduleRefs).reduce(
+    (acc: number, charge: any) => acc + parseFloat(charge.amount_paid || 0),
+    0
+  )
 
-  return allPaid ? 'Paid' : 'Pending'
+  if (totalPaid <= 0) return 'Pending'
+  if (totalScheduled > 0 && totalPaid >= totalScheduled - 0.01) return 'Paid'
+  return 'Partial'
 }
 
 const showNotyForm = (schedule: any) => {

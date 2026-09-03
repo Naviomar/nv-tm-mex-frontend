@@ -40,10 +40,11 @@
                 <v-chip size="small" color="warning" text-color="white" v-else> Not sent </v-chip>
               </div>
               <div>Payment status</div>
-              <div>
-                <v-chip size="small" :color="ffPayment.invoice?.is_paid == 1 ? 'green' : 'red'">{{
-                  ffPayment.invoice?.is_paid == 1 ? 'Paid' : 'Unpaid'
+              <div class="flex items-center gap-2">
+                <v-chip size="small" :color="paymentStatus === 'Paid' ? 'green' : paymentStatus === 'Partial' ? 'info' : 'red'">{{
+                  paymentStatus === 'Partial' ? 'Partial' : paymentStatus === 'Paid' ? 'Paid' : 'Unpaid'
                 }}</v-chip>
+                <InvoiceChargePaymentsView v-if="ffPayment.invoice" size="x-small" :invoice="ffPayment.invoice" />
               </div>
             </div>
           </div>
@@ -224,6 +225,23 @@ const balanceTo = computed(() => {
   if (!ffPayment.value) return ''
   // if ffPayment.amount is negative to F.F. Agent else Transporte Multimodal
   return parseFloat(ffPayment.value.amount) < 0 ? 'F.F. Agent' : 'Transporte Multimodal'
+})
+
+// Status granular basado en lo realmente pagado en los charges (amount_paid), en vez de
+// solo invoice.is_paid (que nunca refleja un pago parcial).
+const paymentStatus = computed((): string => {
+  const charges = ffPayment.value.invoice?.charges || []
+  if (charges.length === 0) return ffPayment.value.invoice?.is_paid == 1 ? 'Paid' : 'Pending'
+
+  const totalCharge = charges.reduce(
+    (acc: number, c: any) => acc + parseFloat(c.amount || 0) + parseFloat(c.amount_iva || 0),
+    0
+  )
+  const totalPaid = charges.reduce((acc: number, c: any) => acc + parseFloat(c.amount_paid || 0), 0)
+
+  if (totalPaid <= 0) return 'Pending'
+  if (totalCharge > 0 && totalPaid >= totalCharge - 0.01) return 'Paid'
+  return 'Partial'
 })
 
 const hasSplitChecked = computed(() => {

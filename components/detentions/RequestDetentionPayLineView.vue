@@ -62,9 +62,18 @@
               </div>
 
               <div v-if="!isCancelled" class="flex flex-wrap gap-2 py-2">
-                <v-btn v-if="!isPaid" color="red" size="small" @click="showConfirmCancelReq"
-                  >Cancel detention request</v-btn
+                <ProcessAuthorizationWrapper
+                  v-if="!isPaid && canCancelRequest"
+                  processName="maritime-detentions.cancel"
+                  :requestKey="props.id.toString()"
+                  label="Cancel detention request"
+                  :displayName="`Detention Request ${reqDetention.folio || '#' + props.id}`"
+                  @refresh="getRequestDetention"
                 >
+                  <template #auth>
+                    <v-btn color="red" size="small" @click="showConfirmCancelReq">Cancel detention request</v-btn>
+                  </template>
+                </ProcessAuthorizationWrapper>
 
                 <v-btn color="lime-darken-2" size="small" @click="previewReqPdf">View PDF</v-btn>
 
@@ -80,10 +89,21 @@
             <v-card class="mb-4">
               <v-card-title>
                 <div class="flex items-center gap-2">
+                  <div v-if="!isPaid && !isCancelled && !hasInvoice && !hasPdfGenerated">
+                    <v-btn color="primary" variant="outlined" size="small" @click="showEditOriginBank"
+                      ><v-icon class="cursor-pointer">
+                        {{ formEditOriginBank.show ? 'mdi-close' : 'mdi-pencil-outline' }}
+                      </v-icon></v-btn
+                    >
+                  </div>
                   <div>Origin Bank</div>
                 </div>
               </v-card-title>
               <v-card-text>
+                <div v-if="formEditOriginBank.show" class="mb-4">
+                  <div class="font-bold mb-2">Select a new origin bank account for this request</div>
+                  <SystemSelectBankAccount @update:model-value="onSelectOriginBank" />
+                </div>
                 <div>
                   <div class="grid grid-cols-3 gap-2">
                     <div class="font-bold">System Bank:</div>
@@ -99,7 +119,7 @@
             <v-card>
               <v-card-title>
                 <div class="flex items-center gap-2">
-                  <div v-if="!isPaid && !isCancelled">
+                  <div v-if="!isPaid && !isCancelled && !hasInvoice && !hasPdfGenerated">
                     <v-btn color="primary" variant="outlined" size="small" @click="showEditBankInfo"
                       ><v-icon class="cursor-pointer">
                         {{ formEditBank.show ? 'mdi-close' : 'mdi-pencil-outline' }}
@@ -190,7 +210,7 @@
               </tr>
               <tr v-for="(demContainer, index) in reqDetention.containers" :key="`req-detention-cont-${index}`">
                 <td>
-                  <div v-if="!isPaid && !isCancelled && !hasInvoice">
+                  <div v-if="!isPaid && !isCancelled && !hasInvoice && !hasPdfGenerated">
                     <TrashButton :item="demContainer" @click="showConfirmDelete" />
                   </div>
                 </td>
@@ -214,7 +234,7 @@
         <div class="grid grid-cols-1 gap-4">
           <div class="flex justify-between gap-2">
             <div class="text-base font-bold">Supplier Invoices Linked</div>
-            <v-btn v-if="!isPaid && !isCancelled && !hasInvoice" color="primary" size="small" @click="addNewInvoice"
+            <v-btn v-if="!isPaid && !isCancelled && !hasInvoice && !hasPdfGenerated" color="primary" size="small" @click="addNewInvoice"
               >Link new supplier invoice</v-btn
             >
           </div>
@@ -323,7 +343,7 @@
                 :key="`req-detention-sp-cfdi-${index}`"
               >
                 <td>
-                  <div v-if="!isPaid && !isCancelled && !hasInvoice">
+                  <div v-if="!isPaid && !isCancelled && !hasInvoice && !hasPdfGenerated">
                     <TrashButton :item="reqDetInvoice" @click="showConfirmDeleteInvoice" />
                   </div>
                 </td>
@@ -405,6 +425,7 @@ const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -440,6 +461,10 @@ const sendForm = reactive({
 })
 
 const formEditBank = reactive({
+  show: false,
+})
+
+const formEditOriginBank = reactive({
   show: false,
 })
 
@@ -529,6 +554,26 @@ const closeEditBankInfo = () => {
   formEditBank.show = false
 }
 
+const showEditOriginBank = () => {
+  formEditOriginBank.show = !formEditOriginBank.show
+}
+
+const onSelectOriginBank = async (bank: any) => {
+  try {
+    loadingStore.start()
+    await $api.maritimeDetentions.updateOriginBank(props.id.toString(), { bank_account_id: bank.id })
+    snackbar.add({ type: 'success', text: 'Origin bank updated' })
+    formEditOriginBank.show = false
+    await getRequestDetention()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
 const toggleEditNotes = () => {
   isEditingNotes.value = !isEditingNotes.value
 }
@@ -540,6 +585,12 @@ const isCancelled = computed(() => {
 const hasInvoice = computed(() => {
   return !!reqDetention.value.invoice
 })
+
+const hasPdfGenerated = computed(() => {
+  return !!reqDetention.value.pdf_generated_at
+})
+
+const canCancelRequest = computed(() => hasPermission('maritime-detentions-delete'))
 
 const reqDetentionAmountNoIva = computed(() => {
   return (
@@ -764,6 +815,8 @@ const previewReqPdf = async () => {
     console.log(blob)
     const pdfUrl = URL.createObjectURL(blob)
     pdfViewer.value.data = pdfUrl
+
+    await getRequestDetention()
   } catch (e) {
     console.error(e)
     showPdfDialog.value = false
@@ -828,9 +881,9 @@ const showConfirmDelete = async (item: any) => {
       const body = {
         ...item,
       }
-      // await $api.maritimeDetentions.unlinkPayment(props.id.toString(), body)
+      await $api.maritimeDetentions.unlinkContainer(body)
 
-      snackbar.add({ type: 'success', text: 'Bank Account deleted' })
+      snackbar.add({ type: 'success', text: 'Container removed from request' })
       await getRequestDetention()
     } catch (e) {
       console.error(e)
