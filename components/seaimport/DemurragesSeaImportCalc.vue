@@ -532,55 +532,90 @@
             </v-card-title>
             <v-card-text>
               <div class="font-bold py-4">Past calculation(s)</div>
-              <v-expansion-panels>
+              <v-expansion-panels variant="accordion">
                 <v-expansion-panel v-for="(container, index) in containerCalcs" :key="`panel-cont-${index}`">
                   <v-expansion-panel-title>
-                    <div class="flex items-center gap-2">
-                      <div class="font-bold">
-                        {{ container.container_number }} - {{ container.container_type?.name }} ➡️
-                      </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                      <v-chip color="primary" variant="flat" size="small" class="font-bold">
+                        <v-icon size="small" class="mr-1">mdi-package-variant-closed</v-icon>
+                        {{ container.container_number }}
+                      </v-chip>
+                      <span class="text-caption opacity-70">{{ container.container_type?.name }}</span>
+                      <v-icon size="small">mdi-arrow-right</v-icon>
                       <PartialLastCalcShow :container="container" />
                     </div>
                   </v-expansion-panel-title>
                   <v-expansion-panel-text>
-                    <div class="grid grid-cols-10 gap-2 border font-bold bg-neutral-200 dark:bg-neutral-600">
-                      <div>Start date</div>
-                      <div>End date</div>
-                      <div>Free days</div>
-                      <div>Rate 1</div>
-                      <div>Rate 2</div>
-                      <div>Subtotal</div>
-                      <div>IVA</div>
-                      <div>Total calculated</div>
-                      <div>Created at</div>
-                      <div>User</div>
-                    </div>
-                    <div
-                      v-for="(calc, index2) in container.demurrage?.calculations || []"
-                      :key="`ref-cont-cal-${index}-${index2}`"
-                    >
-                      <div class="grid grid-cols-10 gap-2 border">
-                        <div>{{ formatDateOnlyString(calc.start_date) }}</div>
-                        <div>{{ formatDateOnlyString(calc.end_date) }}</div>
-                        <div>{{ calc.free_days }}</div>
-                        <div>{{ formatToCurrency(calc.rate_1) }}</div>
-                        <div>{{ formatToCurrency(calc.rate_2) }}</div>
-                        <div>
-                          <div class="flex flex-col justify-center items-center gap-0">
-                            {{ formatToCurrency(calc.amount) }}
-                            <div v-if="calc.discount > 0">
-                              <v-chip color="red" class="text-xs" size="small" variant="outlined"
-                                ><v-icon>mdi-sale-outline</v-icon>-{{ formatToCurrency(calc.discount) }}</v-chip
-                              >
+                    <v-table density="compact">
+                      <thead>
+                        <tr>
+                          <th>Start date</th>
+                          <th>End date</th>
+                          <th>Free days</th>
+                          <th class="text-right">Rate 1</th>
+                          <th class="text-right">Rate 2</th>
+                          <th class="text-right">Subtotal</th>
+                          <th class="text-right">IVA</th>
+                          <th class="text-right">Total calculated</th>
+                          <th>Created at</th>
+                          <th>User</th>
+                          <th class="text-center">Paid</th>
+                          <th>Invoice</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="(calc, index2) in container.demurrage?.calculations || []"
+                          :key="`ref-cont-cal-${index}-${index2}`"
+                        >
+                          <td>{{ formatDateOnlyString(calc.start_date) }}</td>
+                          <td>{{ formatDateOnlyString(calc.end_date) }}</td>
+                          <td>{{ calc.free_days }}</td>
+                          <td class="text-right">{{ formatToCurrency(calc.rate_1) }}</td>
+                          <td class="text-right">{{ formatToCurrency(calc.rate_2) }}</td>
+                          <td class="text-right">
+                            <div class="flex flex-col items-end gap-0">
+                              {{ formatToCurrency(calc.amount) }}
+                              <v-chip v-if="calc.discount > 0" color="red" class="text-xs" size="small" variant="outlined">
+                                <v-icon>mdi-sale-outline</v-icon>-{{ formatToCurrency(calc.discount) }}
+                              </v-chip>
                             </div>
-                          </div>
-                        </div>
-                        <div>{{ formatToCurrency(calc.amount_iva) }}</div>
-                        <div>{{ formatToCurrency(parseFloat(calc.amount) + parseFloat(calc.amount_iva)) }}</div>
-                        <div>{{ formatDateString(calc.created_at) }}</div>
-                        <div>{{ calc.creator?.name }}</div>
-                      </div>
-                    </div>
+                          </td>
+                          <td class="text-right">{{ formatToCurrency(calc.amount_iva) }}</td>
+                          <td class="text-right font-bold">
+                            {{ formatToCurrency(parseFloat(calc.amount) + parseFloat(calc.amount_iva)) }}
+                          </td>
+                          <td>{{ formatDateString(calc.created_at) }}</td>
+                          <td>{{ calc.creator?.name }}</td>
+                          <td class="text-center">
+                            <v-chip
+                              v-if="getContainerInvoices(container).length"
+                              :color="isContainerPaid(container) ? 'success' : 'warning'"
+                              size="small"
+                            >
+                              {{ isContainerPaid(container) ? 'Paid' : 'Pending' }}
+                            </v-chip>
+                            <span v-else class="text-caption opacity-60">—</span>
+                          </td>
+                          <td>
+                            <div v-if="getContainerInvoices(container).length" class="flex flex-col gap-1">
+                              <v-btn
+                                v-for="invoice in getContainerInvoices(container)"
+                                :key="`cont-cal-invoice-${invoice.id}`"
+                                size="x-small"
+                                variant="tonal"
+                                color="blue-lighten-2"
+                                @click="viewInvoice(invoice)"
+                              >
+                                <v-icon size="small" class="mr-1">mdi-open-in-new</v-icon>
+                                {{ invoice.invoice_number }}
+                              </v-btn>
+                            </div>
+                            <span v-else class="text-caption opacity-60">—</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </v-table>
                   </v-expansion-panel-text>
                 </v-expansion-panel>
               </v-expansion-panels>
@@ -893,6 +928,15 @@ const isInvoiceTm = (invoice: any) => {
 
 const viewInvoice = (invoice: any) => {
   router.push(`/invoices/search/${isInvoiceTm(invoice) ? 'tm' : 'wm'}-view-${invoice.invoiceable_id}`)
+}
+
+const getContainerInvoices = (container: any) => {
+  return container?.demurrage_invoices || []
+}
+
+const isContainerPaid = (container: any) => {
+  const invoices = getContainerInvoices(container)
+  return invoices.length > 0 && invoices.every((invoice: any) => invoice.is_paid)
 }
 
 const canUpdateRates = computed(() => {
