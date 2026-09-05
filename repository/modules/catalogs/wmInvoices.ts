@@ -72,6 +72,14 @@ async getUnifiedPaged(fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/preview-by-service-pdf`, fetchOptions)
   }
 
+  async showPdfInvoiceFreightNote(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/preview-by-service-pdf-freight-note`, fetchOptions)
+  }
+
   async create(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

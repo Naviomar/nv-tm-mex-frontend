@@ -103,6 +103,7 @@
           <v-divider class="my-4"></v-divider>
           <div class="flex flex-col sm:flex-row justify-around gap-2 mb-2">
             <PreviewWmInvoice service="sea" :invoice="invoiceWm" />
+            <PreviewWmInvoiceFreightNote service="sea" :invoice="invoiceWm" />
             <div v-if="!isCancelled" class="flex flex-col gap-2">
               <v-btn color="blue" size="small"
                 @click="onSyncClientInfoClick"><v-icon>mdi-sync</v-icon>Sync client info</v-btn>
