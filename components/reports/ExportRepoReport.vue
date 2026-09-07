@@ -49,7 +49,7 @@
             </div>
           </div>
 
-          <EtaModeSelector v-model="filters.etaMode" />
+          <EtaModeSelector v-model="filters.etaMode" label="ETD" />
 
           <!-- All filters flow in a clean 2-column grid (md=6) so the layout never
                leaves an orphaned blank column, regardless of filter count. -->
