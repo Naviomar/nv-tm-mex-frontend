@@ -153,7 +153,7 @@
         <v-table density="compact">
           <thead>
             <tr>
-              <th v-if="canManipulateCharges" class="text-left w-28"></th>
+              <th v-if="canManipulateCharges || canRequestLockedChargeEdit" class="text-left w-28"></th>
               <th class="text-left">Charge</th>
               <th class="text-left">Amount</th>
               <th class="text-left">Currency</th>
@@ -185,6 +185,36 @@
                       @click="removeCharge(index)"
                     ></v-btn>
                   </div>
+                </div>
+              </td>
+              <td v-else-if="canRequestLockedChargeEdit">
+                <div class="flex flex-col gap-1">
+                  <ProcessAuthorizationWrapper
+                    process-name="sea-import.edit-charge-locked"
+                    :request-key="`${props.referencia.id}-charge-${item.id}`"
+                    label="Request edit"
+                    :process-data="{
+                      referencia_id: props.referencia.id,
+                      charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
+                      charge_id: item.id,
+                      action: 'edit',
+                      charge_name: getChargeName(item.charge_id),
+                    }"
+                    :field-catalogs="lockedChargeFieldCatalogs"
+                  />
+                  <ProcessAuthorizationWrapper
+                    process-name="sea-import.delete-charge-locked"
+                    :request-key="`${props.referencia.id}-charge-${item.id}`"
+                    label="Request delete"
+                    :process-data="{
+                      referencia_id: props.referencia.id,
+                      charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
+                      charge_id: item.id,
+                      action: 'delete',
+                      charge_name: getChargeName(item.charge_id),
+                    }"
+                    :field-catalogs="lockedChargeFieldCatalogs"
+                  />
                 </div>
               </td>
               <td>
@@ -403,6 +433,12 @@ const hasAnyInvoice = computed(() => {
 })
 
 const canRequestLockedLocalCharge = computed(() => !hasAnyInvoice.value && !canEditCharges.value)
+
+// Editar/borrar un cargo existente cuando la referencia está bloqueada: cubre
+// tanto el caso sin factura (solo proforma o nada) como el caso con factura ya
+// en status invoice — el backend decide si hace falta cancelar la factura
+// primero (ver sea-import.edit-charge-locked / delete-charge-locked).
+const canRequestLockedChargeEdit = computed(() => !canEditCharges.value)
 
 const lockedChargeFieldCatalogs = computed(() => ({
   charges: (props.catalogs.charges as any[]).map((c: any) => ({ label: c.name, value: c.id, code: c.code })),
