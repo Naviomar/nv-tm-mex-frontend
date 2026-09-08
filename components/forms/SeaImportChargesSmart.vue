@@ -153,14 +153,14 @@
         <v-table density="compact">
           <thead>
             <tr>
-              <th v-if="canManipulateCharges || canRequestLockedChargeEdit" class="text-left w-28"></th>
-              <th class="text-left">Charge</th>
-              <th class="text-left">Amount</th>
-              <th class="text-left">Currency</th>
-              <th class="text-left">Fuera / Dentro BL</th>
-              <th class="text-left">+ IVA</th>
-              <th class="text-left">TM / WM</th>
-              <th class="text-left">Created at</th>
+              <th v-if="canManipulateCharges || canRequestLockedChargeEdit" class="text-left w-28" id="actions"></th>
+              <th class="text-left" id="charge">Charge</th>
+              <th class="text-left" id="amount">Amount</th>
+              <th class="text-left" id="currency">Currency</th>
+              <th class="text-left" id="fuera-dentro-bl">Fuera / Dentro BL</th>
+              <th class="text-left" id="is-con-iva">+ IVA</th>
+              <th class="text-left" id="tm-wm">TM / WM</th>
+              <th class="text-left" id="created-at">Created at</th>
             </tr>
           </thead>
           <tbody>
@@ -219,7 +219,7 @@
               </td>
               <td>
                 <v-icon size="small">{{ linkedChargeToInvoice(item) }}</v-icon>
-                {{ getChargeName(item.charge_id) }}
+                {{ getChargeName(item) }}
               </td>
               <td>{{ formatToCurrency(item.amount) }}</td>
               <td>{{ getCurrencyName(item.currency_id) }}</td>
@@ -271,7 +271,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:charges', 'refresh'])
 
-const { handleSubmit, values, errors, resetForm, setValues, handleReset } = useForm({
+const { handleSubmit, values, setValues, handleReset } = useForm({
   validationSchema: schemaCharge,
 })
 
@@ -280,6 +280,7 @@ const editChargeIndex = ref(null)
 const charges = ref<any[]>([])
 
 const initValues = () => {
+  // TODO: type errors
   setValues({
     id: undefined,
     charge_id: null,
@@ -310,11 +311,9 @@ watch(
       chargesValues.forEach((charge: any) => {
         charge.tm_wm = charge.inv_type
         if (charge.fuera_dentro_bl === 'F') {
-          // console.log('charge.F', charge.fuera_dentro_bl)
           charge.fuera_dentro_bl = 'Fuera BL'
         }
         if (charge.fuera_dentro_bl === 'D') {
-          // console.log('charge.D', charge.fuera_dentro_bl)
           charge.fuera_dentro_bl = 'Dentro BL'
         }
       })
@@ -386,18 +385,29 @@ const onInvoiceTypeChange = (value: any) => {
   if (values.charge_id) {
     const chargeStillValid = filteredCharges.value.some((c: any) => c.id === values.charge_id)
     if (!chargeStillValid) {
+      // TODO: type error
       setValues({ charge_id: null })
     }
   }
 }
 
-const getChargeName = (id: number) => {
-  const charge = props.catalogs.charges.find((c: any) => c.id == id)
-  return charge?.name
+const getChargeName = (chargeItem: any) => {
+  const chargeId = typeof chargeItem === 'object' && chargeItem !== null ? chargeItem.charge_id : chargeItem
+  const catalogCharge = props.catalogs?.charges?.find((c: any) => c.id == chargeId)
+  if (catalogCharge?.name) {
+    return catalogCharge.name
+  }
+
+  if (typeof chargeItem === 'object' && chargeItem !== null) {
+    return chargeItem.charge?.name || chargeItem.charge_name || ''
+  }
+
+  return ''
 }
 
 const getCurrencyName = (id: number) => {
   const currency = props.currencies.find((c: any) => c.id == id)
+  // TODO: property 'name' does not exist on type
   return currency?.name
 }
 
@@ -405,6 +415,7 @@ const clearInvoiceType = (value: any) => {
   if (!editNotAllowInvoiceType.value) {
     // Solo limpiar si se marca + IVA y el tipo actual es WM (que ya no sería válido)
     if (value && values.tm_wm === 'WM') {
+      // TODO: type error
       setValues({ tm_wm: null, charge_id: null })
     }
   }
@@ -520,7 +531,7 @@ const editCharge = (charge: any, index: any) => {
     id: charge.id,
     charge_id: charge.charge_id,
     amount: charge.amount,
-    currency_id: parseInt(charge.currency_id),
+    currency_id: Number.parseInt(charge.currency_id),
     exchange_rate: charge.exchange_rate,
     fuera_dentro_bl: charge.fuera_dentro_bl,
     is_con_iva: charge.is_con_iva,
