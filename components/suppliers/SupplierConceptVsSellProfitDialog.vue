@@ -68,6 +68,14 @@
               <div class="font-bold">Mismatch selected sell charges</div>
               <div>Please make sure that the selected sell charges are the same for TM or WM services only.</div>
             </v-alert>
+
+            <v-alert v-if="hasInvalidLinkAmounts" color="error" density="compact" class="mt-2">
+              <div class="font-bold">Invalid amount to link</div>
+              <div>
+                The amount to link for a selected concept must be greater than 0 and cannot exceed the amount
+                available for that concept.
+              </div>
+            </v-alert>
           </div>
           <div>
             <div class="font-bold pt-4">Select available sell concepts to continue...</div>
@@ -86,22 +94,25 @@
                   <th>Amount</th>
                   <th>IVA</th>
                   <th>Total</th>
+                  <th>Available</th>
+                  <th>Amount to link</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="sellConcepts.length === 0">
-                  <td colspan="6" class="text-center">No sell concepts found</td>
+                  <td colspan="8" class="text-center">No sell concepts found</td>
                 </tr>
                 <tr v-for="(concept, index) in sellConcepts" :key="`sell-concept-${index}`">
                   <td>
                     <v-checkbox
                       v-model="concept.selected"
                       color="primary"
-                      :disabled="concept.supplier_invoice_link"
+                      :disabled="!concept.selected && isConceptFullyLinked(concept)"
                       hide-details
+                      @update:model-value="(val) => onSelectConcept(concept, val)"
                     />
                   </td>
-                  <td>{{ concept.supplier_invoice_link ? 'Linked' : 'Available' }}</td>
+                  <td>{{ getLinkLabel(concept) }}</td>
                   <td>
                     <div class="flex flex-col gap-1">
                       <div>
@@ -114,6 +125,21 @@
                   <td>{{ getCurrencyName(concept.currency_id) }} {{ formatToCurrency(concept.amount) }}</td>
                   <td>{{ concept.is_con_iva === 1 ? 'Yes' : 'No' }}</td>
                   <td>{{ getCurrencyName(concept.currency_id) }} {{ formatToCurrency(getTotalConcept(concept)) }}</td>
+                  <td>
+                    {{ getCurrencyName(concept.currency_id) }} {{ formatToCurrency(getAvailableAmountWithTaxes(concept)) }}
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-if="concept.selected"
+                      v-model.number="concept.link_amount"
+                      type="number"
+                      density="compact"
+                      hide-details
+                      :error="!isLinkAmountValid(concept)"
+                      style="max-width: 130px"
+                    />
+                    <span v-else>-</span>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -124,7 +150,7 @@
           <v-btn color="secondary" @click="cancel"> Close </v-btn>
           <v-btn
             color="primary"
-            :disabled="!isSkipLinkConcepts && selectedSellConceptsCount === 0"
+            :disabled="!isSkipLinkConcepts && (selectedSellConceptsCount === 0 || hasInvalidLinkAmounts)"
             @click="addConceptToSupplierInvoice"
           >
             Add concept to supplier invoice
@@ -228,7 +254,7 @@ const totalServices = computed(() => {
 const selectedSellAmount = computed(() => {
   return sellConcepts.value.reduce((acc: number, concept: any) => {
     if (concept.selected) {
-      let amount = parseFloat(concept.amount)
+      let amount = parseFloat(concept.link_amount ?? concept.amount)
       if (concept.is_con_iva === 1) {
         amount *= 1.16
       }
@@ -298,7 +324,7 @@ const transformFFNotes = (notes: any, response: any) =>
       inv_type: 'N/A',
       ff_note_concept_id: concept.id, // Include concept details if needed
       amount: concept.amount,
-      supplier_invoice_link: concept.supplier_invoice_link,
+      supplier_invoice_links: concept.supplier_invoice_links,
       charge: {
         id: concept.id,
         name: `${concept.charge?.name} - FF Note #${note.service_folio} - From TM Debit`,
@@ -360,7 +386,6 @@ const getServiceSellConcepts = _Debounce(async () => {
 
     sellConcepts.value = sellConceptsFound
     console.log('sellConcepts', sellConcepts.value)
-    setLinkedSellConcepts()
   } catch (error) {
     console.error(error)
   } finally {
@@ -377,27 +402,95 @@ const getServiceRefNum = (concept: any) => {
   return service?.reference_number || ''
 }
 
-const setLinkedSellConcepts = () => {
-  const serviceSellConcepts = supplierProvision.getConcepts()
-  const allSellConcepts = serviceSellConcepts.map((item: any) => item.sell_concepts).flat()
+// Amount (with taxes, same currency as the sell concept) already linked to
+// supplier invoices persisted in the backend for this sell concept.
+const getPersistedLinkedAmount = (concept: any) => {
+  const links = concept.supplier_invoice_links || (concept.supplier_invoice_link ? [concept.supplier_invoice_link] : [])
+  return links.reduce((acc: number, link: any) => acc + parseFloat(link.amount || 0), 0)
+}
 
-  console.log('allSellConcepts store', allSellConcepts)
-  sellConcepts.value.forEach((sellConcept: any) => {
-    // ff_note_concept_id
-    const linkedConcept = allSellConcepts.find((concept: any) => {
-      // if (concept.ff_note_concept_id) {
-      //   return concept.ff_note_concept_id === sellConcept.ff_note_concept_id
-      // }
-      return (
-        concept.id === sellConcept.id &&
-        concept.class_name === sellConcept.class_name &&
-        concept.ff_note_concept_id === sellConcept.ff_note_concept_id
-      )
-    })
-    if (linkedConcept) {
-      sellConcept.supplier_invoice_link = true
-    }
+// Amount (with taxes) already committed to this same sell concept by other
+// supplier concepts added in the current, not-yet-saved capture session.
+const getDraftLinkedAmount = (concept: any) => {
+  const serviceSellConcepts = supplierProvision.getConcepts()
+  const allDraftSellConcepts = serviceSellConcepts.map((item: any) => item.sell_concepts).flat()
+
+  return allDraftSellConcepts
+    .filter(
+      (draftConcept: any) =>
+        draftConcept.id === concept.id &&
+        draftConcept.class_name === concept.class_name &&
+        draftConcept.ff_note_concept_id === concept.ff_note_concept_id
+    )
+    .reduce((acc: number, draftConcept: any) => {
+      const amount = parseFloat(draftConcept.amount || 0)
+      return acc + (draftConcept.is_con_iva ? amount * 1.16 : amount)
+    }, 0)
+}
+
+// Remaining amount (with taxes) that can still be linked for this sell concept.
+const getAvailableAmountWithTaxes = (concept: any) => {
+  const total = getTotalConcept(concept)
+  const used = getPersistedLinkedAmount(concept) + getDraftLinkedAmount(concept)
+  return Math.round(Math.max(0, total - used) * 100) / 100
+}
+
+// Same as above, but expressed in the "base" amount (pre-IVA) shape that
+// concept.amount/link_amount use, since that's what gets sent to the backend.
+const getAvailableBaseAmount = (concept: any) => {
+  const availableWithTaxes = getAvailableAmountWithTaxes(concept)
+  const base = concept.is_con_iva === 1 ? availableWithTaxes / 1.16 : availableWithTaxes
+  return Math.round(base * 100) / 100
+}
+
+const isConceptFullyLinked = (concept: any) => {
+  return getAvailableAmountWithTaxes(concept) <= 0.01
+}
+
+const onSelectConcept = (concept: any, selected: boolean) => {
+  if (selected) {
+    concept.link_amount = getAvailableBaseAmount(concept)
+  }
+}
+
+const isLinkAmountValid = (concept: any) => {
+  if (!concept.selected) {
+    return true
+  }
+  const amount = parseFloat(concept.link_amount)
+  const available = getAvailableBaseAmount(concept)
+  return amount > 0 && amount <= available + 0.01
+}
+
+const hasInvalidLinkAmounts = computed(() => {
+  return sellConcepts.value.some((concept: any) => concept.selected && !isLinkAmountValid(concept))
+})
+
+const getLinkLabel = (concept: any) => {
+  const links = concept.supplier_invoice_links || (concept.supplier_invoice_link ? [concept.supplier_invoice_link] : [])
+  const draftAmount = getDraftLinkedAmount(concept)
+
+  if (links.length === 0 && draftAmount === 0) {
+    return 'Available'
+  }
+
+  const parts = links.map((link: any) => {
+    const cfdi = link.supplier_invoice?.cfdi
+    const reqPay = link.supplier_invoice?.supplier_req_payment
+
+    const cfdiRef = cfdi
+      ? `CFDI ${[cfdi.serie, cfdi.folio].filter(Boolean).join('-')}`
+      : `Supplier invoice #${link.supplier_invoice_id}`
+    const reqPayRef = reqPay ? `Request #${reqPay.id}` : 'not yet assigned to a request payment'
+
+    return `${formatToCurrency(link.amount)} → ${cfdiRef} (${reqPayRef})`
   })
+
+  if (draftAmount > 0) {
+    parts.push(`${formatToCurrency(draftAmount)} → Linked in this capture`)
+  }
+
+  return parts.join(' | ')
 }
 
 const hasMismatchSelectedSellCharges = computed(() => {
@@ -444,7 +537,8 @@ const addConceptToSupplierInvoice = () => {
     sell_concepts: sellConcepts.value.filter((concept: any) => concept.selected) || [],
   }
 
-  // body.sell_concepts map only id, class_name, amount, currency_id, is_con_iva, supplier_invoice_link, inv_type, charge.name
+  // body.sell_concepts map only id, class_name, amount, currency_id, is_con_iva, supplier_invoice_links, inv_type, charge.name
+  // `amount` is the (possibly partial) amount being linked now, not necessarily the full concept amount.
   body.sell_concepts = body.sell_concepts.map((concept: any) => {
     return {
       id: concept.id,
@@ -452,10 +546,10 @@ const addConceptToSupplierInvoice = () => {
       class_name: concept.class_name,
       service_id: concept.service_id,
       service_class_name: concept.service_class_name,
-      amount: concept.amount,
+      amount: concept.link_amount ?? concept.amount,
       currency_id: concept.currency_id,
       is_con_iva: concept.is_con_iva,
-      supplier_invoice_link: concept.supplier_invoice_link,
+      supplier_invoice_links: concept.supplier_invoice_links,
       inv_type: concept.inv_type,
       charge: {
         id: concept.charge?.id,

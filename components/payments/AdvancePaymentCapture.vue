@@ -313,7 +313,9 @@ const setBuyConceptsHomogenized = () => {
     const ffNotes = (service.ff_notes ?? []).map((ffNote: any) => ({
       ...ffNote,
       selected: false,
-      supplier_invoice_link: (ffNote.concepts || []).some((ffNote: any) => ffNote.supplier_invoice_link),
+      supplier_invoice_link: (ffNote.concepts || []).some(
+        (concept: any) => (concept.supplier_invoice_links || []).length > 0
+      ),
       charge: {
         name: `F.F. Note #${ffNote.id} From TM Debit`,
       },
