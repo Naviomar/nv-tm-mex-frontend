@@ -443,7 +443,12 @@ const hasAnyInvoice = computed(() => {
   return props.referencia?.invoice_tms?.length > 0 || props.referencia?.invoice_wms?.length > 0
 })
 
-const canRequestLockedLocalCharge = computed(() => !hasAnyInvoice.value && !canEditCharges.value)
+// Agregar un cargo NUEVO cuando está bloqueada: no requiere cancelar nada (no
+// hay ningún cargo existente que desvincular), así que se permite igual con
+// o sin facturas ya generadas — a diferencia de editar/borrar un cargo
+// existente, que si es necesario puede disparar la cancelación de la
+// factura primero (ver canRequestLockedChargeEdit).
+const canRequestLockedLocalCharge = computed(() => !canEditCharges.value)
 
 // Editar/borrar un cargo existente cuando la referencia está bloqueada: cubre
 // tanto el caso sin factura (solo proforma o nada) como el caso con factura ya

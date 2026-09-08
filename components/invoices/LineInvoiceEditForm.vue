@@ -203,15 +203,9 @@
 
     <!-- ── Section 3: Add new services (only with active auth) ──────────── -->
     <v-card v-if="hasActiveChargeAuth" variant="outlined">
-      <v-card-title class="text-body-1 font-weight-semibold pa-3 pb-0 d-flex align-center justify-space-between gap-2">
-        <div class="d-flex align-center gap-2">
-          <v-icon size="18">mdi-ship-wheel</v-icon>
-          Add maritime services
-        </div>
-        <v-btn size="small" color="amber" variant="tonal" @click="showPendingRefsDialog = true">
-          <v-icon start size="small">mdi-file-clock-outline</v-icon>
-          Pending payment requests without invoice
-        </v-btn>
+      <v-card-title class="text-body-1 font-weight-semibold pa-3 pb-0 d-flex align-center gap-2">
+        <v-icon size="18">mdi-ship-wheel</v-icon>
+        Add maritime services
       </v-card-title>
       <v-card-text>
         <div class="mb-3">
@@ -371,12 +365,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <PendingLineInvoiceRefsDialog
-      v-model="showPendingRefsDialog"
-      :line-id="lineInvoice?.line_id"
-      @select="onSelectPendingRef"
-    />
   </div>
 </template>
 
@@ -390,17 +378,6 @@ const { $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 
 const props = defineProps<{ id: string }>()
-
-const showPendingRefsDialog = ref(false)
-
-const onSelectPendingRef = (item: any) => {
-  const masterBlName = item.ref_master_bl?.name
-  if (masterBlName && !filters.value.masterbls.includes(masterBlName)) {
-    filters.value.masterbls.push(masterBlName)
-  }
-  showPendingRefsDialog.value = false
-  snackbar.add({ type: 'success', text: `Master BL ${masterBlName} added to search` })
-}
 
 const lineInvoice = ref<any>(null)
 const referenciasFound = ref<any[]>([])
