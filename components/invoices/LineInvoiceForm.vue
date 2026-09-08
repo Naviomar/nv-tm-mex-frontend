@@ -21,7 +21,7 @@
             <div class="p-4">
               <v-alert type="info" variant="outlined" density="compact"> Total amount ${{ totalAmount }} </v-alert>
             </div>
-            <FileDropzone @drop-files="(file) => (form.file = file)">
+            <FileDropzone @drop-files="(file: any) => (form.file = file)">
               <v-file-input v-model="form.file" density="compact" label="Attachment" />
             </FileDropzone>
 
