@@ -32,6 +32,10 @@
                     <v-icon size="x-small">mdi-ship-wheel</v-icon>
                     <div>Search maritime services</div>
                   </div>
+                  <v-btn size="small" color="amber" variant="tonal" @click="showPendingRefsDialog = true">
+                    <v-icon start size="small">mdi-file-clock-outline</v-icon>
+                    Pending payment requests without invoice
+                  </v-btn>
                 </div>
               </v-card-title>
               <v-card-text>
@@ -189,19 +193,37 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <PendingLineInvoiceRefsDialog
+      v-model="showPendingRefsDialog"
+      :line-id="form.line_id"
+      @select="onSelectPendingRef"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { currencies } from '@/utils/data/systemData'
-const { $api } = useNuxtApp()
+const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
 const loadingStore = useLoadingStore()
+const confirm = $notifications.useConfirm()
+
+const showPendingRefsDialog = ref(false)
 
 const filters = ref<any>({
   masterBl: '',
   masterbls: [],
 })
+
+const onSelectPendingRef = (item: any) => {
+  const masterBlName = item.ref_master_bl?.name
+  if (masterBlName && !filters.value.masterbls.includes(masterBlName)) {
+    filters.value.masterbls.push(masterBlName)
+  }
+  showPendingRefsDialog.value = false
+  snackbar.add({ type: 'success', text: `Master BL ${masterBlName} added to search` })
+}
 
 const referenciasFound = ref<any>([])
 const referenciasFoundSelected = ref<any>([])
@@ -325,7 +347,7 @@ const searchReferences = async () => {
   }
 }
 
-const saveLineInvoice = async () => {
+const saveLineInvoice = async (confirmDuplicate = false) => {
   try {
     if (!form.value.line_id) {
       snackbar.add({ type: 'error', text: 'Freight line is required' })
@@ -371,12 +393,28 @@ const saveLineInvoice = async () => {
         type: ref.type,
         payment_concept_id: ref.payment_concept_id,
       })),
+      confirm_duplicate: confirmDuplicate ? 1 : 0,
     }
     const response = await $api.linePayments.addLineInvoice(body)
     snackbar.add({ type: 'success', text: 'Freight line invoice created' })
     loadingStore.loading = false
     router.push('/invoices/lines/notes')
-  } catch (error) {
+  } catch (error: any) {
+    // El backend responde 409 + duplicate_warning cuando el folio o el Master BL ya
+    // están capturados: no es un bloqueo definitivo, sino una confirmación pendiente.
+    if ((error?.status === 409 || error?.response?.status === 409) && error?.data?.duplicate_warning) {
+      loadingStore.loading = false
+      const ok = await confirm({
+        title: 'Possible duplicate',
+        content: error.data.message,
+        confirmationText: 'Yes, continue',
+        confirmationButtonProps: { color: 'warning' },
+        dialogProps: { persistent: true, maxWidth: 500 },
+      })
+      if (ok) await saveLineInvoice(true)
+      return
+    }
+    snackbar.add({ type: 'error', text: error?.data?.message ?? 'Error creating freight line invoice' })
     console.error(error)
   } finally {
     setTimeout(() => {

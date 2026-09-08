@@ -203,9 +203,15 @@
 
     <!-- ── Section 3: Add new services (only with active auth) ──────────── -->
     <v-card v-if="hasActiveChargeAuth" variant="outlined">
-      <v-card-title class="text-body-1 font-weight-semibold pa-3 pb-0 d-flex align-center gap-2">
-        <v-icon size="18">mdi-ship-wheel</v-icon>
-        Add maritime services
+      <v-card-title class="text-body-1 font-weight-semibold pa-3 pb-0 d-flex align-center justify-space-between gap-2">
+        <div class="d-flex align-center gap-2">
+          <v-icon size="18">mdi-ship-wheel</v-icon>
+          Add maritime services
+        </div>
+        <v-btn size="small" color="amber" variant="tonal" @click="showPendingRefsDialog = true">
+          <v-icon start size="small">mdi-file-clock-outline</v-icon>
+          Pending payment requests without invoice
+        </v-btn>
       </v-card-title>
       <v-card-text>
         <div class="mb-3">
@@ -365,6 +371,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <PendingLineInvoiceRefsDialog
+      v-model="showPendingRefsDialog"
+      :line-id="lineInvoice?.line_id"
+      @select="onSelectPendingRef"
+    />
   </div>
 </template>
 
@@ -378,6 +390,17 @@ const { $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 
 const props = defineProps<{ id: string }>()
+
+const showPendingRefsDialog = ref(false)
+
+const onSelectPendingRef = (item: any) => {
+  const masterBlName = item.ref_master_bl?.name
+  if (masterBlName && !filters.value.masterbls.includes(masterBlName)) {
+    filters.value.masterbls.push(masterBlName)
+  }
+  showPendingRefsDialog.value = false
+  snackbar.add({ type: 'success', text: `Master BL ${masterBlName} added to search` })
+}
 
 const lineInvoice = ref<any>(null)
 const referenciasFound = ref<any[]>([])
@@ -553,7 +576,7 @@ const saveAuthorizedEdit = async () => {
 
 // ── Save new refs (requires active auth) ─────────────────────────────────────
 
-const saveNewRefs = async () => {
+const saveNewRefs = async (confirmDuplicate = false) => {
   if (!hasActiveChargeAuth.value) {
     snackbar.add({ type: 'error', text: 'You need an active authorization to add services' }); return
   }
@@ -572,6 +595,7 @@ const saveNewRefs = async () => {
         type: r.type,
         payment_concept_id: r.payment_concept_id,
       })),
+      confirm_duplicate: confirmDuplicate ? 1 : 0,
     }
     await ($api as any).linePayments.updateLineInvoice(body)
     snackbar.add({ type: 'success', text: 'Services added to invoice' })
@@ -580,6 +604,21 @@ const saveNewRefs = async () => {
     filters.value.masterbls = []
     await getData()
   } catch (e: any) {
+    // El backend responde 409 + duplicate_warning cuando el Master BL ya está ligado
+    // a esta factura: no es un bloqueo definitivo, sino una confirmación pendiente.
+    if ((e?.status === 409 || e?.response?.status === 409) && e?.data?.duplicate_warning) {
+      const ok = await confirm({
+        title: 'Possible duplicate',
+        content: e.data.message,
+        confirmationText: 'Yes, continue',
+        confirmationButtonProps: { color: 'warning' },
+        dialogProps: { persistent: true, maxWidth: 500 },
+      })
+      if (ok) {
+        await saveNewRefs(true)
+      }
+      return
+    }
     snackbar.add({ type: 'error', text: e?.data?.message ?? 'Error adding services' })
   } finally {
     savingRefs.value = false
