@@ -27,15 +27,9 @@
 
             <v-card class="mb-4">
               <v-card-title>
-                <div class="flex justify-between">
-                  <div class="flex items-center gap-2">
-                    <v-icon size="x-small">mdi-ship-wheel</v-icon>
-                    <div>Search maritime services</div>
-                  </div>
-                  <v-btn size="small" color="amber" variant="tonal" @click="showPendingRefsDialog = true">
-                    <v-icon start size="small">mdi-file-clock-outline</v-icon>
-                    Pending payment requests without invoice
-                  </v-btn>
+                <div class="flex items-center gap-2">
+                  <v-icon size="x-small">mdi-ship-wheel</v-icon>
+                  <div>Search maritime services</div>
                 </div>
               </v-card-title>
               <v-card-text>
@@ -194,11 +188,6 @@
       </v-card-text>
     </v-card>
 
-    <PendingLineInvoiceRefsDialog
-      v-model="showPendingRefsDialog"
-      :line-id="form.line_id"
-      @select="onSelectPendingRef"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -206,24 +195,14 @@ import { currencies } from '@/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const router = useRouter()
+const route = useRoute()
 const loadingStore = useLoadingStore()
 const confirm = $notifications.useConfirm()
-
-const showPendingRefsDialog = ref(false)
 
 const filters = ref<any>({
   masterBl: '',
   masterbls: [],
 })
-
-const onSelectPendingRef = (item: any) => {
-  const masterBlName = item.ref_master_bl?.name
-  if (masterBlName && !filters.value.masterbls.includes(masterBlName)) {
-    filters.value.masterbls.push(masterBlName)
-  }
-  showPendingRefsDialog.value = false
-  snackbar.add({ type: 'success', text: `Master BL ${masterBlName} added to search` })
-}
 
 const referenciasFound = ref<any>([])
 const referenciasFoundSelected = ref<any>([])
@@ -500,8 +479,15 @@ const suggestPaymentConcept = (referencia: any) => {
   return null
 }
 
-// Fetch payment concepts on mount
+// Fetch payment concepts on mount and pre-load Master BL from query (pending refs catalog)
 onMounted(() => {
   fetchPaymentConcepts()
+  const queryMasterBl = route.query.masterBl
+  if (typeof queryMasterBl === 'string' && queryMasterBl.trim()) {
+    const bls = queryMasterBl.split(',').map((b) => b.trim()).filter(Boolean)
+    bls.forEach((bl) => {
+      if (!filters.value.masterbls.includes(bl)) filters.value.masterbls.push(bl)
+    })
+  }
 })
 </script>
