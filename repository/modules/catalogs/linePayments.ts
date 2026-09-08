@@ -95,6 +95,14 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/invoices/search-sea-references`, fetchOptions)
   }
 
+  async getPendingScheduleRefsWithoutInvoice(lineId?: string | number | null, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      query: lineId ? { line_id: lineId } : undefined,
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/invoices/pending-schedule-refs`, fetchOptions)
+  }
+
   async addLineInvoice(data: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(data)
     fetchOptions = {

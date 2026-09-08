@@ -12,6 +12,14 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/cobranza`, fetchOptions)
   }
 
+  async getGlobalFinancial(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/global-financial`, fetchOptions)
+  }
+
   async getCustomerInvoices(fetchOptions?: FetchOptions) {
     fetchOptions = {
       responseType: 'blob',

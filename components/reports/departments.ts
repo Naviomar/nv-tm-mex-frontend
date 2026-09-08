@@ -122,6 +122,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     color: 'green',
     reports: [
       {
+        key: 'global-financial',
+        title: 'Global Financial Report',
+        icon: 'mdi-finance',
+        component: 'GlobalFinancialReport',
+        permission: 'reports-finance-global-view',
+      },
+      {
         key: 'cobranza',
         title: 'Cobranza',
         icon: 'mdi-cash-multiple',

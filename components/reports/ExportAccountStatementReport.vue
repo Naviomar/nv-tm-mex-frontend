@@ -61,7 +61,7 @@
             </div>
           </div>
 
-          <EtaModeSelector v-model="filters.etaMode" />
+          <EtaModeSelector v-model="filters.etaMode" label="ETD" />
 
           <v-row>
             <v-col cols="12" md="6">

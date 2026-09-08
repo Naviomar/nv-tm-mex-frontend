@@ -52,7 +52,7 @@
             </div>
           </div>
 
-          <EtaModeSelector v-model="filters.etaMode" />
+          <EtaModeSelector v-model="filters.etaMode" label="ETD" />
 
           <v-row>
             <!-- Report Type (Yearly vs Monthly) -->

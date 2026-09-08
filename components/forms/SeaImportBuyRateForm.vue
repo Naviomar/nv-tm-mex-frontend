@@ -69,6 +69,15 @@
                     <v-icon v-if="!showChargeForm">mdi-plus</v-icon>
                   </v-btn>
                 </div>
+                <div v-else-if="isLocked">
+                  <ProcessAuthorizationWrapper
+                    process-name="sea-import.buy-charge-locked"
+                    :request-key="`${props.referencia.id}-buy-charge-new`"
+                    label="Request charge"
+                    :process-data="{ referencia_id: props.referencia.id, action: 'add' }"
+                    :field-catalogs="buyChargeFieldCatalogs"
+                  />
+                </div>
               </div>
             </v-card-title>
             <v-card-text>
@@ -156,6 +165,22 @@
                         <TrashButton item="charge" @click="removeCharge(index)" />
                         <EditButton item="charge" @click="editBuyCharge(charge, index)" />
                       </div>
+                      <div v-else-if="isLocked && charge.id" class="flex flex-col gap-1">
+                        <ProcessAuthorizationWrapper
+                          process-name="sea-import.buy-charge-locked"
+                          :request-key="`${props.referencia.id}-buy-charge-${charge.id}`"
+                          label="Request edit"
+                          :process-data="{ referencia_id: props.referencia.id, action: 'edit', charge_id: charge.id, charge_name: getChargeName(charge.charge_id) }"
+                          :field-catalogs="buyChargeFieldCatalogs"
+                        />
+                        <ProcessAuthorizationWrapper
+                          process-name="sea-import.buy-charge-locked"
+                          :request-key="`${props.referencia.id}-buy-charge-${charge.id}-delete`"
+                          label="Request delete"
+                          :process-data="{ referencia_id: props.referencia.id, action: 'delete', charge_id: charge.id, charge_name: getChargeName(charge.charge_id) }"
+                          :field-catalogs="buyChargeFieldCatalogs"
+                        />
+                      </div>
                     </td>
                     <td>{{ charge.type }}</td>
                     <td>{{ getChargeName(charge.charge_id) }}</td>
@@ -177,15 +202,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { permissions } from '@/utils/data/system'
 import { schemaBuyRate } from '~~/forms/maritimeReferenceForm'
 
 const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
-
-const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   referencia: {
@@ -277,15 +299,17 @@ const isNewCharge = computed(() => {
   return !form.id
 })
 
-const canManipulateCharges = computed(() => {
-  // Si el viaje no está bloqueado, permitir manipular cargos
-  if (!props.referencia.voyage_discharge || props.referencia.voyage_discharge.locked_at == null) {
-    return true
-  }
-
-  // Si el viaje está bloqueado, verificar si el usuario tiene el permiso
-  return hasPermission(permissions.SupportRequestAssit) // Cambia el nombre del permiso según tu lógica
+const isLocked = computed(() => {
+  return !!(props.referencia.voyage_discharge && props.referencia.voyage_discharge.locked_at != null)
 })
+
+const canManipulateCharges = computed(() => !isLocked.value)
+
+const buyChargeFieldCatalogs = computed(() => ({
+  charges: (props.charges as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
+  currencies: (props.currencies as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
+  master_bls: (props.masterBls as any[])?.map((m: any) => ({ label: m.name, value: m.name })) ?? [],
+}))
 
 const saveSeaImportBuyCharges = async () => {
   try {

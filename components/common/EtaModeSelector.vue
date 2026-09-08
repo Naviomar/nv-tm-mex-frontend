@@ -12,7 +12,7 @@
       >
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>Filter by ETA Status</span>
+      <span>Filter by {{ label }} Status</span>
     </div>
 
     <div
@@ -56,7 +56,7 @@
           />
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 12l4 4m0-4l-4 4" />
         </svg>
-        <span>Only without ETA</span>
+        <span>Only without {{ label }}</span>
       </button>
 
       <!-- Option: ambos -->
@@ -86,7 +86,7 @@
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-        <span>Both (With & Without ETA)</span>
+        <span>Both (With & Without {{ label }})</span>
       </button>
 
       <!-- Option: con_eta -->
@@ -117,18 +117,23 @@
           />
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 16l3 3 7-7" />
         </svg>
-        <span>Only with ETA</span>
+        <span>Only with {{ label }}</span>
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRefs } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: string
-}>()
+  label?: string
+}>(), {
+  label: 'ETA',
+})
+
+const { label } = toRefs(props)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
