@@ -1,15 +1,26 @@
 <template>
   <v-dialog :model-value="modelValue" max-width="1000" @update:model-value="$emit('update:modelValue', $event)">
     <v-card>
-      <v-card-title class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <v-icon size="small">mdi-file-clock-outline</v-icon>
-          <span class="text-lg font-bold">Pending references (payment request without line invoice)</span>
-        </div>
-        <v-btn icon variant="text" @click="close">
+      <v-toolbar density="compact" color="transparent" flat>
+        <v-icon class="ml-4" size="small">mdi-file-clock-outline</v-icon>
+        <v-toolbar-title class="text-body-1 font-weight-bold pa-0">
+          Pending references (payment request without line invoice)
+        </v-toolbar-title>
+        <v-spacer />
+        <v-btn
+          icon="mdi-microsoft-excel"
+          variant="text"
+          size="small"
+          color="green-darken-1"
+          :disabled="loading || items.length === 0"
+          title="Export to Excel"
+          @click="exportToExcel"
+        />
+        <v-btn icon variant="text" size="small" title="Close" @click="close">
           <v-icon>mdi-close</v-icon>
         </v-btn>
-      </v-card-title>
+      </v-toolbar>
+
       <v-card-text>
         <v-alert type="info" variant="tonal" density="compact" class="mb-3 text-caption">
           References/Master BL(s) with an active payment request (Payment Release) that still don't have a
@@ -72,6 +83,7 @@
 <script setup lang="ts">
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
+const { exportTableToExcel } = useExcelExport()
 
 const props = defineProps<{
   modelValue: boolean
@@ -89,6 +101,34 @@ const close = () => {
 
 const selectItem = (item: any) => {
   emit('select', item)
+}
+
+const exportToExcel = async () => {
+  if (items.value.length === 0) return
+  const headers = [
+    { title: 'Reference #', key: 'reference_number' },
+    { title: 'Master BL', key: 'master_bl' },
+    { title: 'Freight line', key: 'freight_line' },
+    { title: 'Payment Release', key: 'payment_release' },
+    { title: 'Amount', key: 'amount' },
+    { title: 'Currency', key: 'currency' },
+    { title: 'Created at', key: 'created_at' },
+  ]
+  const rows = items.value.map((item: any) => ({
+    reference_number: item.referencia?.reference_number ?? '',
+    master_bl: item.ref_master_bl?.name ?? '',
+    freight_line: item.schedule?.line?.name ?? '',
+    payment_release: item.schedule?.folio ?? (item.schedule?.id ? `#${item.schedule.id}` : ''),
+    amount: item.amount ?? 0,
+    currency: getCurrencyName(item.currency_id),
+    created_at: formatDateString(item.created_at),
+  }))
+  try {
+    await exportTableToExcel(headers, rows, undefined, 'pending-line-invoice-refs', 'Pending refs')
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error exporting to Excel' })
+  }
 }
 
 const load = async () => {

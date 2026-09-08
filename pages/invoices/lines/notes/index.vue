@@ -6,7 +6,7 @@
       <v-card-title>
         <div class="flex items-center justify-between">
           <h1 class="text-xl font-bold">Freight line notes (line invoices)</h1>
-          <v-btn size="small" color="amber" variant="tonal" @click="showPendingRefsDialog = true">
+          <v-btn size="small" color="warning" variant="elevated" @click="showPendingRefsDialog = true">
             <v-icon start size="small">mdi-file-clock-outline</v-icon>
             Pending payment requests without invoice
           </v-btn>
