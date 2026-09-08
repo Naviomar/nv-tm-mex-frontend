@@ -254,14 +254,15 @@
           </div>
 
           <div class="text-xs text-grey-darken-1 mb-1">Linked references</div>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-4 gap-2">
             <div class="font-bold"># Ref</div>
             <div class="font-bold">MBL</div>
             <div class="font-bold">Amount</div>
+            <div class="font-bold">Line invoices</div>
           </div>
           <div
             v-for="(ref, index) in showDetail.schedule.schedule_refs"
-            class="grid grid-cols-3 gap-2"
+            class="grid grid-cols-4 gap-2 items-start"
             :key="`sched-${index}`"
           >
             <div>
@@ -271,6 +272,23 @@
             </div>
             <div>{{ ref.ref_master_bl?.name }}</div>
             <div>{{ formatToCurrency(ref.amount) }}</div>
+            <div class="flex flex-wrap gap-1">
+              <template v-if="(ref.line_invoice_refs || []).length > 0">
+                <v-chip
+                  v-for="(lir, lirIdx) in ref.line_invoice_refs"
+                  :key="`sched-${index}-linv-${lirIdx}`"
+                  size="small"
+                  :color="lir.invoice?.is_paid == 1 ? 'success' : 'warning'"
+                  variant="tonal"
+                  @click="showLineInvoiceDetail(lir)"
+                >
+                  <v-icon start size="small">mdi-file-document-outline</v-icon>
+                  {{ lir.line_invoice?.serie_folio || lir.line_invoice?.folio || '-' }}
+                  <span class="ml-1">{{ formatToCurrency(lir.amount) }}</span>
+                </v-chip>
+              </template>
+              <span v-else class="text-xs text-grey-darken-1">No line invoices</span>
+            </div>
           </div>
 
           <v-alert v-if="detailStatus === 'Paid'" type="info" variant="tonal" density="compact" class="mt-4">
@@ -400,6 +418,86 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="lineInvoiceDialog.showDialog" max-width="700">
+      <v-card>
+        <v-card-title class="flex items-center justify-between">
+          <h1 class="text-xl font-bold">
+            Line invoice {{ lineInvoiceDialog.lineInvoice?.serie_folio || lineInvoiceDialog.lineInvoice?.folio || '-' }}
+          </h1>
+          <div class="flex items-center gap-2">
+            <v-chip
+              v-if="lineInvoiceDialog.invoice?.is_paid == 1"
+              color="success"
+              size="small"
+            >Paid</v-chip>
+            <v-chip v-else color="warning" size="small">Pending</v-chip>
+            <InvoiceChargePaymentsView
+              v-if="lineInvoiceDialog.invoice"
+              size="small"
+              :invoice="lineInvoiceDialog.invoice"
+            />
+          </div>
+        </v-card-title>
+        <v-card-text>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <div class="text-xs text-grey-darken-1">Freight note</div>
+              <div class="font-bold">{{ lineInvoiceDialog.lineInvoice?.serie_folio || '-' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Line</div>
+              <div class="font-bold">{{ lineInvoiceDialog.lineInvoice?.line?.name || '-' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Amount</div>
+              <div class="font-bold">
+                {{ getCurrencyName(lineInvoiceDialog.currencyId) }}
+                {{ formatToCurrency(lineInvoiceDialog.amount) }}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-grey-darken-1">Invoice date</div>
+              <div class="text-sm">{{ formatDateOnlyString(lineInvoiceDialog.lineInvoice?.invoice_date) }}</div>
+            </div>
+          </div>
+
+          <div v-if="lineInvoiceDialog.invoice?.charges?.length > 0">
+            <div class="text-xs text-grey-darken-1 mb-1">Charges</div>
+            <v-table density="compact">
+              <thead>
+                <tr>
+                  <th class="text-left">Charge</th>
+                  <th class="text-left">Amount</th>
+                  <th class="text-left">Paid</th>
+                  <th class="text-left">Pending</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(charge, cIdx) in lineInvoiceDialog.invoice.charges" :key="`linv-charge-${cIdx}`">
+                  <td>{{ charge.charge?.name || '-' }}</td>
+                  <td>{{ formatToCurrency(parseFloat(charge.amount || 0) + parseFloat(charge.amount_iva || 0)) }}</td>
+                  <td>{{ formatToCurrency(charge.amount_paid || 0) }}</td>
+                  <td>{{ formatToCurrency(charge.pending_balance || 0) }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            v-if="lineInvoiceDialog.lineInvoice?.id"
+            color="secondary"
+            :to="`/invoices/lines/notes/view-${lineInvoiceDialog.lineInvoice.id}`"
+            target="_blank"
+          >
+            <v-icon start>mdi-open-in-new</v-icon> Open freight note
+          </v-btn>
+          <v-btn color="secondary" @click="closeLineInvoiceDialog"> Close </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -437,6 +535,14 @@ const previewLoading = ref(false)
 const refDialog = ref<any>({
   showDialog: false,
   referencia: null,
+})
+
+const lineInvoiceDialog = ref<any>({
+  showDialog: false,
+  lineInvoice: null,
+  invoice: null,
+  amount: 0,
+  currencyId: null,
 })
 
 const catalogs = ref({
@@ -597,6 +703,22 @@ const showNewTabRef = (ref: any) => {
 const closeRefDialog = () => {
   refDialog.value.showDialog = false
   refDialog.value.referencia = null
+}
+
+const showLineInvoiceDetail = (lir: any) => {
+  lineInvoiceDialog.value.showDialog = true
+  lineInvoiceDialog.value.lineInvoice = lir.line_invoice || null
+  lineInvoiceDialog.value.invoice = lir.invoice || null
+  lineInvoiceDialog.value.amount = lir.amount || 0
+  lineInvoiceDialog.value.currencyId = lir.currency_id || null
+}
+
+const closeLineInvoiceDialog = () => {
+  lineInvoiceDialog.value.showDialog = false
+  lineInvoiceDialog.value.lineInvoice = null
+  lineInvoiceDialog.value.invoice = null
+  lineInvoiceDialog.value.amount = 0
+  lineInvoiceDialog.value.currencyId = null
 }
 
 const downloadExcel = async (schedule: any) => {
