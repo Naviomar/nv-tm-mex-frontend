@@ -118,11 +118,13 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          Rows are color-coded in the Excel file: <strong>green</strong> = settled / profitable,
-          <strong>amber</strong> = still pending collection or payment, <strong>red</strong> = expected loss.
-          "Esperado" columns include everything billed/requested regardless of payment status; "Real" / "Pagado"
-          columns only count what has actually been collected from customers or paid to
-          suppliers/lines/FF-agents.
+          <div>
+            <strong>Workbook structure:</strong>
+            <ul class="ml-4 mt-1">
+              <li><strong>Sheet 1 (Resumen Financiero):</strong> Includes separate columns for Freight vs. Local Sales, Line Freight vs. Local Line Cost, Supplier Invoices, FF Notes, Demurrages/Detentions, Real vs. Expected Profit, and text summaries of concepts. Color-coded (green = profitable / settled, amber = pending, red = loss).</li>
+              <li><strong>Sheet 2 (Desglose de Conceptos):</strong> Full line-by-line itemized ledger of every buy and sell concept across all references with original currency, exchange rate, USD equivalent, invoice number, and payment status.</li>
+            </ul>
+          </div>
         </v-alert>
       </v-card-text>
     </v-card>
@@ -172,6 +174,12 @@ const legendGroups = [
     icon: 'mdi-timer-alert-outline',
     color: 'orange',
     description: 'Cost billed by shipping lines for container demurrages/detentions, and its payment status.',
+  },
+  {
+    title: 'Desglose de Conceptos',
+    icon: 'mdi-format-list-bulleted-type',
+    color: 'deep-purple',
+    description: 'Detailed concept-by-concept breakdown of all buy and sell charges, suppliers, FF notes and demurrages.',
   },
   {
     title: 'Profit Esperado',
