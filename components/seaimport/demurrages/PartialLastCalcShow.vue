@@ -3,7 +3,7 @@
     <div v-if="!lastCalc">
       <div class="text-base font-bold">No calculation yet</div>
     </div>
-    <v-card v-if="lastCalc" variant="tonal" color="blue-grey" class="pa-2">
+    <v-card v-if="lastCalc" variant="outlined" class="pa-2">
       <div class="text-caption font-bold text-uppercase mb-1 opacity-70">Last calculation</div>
       <v-table density="compact" class="bg-transparent">
         <thead>
@@ -48,7 +48,7 @@
                   :key="`cont-invoice-${invoice.id}`"
                   size="x-small"
                   variant="tonal"
-                  color="blue-lighten-2"
+                  color="primary"
                   @click="viewInvoice(invoice)"
                 >
                   <v-icon size="small" class="mr-1">mdi-open-in-new</v-icon>
