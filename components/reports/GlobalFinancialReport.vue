@@ -119,11 +119,8 @@
             <v-icon>mdi-information-outline</v-icon>
           </template>
           <div>
-            <strong>Workbook structure:</strong>
-            <ul class="ml-4 mt-1">
-              <li><strong>Sheet 1 (Resumen Financiero):</strong> Includes separate columns for Freight vs. Local Sales, Line Freight vs. Local Line Cost, Supplier Invoices, FF Notes, Demurrages/Detentions, Real vs. Expected Profit, and text summaries of concepts. Color-coded (green = profitable / settled, amber = pending, red = loss).</li>
-              <li><strong>Sheet 2 (Desglose de Conceptos):</strong> Full line-by-line itemized ledger of every buy and sell concept across all references with original currency, exchange rate, USD equivalent, invoice number, and payment status.</li>
-            </ul>
+            <strong>Single-sheet financial breakdown:</strong>
+            Each reference expands into multiple rows based on the maximum number of buy or sell concepts. Sell concepts (amounts, invoice, collection status) and Buy/Cost concepts (amounts, line/supplier, invoice/PR folio, payment status) are presented side-by-side with the reference's expected and real profit calculations.
           </div>
         </v-alert>
       </v-card-text>
