@@ -410,12 +410,12 @@ const fetchData = async () => {
           if (updatedResponse?.referencia) reference.value = updatedResponse.referencia
           milestones.value = updatedResponse?.milestones || []
         } else if (milestones.value.length === 0) {
-          snackbar.add({ type: 'warning', text: 'No se encontraron eventos. Por favor, verifica que el BL/Booking y la naviera seleccionada correspondan entre sí.' })
+          snackbar.add({ type: 'warning', text: syncResponse?.message || 'No se encontraron eventos. Por favor, verifica que el BL/Booking y la naviera seleccionada correspondan entre sí.' })
         }
-      } catch (syncErr) {
+      } catch (syncErr: any) {
         console.error('Auto-sync failed:', syncErr)
         if (milestones.value.length === 0) {
-          snackbar.add({ type: 'warning', text: 'No se pudo realizar la sincronización automática. Por favor, revisa que los datos de tu registro sean correctos.' })
+          snackbar.add({ type: 'warning', text: syncErr?.data?.message || 'No se pudo realizar la sincronización automática. Por favor, revisa que los datos de tu registro sean correctos.' })
         }
       } finally {
         syncing.value = false
@@ -444,7 +444,7 @@ const triggerLiveSync = async () => {
     } else {
       snackbar.add({ 
         type: 'error', 
-        text: 'No se pudo sincronizar con la naviera. Por favor, verifica que el número de BL/Booking sea el correcto y corresponda a la naviera seleccionada. ¡Gracias por revisar!' 
+        text: response?.message || 'No se pudo sincronizar con la naviera. Por favor, verifica que el número de BL/Booking sea el correcto y corresponda a la naviera seleccionada.' 
       })
     }
 
