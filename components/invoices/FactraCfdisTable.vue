@@ -66,8 +66,8 @@
                 v-model="filters.nameEmisor"
                 clearable
                 density="compact"
-                label="Nombre Emisor"
-                hint="Busca por nombre aunque el proveedor no esté dado de alta"
+                label="Issuer Name"
+                hint="Search by name even if the supplier is not registered"
                 persistent-hint
                 @keyup.enter="getSupplierCfdis"
               />
