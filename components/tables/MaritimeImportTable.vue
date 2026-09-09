@@ -451,7 +451,9 @@
                     size="x-small"
                     :color="getLiveCarrierColor(item)"
                     variant="elevated"
-                    class="font-bold"
+                    class="font-bold cursor-pointer"
+                    style="cursor: pointer;"
+                    @click.stop="openLiveTracking(item)"
                   >
                     {{ getLiveCarrierLabel(item) }}
                   </v-chip>

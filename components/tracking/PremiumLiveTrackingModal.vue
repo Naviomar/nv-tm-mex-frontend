@@ -239,9 +239,10 @@ const selectedContainer = ref<string | null>(null)
 const isAutomated = computed(() => {
   const refObj = reference.value?.line ? reference.value : props.referencia
   const n = (refObj?.line?.name || '').toLowerCase()
+  const comm = (refObj?.line?.commercial_name || '').toLowerCase()
   const c = (refObj?.line?.code || '').toUpperCase()
-  // While COSCO live sync is suspended, only Hapag-Lloyd is automated
-  return n.includes('hapag') || c === 'HLCU'
+  // While COSCO live sync is suspended, Hapag-Lloyd is automated
+  return n.includes('hapag') || comm.includes('hapag') || n.includes('lloyd') || c === 'HLCU' || c === 'HLAG' || c.startsWith('HPL')
 })
 
 const isMismatched = computed(() => {
@@ -392,7 +393,12 @@ const fetchData = async () => {
     reference.value = response?.referencia || {}
     milestones.value = response?.milestones || []
 
-    // 2. If it is an automated shipping line (COSCO or Hapag), automatically trigger a live sync in the background
+    // If local milestones already exist, display them immediately so the user doesn't wait
+    if (milestones.value.length > 0) {
+      loading.value = false
+    }
+
+    // 2. If it is an automated shipping line (Hapag), automatically trigger a live sync
     // to get the absolute latest tracking milestones without forcing the user to click the sync button!
     if (isAutomated.value) {
       syncing.value = true
@@ -401,13 +407,16 @@ const fetchData = async () => {
         if (syncResponse?.success) {
           // Re-fetch milestones with the newly synced tracking data
           const updatedResponse = await $api.seaTrackings.getLiveTimeline(refId)
+          if (updatedResponse?.referencia) reference.value = updatedResponse.referencia
           milestones.value = updatedResponse?.milestones || []
-        } else {
+        } else if (milestones.value.length === 0) {
           snackbar.add({ type: 'warning', text: 'No se encontraron eventos. Por favor, verifica que el BL/Booking y la naviera seleccionada correspondan entre sí.' })
         }
       } catch (syncErr) {
         console.error('Auto-sync failed:', syncErr)
-        snackbar.add({ type: 'warning', text: 'No se pudo realizar la sincronización automática. Por favor, revisa que los datos de tu registro sean correctos.' })
+        if (milestones.value.length === 0) {
+          snackbar.add({ type: 'warning', text: 'No se pudo realizar la sincronización automática. Por favor, revisa que los datos de tu registro sean correctos.' })
+        }
       } finally {
         syncing.value = false
       }
@@ -455,10 +464,26 @@ const formatDateOnly = (dateStr: string) => {
   })
 }
 
+onMounted(async () => {
+  if (props.modelValue) {
+    await fetchData()
+  }
+})
+
 watch(
   () => props.modelValue,
   async (val) => {
     if (val) await fetchData()
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.referenciaId,
+  async (newId, oldId) => {
+    if (props.modelValue && newId && newId !== oldId) {
+      await fetchData()
+    }
   }
 )
 </script>
