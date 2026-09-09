@@ -118,11 +118,10 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          Rows are color-coded in the Excel file: <strong>green</strong> = settled / profitable,
-          <strong>amber</strong> = still pending collection or payment, <strong>red</strong> = expected loss.
-          "Esperado" columns include everything billed/requested regardless of payment status; "Real" / "Pagado"
-          columns only count what has actually been collected from customers or paid to
-          suppliers/lines/FF-agents.
+          <div>
+            <strong>Single-sheet financial breakdown:</strong>
+            Each reference expands into multiple rows based on the maximum number of buy or sell concepts. Sell concepts (amounts, invoice, collection status) and Buy/Cost concepts (amounts, line/supplier, invoice/PR folio, payment status) are presented side-by-side with the reference's expected and real profit calculations.
+          </div>
         </v-alert>
       </v-card-text>
     </v-card>
@@ -172,6 +171,12 @@ const legendGroups = [
     icon: 'mdi-timer-alert-outline',
     color: 'orange',
     description: 'Cost billed by shipping lines for container demurrages/detentions, and its payment status.',
+  },
+  {
+    title: 'Desglose de Conceptos',
+    icon: 'mdi-format-list-bulleted-type',
+    color: 'deep-purple',
+    description: 'Detailed concept-by-concept breakdown of all buy and sell charges, suppliers, FF notes and demurrages.',
   },
   {
     title: 'Profit Esperado',
