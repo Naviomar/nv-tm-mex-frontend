@@ -63,6 +63,17 @@
             </div>
             <div class="col-span-2">
               <v-text-field
+                v-model="filters.nameEmisor"
+                clearable
+                density="compact"
+                label="Nombre Emisor"
+                hint="Busca por nombre aunque el proveedor no esté dado de alta"
+                persistent-hint
+                @keyup.enter="getSupplierCfdis"
+              />
+            </div>
+            <div class="col-span-2">
+              <v-text-field
                 v-model="filters.uuid"
                 clearable
                 density="compact"
@@ -604,6 +615,7 @@ const filters = ref<any>({
   serviceNumbers: null,
   tipoComprobante: '',
   rfcEmisor: '',
+  nameEmisor: '',
   uuid: '',
   currencyId: null,
   hasSupplier: null,
@@ -889,6 +901,7 @@ const clearFilters = async () => {
     serviceYear: null,
     serviceNumbers: null,
     rfcEmisor: '',
+    nameEmisor: '',
     uuid: '',
     currencyId: null,
     hasSupplier: null,
