@@ -353,9 +353,27 @@
                       title="Live Carrier Tracking"
                     ></v-btn>
 
-                    <v-tooltip location="right" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
+                    <v-tooltip location="right" max-width="360" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
                       <template v-slot:activator="{ props }">
+                        <v-badge
+                          v-if="item.applied_warranty_letter_info?.has_multiple_agents"
+                          :content="item.applied_warranty_letter_info.total_agents"
+                          color="indigo"
+                          size="x-small"
+                          location="top end"
+                          offset-x="2"
+                          offset-y="2"
+                        >
+                          <v-btn
+                            v-bind="props"
+                            :color="item.applied_warranty_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
+                            icon="mdi-shield-check"
+                            variant="text"
+                            density="compact"
+                          ></v-btn>
+                        </v-badge>
                         <v-btn
+                          v-else
                           v-bind="props"
                           :color="item.applied_warranty_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
                           icon="mdi-shield-check"
@@ -363,42 +381,126 @@
                           density="compact"
                         ></v-btn>
                       </template>
-                      <div v-if="item.applied_warranty_letter_info?.is_applied" class="flex flex-col gap-1 p-2 letter-text">
-                        <div class="font-bold text-sm">Carta Garantía Aplicada</div>
-                        <div class="flex gap-2">
-                          <v-chip size="x-small" :color="item.applied_warranty_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold w-fit" variant="flat">
+                      <div v-if="item.applied_warranty_letter_info?.is_applied" class="flex flex-col gap-1.5 p-2 letter-text max-w-[340px]">
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="font-bold text-sm">Carta Garantía Aplicada</div>
+                          <v-chip size="x-small" :color="item.applied_warranty_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold shrink-0" variant="flat">
                             {{ item.applied_warranty_letter_info?.source === 'consignee' ? 'Global' : 'Específica' }}
                           </v-chip>
-                          <v-chip v-if="item.applied_warranty_letter_info?.is_expired" size="x-small" color="error" class="font-bold w-fit" variant="flat">
-                            Vencida
+                        </div>
+                        <div class="flex flex-wrap gap-1 items-center">
+                          <v-chip v-if="item.applied_warranty_letter_info?.has_multiple_agents" size="x-small" color="indigo" class="font-bold" variant="flat">
+                            {{ item.applied_warranty_letter_info.total_agents }} Agentes en {{ item.applied_warranty_letter_info.port || item.applied_warranty_letter_info.pod_name }}
+                          </v-chip>
+                          <v-chip v-if="item.applied_warranty_letter_info?.is_expired" size="x-small" color="error" class="font-bold" variant="flat">
+                            {{ item.applied_warranty_letter_info?.has_multiple_agents ? 'Con cartas vencidas' : 'Vencida' }}
+                          </v-chip>
+                          <v-chip v-else size="x-small" color="success" class="font-bold" variant="flat">
+                            Vigente
                           </v-chip>
                         </div>
-                        <div class="text-xs max-w-[200px] leading-tight text-muted mt-1">
+                        <div class="text-xs text-muted leading-tight">
                           {{ item.applied_warranty_letter_info?.source === 'consignee'
-                              ? 'Aplica para todos los embarques de este cliente.'
+                              ? 'Aplica para los embarques de este cliente en este puerto.'
                               : 'Aplica únicamente para este embarque.'
                           }}
                         </div>
-                        <div class="text-xs mt-2" v-if="item.applied_warranty_letter_info?.custom_agent !== 'N/A'">
-                          <strong>Agente:</strong> {{ item.applied_warranty_letter_info?.custom_agent }}
+                        <div class="text-xs">
+                          <strong>Puerto:</strong> {{ item.applied_warranty_letter_info?.port || item.applied_warranty_letter_info?.pod_name }}
                         </div>
-                        <div class="text-xs" v-if="item.applied_warranty_letter_info?.port !== 'N/A'">
-                          <strong>Puerto:</strong> {{ item.applied_warranty_letter_info?.port }}
+                        <div class="text-xs" v-if="item.applied_warranty_letter_info?.assigned_agent">
+                          <strong>AA en Ref:</strong>
+                          <span v-if="item.applied_warranty_letter_info.assigned_agent_matched" class="text-green-600 dark:text-green-400 font-semibold ml-1">
+                            {{ item.applied_warranty_letter_info.assigned_agent }} ✓
+                          </span>
+                          <span v-else class="text-amber-600 dark:text-amber-400 font-semibold ml-1">
+                            {{ item.applied_warranty_letter_info.assigned_agent }} ⚠️ (Sin carta para este puerto)
+                          </span>
                         </div>
-                        <div class="text-xs" v-if="item.applied_warranty_letter_info?.valid_to !== 'N/A'">
-                          <strong>Vigencia:</strong> {{ item.applied_warranty_letter_info?.valid_from }} a {{ item.applied_warranty_letter_info?.valid_to }}
+                        <div class="text-xs text-slate-500 italic" v-else-if="item.applied_warranty_letter_info?.has_multiple_agents">
+                          <strong>AA en Ref:</strong> Sin asignar (varios AA disponibles)
                         </div>
-                        <div class="text-[10px] text-disabled-custom mt-2">
-                          Reg: {{ item.applied_warranty_letter_info?.registered_by }}<br />
-                          Fecha: {{ item.applied_warranty_letter_info?.registered_at }}
+
+                        <!-- Múltiples agentes -->
+                        <div v-if="item.applied_warranty_letter_info?.has_multiple_agents" class="mt-1">
+                          <div class="text-xs font-semibold mb-1">Agentes autorizados para este puerto:</div>
+                          <div class="flex flex-col gap-1 max-h-[160px] overflow-y-auto pr-1">
+                            <div
+                              v-for="(ag, agIdx) in item.applied_warranty_letter_info.agents"
+                              :key="`w-ag-${agIdx}`"
+                              class="p-1.5 rounded border text-xs"
+                              :class="ag.is_assigned ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50'"
+                            >
+                              <div class="flex items-center justify-between gap-1">
+                                <span class="font-medium truncate" :title="ag.custom_agent">{{ ag.short_name || ag.custom_agent }}</span>
+                                <div class="flex gap-1 shrink-0">
+                                  <v-chip v-if="ag.is_assigned" size="x-small" color="primary" variant="flat">Asignado</v-chip>
+                                  <v-chip size="x-small" :color="ag.is_expired ? 'error' : 'success'" variant="flat">
+                                    {{ ag.is_expired ? 'Vencida' : 'Vigente' }}
+                                  </v-chip>
+                                </div>
+                              </div>
+                              <div class="text-[11px] text-muted mt-0.5" v-if="ag.valid_to !== 'N/A'">
+                                Vigencia: {{ ag.valid_from }} a {{ ag.valid_to }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- 1 solo agente -->
+                        <div v-else>
+                          <div class="text-xs mt-1" v-if="item.applied_warranty_letter_info?.custom_agent !== 'N/A'">
+                            <strong>Agente:</strong> {{ item.applied_warranty_letter_info?.custom_agent }}
+                          </div>
+                          <div class="text-xs" v-if="item.applied_warranty_letter_info?.valid_to !== 'N/A'">
+                            <strong>Vigencia:</strong> {{ item.applied_warranty_letter_info?.valid_from }} a {{ item.applied_warranty_letter_info?.valid_to }}
+                          </div>
+                          <div class="text-[10px] text-disabled-custom mt-1">
+                            Reg: {{ item.applied_warranty_letter_info?.registered_by }}<br />
+                            Fecha: {{ item.applied_warranty_letter_info?.registered_at }}
+                          </div>
                         </div>
                       </div>
-                      <div v-else class="letter-text">Carta Garantía Pendiente</div>
+                      <div v-else class="flex flex-col gap-1 p-2 letter-text max-w-[260px]">
+                        <div class="font-bold text-sm flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                          <v-icon size="x-small" color="grey">mdi-alert-circle-outline</v-icon>
+                          Carta Garantía Pendiente
+                        </div>
+                        <div class="text-xs text-muted" v-if="item.applied_warranty_letter_info?.pod_name && item.applied_warranty_letter_info?.pod_name !== 'N/A'">
+                          Sin carta para el puerto: <strong>{{ item.applied_warranty_letter_info.pod_name }}</strong>
+                        </div>
+                        <div class="text-xs text-muted mt-1" v-if="item.applied_warranty_letter_info?.other_ports?.length">
+                          Tiene cartas en:
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <v-chip v-for="p in item.applied_warranty_letter_info.other_ports" :key="p" size="x-small" variant="outlined">
+                              {{ p }}
+                            </v-chip>
+                          </div>
+                        </div>
+                      </div>
                     </v-tooltip>
 
-                    <v-tooltip location="right" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
+                    <v-tooltip location="right" max-width="360" content-class="letter-tooltip backdrop-blur-md border border-slate-500/30 shadow-2xl rounded-2xl">
                       <template v-slot:activator="{ props }">
+                        <v-badge
+                          v-if="item.applied_entrust_letter_info?.has_multiple_agents"
+                          :content="item.applied_entrust_letter_info.total_agents"
+                          color="indigo"
+                          size="x-small"
+                          location="top end"
+                          offset-x="2"
+                          offset-y="2"
+                        >
+                          <v-btn
+                            v-bind="props"
+                            :color="item.applied_entrust_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
+                            icon="mdi-file-document-check"
+                            variant="text"
+                            density="compact"
+                          ></v-btn>
+                        </v-badge>
                         <v-btn
+                          v-else
                           v-bind="props"
                           :color="item.applied_entrust_letter_info?.is_applied ? 'success' : 'grey-lighten-1'"
                           icon="mdi-file-document-check"
@@ -406,37 +508,103 @@
                           density="compact"
                         ></v-btn>
                       </template>
-                      <div v-if="item.applied_entrust_letter_info?.is_applied" class="flex flex-col gap-1 p-2 letter-text">
-                        <div class="font-bold text-sm">Carta Encomienda Aplicada</div>
-                        <div class="flex gap-2">
-                          <v-chip size="x-small" :color="item.applied_entrust_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold w-fit" variant="flat">
+                      <div v-if="item.applied_entrust_letter_info?.is_applied" class="flex flex-col gap-1.5 p-2 letter-text max-w-[340px]">
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="font-bold text-sm">Carta Encomienda Aplicada</div>
+                          <v-chip size="x-small" :color="item.applied_entrust_letter_info?.source === 'consignee' ? 'purple' : 'info'" class="font-bold shrink-0" variant="flat">
                             {{ item.applied_entrust_letter_info?.source === 'consignee' ? 'Global' : 'Específica' }}
                           </v-chip>
-                          <v-chip v-if="item.applied_entrust_letter_info?.is_expired" size="x-small" color="error" class="font-bold w-fit" variant="flat">
-                            Vencida
+                        </div>
+                        <div class="flex flex-wrap gap-1 items-center">
+                          <v-chip v-if="item.applied_entrust_letter_info?.has_multiple_agents" size="x-small" color="indigo" class="font-bold" variant="flat">
+                            {{ item.applied_entrust_letter_info.total_agents }} Agentes en {{ item.applied_entrust_letter_info.port || item.applied_entrust_letter_info.pod_name }}
+                          </v-chip>
+                          <v-chip v-if="item.applied_entrust_letter_info?.is_expired" size="x-small" color="error" class="font-bold" variant="flat">
+                            {{ item.applied_entrust_letter_info?.has_multiple_agents ? 'Con cartas vencidas' : 'Vencida' }}
+                          </v-chip>
+                          <v-chip v-else size="x-small" color="success" class="font-bold" variant="flat">
+                            Vigente
                           </v-chip>
                         </div>
-                        <div class="text-xs max-w-[200px] leading-tight text-muted mt-1">
+                        <div class="text-xs text-muted leading-tight">
                           {{ item.applied_entrust_letter_info?.source === 'consignee'
-                              ? 'Aplica para todos los embarques de este cliente.'
+                              ? 'Aplica para los embarques de este cliente en este puerto.'
                               : 'Aplica únicamente para este embarque.'
                           }}
                         </div>
-                        <div class="text-xs mt-2" v-if="item.applied_entrust_letter_info?.custom_agent !== 'N/A'">
-                          <strong>Agente:</strong> {{ item.applied_entrust_letter_info?.custom_agent }}
+                        <div class="text-xs">
+                          <strong>Puerto:</strong> {{ item.applied_entrust_letter_info?.port || item.applied_entrust_letter_info?.pod_name }}
                         </div>
-                        <div class="text-xs" v-if="item.applied_entrust_letter_info?.port !== 'N/A'">
-                          <strong>Puerto:</strong> {{ item.applied_entrust_letter_info?.port }}
+                        <div class="text-xs" v-if="item.applied_entrust_letter_info?.assigned_agent">
+                          <strong>AA en Ref:</strong>
+                          <span v-if="item.applied_entrust_letter_info.assigned_agent_matched" class="text-green-600 dark:text-green-400 font-semibold ml-1">
+                            {{ item.applied_entrust_letter_info.assigned_agent }} ✓
+                          </span>
+                          <span v-else class="text-amber-600 dark:text-amber-400 font-semibold ml-1">
+                            {{ item.applied_entrust_letter_info.assigned_agent }} ⚠️ (Sin carta para este puerto)
+                          </span>
                         </div>
-                        <div class="text-xs" v-if="item.applied_entrust_letter_info?.valid_to !== 'N/A'">
-                          <strong>Vigencia:</strong> {{ item.applied_entrust_letter_info?.valid_from }} a {{ item.applied_entrust_letter_info?.valid_to }}
+                        <div class="text-xs text-slate-500 italic" v-else-if="item.applied_entrust_letter_info?.has_multiple_agents">
+                          <strong>AA en Ref:</strong> Sin asignar (varios AA disponibles)
                         </div>
-                        <div class="text-[10px] text-disabled-custom mt-2">
-                          Reg: {{ item.applied_entrust_letter_info?.registered_by }}<br />
-                          Fecha: {{ item.applied_entrust_letter_info?.registered_at }}
+
+                        <!-- Múltiples agentes -->
+                        <div v-if="item.applied_entrust_letter_info?.has_multiple_agents" class="mt-1">
+                          <div class="text-xs font-semibold mb-1">Agentes autorizados para este puerto:</div>
+                          <div class="flex flex-col gap-1 max-h-[160px] overflow-y-auto pr-1">
+                            <div
+                              v-for="(ag, agIdx) in item.applied_entrust_letter_info.agents"
+                              :key="`e-ag-${agIdx}`"
+                              class="p-1.5 rounded border text-xs"
+                              :class="ag.is_assigned ? 'border-primary bg-primary/10' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50'"
+                            >
+                              <div class="flex items-center justify-between gap-1">
+                                <span class="font-medium truncate" :title="ag.custom_agent">{{ ag.short_name || ag.custom_agent }}</span>
+                                <div class="flex gap-1 shrink-0">
+                                  <v-chip v-if="ag.is_assigned" size="x-small" color="primary" variant="flat">Asignado</v-chip>
+                                  <v-chip size="x-small" :color="ag.is_expired ? 'error' : 'success'" variant="flat">
+                                    {{ ag.is_expired ? 'Vencida' : 'Vigente' }}
+                                  </v-chip>
+                                </div>
+                              </div>
+                              <div class="text-[11px] text-muted mt-0.5" v-if="ag.valid_to !== 'N/A'">
+                                Vigencia: {{ ag.valid_from }} a {{ ag.valid_to }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- 1 solo agente -->
+                        <div v-else>
+                          <div class="text-xs mt-1" v-if="item.applied_entrust_letter_info?.custom_agent !== 'N/A'">
+                            <strong>Agente:</strong> {{ item.applied_entrust_letter_info?.custom_agent }}
+                          </div>
+                          <div class="text-xs" v-if="item.applied_entrust_letter_info?.valid_to !== 'N/A'">
+                            <strong>Vigencia:</strong> {{ item.applied_entrust_letter_info?.valid_from }} a {{ item.applied_entrust_letter_info?.valid_to }}
+                          </div>
+                          <div class="text-[10px] text-disabled-custom mt-1">
+                            Reg: {{ item.applied_entrust_letter_info?.registered_by }}<br />
+                            Fecha: {{ item.applied_entrust_letter_info?.registered_at }}
+                          </div>
                         </div>
                       </div>
-                      <div v-else class="letter-text">Carta Encomienda Pendiente</div>
+                      <div v-else class="flex flex-col gap-1 p-2 letter-text max-w-[260px]">
+                        <div class="font-bold text-sm flex items-center gap-1 text-slate-700 dark:text-slate-200">
+                          <v-icon size="x-small" color="grey">mdi-alert-circle-outline</v-icon>
+                          Carta Encomienda Pendiente
+                        </div>
+                        <div class="text-xs text-muted" v-if="item.applied_entrust_letter_info?.pod_name && item.applied_entrust_letter_info?.pod_name !== 'N/A'">
+                          Sin carta para el puerto: <strong>{{ item.applied_entrust_letter_info.pod_name }}</strong>
+                        </div>
+                        <div class="text-xs text-muted mt-1" v-if="item.applied_entrust_letter_info?.other_ports?.length">
+                          Tiene cartas en:
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <v-chip v-for="p in item.applied_entrust_letter_info.other_ports" :key="p" size="x-small" variant="outlined">
+                              {{ p }}
+                            </v-chip>
+                          </div>
+                        </div>
+                      </div>
                     </v-tooltip>
                   </div>
                 </td>
