@@ -148,18 +148,22 @@ const toggle = () => {
 }
 
 const onSuccess = async (values: any) => {
-  console.log('click submit add Freight Bank', values)
-  values.id = props.id
-  values.name = 'empty'
+  values.freight_forwarder_id = props.id
+  values.name = values.beneficiary_name
 
-  await $api.freightForwarders.update(props.id, values)
+  try {
+    await $api.freightBanks.upsert(values)
 
-  snackbar.add({ type: 'success', text: 'Freight Bank created' })
+    snackbar.add({ type: 'success', text: 'Freight Bank created' })
 
-  const response: any = await $api.freightForwarders.getById(route.params.id!.toString())
+    const response: any = await $api.freightForwarders.getById(route.params.id!.toString())
 
-  local_freight_banks.value = [...response.freight_banks]
-  toggle()
+    local_freight_banks.value = [...response.freight_banks]
+    toggle()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error creating Freight Bank' })
+  }
 }
 
 function onInvalidSubmit({ values, errors, results }: any) {
