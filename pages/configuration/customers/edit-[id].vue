@@ -6,7 +6,7 @@
         <h3>Customer #{{ id }}</h3>
       </v-card-title>
       <v-card-text>
-        <ConsigneeEditForm />
+        <ConsigneeEditForm :auto-open-emails="route.query.openEmails === '1'" />
       </v-card-text>
     </v-card>
   </v-container>

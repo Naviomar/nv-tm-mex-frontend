@@ -66,6 +66,10 @@
           <v-icon start>mdi-email-multiple-outline</v-icon>
           Mail Logs
         </v-tab>
+        <v-tab value="alerts">
+          <v-icon start>mdi-bell-alert-outline</v-icon>
+          Alerts
+        </v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab">
@@ -108,6 +112,23 @@
           <!-- Detail Dialog -->
           <MailLogDetail v-model="mailDetailOpen" :log="selectedMailLog" />
         </v-window-item>
+
+        <v-window-item value="alerts">
+          <!-- Filters Bar -->
+          <AlertsLogFilters @apply="setAlertsFilters" @clear="clearAlertsFilters" />
+
+          <!-- Logs Table -->
+          <AlertsLogTable
+            :logs="alertsLogState.logs"
+            :loading="alertsLogState.isLoading"
+            :pagination="alertsLogState.pagination"
+            @page-change="fetchAlertsLog"
+            @row-click="openAlertDetail"
+          />
+
+          <!-- Detail Dialog -->
+          <AlertsLogDetail v-model="alertDetailOpen" :alert="selectedAlert" />
+        </v-window-item>
       </v-window>
 
       <!-- Online Users Drawer -->
@@ -119,6 +140,7 @@
 <script setup lang="ts">
 import type { ISystemLog } from '~/repository/modules/systemLogs'
 import type { IMailLog } from '~/repository/modules/mailLogs'
+import type { IAdminAlert } from '~/repository/modules/alerts'
 
 definePageMeta({
   title: 'System Logs',
@@ -151,6 +173,13 @@ const {
   exportCategoryReport,
 } = useMailLogs()
 
+const {
+  state: alertsLogState,
+  fetchLogs: fetchAlertsLog,
+  setFilters: setAlertsFilters,
+  clearFilters: clearAlertsFilters,
+} = useAlertsLog()
+
 const { users: presenceUsers } = useSystemPresence()
 
 const detailOpen = ref(false)
@@ -159,6 +188,9 @@ const selectedLog = ref<ISystemLog | null>(null)
 
 const mailDetailOpen = ref(false)
 const selectedMailLog = ref<IMailLog | null>(null)
+
+const alertDetailOpen = ref(false)
+const selectedAlert = ref<IAdminAlert | null>(null)
 
 const openDetail = async (log: ISystemLog) => {
   selectedLog.value = log
@@ -183,8 +215,13 @@ const handleGenerateReport = (filters: Record<string, string>) => {
   exportCategoryReport(filters)
 }
 
+const openAlertDetail = (alert: IAdminAlert) => {
+  selectedAlert.value = alert
+  alertDetailOpen.value = true
+}
+
 onMounted(async () => {
-  await Promise.all([fetchLogs(), fetchMetrics(), fetchMailLogs(), fetchMailMetrics()])
+  await Promise.all([fetchLogs(), fetchMetrics(), fetchMailLogs(), fetchMailMetrics(), fetchAlertsLog()])
   connectStream()
 })
 

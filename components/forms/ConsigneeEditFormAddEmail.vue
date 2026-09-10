@@ -164,13 +164,26 @@ const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 
-const props = defineProps(['emails', 'catalogs', 'id'])
+const props = defineProps(['emails', 'catalogs', 'id', 'autoOpen'])
 const emit = defineEmits(['refresh'])
 
 const showModal = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 const selectedEmail = ref<any>(null)
 const showMatrix = ref(false)
+
+const route = useRoute()
+const router = useRouter()
+
+onMounted(() => {
+  if (props.autoOpen) {
+    modalMode.value = 'create'
+    selectedEmail.value = null
+    showModal.value = true
+    const { openEmails, ...rest } = route.query
+    router.replace({ query: rest })
+  }
+})
 
 const NOTY_PREVIEW = 3
 const expandedRows = ref<Set<number>>(new Set())
