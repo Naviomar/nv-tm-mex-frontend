@@ -380,45 +380,47 @@
                 <InvoiceChargePaymentsView size="x-small" :invoice="creditDebit.note_payment?.payment?.invoice" />
               </td>
               <td class="whitespace-nowrap">
-                <!-- Consignee notes: cancel restricted to Super Admin -->
+                <!-- Consignee notes: cancel/replace restricted to Super Admin -->
                 <div
                   v-if="
                     !creditDebit.deleted_at &&
-                    canCancelFfNotes &&
+                    (canCancelFfNotes || canReplaceFfNotes) &&
                     (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                   "
                   class="flex items-center gap-1"
                 >
-                  <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
-                    <template #activator="{ props: tooltipProps }">
-                      <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
-                    </template>
-                  </v-tooltip>
+                  <template v-if="canCancelFfNotes">
+                    <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
+                      <template #activator="{ props: tooltipProps }">
+                        <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
+                      </template>
+                    </v-tooltip>
 
-                  <v-btn
-                    v-else-if="canCancelDirect(creditDebit)"
-                    icon
-                    color="red"
-                    @click="confirmDelete(creditDebit)"
-                    size="x-small"
-                  >
-                    <v-icon>mdi-delete-outline</v-icon>
-                  </v-btn>
+                    <v-btn
+                      v-else-if="canCancelDirect(creditDebit)"
+                      icon
+                      color="red"
+                      @click="confirmDelete(creditDebit)"
+                      size="x-small"
+                    >
+                      <v-icon>mdi-delete-outline</v-icon>
+                    </v-btn>
 
-                  <ProcessAuthorizationWrapper
-                    v-else
-                    processName="ff-notes.cancel"
-                    :requestKey="String(creditDebit.id)"
-                    label="Request Cancellation"
-                    :displayName="`FF Note ${creditDebit.folio || '#' + creditDebit.id}`"
-                    @refresh="fetchServiceFfNotes"
-                  >
-                    <template #auth>
-                      <v-btn icon color="red" @click="confirmDelete(creditDebit, true)" size="x-small">
-                        <v-icon>mdi-delete-outline</v-icon>
-                      </v-btn>
-                    </template>
-                  </ProcessAuthorizationWrapper>
+                    <ProcessAuthorizationWrapper
+                      v-else
+                      processName="ff-notes.cancel"
+                      :requestKey="String(creditDebit.id)"
+                      label="Request Cancellation"
+                      :displayName="`FF Note ${creditDebit.folio || '#' + creditDebit.id}`"
+                      @refresh="fetchServiceFfNotes"
+                    >
+                      <template #auth>
+                        <v-btn icon color="red" @click="confirmDelete(creditDebit, true)" size="x-small">
+                          <v-icon>mdi-delete-outline</v-icon>
+                        </v-btn>
+                      </template>
+                    </ProcessAuthorizationWrapper>
+                  </template>
 
                   <v-tooltip v-if="canReplaceWithDebitNote(creditDebit)" text="Replace with agent Debit Note">
                     <template #activator="{ props: tooltipProps }">
@@ -549,6 +551,7 @@ const { isSuperAdminRole, hasPermission } = useCheckUser()
 // Only Super Admin can edit or delete Consignee-party notes
 const canEditConsigneeNote = computed(() => isSuperAdminRole())
 const canCancelFfNotes = computed(() => hasPermission('ff-notes-cancel'))
+const canReplaceFfNotes = computed(() => hasPermission('ff-notes-replace-with-debit'))
 
 // Espeja FfNoteService::classifyCancellation() del backend para decidir qué
 // acción mostrar; el backend siempre revalida antes de ejecutar.
@@ -567,7 +570,7 @@ const canReplaceWithDebitNote = (note: any) =>
   (note.type === 'C' || note.type === 'Credit') &&
   note.inbound == 0 &&
   canCancelDirect(note) &&
-  canCancelFfNotes.value &&
+  canReplaceFfNotes.value &&
   (!note.party_type?.includes('Consignee') || canEditConsigneeNote.value)
 
 const replaceDialog = ref<any>({ show: false, creditNote: null })
