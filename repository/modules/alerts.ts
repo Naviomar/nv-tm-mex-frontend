@@ -39,6 +39,35 @@ export interface IAllAlertsResponse {
   total: number
 }
 
+export interface IAdminAlert {
+  id: number
+  title: string
+  message: string | null
+  severity: 'info' | 'warning' | 'error' | 'critical'
+  icon: string | null
+  color: string | null
+  category: string | null
+  category_code: string | null
+  alert_type_code: string | null
+  action_url: string | null
+  data: Record<string, any> | null
+  reference: string | null
+  creator: string | null
+  resolved_at: string | null
+  total_recipients: number
+  read_count: number
+  dismissed_count: number
+  created_at: string
+}
+
+export interface IAdminAlertsResponse {
+  data: IAdminAlert[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
 export interface IAlertCategory {
   id: number
   name: string
@@ -71,6 +100,7 @@ class AlertsModule extends FetchFactory<IAlertsResponse> {
   private RESOURCE = '/alerts'
   private ADMIN_CATEGORIES = '/admin/alert-categories'
   private ADMIN_TYPES = '/admin/alert-types'
+  private ADMIN_ALERTS = '/admin/alerts'
 
   // User alerts endpoints
   async getAlerts(limit: number = 50, fetchOptions?: FetchOptions) {
@@ -113,6 +143,16 @@ class AlertsModule extends FetchFactory<IAlertsResponse> {
 
   async dismissAll(fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/dismiss-all`, fetchOptions)
+  }
+
+  // Admin — all alerts (all users, includes read/dismissed/resolved)
+  async getAdminAlerts(params?: Record<string, any>, fetchOptions?: FetchOptions) {
+    const cleaned: Record<string, string> = {}
+    Object.entries(params ?? {}).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') cleaned[k] = String(v)
+    })
+    const query = new URLSearchParams(cleaned).toString()
+    return this.call('GET', `${this.ADMIN_ALERTS}${query ? `?${query}` : ''}`, fetchOptions)
   }
 
   // Admin alert categories endpoints

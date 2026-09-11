@@ -450,6 +450,7 @@
           :emails="consignee?.consignee_emails"
           :catalogs="catalogs"
           :id="id.toString()"
+          :auto-open="props.autoOpenEmails"
           @refresh="getData"
         />
 
@@ -469,6 +470,10 @@
 import { schemaEdit, schemaExecutive } from '~~/forms/consigneeForm'
 import { cfdiCatalogs } from '~~/utils/data/systemData'
 import VeeForm from '@/components/global/VeeForm.vue'
+
+const props = defineProps({
+  autoOpenEmails: { type: Boolean, default: false },
+})
 
 const router = useRouter()
 const route = useRoute()
