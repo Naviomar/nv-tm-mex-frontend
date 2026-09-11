@@ -70,12 +70,22 @@ class FfNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/add-service-notes`, fetchOptions)
   }
 
-  async deleteFfNote(form: any, fetchOptions?: FetchOptions) {
+  async cancelFfNote(id: string | number, comments: string | null, skipProcessCheck: boolean, fetchOptions?: FetchOptions) {
     fetchOptions = {
-      body: JSON.stringify(form),
+      body: JSON.stringify({ comments }),
+      headers: { 'X-Skip-Process-Check': String(skipProcessCheck) },
       ...fetchOptions,
     }
-    return this.call('POST', `${this.RESOURCE}/delete-ff-note`, fetchOptions)
+    return this.call('POST', `${this.RESOURCE}/${id}/cancel`, fetchOptions)
+  }
+
+  async replaceWithAgentDebitNote(id: string | number, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/replace-with-agent-debit-note`, fetchOptions)
   }
 
   async updateFfNoteNotes(id: string, form: any, fetchOptions?: FetchOptions) {

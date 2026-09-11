@@ -380,18 +380,59 @@
                 <InvoiceChargePaymentsView size="x-small" :invoice="creditDebit.note_payment?.payment?.invoice" />
               </td>
               <td class="whitespace-nowrap">
-                <!-- Consignee notes: delete restricted to Super Admin -->
+                <!-- Consignee notes: cancel restricted to Super Admin -->
                 <div
                   v-if="
                     !creditDebit.deleted_at &&
-                    !creditDebit.checked_at &&
-                    creditDebit.is_deletable !== false &&
+                    canCancelFfNotes &&
                     (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                   "
+                  class="flex items-center gap-1"
                 >
-                  <v-btn icon color="red" @click="confirmDelete(creditDebit)" size="x-small">
+                  <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
+                    <template #activator="{ props: tooltipProps }">
+                      <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
+                    </template>
+                  </v-tooltip>
+
+                  <v-btn
+                    v-else-if="canCancelDirect(creditDebit)"
+                    icon
+                    color="red"
+                    @click="confirmDelete(creditDebit)"
+                    size="x-small"
+                  >
                     <v-icon>mdi-delete-outline</v-icon>
                   </v-btn>
+
+                  <ProcessAuthorizationWrapper
+                    v-else
+                    processName="ff-notes.cancel"
+                    :requestKey="String(creditDebit.id)"
+                    label="Request Cancellation"
+                    :displayName="`FF Note ${creditDebit.folio || '#' + creditDebit.id}`"
+                    @refresh="fetchServiceFfNotes"
+                  >
+                    <template #auth>
+                      <v-btn icon color="red" @click="confirmDelete(creditDebit, true)" size="x-small">
+                        <v-icon>mdi-delete-outline</v-icon>
+                      </v-btn>
+                    </template>
+                  </ProcessAuthorizationWrapper>
+
+                  <v-tooltip v-if="canReplaceWithDebitNote(creditDebit)" text="Replace with agent Debit Note">
+                    <template #activator="{ props: tooltipProps }">
+                      <v-btn
+                        v-bind="tooltipProps"
+                        icon
+                        color="orange"
+                        size="x-small"
+                        @click="openReplaceDialog(creditDebit)"
+                      >
+                        <v-icon>mdi-file-replace-outline</v-icon>
+                      </v-btn>
+                    </template>
+                  </v-tooltip>
                 </div>
                 <UserInfoBadge :item="creditDebit" />
                 <div v-if="creditDebit.deleted_at">Reason: {{ creditDebit.cancelled_reason }}</div>
@@ -417,6 +458,11 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <FfNoteReplaceWithDebitDialog
+      v-model="replaceDialog.show"
+      :credit-note="replaceDialog.creditNote"
+      @replaced="fetchServiceFfNotes"
+    />
     <v-dialog v-model="lockNote.show" max-width="500">
       <v-card>
         <v-card-title>Confirm lock / unlock action</v-card-title>
@@ -498,10 +544,36 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const router = useRouter()
-const { isSuperAdminRole } = useCheckUser()
+const { isSuperAdminRole, hasPermission } = useCheckUser()
 
 // Only Super Admin can edit or delete Consignee-party notes
 const canEditConsigneeNote = computed(() => isSuperAdminRole())
+const canCancelFfNotes = computed(() => hasPermission('ff-notes-cancel'))
+
+// Espeja FfNoteService::classifyCancellation() del backend para decidir qué
+// acción mostrar; el backend siempre revalida antes de ejecutar.
+const isDisbursed = (note: any) => !!(note.note_payment && note.note_payment.payment?.invoice?.is_paid == 1)
+const isHardBlocked = (note: any) => note.is_deletable === false || isDisbursed(note)
+const canCancelDirect = (note: any) => !isHardBlocked(note) && !note.checked_at && !note.note_payment
+const hardBlockedMessage = (note: any) =>
+  isDisbursed(note)
+    ? 'This note has an already-disbursed payment to the agent. Contact Finance for manual reconciliation.'
+    : 'This note cannot be cancelled.'
+// Reemplaza una Credit Note "From TM" (la que el usuario le manda al agente)
+// por la Debit Note real "From agent" que el agente contesta con su factura.
+// Nota: fetchServiceFfNotes() ya transforma note.type de 'C'/'D' a 'Credit'/'Debit'
+// antes de llegar aquí (ver getTypeName, que por eso acepta ambas formas).
+const canReplaceWithDebitNote = (note: any) =>
+  (note.type === 'C' || note.type === 'Credit') &&
+  note.inbound == 0 &&
+  canCancelDirect(note) &&
+  canCancelFfNotes.value &&
+  (!note.party_type?.includes('Consignee') || canEditConsigneeNote.value)
+
+const replaceDialog = ref<any>({ show: false, creditNote: null })
+const openReplaceDialog = (note: any) => {
+  replaceDialog.value = { show: true, creditNote: note }
+}
 
 const props = defineProps({
   referenciaId: {
@@ -576,6 +648,7 @@ const deleteNote = ref<any>({
   show: false,
   creditDebit: null,
   comments: null,
+  viaAuthorization: false,
 })
 
 const lockNote = ref<any>({
@@ -966,8 +1039,9 @@ const editFfNote = async (creditDebit: any) => {
   openForm()
 }
 
-const confirmDelete = async (creditDebit: any) => {
+const confirmDelete = async (creditDebit: any, viaAuthorization = false) => {
   deleteNote.value.creditDebit = creditDebit
+  deleteNote.value.viaAuthorization = viaAuthorization
   deleteNote.value.show = true
 }
 
@@ -1036,23 +1110,28 @@ const deleteNoteConfirm = async () => {
       return
     }
     loadingStore.start()
-    const body = {
-      creditNote: deleteNote.value.creditDebit,
-      comments: deleteNote.value.comments,
-    }
-    const response = await $api.ffNotes.deleteFfNote(body)
+    await $api.ffNotes.cancelFfNote(
+      deleteNote.value.creditDebit.id,
+      deleteNote.value.comments,
+      !deleteNote.value.viaAuthorization,
+    )
     snackbar.add({
       type: 'success',
-      text: 'Agent freight forwarder note deleted',
+      text: 'Agent freight forwarder note cancelled',
     })
     deleteNote.value = {
       show: false,
       creditDebit: null,
       comments: null,
+      viaAuthorization: false,
     }
     fetchServiceFfNotes()
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: e?.data?.message || e?.response?.data?.message || 'Error cancelling the note.',
+    })
   } finally {
     setTimeout(() => {
       loadingStore.stop()
