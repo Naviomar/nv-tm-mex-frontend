@@ -104,7 +104,17 @@
                 </div>
               </div>
               <div class="block">
-                <v-btn color="primary" @click="saveSeal"> Save PDF with seals</v-btn>
+                <v-btn
+                  color="primary"
+                  :class="{ 'seal-save-pulse': hasUnsavedSeal }"
+                  @click="saveSeal"
+                >
+                  Save PDF with seals
+                </v-btn>
+                <div v-if="hasUnsavedSeal" class="text-orange-darken-2 text-sm mt-1">
+                  <v-icon size="small" color="orange-darken-2">mdi-alert</v-icon>
+                  You changed the seal type/position but haven't saved it yet.
+                </div>
               </div>
             </div>
           </div>
@@ -298,6 +308,7 @@ const numPages = ref<number>(0)
 
 const fontSizeRef = ref(12)
 const typeSeal = ref('')
+const hasUnsavedSeal = ref(false)
 
 const form = reactive({
   files: [],
@@ -587,6 +598,7 @@ const app = reactive({
     ctx.clearRect(0, 0, 500, 350)
 
     typeSeal.value = type
+    hasUnsavedSeal.value = true
     const tipoSello =
       type === 'REVALIDACION'
         ? 'REVALIDADO'
@@ -1238,6 +1250,7 @@ const saveSeal = async () => {
     fileOriginal.value = response.attachment_original
     fileSealed.value = response.attachment_sellos
     snackbar.add({ type: 'success', text: 'Success pdf with seals saved' })
+    hasUnsavedSeal.value = false
     emits('updateReference')
   } catch (e) {
     console.error(e)
@@ -1248,4 +1261,24 @@ const saveSeal = async () => {
     }, 200)
   }
 }
+
+defineExpose({
+  hasUnsavedSeal,
+})
 </script>
+
+<style scoped>
+.seal-save-pulse {
+  animation: seal-save-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes seal-save-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+  }
+}
+</style>

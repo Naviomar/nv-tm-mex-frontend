@@ -22,7 +22,9 @@
     </div>
     <div class="col-span-1"></div>
     <div class="col-span-2">
-      <v-btn size="small" color="primary" @click="resendRevalidationClick">Resend revalidation</v-btn>
+      <v-btn size="small" color="primary" :disabled="props.disabled" @click="resendRevalidationClick"
+        >Resend revalidation</v-btn
+      >
     </div>
   </div>
 </template>
@@ -38,6 +40,10 @@ const props = defineProps({
   reference: {
     type: Object,
     required: true,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 })
 

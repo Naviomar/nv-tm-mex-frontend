@@ -197,8 +197,20 @@
                           <template #auth>
                             <div class="mb-4">
                               <div class="font-bold mb-1">Re-stamp document (optional)</div>
-                              <Stamp :reference="reference" @updateReference="refresh" />
+                              <Stamp ref="stampRef" :reference="reference" @updateReference="refresh" />
                             </div>
+
+                            <v-alert
+                              v-if="hasUnsavedSeal"
+                              type="warning"
+                              variant="tonal"
+                              border="start"
+                              prominent
+                              class="mb-4"
+                            >
+                              You have an unsaved seal change. Click "Save PDF with seals" above before resending or
+                              redoing the revalidation, otherwise the old seal will be used.
+                            </v-alert>
 
                             <div class="mb-4">
                               <div class="font-bold mb-1">MBL Files</div>
@@ -210,13 +222,21 @@
                               <div class="mb-2 text-sm">
                                 Update the consignee emails/notes and resend, without redoing the whole revalidation.
                               </div>
-                              <SeaImportRevalidationResendForm :reference="reference" @updated="refresh" />
+                              <SeaImportRevalidationResendForm
+                                :reference="reference"
+                                :disabled="hasUnsavedSeal"
+                                @updated="refresh"
+                              />
                             </div>
 
                             <v-divider class="my-4" />
 
                             <div class="flex justify-start">
-                              <v-btn size="small" color="red-darken-4" @click="onClickRedoRevalidation"
+                              <v-btn
+                                size="small"
+                                color="red-darken-4"
+                                :disabled="hasUnsavedSeal"
+                                @click="onClickRedoRevalidation"
                                 >Redo revalidation</v-btn
                               >
                             </div>
@@ -293,6 +313,11 @@ const showAgentChangeDialog = ref(false)
 const skipAgentChangeCharge = ref(false)
 const refreshAuthReqs = ref(false)
 const authProcessRef = ref<any>(null)
+const stampRef = ref<any>(null)
+
+const hasUnsavedSeal = computed(() => {
+  return stampRef.value?.hasUnsavedSeal ?? false
+})
 
 const canSkipAgentChangeCharge = computed(() => {
   return hasPermission('revalidation-skip-agent-change-charge')
