@@ -133,6 +133,23 @@ class ReportsModule extends FetchFactory<any> {
     }
     return this.call('POST', `${this.RESOURCE}/comparative-teus-export/export-excel`, fetchOptions)
   }
+
+  async exportContainersByClientShipperExcel(
+    data: { filters: any; useLegacy: boolean; useNew: boolean },
+    fetchOptions?: FetchOptions,
+  ) {
+    fetchOptions = {
+      method: 'POST',
+      body: data,
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/containers-by-client-shipper/export-excel`, fetchOptions)
+  }
+
+  async getContainersByClientShipperCatalogs(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/containers-by-client-shipper/catalogs`, fetchOptions)
+  }
 }
 
 export default ReportsModule

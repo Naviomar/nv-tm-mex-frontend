@@ -64,6 +64,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         permission: 'reports-maritime-import-comparative-teus-view',
       },
       {
+        key: 'containers-client-shipper',
+        title: 'Containers by Client & Supplier',
+        icon: 'mdi-container-cargo-ports',
+        component: 'ContainersByClientShipperReport',
+        permission: 'reports-maritime-import-containers-client-shipper-view',
+      },
+      {
         key: 'releases',
         title: 'Release & Revalidations',
         icon: 'mdi-file-document-check',
