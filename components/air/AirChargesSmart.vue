@@ -213,7 +213,25 @@
 
               <tr v-if="hasCharges" v-for="charge in fueraAwbCharges" :key="charge.id">
                 <td>
-                  <div v-if="!hasLinkInvoice(charge)" class="flex gap-2">
+                  <div v-if="!props.canEdit" class="flex flex-col gap-1">
+                    <ProcessAuthorizationWrapper
+                      process-name="air.edit-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request edit"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                    <ProcessAuthorizationWrapper
+                      process-name="air.delete-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request delete"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'delete', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                  </div>
+                  <div v-else-if="!hasLinkInvoice(charge)" class="flex gap-2">
                     <v-btn
                       color="primary"
                       icon="mdi-pencil-outline"
@@ -274,7 +292,16 @@
         <!-- Formulario para cargo -->
         <div class="py-4">
           <div class="flex flex-wrap gap-2">
-            <v-btn color="secondary" size="small" @click="toggleChargeForm">{{ labelNewCharge }}</v-btn>
+            <v-btn v-if="props.canEdit" color="secondary" size="small" @click="toggleChargeForm">{{ labelNewCharge }}</v-btn>
+            <ProcessAuthorizationWrapper
+              v-else
+              process-name="air.add-charge-locked"
+              :request-key="`${props.referenciaId}-charge-new`"
+              label="Request charge"
+              :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
+              :field-catalogs="lockedFieldCatalogs"
+              @refresh="getAirCharges"
+            />
 
             <v-btn
               v-if="props.showProformaBtn"
@@ -397,8 +424,18 @@
           </div>
         </v-card-title>
         <v-card-text>
-          <div v-if="!formBuyCharge.show">
+          <div v-if="!formBuyCharge.show && props.canEdit">
             <v-btn color="primary" size="small" @click="newBuyChargeForm">New buy charge</v-btn>
+          </div>
+          <div v-else-if="!props.canEdit">
+            <ProcessAuthorizationWrapper
+              process-name="air.add-charge-locked"
+              :request-key="`${props.referenciaId}-charge-new-buy`"
+              label="Request charge"
+              :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
+              :field-catalogs="lockedFieldCatalogs"
+              @refresh="getAirCharges"
+            />
           </div>
           <!-- Formulario para cargo -->
           <div v-if="formBuyCharge.show" class="py-4">
@@ -487,7 +524,25 @@
             <tbody>
               <tr v-for="(charge, index) in buyCharges" :key="`buy-${index}`">
                 <td>
-                  <div v-if="!hasLinkInvoice(charge)" class="flex gap-2">
+                  <div v-if="!props.canEdit" class="flex flex-col gap-1">
+                    <ProcessAuthorizationWrapper
+                      process-name="air.edit-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request edit"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                    <ProcessAuthorizationWrapper
+                      process-name="air.delete-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request delete"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'delete', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                  </div>
+                  <div v-else-if="!hasLinkInvoice(charge)" class="flex gap-2">
                     <v-btn
                       color="primary"
                       icon="mdi-pencil-outline"
@@ -552,8 +607,18 @@
           </div>
         </v-card-title>
         <v-card-text>
-          <div v-if="!formSellCharge.show">
+          <div v-if="!formSellCharge.show && props.canEdit">
             <v-btn color="primary" size="small" @click="newSellChargeForm">New sell charge</v-btn>
+          </div>
+          <div v-else-if="!props.canEdit">
+            <ProcessAuthorizationWrapper
+              process-name="air.add-charge-locked"
+              :request-key="`${props.referenciaId}-charge-new-sell`"
+              label="Request charge"
+              :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
+              :field-catalogs="lockedFieldCatalogs"
+              @refresh="getAirCharges"
+            />
           </div>
           <!-- Formulario para cargo -->
           <div v-if="formSellCharge.show" class="py-4">
@@ -642,7 +707,25 @@
             <tbody>
               <tr v-for="(charge, index) in sellCharges" :key="`sell-${index}`">
                 <td>
-                  <div v-if="!hasLinkInvoice(charge)" class="flex gap-2">
+                  <div v-if="!props.canEdit" class="flex flex-col gap-1">
+                    <ProcessAuthorizationWrapper
+                      process-name="air.edit-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request edit"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                    <ProcessAuthorizationWrapper
+                      process-name="air.delete-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${charge.id}`"
+                      label="Request delete"
+                      :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'delete', charge_name: charge.charge?.name }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getAirCharges"
+                    />
+                  </div>
+                  <div v-else-if="!hasLinkInvoice(charge)" class="flex gap-2">
                     <v-btn
                       color="primary"
                       icon="mdi-pencil-outline"
@@ -797,6 +880,11 @@ const sell_rate_type = ref<any>(null)
 const catalogs = ref<any>({
   charges: [],
 })
+
+const lockedFieldCatalogs = computed(() => ({
+  charges: (catalogs.value.charges as any[])?.map((c: any) => ({ label: c.name, value: c.id, code: c.code })) ?? [],
+  currencies: (currencies as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
+}))
 
 const fueraDentroBls = [
   { value: 'F', name: 'Fuera AWB' },

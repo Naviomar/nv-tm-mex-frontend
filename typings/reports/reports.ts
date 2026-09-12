@@ -114,3 +114,14 @@ export interface ComparativeTeusFilters {
   include_offices: boolean
   etaMode: string
 }
+
+export interface ContainersByClientShipperFilters {
+  report_type: string
+  start_year: number
+  end_year: number
+  year: number
+  ejecutivo_id: number | null
+  client_id: number | null
+  shipper_name: string
+  etaMode: string
+}

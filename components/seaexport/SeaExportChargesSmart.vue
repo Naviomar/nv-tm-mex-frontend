@@ -39,7 +39,35 @@
 
               <tr v-if="hasCharges" v-for="(exportCharge, index) in charges" :key="`sea-export-charge-${index}`">
                 <td>
-                  <div v-if="!hasLinkInvoice(exportCharge)" class="flex items-center">
+                  <div v-if="!props.canEdit" class="flex flex-col gap-1">
+                    <ProcessAuthorizationWrapper
+                      process-name="sea-export.edit-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${exportCharge.id}`"
+                      label="Request edit"
+                      :process-data="{
+                        referencia_id: props.referenciaId,
+                        charge_id: exportCharge.id,
+                        action: 'edit',
+                        charge_name: exportCharge.charge?.name,
+                      }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getExportCharges"
+                    />
+                    <ProcessAuthorizationWrapper
+                      process-name="sea-export.delete-charge-locked"
+                      :request-key="`${props.referenciaId}-charge-${exportCharge.id}`"
+                      label="Request delete"
+                      :process-data="{
+                        referencia_id: props.referenciaId,
+                        charge_id: exportCharge.id,
+                        action: 'delete',
+                        charge_name: exportCharge.charge?.name,
+                      }"
+                      :field-catalogs="lockedFieldCatalogs"
+                      @refresh="getExportCharges"
+                    />
+                  </div>
+                  <div v-else-if="!hasLinkInvoice(exportCharge)" class="flex items-center">
                     <v-btn
                       color="primary"
                       icon="mdi-pencil-outline"
@@ -115,12 +143,22 @@
         <div class="py-4">
           <div class="flex flex-wrap gap-2">
             <v-btn
+              v-if="props.canEdit"
               :color="formCharge.show ? 'red' : 'primary'"
               class="cursor-pointer"
               size="small"
               @click="toggleChargeForm"
               >{{ labelNewCharge }}</v-btn
             >
+            <ProcessAuthorizationWrapper
+              v-else
+              process-name="sea-export.add-charge-locked"
+              :request-key="`${props.referenciaId}-charge-new`"
+              label="Request charge"
+              :process-data="{ referencia_id: props.referenciaId, action: 'add' }"
+              :field-catalogs="lockedFieldCatalogs"
+              @refresh="getExportCharges"
+            />
 
             <v-btn
               v-if="props.showProformaBtn"
@@ -335,6 +373,11 @@ const hasLinkInvoice = (charge: any) => {
 }
 
 const hasCharges = computed(() => charges.value.length > 0)
+
+const lockedFieldCatalogs = computed(() => ({
+  charges: (catalogs.value.charges as any[])?.map((c: any) => ({ label: c.name, value: c.id, code: c.code })) ?? [],
+  currencies: (currencies as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
+}))
 
 // Filtrar charges según el tipo de factura seleccionado (TM/WM)
 // TM: solo charges con clave SAT (code no nulo)
