@@ -144,8 +144,11 @@ const proformas = computed(() => {
 })
 
 const canEditCharges = computed(() => {
+  // Charges can be edited from the start, only blocked when:
+  // - voyage_discharge exists and is locked.
+  // When no voyage is assigned yet, editing is allowed (same as Sea Import).
   if (!referencia.value.voyage_discharge) {
-    return false
+    return true
   }
   return referencia.value.voyage_discharge.locked_at == null
 })

@@ -34,12 +34,6 @@
           <div>
             <InputText name="subject" density="compact" label="Subject *" />
           </div>
-          <div v-if="false">
-            <div class="flex gap-4">
-              <v-btn size="small" color="amber" @click="setNewEtaOnBody">Set new ETA in body message</v-btn>
-              <v-btn size="small" color="red" @click="resetBodyMessage">Reset body message</v-btn>
-            </div>
-          </div>
           <div class="wang-editor-styles py-4" style="border: 1px solid #ccc">
             <ClientOnly>
               <Toolbar
@@ -64,9 +58,20 @@
           <div>
             <InputFile name="archivos" density="compact" label="Support files" :multiple="true" />
           </div>
+          <div v-if="hasNewEtaDate" class="py-2">
+            <div v-if="canSkipNotification" class="flex items-center gap-2">
+              <v-checkbox v-model="notifyClient" density="compact" label="Notify client" hide-details />
+              <div class="text-sm text-gray-500">
+                The {{ etaLabel }} change is less than 5 days ({{ etaDiffDays }} day(s)). You can choose whether to notify the client.
+              </div>
+            </div>
+            <v-alert v-else density="compact" type="info" variant="tonal" class="mt-2">
+              The {{ etaLabel }} change is {{ etaDiffDays }} day(s). The client will always be notified.
+            </v-alert>
+          </div>
           <div>
             <v-btn color="primary" @click="confirmUpdateEtaClick" :disabled="loadingStore.loading"
-              >Update {{ etaLabel }} & Notify</v-btn
+              >Update {{ etaLabel }}{{ shouldNotify ? ' & Notify' : '' }}</v-btn
             >
           </div>
         </div>
@@ -174,6 +179,22 @@ const isImport = computed(() => {
 // Export voyages track ETD (departure) at this same checkpoint, not ETA (arrival).
 const etaLabel = computed(() => (isImport.value ? 'ETA' : 'ETD'))
 
+const notifyClient = ref(true)
+
+const etaDiffDays = computed(() => {
+  const newDate = voyageDestUpdateEtaFormRef.value?.values.new_eta_date
+  const currentDate = voyageDestination.value?.eta_date
+  if (!newDate || !currentDate) return null
+  const diffMs = Math.abs(new Date(newDate).getTime() - new Date(currentDate).getTime())
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24))
+})
+
+const hasNewEtaDate = computed(() => etaDiffDays.value !== null)
+
+const canSkipNotification = computed(() => hasNewEtaDate.value && etaDiffDays.value! < 5)
+
+const shouldNotify = computed(() => !canSkipNotification.value || notifyClient.value)
+
 const selectAll = () => {
   referencias.value = referencias.value.map((ref: any) => {
     ref.selected = !ref.selected
@@ -206,6 +227,7 @@ const updateEtaClick = async (values: any) => {
     const body = {
       ...values,
       body: valueHtml.value,
+      notify_client: shouldNotify.value,
     }
 
     // add selected references
@@ -231,8 +253,10 @@ const confirmUpdateEtaClick = async () => {
   }
   const result = await confirm({
     title: `Confirm update ${etaLabel.value}`,
-    confirmationText: `Yes update ${etaLabel.value} and notify`,
-    content: `Please confirm you want to update the ${etaLabel.value} of this voyage destination.`,
+    confirmationText: shouldNotify.value ? `Yes update ${etaLabel.value} and notify` : `Yes update ${etaLabel.value}`,
+    content: shouldNotify.value
+      ? `Please confirm you want to update the ${etaLabel.value} of this voyage destination.`
+      : `Please confirm you want to update the ${etaLabel.value} of this voyage destination. The client will NOT be notified.`,
     dialogProps: {
       persistent: true,
       maxWidth: 500,
