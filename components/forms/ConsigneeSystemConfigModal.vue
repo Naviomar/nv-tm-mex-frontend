@@ -249,7 +249,7 @@
 
             <v-list-item-title>Skip pending charges validation</v-list-item-title>
             <v-list-item-subtitle class="text-wrap">
-              Allows revalidation to proceed even if there are non-demurrage sell charges pending invoicing.
+              Allows revalidation to proceed even if there are sell charges pending invoicing.
             </v-list-item-subtitle>
 
             <template v-slot:append>
