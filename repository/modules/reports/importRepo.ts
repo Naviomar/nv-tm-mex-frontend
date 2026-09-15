@@ -16,6 +16,7 @@ export interface ImportRepoFilters {
   destinationPort?: number | null
   release?: string | null
   transportType?: string | null
+  coloader?: number | null
 }
 
 export interface ImportRepoRequest {
@@ -116,6 +117,10 @@ class ImportRepoModule extends FetchFactory<any> {
 
   async getFreightForwarderGroups(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/catalogs/freight-forwarder-groups`, fetchOptions)
+  }
+
+  async getColoaders(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/catalogs/coloaders`, fetchOptions)
   }
 }
 
