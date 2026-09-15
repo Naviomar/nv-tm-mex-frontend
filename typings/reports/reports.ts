@@ -57,6 +57,7 @@ export interface ImportRepoFilters {
   consignee_group_id: number | null
   ff_id: number | null
   ff_group_id: number | null
+  coloader_id: number | null
   line_id: number | null
   executive_id: number | null
   release: string | null
