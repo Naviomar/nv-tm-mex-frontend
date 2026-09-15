@@ -105,7 +105,7 @@
             <div class="text-xs text-gray-500 dark:text-white">En la referencia</div>
           </td>
           <td class="p-2">
-            <div v-if="checklist.skip_demurrage_charges_validation" class="text-sm text-blue-600 font-semibold">
+            <div v-if="checklist.skip_pending_charges_validation" class="text-sm text-blue-600 font-semibold">
               Omitido (configuración del cliente)
             </div>
             <div v-if="checklist.referencia_has_credit">
@@ -598,6 +598,7 @@ const checklist = ref<any>({
   skip_sea_invoice_validation: false,
   skip_demurrage_charges_validation: false,
   skip_demurrage_invoice_validation: false,
+  skip_pending_charges_validation: false,
   warranty_letter_applies: true,
 })
 
