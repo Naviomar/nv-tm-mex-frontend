@@ -214,8 +214,8 @@
               References without ETA appear in the ADICIONALES column.
             </li>
             <li>
-              <strong>Detail:</strong> one row per reference with client, supplier, executive, reference, ETA,
-              container count and TEUs.
+              <strong>Detail:</strong> one row per container with reference, master/house BL, container number and
+              type, vessel, voyage, ETA, consignee, supplier (shipper), executive and TEUs — ready to send to the client.
             </li>
             <li>
               Includes data from TM1 (Legacy) and TM2 (New) based on the selected sources.
