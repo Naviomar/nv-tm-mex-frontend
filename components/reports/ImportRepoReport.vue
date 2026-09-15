@@ -226,6 +226,33 @@
 
             <v-col cols="12" md="6">
               <v-autocomplete
+                v-model="filters.coloader_id"
+                :items="filteredColoaders"
+                @update:search="onColoaderSearch"
+                item-title="name"
+                item-value="id"
+                label="Co-loader"
+                density="compact"
+                hide-details
+                clearable
+                variant="outlined"
+                prepend-inner-icon="mdi-vector-link"
+                auto-select-first
+              >
+                <template #append-item>
+                  <div
+                    v-if="hasMoreColoaders"
+                    v-intersect="onColoaderIntersect"
+                    class="text-center py-2 text-caption text-grey"
+                  >
+                    Loading more...
+                  </div>
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-autocomplete
                 v-model="filters.line_id"
                 :items="filteredLines"
                 @update:search="onLineSearch"
@@ -508,6 +535,7 @@ const filters = ref<ImportRepoFilters>({
   consignee_group_id: null,
   ff_id: null,
   ff_group_id: null,
+  coloader_id: null,
   line_id: null,
   executive_id: null,
   release: null,
@@ -529,6 +557,7 @@ const consignees = ref<CatalogOption[]>([])
 const freightForwarders = ref<CatalogOption[]>([])
 const consigneeGroups = ref<CatalogOption[]>([])
 const ffGroups = ref<CatalogOption[]>([])
+const coloaders = ref<CatalogOption[]>([])
 
 
 const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
@@ -536,6 +565,7 @@ const { onSearch: onConsigneeSearch, filteredItems: filteredConsignees, hasMore:
 const { onSearch: onConsigneeGroupSearch, filteredItems: filteredConsigneeGroups, hasMore: hasMoreConsigneeGroups, onIntersect: onConsigneeGroupIntersect } = useAutocompleteFilter(consigneeGroups, () => filters.value.consignee_group_id)
 const { onSearch: onFfSearch, filteredItems: filteredFreightForwarders, hasMore: hasMoreFreightForwarders, onIntersect: onFfIntersect } = useAutocompleteFilter(freightForwarders, () => filters.value.ff_id)
 const { onSearch: onFfGroupSearch, filteredItems: filteredFfGroups, hasMore: hasMoreFfGroups, onIntersect: onFfGroupIntersect } = useAutocompleteFilter(ffGroups, () => filters.value.ff_group_id)
+const { onSearch: onColoaderSearch, filteredItems: filteredColoaders, hasMore: hasMoreColoaders, onIntersect: onColoaderIntersect } = useAutocompleteFilter(coloaders, () => filters.value.coloader_id)
 const { onSearch: onLineSearch, filteredItems: filteredLines, hasMore: hasMoreLines, onIntersect: onLineIntersect } = useAutocompleteFilter(lines, () => filters.value.line_id)
 const { onSearch: onExecutiveSearch, filteredItems: filteredExecutives, hasMore: hasMoreExecutives, onIntersect: onExecutiveIntersect } = useAutocompleteFilter(executives, () => filters.value.executive_id)
 const { onSearch: onOriginPortSearch, filteredItems: filteredOriginPorts, hasMore: hasMoreOriginPorts, onIntersect: onOriginPortIntersect } = useAutocompleteFilter(ports, () => filters.value.originPort_id)
@@ -562,6 +592,7 @@ const applyFilters = async () => {
         consignee_group: filters.value.consignee_group_id,
         ff: filters.value.ff_id,
         ff_group: filters.value.ff_group_id,
+        coloader: filters.value.coloader_id,
         line: filters.value.line_id,
         executive: filters.value.executive_id,
         release: filters.value.release,
@@ -620,6 +651,7 @@ const clearFilters = () => {
   filters.value.consignee_group_id = null
   filters.value.ff_id = null
   filters.value.ff_group_id = null
+  filters.value.coloader_id = null
   filters.value.line_id = null
   filters.value.executive_id = null
   filters.value.release = null
@@ -635,7 +667,7 @@ const clearFilters = () => {
 onMounted(async () => {
   try {
     loadingConsignees.value = true
-    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData, consigneeGroupsData, ffGroupsData] = await Promise.all([
+    const [voyagesData, linesData, executivesData, portsData, consigneesData, freightForwardersData, consigneeGroupsData, ffGroupsData, coloadersData] = await Promise.all([
       $api.importRepo.getVoyages(),
       $api.importRepo.getLines(),
       $api.importRepo.getExecutives(),
@@ -644,6 +676,7 @@ onMounted(async () => {
       $api.importRepo.getFreightForwarders(),
       $api.importRepo.getConsigneeGroups(),
       $api.importRepo.getFreightForwarderGroups(),
+      $api.importRepo.getColoaders(),
     ])
 
     voyages.value = voyagesData.data || []
@@ -654,6 +687,7 @@ onMounted(async () => {
     freightForwarders.value = freightForwardersData.data || []
     consigneeGroups.value = consigneeGroupsData.data || []
     ffGroups.value = ffGroupsData.data || []
+    coloaders.value = coloadersData.data || []
   } catch (error) {
     console.error('Error loading catalog data:', error)
   } finally {
