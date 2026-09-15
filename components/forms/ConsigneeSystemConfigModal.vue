@@ -243,6 +243,74 @@
           <v-list-item>
             <template v-slot:prepend>
               <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-timer-sand" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Skip demurrage charges validation</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Allows revalidation to proceed even if there are demurrage charges pending invoicing.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-skip-demurrage-charges-validation')"
+                v-model="form.skip_demurrage_charges_validation"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.skip_demurrage_charges_validation ? 'success' : 'default'"
+              >
+                {{ form.skip_demurrage_charges_validation ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
+                <v-icon icon="mdi-timer-sand" />
+              </v-avatar>
+            </template>
+
+            <v-list-item-title>Skip demurrage invoice validation</v-list-item-title>
+            <v-list-item-subtitle class="text-wrap">
+              Allows revalidation to proceed even if the customer has unpaid demurrage invoices.
+            </v-list-item-subtitle>
+
+            <template v-slot:append>
+              <v-switch
+                v-if="hasPermission('customers-skip-demurrage-invoice-validation')"
+                v-model="form.skip_demurrage_invoice_validation"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+              <v-chip
+                v-else
+                size="small"
+                variant="tonal"
+                :color="form.skip_demurrage_invoice_validation ? 'success' : 'default'"
+              >
+                {{ form.skip_demurrage_invoice_validation ? 'Enabled' : 'Disabled' }}
+              </v-chip>
+            </template>
+          </v-list-item>
+
+          <v-divider />
+
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-avatar color="primary" variant="tonal" size="40" class="mr-3">
                 <v-icon icon="mdi-ferry" />
               </v-avatar>
             </template>
@@ -374,6 +442,8 @@ const form = reactive({
   skip_hbl_validation: false,
   skip_air_invoice_validation: false,
   skip_sea_invoice_validation: false,
+  skip_demurrage_charges_validation: false,
+  skip_demurrage_invoice_validation: false,
   allow_collect_export_invoicing: false,
   send_arrival_proforma_wm: true,
   send_arrival_proforma_tm: false,
@@ -391,6 +461,8 @@ const resetForm = () => {
   form.skip_hbl_validation = false
   form.skip_air_invoice_validation = false
   form.skip_sea_invoice_validation = false
+  form.skip_demurrage_charges_validation = false
+  form.skip_demurrage_invoice_validation = false
   form.allow_collect_export_invoicing = false
   form.send_arrival_proforma_wm = true
   form.send_arrival_proforma_tm = false
@@ -406,6 +478,8 @@ const openEdit = async (consignee: any) => {
   form.skip_hbl_validation = !!consignee.skip_hbl_validation
   form.skip_air_invoice_validation = !!consignee.skip_air_invoice_validation
   form.skip_sea_invoice_validation = !!consignee.skip_sea_invoice_validation
+  form.skip_demurrage_charges_validation = !!consignee.skip_demurrage_charges_validation
+  form.skip_demurrage_invoice_validation = !!consignee.skip_demurrage_invoice_validation
   form.allow_collect_export_invoicing = !!consignee.allow_collect_export_invoicing
   form.send_arrival_proforma_wm = consignee.send_arrival_proforma_wm === undefined ? true : !!consignee.send_arrival_proforma_wm
   form.send_arrival_proforma_tm = !!consignee.send_arrival_proforma_tm

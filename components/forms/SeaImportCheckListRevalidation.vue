@@ -105,6 +105,9 @@
             <div class="text-xs text-gray-500 dark:text-white">En la referencia</div>
           </td>
           <td class="p-2">
+            <div v-if="checklist.skip_demurrage_charges_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <div v-if="checklist.referencia_has_credit">
               <span class="text-green-600 font-bold"> CRÉDITO </span>
             </div>
@@ -157,6 +160,9 @@
         <tr>
           <td class="p-2 font-medium">Concepto de demoras sin facturar</td>
           <td class="p-2">
+            <div v-if="checklist.skip_demurrage_charges_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <span
               :class="
                 checklist.demurrages_without_invoice?.length > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'
@@ -178,6 +184,9 @@
         <tr>
           <td class="p-2 font-medium">Facturas de demoras pendientes</td>
           <td class="p-2">
+            <div v-if="checklist.skip_demurrage_invoice_validation" class="text-sm text-blue-600 font-semibold">
+              Omitido (configuración del cliente)
+            </div>
             <span
               :class="
                 checklist.unpaid_demurrage_invoices?.length > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'
@@ -587,6 +596,8 @@ const checklist = ref<any>({
   unpaid_air_invoices: [],
   skip_air_invoice_validation: false,
   skip_sea_invoice_validation: false,
+  skip_demurrage_charges_validation: false,
+  skip_demurrage_invoice_validation: false,
   warranty_letter_applies: true,
 })
 
