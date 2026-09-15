@@ -282,7 +282,9 @@
               <tr>
                 <th>Actions</th>
                 <th>Supplier Inv#</th>
+                <th>Invoice date</th>
                 <th>Service Ref#</th>
+                <th>ETA</th>
                 <th>Concept</th>
                 <th>Amount</th>
                 <th>Currency</th>
@@ -295,7 +297,7 @@
             </thead>
             <tbody>
               <tr v-if="supReqPayment.supplier_invoices?.length === 0">
-                <td colspan="11" class="text-center">No concepts found</td>
+                <td colspan="13" class="text-center">No concepts found</td>
               </tr>
               <tr v-for="(invoice, index) in supReqPayment.supplier_invoices" :key="`sup-invoice-${index}`">
                 <td>
@@ -312,7 +314,9 @@
                   </ProcessAuthorizationWrapper>
                 </td>
                 <td>{{ invoice.cfdi?.serie_folio }}</td>
+                <td>{{ invoice.cfdi?.invoice_date ? formatDateString(invoice.cfdi.invoice_date) : '-' }}</td>
                 <td>{{ invoice.referenceable?.reference_number }}</td>
+                <td>{{ getInvoiceEta(invoice) ? formatDateString(getInvoiceEta(invoice)) : '-' }}</td>
                 <td>
                   <div>{{ invoice.chargeable?.name }}</div>
                   <div v-if="invoice.notes" class="text-xs text-grey-darken-1 italic">{{ invoice.notes }}</div>
@@ -630,6 +634,12 @@ const formattedNotes = computed(() => {
 
 const viewAdvancePayment = (advPayment: any) => {
   router.push(`/advance-payments/view-${advPayment.req_advance_payment_id}`)
+}
+
+const getInvoiceEta = (invoice: any) => {
+  const referenceable = invoice.referenceable
+  if (!referenceable) return null
+  return referenceable.voyage_discharge?.eta_date ?? referenceable.eta_date ?? null
 }
 
 const getLinkName = (link: any) => {

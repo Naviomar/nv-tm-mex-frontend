@@ -533,12 +533,34 @@ const getCurrenciesTotal = (invoice: any) => {
   return totales
 }
 
+const buyOwners = [
+  { value: 'F', name: 'Freight line' },
+  { value: 'S', name: 'Supplier' },
+]
+
+const mapExportCharges = (charges: any[]) => {
+  return charges.map((charge: any) => {
+    const buyOwnerValue = buyOwners.find((item) => item.value === charge.buy_owner)
+    return {
+      ...charge,
+      fuera_dentro_bl_value: charge.fuera_dentro_bl === 'F' ? 'Fuera de BL' : 'Dentro de BL',
+      charge_type_value: charge.charge_type === 'C' ? 'Per container' : 'Per BL',
+      buy_owner_value: buyOwnerValue?.name,
+      sell_type_value: charge.sell_type === 'P' ? 'Prepaid' : 'Collect',
+      buy_type_value: charge.buy_type === 'P' ? 'Prepaid' : 'Collect',
+    }
+  })
+}
+
 const getData = async () => {
   try {
     loadingStore.loading = true
     const response = (await $api.referenciasExport.getSeaExportFullDetailById(props.id)) as any
 
-    referencia.value = response
+    referencia.value = {
+      ...response,
+      export_charges: mapExportCharges(response.export_charges || []),
+    }
   } catch (e) {
     console.error(e)
   } finally {
