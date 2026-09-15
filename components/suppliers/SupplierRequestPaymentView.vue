@@ -133,6 +133,10 @@
                 <div class="col-span-2">{{ supReqPayment.account_number }}</div>
               </div>
               <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="font-bold">CLABE:</div>
+                <div class="col-span-2">{{ supReqPayment.clabe }}</div>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mb-2">
                 <div class="font-bold">ABA:</div>
                 <div class="col-span-2">{{ supReqPayment.aba }}</div>
               </div>
@@ -574,6 +578,7 @@ const showEditBankInfo = () => {
       bank: supReqPayment.value.bank,
       beneficiary_name: supReqPayment.value.beneficiary_name,
       account_number: supReqPayment.value.account_number,
+      clabe: supReqPayment.value.clabe,
       aba: supReqPayment.value.aba,
       swift: supReqPayment.value.swift,
       iban: supReqPayment.value.iban,
@@ -776,13 +781,14 @@ const onSaveBankInfoClick = async (values: any) => {
   try {
     loadingStore.start()
     // only send the fields that are being updated
-    const { bank, beneficiary_name, account_number, aba, swift, iban } = values
+    const { bank, beneficiary_name, account_number, clabe, aba, swift, iban } = values
 
     const body = {
       req_refund_id: props.id,
       bank,
       beneficiary_name,
       account_number,
+      clabe,
       aba,
       swift,
       iban,

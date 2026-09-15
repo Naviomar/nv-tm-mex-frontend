@@ -179,7 +179,13 @@
                     </v-alert>
                   </div>
 
-                  <v-btn color="primary" class="mt-4" @click="saveLineInvoice">Create line invoice</v-btn>
+                  <v-btn
+                    color="primary"
+                    class="mt-4"
+                    :loading="isSaving"
+                    :disabled="isSaving"
+                    @click="saveLineInvoice()"
+                  >Create line invoice</v-btn>
                 </div>
               </v-card-text>
             </v-card>
@@ -326,7 +332,16 @@ const searchReferences = async () => {
   }
 }
 
+const isSaving = ref(false)
+
 const saveLineInvoice = async (confirmDuplicate = false) => {
+  // Sin este guard, un doble clic (o un clic mientras la request anterior seguía
+  // en curso) disparaba dos submits concurrentes. El backend valida duplicados con
+  // un exists() dentro de la transacción, así que dos requests casi simultáneas
+  // pasan la validación antes de que cualquiera haga commit, y se crean dos
+  // facturas idénticas (mismo folio/Master BL) en vez de una sola.
+  if (isSaving.value) return
+  isSaving.value = true
   try {
     if (!form.value.line_id) {
       snackbar.add({ type: 'error', text: 'Freight line is required' })
@@ -390,12 +405,17 @@ const saveLineInvoice = async (confirmDuplicate = false) => {
         confirmationButtonProps: { color: 'warning' },
         dialogProps: { persistent: true, maxWidth: 500 },
       })
-      if (ok) await saveLineInvoice(true)
+      if (ok) {
+        isSaving.value = false
+        await saveLineInvoice(true)
+        return
+      }
       return
     }
     snackbar.add({ type: 'error', text: error?.data?.message ?? 'Error creating freight line invoice' })
     console.error(error)
   } finally {
+    isSaving.value = false
     setTimeout(() => {
       loadingStore.stop()
     }, 250)

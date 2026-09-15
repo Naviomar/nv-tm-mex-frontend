@@ -55,7 +55,7 @@
           </FileDropzone>
 
           <div class="d-flex justify-end">
-            <v-btn color="primary" size="small" :loading="savingFolio" @click="saveFolioEdit">
+            <v-btn color="primary" size="small" :loading="savingFolio" :disabled="savingFolio" @click="saveFolioEdit">
               <v-icon start size="16">mdi-content-save-outline</v-icon>
               Save folio &amp; PDF
             </v-btn>
@@ -320,7 +320,7 @@
           </v-table>
 
           <div class="d-flex justify-end mt-3">
-            <v-btn color="primary" size="small" :loading="savingRefs" @click="saveNewRefs">
+            <v-btn color="primary" size="small" :loading="savingRefs" :disabled="savingRefs" @click="saveNewRefs()">
               <v-icon start size="16">mdi-plus-circle-outline</v-icon>
               Add services to invoice
             </v-btn>
@@ -361,7 +361,7 @@
         <v-card-actions class="pa-3 pt-0">
           <v-spacer />
           <v-btn size="small" @click="authorizedEditDialog = false">Cancel</v-btn>
-          <v-btn size="small" color="primary" :loading="savingAuthorized" @click="saveAuthorizedEdit">Save</v-btn>
+          <v-btn size="small" color="primary" :loading="savingAuthorized" :disabled="savingAuthorized" @click="saveAuthorizedEdit">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
