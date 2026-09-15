@@ -66,7 +66,7 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
       {
         key: 'containers-client-shipper',
         title: 'Containers by Client & Supplier',
-        icon: 'mdi-container-cargo-ports',
+        icon: 'mdi-package-variant-closed',
         component: 'ContainersByClientShipperReport',
         permission: 'reports-maritime-import-containers-client-shipper-view',
       },
