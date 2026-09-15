@@ -71,6 +71,18 @@
                 <div class="flex gap-2">
                   <ViewButton :item="ff" @click="viewFf(ff)" />
                   <EditButton :item="ff" permission="freight-forwarders-edit" @click="editFf(ff)" />
+                  <v-tooltip v-if="canViewSystemConfig" text="System Config">
+                    <template v-slot:activator="{ props }">
+                      <v-btn
+                        color="grey-darken-2"
+                        size="x-small"
+                        variant="elevated"
+                        v-bind="props"
+                        icon="mdi-cog-outline"
+                        @click="openSystemConfig(ff)"
+                      ></v-btn>
+                    </template>
+                  </v-tooltip>
                   <TrashButton :item="ff" permission="freight-forwarders-delete" @click="showConfirmDelete" />
                 </div>
               </td>
@@ -106,11 +118,13 @@
     </v-card>
 
     <FreightForwarderModal ref="freightForwarderModalRef" @refresh="getFreightForwarders" />
+    <FreightForwarderSystemConfigModal ref="systemConfigModalRef" @refresh="getFreightForwarders" />
   </div>
 </template>
 <script setup lang="ts">
 import { deletedStatus } from '@/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
+import FreightForwarderSystemConfigModal from '~/components/forms/FreightForwarderSystemConfigModal.vue'
 
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
@@ -118,8 +132,15 @@ const confirm = $notifications.useConfirm()
 
 const loadingStore = useLoadingStore()
 const router = useRouter()
+const { hasPermission } = useCheckUser()
 
 const freightForwarderModalRef = ref<InstanceType<typeof FreightForwarderModal> | null>(null)
+const systemConfigModalRef = ref<InstanceType<typeof FreightForwarderSystemConfigModal> | null>(null)
+const canViewSystemConfig = computed(() => hasPermission('freight-forwarders-view-system-config'))
+
+const openSystemConfig = (ff: any) => {
+  systemConfigModalRef.value?.openEdit(ff)
+}
 
 // Initial filter values
 const initialFilters = {
