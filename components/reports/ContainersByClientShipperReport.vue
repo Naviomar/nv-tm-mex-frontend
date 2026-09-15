@@ -6,12 +6,12 @@
         <div class="header-content">
           <div class="header-left">
             <div class="icon-wrapper">
-              <v-icon color="white" size="28">mdi-container-cargo-ports</v-icon>
+              <v-icon color="white" size="28">mdi-package-variant-closed</v-icon>
             </div>
             <div class="header-text">
-              <h2 class="report-title">Contenedores por Cliente y Proveedor</h2>
+              <h2 class="report-title">Containers by Client & Supplier</h2>
               <p class="report-subtitle">
-                Contenedores que cada cliente va a recibir, agrupados por proveedor (shipper), por mes
+                Containers each client will receive, grouped by supplier (shipper), by month
               </p>
             </div>
           </div>
@@ -39,7 +39,7 @@
                 @click="useLegacyData = !useLegacyData"
               >
                 <v-icon start size="small">mdi-database</v-icon>
-                Legacy (TM1)
+                Legacy
               </v-chip>
               <v-chip
                 :color="useNewData ? 'success' : 'default'"
@@ -49,7 +49,7 @@
                 @click="useNewData = !useNewData"
               >
                 <v-icon start size="small">mdi-server</v-icon>
-                New (TM2)
+                New
               </v-chip>
             </div>
           </div>
@@ -100,7 +100,7 @@
                 @update:search="onConsigneeSearch"
                 item-title="name"
                 item-value="id"
-                label="Consignee (Cliente)"
+                label="Consignee"
                 density="compact"
                 hide-details
                 clearable
@@ -133,13 +133,13 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="filters.shipper_name"
-                label="Proveedor (Shipper) — texto"
+                label="Supplier (Shipper)"
                 density="compact"
                 hide-details
                 clearable
                 variant="outlined"
                 prepend-inner-icon="mdi-truck-fast"
-                placeholder="Nombre del proveedor / embarcador"
+                placeholder="Supplier / shipper name"
               />
             </v-col>
 
@@ -207,18 +207,18 @@
           <template #prepend>
             <v-icon>mdi-information-outline</v-icon>
           </template>
-          Este reporte descarga un Excel con dos hojas:
+          This report downloads an Excel workbook with two sheets:
           <ul class="pl-4 mt-1">
             <li>
-              <strong>Resumen:</strong> contenedores por cliente y proveedor (shipper), distribuidos por mes (basado en ETA).
-              Las referencias sin ETA aparecen en la columna ADICIONALES.
+              <strong>Summary:</strong> containers by client and supplier (shipper), distributed by month (based on ETA).
+              References without ETA appear in the ADICIONALES column.
             </li>
             <li>
-              <strong>Detalle:</strong> una fila por referencia con cliente, proveedor, ejecutivo, referencia, ETA,
-              conteo de contenedores y TEUs.
+              <strong>Detail:</strong> one row per reference with client, supplier, executive, reference, ETA,
+              container count and TEUs.
             </li>
             <li>
-              Incluye datos de TM1 (Legacy) y TM2 (New) según las fuentes seleccionadas.
+              Includes data from TM1 (Legacy) and TM2 (New) based on the selected sources.
             </li>
           </ul>
         </v-alert>
