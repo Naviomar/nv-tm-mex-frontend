@@ -324,9 +324,12 @@
                   </div>
                   <!-- State 1: Invoice blocked due to late entry into Factra -->
                   <div v-else-if="isBlockedAtEntry(cfdi)" class="text-sm text-red-600 dark:text-red-300">
+                    <div class="flex justify-center mb-2">
+                      <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                    </div>
                     <v-icon size="small">mdi-lock</v-icon>
                     <small>{{ cfdi.blocked_at_entry_reason || 'This invoice is blocked because it was entered into Factra past the deadline.' }}</small>
-                    <ProcessAuthorizationWrapper 
+                    <ProcessAuthorizationWrapper
                         processName="supplier-work-past-date"
                         :requestKey="`${cfdi.id}`"
                         :displayName="cfdi.serie_folio || `Invoice ${cfdi.id}`"
@@ -334,7 +337,6 @@
                         >
                         <template #auth>
                             <div class="flex justify-center gap-2 mb-2">
-                              <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <template v-if="hasSupplierLinked(cfdi)">
                                 <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                                 <ProcessAuthorizationWrapper
@@ -381,6 +383,9 @@
                     <small v-else>
                       The supplier's credit days have expired.<br>({{ cfdi.supplier_credit_days }} days from {{ new Date(cfdi.invoice_date).toLocaleDateString() }})
                     </small>
+                    <div class="flex justify-center mb-2">
+                      <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                    </div>
                     <ProcessAuthorizationWrapper
                         processName="supplier-work-past-date"
                         :requestKey="`${cfdi.id}`"
@@ -389,7 +394,6 @@
                         >
                         <template #auth>
                             <div class="flex justify-center gap-2 mb-2">
-                              <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
                               <template v-if="hasSupplierLinked(cfdi)">
                                 <EditButton :item="cfdi" @click="editSupplierCfdi(cfdi)" />
                                 <ProcessAuthorizationWrapper
