@@ -62,7 +62,7 @@
             <div v-if="canSkipNotification" class="flex items-center gap-2">
               <v-checkbox v-model="notifyClient" density="compact" label="Notify client" hide-details />
               <div class="text-sm text-gray-500">
-                The {{ etaLabel }} change is less than 5 days ({{ etaDiffDays }} day(s)). You can choose whether to notify the client.
+                The {{ etaLabel }} change is less than 5 days ({{ etaDiffDays }} day(s)). Check the box only if you want to notify the client.
               </div>
             </div>
             <v-alert v-else density="compact" type="info" variant="tonal" class="mt-2">
@@ -179,7 +179,7 @@ const isImport = computed(() => {
 // Export voyages track ETD (departure) at this same checkpoint, not ETA (arrival).
 const etaLabel = computed(() => (isImport.value ? 'ETA' : 'ETD'))
 
-const notifyClient = ref(true)
+const notifyClient = ref(false)
 
 const etaDiffDays = computed(() => {
   const newDate = voyageDestUpdateEtaFormRef.value?.values.new_eta_date
