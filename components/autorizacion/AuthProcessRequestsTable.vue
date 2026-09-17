@@ -117,6 +117,17 @@
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
                 </v-btn>
+                <v-btn
+                  v-if="authRequest.process_data"
+                  icon
+                  size="small"
+                  variant="text"
+                  color="secondary"
+                  title="View request data"
+                  @click="showDetails(authRequest)"
+                >
+                  <v-icon>mdi-information-outline</v-icon>
+                </v-btn>
               </div>
             </td>
             <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
@@ -125,42 +136,17 @@
             </td>
             <td>
               <div class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</div>
-              <template v-if="authRequest.process_data?.charges?.length">
-                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                  <div
-                    v-for="(c, ci) in authRequest.process_data.charges"
-                    :key="ci"
-                    class="flex items-center gap-2 px-2 py-1 text-xs bg-gray-50"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-800 truncate">{{ c.charge_name }}</div>
-                      <div v-if="c.invoice_number" class="text-gray-400">Invoice #{{ c.invoice_number }}</div>
-                    </div>
-                    <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
-                  </div>
-                </div>
-              </template>
-              <template v-else-if="authRequest.process_data?.operations?.length">
-                <div class="mt-1 divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                  <div
-                    v-for="(op, oi) in authRequest.process_data.operations"
-                    :key="oi"
-                    class="px-2 py-1 text-xs bg-gray-50"
-                  >
-                    <span class="font-semibold capitalize">{{ op.action }}</span>
-                    <span class="ml-1">{{ describeOperation(op) }}</span>
-                  </div>
-                </div>
-              </template>
-              <template v-else-if="authRequest.process_data">
-                <div
-                  v-for="(val, key) in authRequest.process_data"
-                  :key="key"
-                  class="text-xs text-gray-600 whitespace-nowrap"
-                >
-                  <span class="font-semibold capitalize">{{ String(key).replace(/_/g, ' ') }}:</span> {{ val }}
-                </div>
-              </template>
+              <v-btn
+                v-if="authRequest.process_data"
+                size="x-small"
+                variant="tonal"
+                color="secondary"
+                class="mt-1"
+                prepend-icon="mdi-eye-outline"
+                @click="showDetails(authRequest)"
+              >
+                View data
+              </v-btn>
               <!-- Supporting documents -->
               <div v-if="authRequest.files?.length" class="mt-1 d-flex flex-wrap ga-1">
                 <ButtonDownloadS3Object
@@ -205,34 +191,35 @@
           <template v-if="form.auth_request?.process_data">
             <v-divider class="my-2" />
             <div class="text-sm font-semibold mb-1">Request details:</div>
-            <template v-if="form.auth_request.process_data.charges?.length">
-              <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                <div v-for="(c, ci) in form.auth_request.process_data.charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
-                  <div class="flex-1 min-w-0">
-                    <div class="font-medium text-gray-900 truncate">{{ c.charge_name }}</div>
-                    <div v-if="c.invoice_number" class="text-xs text-gray-400">Invoice #{{ c.invoice_number }}</div>
-                  </div>
-                  <div class="font-semibold text-gray-700 whitespace-nowrap">${{ Number(c.amount).toFixed(2) }}</div>
-                </div>
-              </div>
-            </template>
-            <template v-else-if="form.auth_request.process_data.operations?.length">
-              <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
-                <div v-for="(op, oi) in form.auth_request.process_data.operations" :key="oi" class="px-2 py-1.5 text-sm bg-gray-50">
-                  <span class="font-medium capitalize">{{ op.action }}</span>
-                  <span class="ml-1">{{ describeOperation(op) }}</span>
-                </div>
-              </div>
-            </template>
-            <template v-else>
-              <div v-for="(val, key) in form.auth_request.process_data" :key="key" class="text-sm">
-                <span class="font-medium capitalize">{{ String(key).replace(/_/g, ' ') }}:</span>
-                <span class="ml-1">{{ val }}</span>
-              </div>
-            </template>
+            <ProcessRequestDetails :process-data="form.auth_request.process_data" />
           </template>
         </template>
       </GrantDenyDialog>
+
+      <!-- Request Data Details Dialog -->
+      <v-dialog v-model="showDetailsDialog" max-width="640">
+        <v-card v-if="detailsRequest">
+          <v-card-title class="d-flex align-center">
+            <v-icon class="mr-2">mdi-information-outline</v-icon>
+            Request data — #{{ detailsRequest.id }}
+          </v-card-title>
+          <v-card-subtitle>{{ detailsRequest.resolved_display }}</v-card-subtitle>
+          <v-card-text>
+            <div class="text-sm mb-2">
+              <span class="font-medium">Requested by:</span> {{ detailsRequest.user?.name }}
+            </div>
+            <div class="text-sm mb-3">
+              <span class="font-medium">Comments:</span> {{ detailsRequest.reason || 'No comments' }}
+            </div>
+            <v-divider class="mb-3" />
+            <ProcessRequestDetails :process-data="detailsRequest.process_data" />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="showDetailsDialog = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
@@ -299,6 +286,7 @@ import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import GrantDenyDialog from './shared/GrantDenyDialog.vue'
 import DecisionChip from './shared/DecisionChip.vue'
+import ProcessRequestDetails from './shared/ProcessRequestDetails.vue'
 const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
@@ -372,6 +360,14 @@ const onClickPagination = async (page: number) => {
 
 const isPendingToGrant = (authRequest: any) => {
   return authRequest.status == 'pending'
+}
+
+const showDetailsDialog = ref(false)
+const detailsRequest = ref<any>(null)
+
+const showDetails = (authRequest: any) => {
+  detailsRequest.value = authRequest
+  showDetailsDialog.value = true
 }
 
 const showChatDrawer = ref(false)
