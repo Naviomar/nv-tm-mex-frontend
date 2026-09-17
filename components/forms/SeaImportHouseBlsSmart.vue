@@ -385,7 +385,9 @@ const updateReferenciaHouseBl = async () => {
     snackbar.add({ type: 'success', text: 'House BL updated successfully' })
     // update houseBls
     const index = houseBls.value.findIndex((hbl) => hbl.id == values.id)
-    houseBls.value[index] = response
+    // Merge en vez de reemplazo total: mismo motivo que en master bls y
+    // containers, para no perder campos si la respuesta llegara incompleta.
+    houseBls.value[index] = { ...houseBls.value[index], ...response }
     cancel()
   } catch (e: any) {
     console.error(e)

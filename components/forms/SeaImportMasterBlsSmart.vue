@@ -296,7 +296,11 @@ const updateReferenciaMasterBl = async () => {
     snackbar.add({ type: 'success', text: 'Master BL updated successfully' })
     // update masterBls
     const index = masterBls.value.findIndex((mbl) => mbl.id == values.id)
-    masterBls.value[index] = response
+    // Merge en vez de reemplazo total: si la respuesta llegara incompleta,
+    // no queremos perder campos ya conocidos del master bl en el estado
+    // local (mismo problema que containers: un master bl corrupto ahí
+    // termina reventando el siguiente guardado general de la referencia).
+    masterBls.value[index] = { ...masterBls.value[index], ...response }
     cancel()
   } catch (e: any) {
     console.error(e)

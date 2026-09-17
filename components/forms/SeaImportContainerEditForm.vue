@@ -138,14 +138,19 @@ const saveUpdatedContainer = async (values: any) => {
     const body = {
       ...values,
     }
-    const container = await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body, {
+    await $api.referencias.updateContainer(props.referenciaId!.toString(), values.id.toString(), body, {
       headers: {
         'X-Skip-Process-Check': String(!props.isLocked),
       },
     })
 
     snackbar.add({ type: 'success', text: 'Container updated' })
-    emit('updated', container)
+    // Emitimos los values ya validados por yup, no la respuesta cruda del API:
+    // si la respuesta llegara incompleta, un container corrupto en el estado
+    // local terminaba reventando el siguiente guardado general de la
+    // referencia (containers.container_type_id undefined), sin relación con
+    // lo que el usuario editara en ese momento.
+    emit('updated', values)
   } catch (e) {
     console.error(e)
   } finally {
