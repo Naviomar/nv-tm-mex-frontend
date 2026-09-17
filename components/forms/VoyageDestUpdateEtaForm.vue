@@ -227,7 +227,7 @@ const updateEtaClick = async (values: any) => {
     const body = {
       ...values,
       body: valueHtml.value,
-      notify_client: shouldNotify.value,
+      notify_client: shouldNotify.value ? '1' : '0',
     }
 
     // add selected references
