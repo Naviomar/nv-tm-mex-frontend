@@ -22,6 +22,10 @@
                   <div>{{ supplierCfdi.supplier?.name || 'Pending supplier' }} ➡️ {{ supplierCfdi.rfc_emisor }}</div>
                 </div>
                 <div>
+                  <h3 class="font-bold">Serie / Folio</h3>
+                  <div>{{ supplierCfdi.serie_folio || '-' }}</div>
+                </div>
+                <div>
                   <h3 class="font-bold">CFDI date</h3>
                   <div>{{ formatDateOnlyString(supplierCfdi.invoice_date) }}</div>
                 </div>
