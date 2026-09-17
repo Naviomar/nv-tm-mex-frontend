@@ -52,6 +52,15 @@
                         {{ bank.account_number }} - {{ getCurrencyName(bank.currency_id) }}
                       </div>
 
+                      <div>CLABE:</div>
+                      <div v-if="bank.clabe">
+                        <v-icon class="cursor-pointer" @click="clipboard.copyToClipboard(bank.clabe)">
+                          mdi-content-copy
+                        </v-icon>
+                        {{ bank.clabe }}
+                      </div>
+                      <div v-else>-</div>
+
                       <div>Beneficiary:</div>
                       <div>{{ bank.beneficiary_name }}</div>
 
