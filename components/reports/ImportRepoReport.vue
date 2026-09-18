@@ -235,6 +235,9 @@
                 density="compact"
                 hide-details
                 clearable
+                multiple
+                chips
+                closable-chips
                 variant="outlined"
                 prepend-inner-icon="mdi-vector-link"
                 auto-select-first
@@ -535,7 +538,7 @@ const filters = ref<ImportRepoFilters>({
   consignee_group_id: null,
   ff_id: null,
   ff_group_id: null,
-  coloader_id: null,
+  coloader_id: [],
   line_id: null,
   executive_id: null,
   release: null,
@@ -651,7 +654,7 @@ const clearFilters = () => {
   filters.value.consignee_group_id = null
   filters.value.ff_id = null
   filters.value.ff_group_id = null
-  filters.value.coloader_id = null
+  filters.value.coloader_id = []
   filters.value.line_id = null
   filters.value.executive_id = null
   filters.value.release = null

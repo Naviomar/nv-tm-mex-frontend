@@ -5,12 +5,12 @@ import { ref, computed, type Ref } from 'vue'
  * debouncing, and automatic infinite scroll.
  * 
  * @param rawItemsRef Ref holding the complete catalog array
- * @param getSelectedId Callback returning the current selected value ID
+ * @param getSelectedId Callback returning the current selected value ID (or IDs for multi-select)
  * @param keyName The key inside item objects used for name searching (defaults to 'name')
  */
 export function useAutocompleteFilter<T extends Record<string, any>>(
   rawItemsRef: Ref<T[]>,
-  getSelectedId: () => string | number | null | undefined,
+  getSelectedId: () => string | number | Array<string | number> | null | undefined,
   keyName: keyof T = 'name' as keyof T
 ) {
   const search = ref('')
@@ -55,14 +55,17 @@ export function useAutocompleteFilter<T extends Record<string, any>>(
 
   const filteredItems = computed(() => {
     const results = filteredAll.value
-    const selectedId = getSelectedId()
-    const selectedItem = selectedId ? rawItemsRef.value.find(item => item.id === selectedId) : null
+    const selected = getSelectedId()
+    const selectedIds = Array.isArray(selected) ? selected : selected != null ? [selected] : []
 
     const sliced = results.slice(0, limit.value)
 
-    // Ensure selected item is present in the list
-    if (selectedItem && !sliced.some(item => item.id === selectedId)) {
-      sliced.unshift(selectedItem)
+    // Ensure selected items are present in the list
+    const missing = selectedIds
+      .map(id => rawItemsRef.value.find(item => item.id === id))
+      .filter((item): item is T => !!item && !sliced.some(s => s.id === item.id))
+    if (missing.length) {
+      sliced.unshift(...missing)
     }
 
     return sliced
