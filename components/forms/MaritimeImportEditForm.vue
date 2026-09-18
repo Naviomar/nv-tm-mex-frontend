@@ -1341,9 +1341,18 @@ const onSuccess = async () => {
       release_type: values.release_type ?? null,
       sea_region_id: values.sea_region_id ?? null,
       transhipments: transhipments.value,
-      master_bls: masterBls.value,
-      house_bls: houseBls.value,
-      containers: containers.value,
+      // Master BLs, house BLs y containers ya existentes (con id) se
+      // guardan mediante sus propios endpoints dedicados apenas se editan;
+      // reenviarlos aqui completos en cada guardado general de la
+      // referencia era la causa raiz del patron "payload parcial rompe
+      // datos no relacionados" (ver IM26-3848: un container editado con
+      // datos desactualizados en el estado local reventaba el guardado de
+      // booking number / release type / etc). Solo los que todavia no
+      // tienen id (alta pendiente hecha en el form) dependen de este
+      // guardado para persistirse.
+      master_bls: masterBls.value.filter((mbl: any) => mbl.id == null),
+      house_bls: houseBls.value.filter((hbl: any) => hbl.id == null),
+      containers: containers.value.filter((c: any) => c.id == null),
     }
 
     await $api.referencias.updateSeaImport(values.id!, body)
