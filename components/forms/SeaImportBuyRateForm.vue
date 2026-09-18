@@ -74,6 +74,7 @@
                     process-name="sea-import.buy-charge-locked"
                     :request-key="`${props.referencia.id}-buy-charge-new`"
                     label="Request charge"
+                    :display-name="`Ref. ${props.referencia.reference_number}`"
                     :process-data="{ referencia_id: props.referencia.id, action: 'add' }"
                     :field-catalogs="buyChargeFieldCatalogs"
                   />
@@ -170,6 +171,7 @@
                           process-name="sea-import.buy-charge-locked"
                           :request-key="`${props.referencia.id}-buy-charge-${charge.id}`"
                           label="Request edit"
+                          :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
                           :process-data="{ referencia_id: props.referencia.id, action: 'edit', charge_id: charge.id, charge_name: getChargeName(charge.charge_id) }"
                           :field-catalogs="buyChargeFieldCatalogs"
                         />
@@ -177,6 +179,7 @@
                           process-name="sea-import.buy-charge-locked"
                           :request-key="`${props.referencia.id}-buy-charge-${charge.id}-delete`"
                           label="Request delete"
+                          :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
                           :process-data="{ referencia_id: props.referencia.id, action: 'delete', charge_id: charge.id, charge_name: getChargeName(charge.charge_id) }"
                           :field-catalogs="buyChargeFieldCatalogs"
                         />
