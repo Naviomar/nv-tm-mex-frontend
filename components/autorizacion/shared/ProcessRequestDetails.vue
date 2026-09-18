@@ -55,7 +55,14 @@ const props = defineProps<{
   processData: Record<string, any> | null | undefined
 }>()
 
-const humanizeKey = (key: string) => String(key).replace(/_/g, ' ')
+const keyLabels: Record<string, string> = {
+  referencia_id: 'Referencia',
+  air_reference_id: 'Air Reference',
+  reference_ids: 'References',
+  charge_id: 'Charge ID',
+}
+
+const humanizeKey = (key: string) => keyLabels[key] ?? String(key).replace(/_/g, ' ')
 
 const tryParseJson = (val: any) => {
   if (typeof val !== 'string') return val
