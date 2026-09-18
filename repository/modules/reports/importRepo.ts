@@ -16,7 +16,7 @@ export interface ImportRepoFilters {
   destinationPort?: number | null
   release?: string | null
   transportType?: string | null
-  coloader?: number | null
+  coloader?: number[] | null
 }
 
 export interface ImportRepoRequest {
