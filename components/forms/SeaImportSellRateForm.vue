@@ -65,6 +65,17 @@
                     <v-icon v-if="!showChargeForm">mdi-plus</v-icon>
                   </v-btn>
                 </div>
+                <div v-else-if="canRequestLockedCharge">
+                  <ProcessAuthorizationWrapper
+                    process-name="sea-import.add-charge-locked"
+                    :request-key="String(props.referencia.id)"
+                    label="Request charge"
+                    :display-name="`Ref. ${props.referencia.reference_number}`"
+                    :process-data="{ referencia_id: props.referencia.id }"
+                    :field-catalogs="lockedChargeFieldCatalogs"
+                    @refresh="emit('refresh')"
+                  />
+                </div>
               </div>
             </v-card-title>
             <v-card-text>
@@ -167,6 +178,36 @@
                         <TrashButton item="charge" @click="removeCharge(index)" />
                         <EditButton item="charge" @click="editSellCharge(charge, index)" />
                       </div>
+                      <div v-else-if="canRequestLockedCharge && charge.id" class="flex flex-col gap-1">
+                        <ProcessAuthorizationWrapper
+                          process-name="sea-import.edit-charge-locked"
+                          :request-key="`${props.referencia.id}-charge-${charge.id}`"
+                          label="Request edit"
+                          :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
+                          :process-data="{
+                            referencia_id: props.referencia.id,
+                            charge_table: 'sellrate',
+                            charge_id: charge.id,
+                            action: 'edit',
+                            charge_name: getChargeName(charge.charge_id),
+                          }"
+                          :field-catalogs="lockedChargeFieldCatalogs"
+                        />
+                        <ProcessAuthorizationWrapper
+                          process-name="sea-import.delete-charge-locked"
+                          :request-key="`${props.referencia.id}-charge-${charge.id}`"
+                          label="Request delete"
+                          :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
+                          :process-data="{
+                            referencia_id: props.referencia.id,
+                            charge_table: 'sellrate',
+                            charge_id: charge.id,
+                            action: 'delete',
+                            charge_name: getChargeName(charge.charge_id),
+                          }"
+                          :field-catalogs="lockedChargeFieldCatalogs"
+                        />
+                      </div>
                     </td>
                     <td>
                       <v-icon size="small">{{ linkedChargeToInvoice(charge) }}</v-icon>
@@ -257,6 +298,13 @@ const canEditCharges = computed(() => {
   }
   return props.referencia.voyage_discharge.locked_at == null
 })
+
+const canRequestLockedCharge = computed(() => !canEditCharges.value)
+
+const lockedChargeFieldCatalogs = computed(() => ({
+  charges: (props.charges as any[] ?? []).map((c: any) => ({ label: c.name, value: c.id, code: c.code })),
+  currencies: (props.currencies as any[] ?? []).map((c: any) => ({ label: c.name, value: c.id })),
+}))
 
 const canUpdateCharges = computed(() => {
   const hasTmInvoices = props.referencia?.invoice_tms?.some((i: any) => i.is_proforma == 0)

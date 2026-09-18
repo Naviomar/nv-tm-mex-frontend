@@ -18,6 +18,7 @@
               process-name="sea-import.add-charge-locked"
               :request-key="String(props.referencia.id)"
               label="Request charge"
+              :display-name="`Ref. ${props.referencia.reference_number}`"
               :process-data="{ referencia_id: props.referencia.id }"
               :field-catalogs="lockedChargeFieldCatalogs"
               @refresh="emit('refresh')"
@@ -193,6 +194,7 @@
                     process-name="sea-import.edit-charge-locked"
                     :request-key="`${props.referencia.id}-charge-${item.id}`"
                     label="Request edit"
+                    :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(item.charge_id)}`"
                     :process-data="{
                       referencia_id: props.referencia.id,
                       charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
@@ -206,6 +208,7 @@
                     process-name="sea-import.delete-charge-locked"
                     :request-key="`${props.referencia.id}-charge-${item.id}`"
                     label="Request delete"
+                    :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(item.charge_id)}`"
                     :process-data="{
                       referencia_id: props.referencia.id,
                       charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
