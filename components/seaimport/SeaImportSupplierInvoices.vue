@@ -137,13 +137,14 @@
                 </td>
                 <td class="p-2 font-bold">{{ formatToCurrency(invoice.amount_total) }}</td>
                 <td class="p-2">
-                  <div v-if="invoice.chargeable">
-                    <div>{{ invoice.chargeable.charge_name || invoice.charge?.name || `Charge #${invoice.charge_id}` }}</div>
-                    <div class="text-xs">
-                      {{ invoice.chargeable_type?.split('\\').pop() }} #{{ invoice.chargeable_id }} -
-                      {{ formatToCurrency(invoice.chargeable.amount) }}
-                      {{ getCurrencyName(invoice.chargeable.currency_id) }}
-                      <span v-if="invoice.chargeable.type"> ({{ invoice.chargeable.type }})</span>
+                  <div v-if="invoice.links && invoice.links.length > 0">
+                    <div v-for="link in invoice.links" :key="link.id" class="mb-1">
+                      <div>{{ getLinkName(link) }}</div>
+                      <div class="text-xs">
+                        {{ link.chargeable_type?.split('\\').pop() }} #{{ link.chargeable_id }} -
+                        {{ formatToCurrency(link.amount) }}
+                        {{ getCurrencyName(link.currency_id) }}
+                      </div>
                     </div>
                   </div>
                   <v-chip v-else color="warning" size="small">Not linked to a captured charge</v-chip>
@@ -180,6 +181,16 @@ const selectedCfdi = ref<any>(null)
 const openChargesDialog = (cfdi: any) => {
   selectedCfdi.value = cfdi
   chargesDialog.value = true
+}
+
+const getLinkName = (link: any) => {
+  if (link.chargeable_type?.includes('Charge')) {
+    return link.chargeable?.charge?.name
+  }
+  if (link.chargeable_type?.includes('FfNote')) {
+    return `${link.chargeable?.charge?.name} - F.F. Note #${link.chargeable_id} From TM Debit`
+  }
+  return 'Unknown link name'
 }
 
 const hasFirstInvoiceReqPay = (cfdi: any) => {
