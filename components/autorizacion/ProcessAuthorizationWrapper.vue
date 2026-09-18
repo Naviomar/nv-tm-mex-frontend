@@ -297,6 +297,25 @@ const onRequestAuthorizationClick = async () => {
       snackbar.add({ type: 'error', text: 'Please provide a reason for the authorization request' })
       return
     }
+
+    // A charge_builder element means this request is only meaningful once it carries
+    // at least one charge — otherwise approval would auto-execute against nothing (see
+    // sea-import.add-charge-locked: request #191 shipped with only { referencia_id }).
+    const hasChargeBuilder = tpl.value.elements?.some((el: any) => el.type === 'charge_builder')
+    const allCharges = Object.values(chargesData.value).flat()
+    if (hasChargeBuilder && allCharges.length === 0) {
+      snackbar.add({ type: 'error', text: 'Add at least one charge to the list before submitting' })
+      return
+    }
+
+    const missingField = tpl.value.elements?.find(
+      (el: any) => el.type === 'form_field' && el.field?.required && !formData.value[el.field.name]
+    )
+    if (missingField) {
+      snackbar.add({ type: 'error', text: `Please fill in "${missingField.field.label}" before submitting` })
+      return
+    }
+
     loadingStore.loading = true
 
     const body: Record<string, any> = {
@@ -315,7 +334,6 @@ const onRequestAuthorizationClick = async () => {
     }
 
     // Merge all charges from charge_builder elements into process_data.charges
-    const allCharges = Object.values(chargesData.value).flat()
     if (allCharges.length > 0) {
       body.process_data = { ...(body.process_data ?? {}), charges: allCharges }
     }
