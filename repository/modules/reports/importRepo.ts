@@ -44,6 +44,7 @@ export interface ImportRepoReportItem {
   bl_house: string
   date: string
   ff: string
+  coloader: string
   condition: string
   m3: number
   kgs: number
