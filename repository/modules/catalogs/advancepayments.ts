@@ -51,7 +51,12 @@ class AdvancePaymentModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/search-services-buy-concepts`, fetchOptions)
   }
 
-  async cancelAdvRequest(id: string, fetchOptions?: FetchOptions) {
+  async cancelAdvRequest(id: string, comments: string | null, skipProcessCheck: boolean, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify({ comments }),
+      headers: { 'X-Skip-Process-Check': String(skipProcessCheck) },
+      ...fetchOptions,
+    }
     return this.call('POST', `${this.RESOURCE}/${id}/cancel`, fetchOptions)
   }
 

@@ -48,7 +48,25 @@
               <div class="flex gap-2">
                 <ViewButton :item="advPayment" @click="viewItem(advPayment)" />
                 <div v-if="advPayment.deleted_at == null">
-                  <TrashButton :item="advPayment" permission="advance-payments-delete" @click="showFormDelete(advPayment)" />
+                  <TrashButton
+                    v-if="canCancelDirect"
+                    :item="advPayment"
+                    :form-deletion="formDeletion"
+                    permission="advance-payments-delete"
+                    @click="showFormDelete(advPayment, false)"
+                  />
+                  <ProcessAuthorizationWrapper
+                    v-else
+                    processName="advance-payments.cancel"
+                    :requestKey="String(advPayment.id)"
+                    label="Request Cancellation"
+                    :displayName="`Advance Payment ${advPayment.folio || '#' + advPayment.id}`"
+                    @refresh="getAdvancePayments"
+                  >
+                    <template #auth>
+                      <TrashButton :item="advPayment" :form-deletion="formDeletion" @click="showFormDelete(advPayment, true)" />
+                    </template>
+                  </ProcessAuthorizationWrapper>
                 </div>
               </div>
             </td>
@@ -103,6 +121,9 @@
             <div class="col-span-2">
               Please confirm the cancellation of the advance payment #{{ formDelete.advPayment?.id }}
             </div>
+            <div class="col-span-2">
+              <v-textarea v-model="formDelete.comments" density="compact" rows="3" label="Comments about cancellation." />
+            </div>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -119,7 +140,9 @@ const { $api } = useNuxtApp()
 const router = useRouter()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
-const { checkUserAndNotify } = useCheckUser()
+const { checkUserAndNotify, hasPermission } = useCheckUser()
+
+const canCancelDirect = computed(() => hasPermission('advance-payments-delete'))
 
 const filters = ref<any>({
   id: null,
@@ -132,7 +155,12 @@ const formDelete = ref<any>({
   show: false,
   advPayment: null,
   comments: '',
+  viaAuthorization: false,
 })
+
+// Only used by TrashButton's internal confirm modal when serviceType is set;
+// advance payments don't use that flow but the prop is required.
+const formDeletion = ref<any>({ reason: '' })
 
 const advPayments = ref({
   data: [] as any,
@@ -141,11 +169,12 @@ const advPayments = ref({
   last_page: 1,
 })
 
-const showFormDelete = (advPayment: any) => {
+const showFormDelete = (advPayment: any, viaAuthorization = false) => {
   if (!checkUserAndNotify(advPayment.created_by)) {
     return
   }
   formDelete.value.advPayment = advPayment
+  formDelete.value.viaAuthorization = viaAuthorization
   formDelete.value.show = true
 }
 
@@ -153,6 +182,7 @@ const closeFormDelete = () => {
   formDelete.value.show = false
   formDelete.value.advPayment = null
   formDelete.value.comments = ''
+  formDelete.value.viaAuthorization = false
 }
 
 const clearFilters = async () => {
@@ -184,7 +214,11 @@ const onClickPagination = async (page: number) => {
 const deleteAdvPayment = async () => {
   try {
     loadingStore.start()
-    await $api.advancePayments.cancelAdvRequest(formDelete.value.advPayment.id)
+    await $api.advancePayments.cancelAdvRequest(
+      formDelete.value.advPayment.id,
+      formDelete.value.comments,
+      !formDelete.value.viaAuthorization,
+    )
     snackbar.add({
       type: 'success',
       text: 'Advance payment cancelled successfully',
