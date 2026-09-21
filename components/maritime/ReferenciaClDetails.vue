@@ -49,8 +49,8 @@
                 <div class="col-span-2">
                   <v-divider />
                 </div>
-                <div>Booking number</div>
-                <div>{{ referenciaCl.booking_number }}</div>
+                <div>Fecha de zarpe</div>
+                <div>{{ formatDateString(referenciaCl.etd_date) }}</div>
                 <div>P.O.</div>
                 <div>{{ referenciaCl.po_num }}</div>
                 <div class="col-span-2">
