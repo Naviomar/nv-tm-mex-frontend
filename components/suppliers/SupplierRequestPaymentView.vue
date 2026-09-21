@@ -45,6 +45,7 @@
               <div class="flex flex-wrap items-center gap-2 py-2">
                 <v-btn color="primary" size="small" @click="previewReqPdf">View PDF</v-btn>
                 <v-btn color="purple" size="small" @click="showSendByEmail">Send by email</v-btn>
+                <MailLogHistory type="supplier-request-payment" :id="props.id" title="Supplier Request Payment History" />
                 <ReqSupplierPaymentAttachments :sup-req-payment="supReqPayment" />
                 
                 <v-btn

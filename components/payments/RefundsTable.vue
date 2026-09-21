@@ -52,19 +52,21 @@
               }"
             >
               <td>
-                <div class="flex gap-2">
-                  <ViewButton :item="refund" @click="viewItem(refund)" />
-                  <div>
-                    <EditButton :item="refund" permission="refunds-edit" @click="checkUserAndExecute(refund.created_by, () => editItem(refund));" />
+                <div class="flex flex-col items-center gap-1">
+                  <div class="flex gap-2">
+                    <ViewButton :item="refund" @click="viewItem(refund)" />
+                    <div>
+                      <EditButton :item="refund" permission="refunds-edit" @click="checkUserAndExecute(refund.created_by, () => editItem(refund));" />
+                    </div>
+                    <div v-if="refund.deleted_at == null">
+                      <TrashButton
+                        :item="refund"
+                        permission="refunds-delete"
+                        @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
+                      />
+                    </div>
                   </div>
-                  <div v-if="refund.deleted_at == null">
-                    <TrashButton
-                      :item="refund"
-                      permission="refunds-delete"
-                      @click="checkUserAndExecute(refund.created_by, () => showFormDelete(refund))"
-                    />
-                  </div>
-                  
+                  <MailLogHistory type="refund" :id="refund.id" title="Refund Request History" />
                 </div>
               </td>
               <td>{{ refund.folio || '#' + refund.id }}</td>

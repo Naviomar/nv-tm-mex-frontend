@@ -110,11 +110,14 @@
               }"
             >
               <td>
-                <div class="flex gap-2">
-                  <ViewButton :item="ffpayment" @click="viewFfReqPayment(ffpayment)" />
-                  <div v-if="ffpayment.sent_at == null && ffpayment.deleted_at == null">
-                    <TrashButton :item="ffpayment" @click="deleteFfPayment(ffpayment)" />
+                <div class="flex flex-col items-center gap-1">
+                  <div class="flex gap-2">
+                    <ViewButton :item="ffpayment" @click="viewFfReqPayment(ffpayment)" />
+                    <div v-if="ffpayment.sent_at == null && ffpayment.deleted_at == null">
+                      <TrashButton :item="ffpayment" @click="deleteFfPayment(ffpayment)" />
+                    </div>
                   </div>
+                  <MailLogHistory type="ff-payment" :id="ffpayment.id" title="F.F. Agent Payment Request History" />
                 </div>
               </td>
               <td>
