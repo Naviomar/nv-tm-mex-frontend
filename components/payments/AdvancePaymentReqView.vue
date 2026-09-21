@@ -218,7 +218,7 @@
                 <td>
                   <v-chip size="small" color="indigo" @click="viewSupplierReqPayment(supReqPayment)">
                     <v-icon>mdi-eye-outline</v-icon>
-                    Supplier request payment #{{ supReqPayment.supplier_req_pay_id }}
+                    Supplier request payment {{ supReqPayment.supplier_req_payment?.folio || `#${supReqPayment.supplier_req_pay_id}` }}
                   </v-chip>
                 </td>
                 <td>
