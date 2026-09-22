@@ -107,14 +107,14 @@
                 </div>
               </div>
             </td>
-            <td>{{ item.bank.name }}</td>
+            <td>{{ item.bank?.name }}</td>
             <td>{{ item.beneficiary_name }}</td>
             <td>{{ item.beneficiary_address }}</td>
             <td>{{ item.beneficiary_zip_code }}</td>
             <td>{{ item.beneficiary_city }}</td>
-            <td>{{ item.country.name }}</td>
+            <td>{{ item.country?.name }}</td>
             <td>{{ item.account_number }}</td>
-            <td>{{ item.currency.name }}</td>
+            <td>{{ item.currency?.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
           </tr>

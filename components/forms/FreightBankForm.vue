@@ -90,9 +90,22 @@
         </div>
 
         <div class="col-span-2">
-          <div class="flex justify-end items-center">
+          <div v-if="!requestReady" class="flex justify-end items-center">
             <v-btn class="mr-4" color="secondary" :disabled="saving" @click="toggle"> Cancel </v-btn>
-            <v-btn color="primary" :loading="saving" :disabled="saving" @click="save"> Save </v-btn>
+            <v-btn color="primary" :loading="saving" :disabled="saving" @click="onValidate"> Save </v-btn>
+          </div>
+          <div v-else class="flex justify-end items-center">
+            <v-btn class="mr-4" color="secondary" @click="requestReady = false"> Back </v-btn>
+            <ProcessAuthorizationWrapper
+              :processName="processName"
+              :requestKey="String(props.id)"
+              :processData="requestProcessData"
+              label="Save Bank Account"
+              :displayName="values.name"
+              @refresh="onRequestGranted"
+            >
+              <template #auth><span /></template>
+            </ProcessAuthorizationWrapper>
           </div>
         </div>
       </div>
@@ -169,15 +182,19 @@ const props = defineProps({
 
 const api = computed(() => (props.ownerType === 'freight_group' ? $api.freightGroupBanks : $api.freightBanks))
 const ownerIdField = computed(() => (props.ownerType === 'freight_group' ? 'freight_group_id' : 'freight_forwarder_id'))
+const processName = computed(() => (props.ownerType === 'freight_group' ? 'freight-group-bank.upsert' : 'freight-bank.upsert'))
+const requestReady = ref(false)
 
 const bankAccounts = ref<any>([])
 
-const { handleSubmit, values, errors, setValues, resetForm } = useForm({
+const { values, errors, setValues, resetForm, validate } = useForm({
   validationSchema: schema,
   initialValues: {
     id: null,
   },
 })
+
+const requestProcessData = computed(() => ({ ...values, [ownerIdField.value]: Number(props.id) }))
 
 const showForm = ref(false)
 const saving = ref(false)
@@ -238,40 +255,24 @@ const editItem = (item: any) => {
   })
 }
 
-const onSuccess = async (values: any) => {
-  // Guards against double submission - a slow response plus an impatient
-  // double-click on Save (no visual feedback that a save was in flight)
-  // is exactly how a production user ended up with the same bank account
-  // registered four times.
-  if (saving.value) return
-
-  try {
-    saving.value = true
-    loadingStore.start()
-
-    const body = {
-      ...values,
-      [ownerIdField.value]: Number(props.id),
-    }
-
-    await api.value.upsert(body)
-
-    snackbar.add({ type: 'success', text: 'Bank account updated' })
-    toggle()
-    await getData()
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error saving bank account' })
-  } finally {
-    saving.value = false
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+// Bank accounts are sensitive — capture no longer writes directly. "Save"
+// only validates the form locally; the actual write happens once an
+// authorization request for this data is granted (see AutoExecuteDispatcher
+// on the backend), never on the user's own submit.
+const onValidate = async () => {
+  const result = await validate()
+  if (!result.valid) {
+    snackbar.add({ type: 'warning', text: 'Validate form before submit' })
+    return
   }
+  requestReady.value = true
 }
 
-function onInvalidSubmit({ values, errors, results }: any) {
-  snackbar.add({ type: 'warning', text: 'Validate form before submit' })
+const onRequestGranted = async () => {
+  snackbar.add({ type: 'success', text: 'Bank account request approved and saved' })
+  requestReady.value = false
+  toggle()
+  await getData()
 }
 
 const showConfirmDelete = async (item: any) => {
@@ -304,8 +305,6 @@ const showConfirmDelete = async (item: any) => {
     }
   }
 }
-
-const save = handleSubmit(onSuccess, onInvalidSubmit)
 
 const getData = async () => {
   try {
