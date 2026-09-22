@@ -174,7 +174,7 @@ const { values, errors, setValues, resetForm, validate } = useForm({
   },
 })
 
-const canDirectWrite = computed(() => hasPermission('customs-agents-edit'))
+const canDirectWrite = computed(() => hasPermission('customs-agents-banks-edit'))
 const requestReady = ref(false)
 
 const showForm = ref(false)

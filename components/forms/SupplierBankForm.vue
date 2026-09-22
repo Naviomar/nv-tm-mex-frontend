@@ -176,7 +176,7 @@ const { values, errors, setValues, resetForm, validate } = useForm({
   },
 })
 
-const canDirectWrite = computed(() => hasPermission('suppliers-edit'))
+const canDirectWrite = computed(() => hasPermission('suppliers-banks-edit'))
 const requestReady = ref(false)
 const requestProcessData = computed(() => ({ ...values, supplier_id: Number(props.id) }))
 

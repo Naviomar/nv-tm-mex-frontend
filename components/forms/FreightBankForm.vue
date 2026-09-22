@@ -184,7 +184,7 @@ const props = defineProps({
 const api = computed(() => (props.ownerType === 'freight_group' ? $api.freightGroupBanks : $api.freightBanks))
 const ownerIdField = computed(() => (props.ownerType === 'freight_group' ? 'freight_group_id' : 'freight_forwarder_id'))
 const processName = computed(() => (props.ownerType === 'freight_group' ? 'freight-group-bank.upsert' : 'freight-bank.upsert'))
-const editPermission = computed(() => (props.ownerType === 'freight_group' ? 'freight-groups-edit' : 'freight-forwarders-edit'))
+const editPermission = computed(() => (props.ownerType === 'freight_group' ? 'freight-groups-banks-edit' : 'freight-forwarders-banks-edit'))
 const canDirectWrite = computed(() => hasPermission(editPermission.value))
 const requestReady = ref(false)
 
