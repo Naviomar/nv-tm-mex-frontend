@@ -316,13 +316,49 @@ const uniqueContainers = computed(() => {
       })
     }
   })
+  if (reference.value?.containers && Array.isArray(reference.value.containers)) {
+    reference.value.containers.forEach((c: any) => {
+      if (c.container_number) cntrs.add(c.container_number)
+    })
+  }
   return Array.from(cntrs)
 })
 
 const filteredMilestones = computed(() => {
-  if (!selectedContainer.value) return milestones.value
-  return milestones.value.filter(m => {
-    return m.containers && m.containers.some((c: any) => c.reference_container?.container_number === selectedContainer.value)
+  let list = milestones.value || []
+  if (selectedContainer.value) {
+    list = list.filter(m => {
+      // Keep general vessel/BL events (which apply to the whole shipment) or events for the selected container
+      if (!m.containers || m.containers.length === 0) return true
+      return m.containers.some((c: any) => c.reference_container?.container_number === selectedContainer.value)
+    })
+  }
+
+  // Deduplicate visually by unique event footprint
+  const seen = new Set<string>()
+  const deduped = list.filter(m => {
+    const desc = parseDescription(m.event_description)
+    const status = desc.status || m.event?.name || ''
+    const date = m.event_date || ''
+    const time = desc.time || ''
+    const loc = desc.location || ''
+    const cntrs = (m.containers || [])
+      .map((c: any) => c.reference_container?.container_number || '')
+      .sort()
+      .join(',')
+    const key = `${status}|${date}|${time}|${loc}|${cntrs}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  // Guarantee strictly chronological order by full date and time
+  return deduped.sort((a, b) => {
+    const timeA = parseDescription(a.event_description).time || '00:00'
+    const timeB = parseDescription(b.event_description).time || '00:00'
+    const strA = `${a.event_date || '1970-01-01'}T${timeA.length === 5 ? timeA : '00:00'}:00`
+    const strB = `${b.event_date || '1970-01-01'}T${timeB.length === 5 ? timeB : '00:00'}:00`
+    return new Date(strA).getTime() - new Date(strB).getTime()
   })
 })
 
@@ -379,10 +415,14 @@ const getEventIcon = (eventName: string, transport: string) => {
   return 'mdi-ferry'
 }
 
+let isFetching = false
+
 const fetchData = async () => {
   const refId = props.referenciaId
   if (!refId) return
+  if (isFetching || syncing.value) return
 
+  isFetching = true
   try {
     loading.value = true
     selectedContainer.value = null // Reset filter
@@ -426,12 +466,14 @@ const fetchData = async () => {
     console.error(err)
   } finally {
     loading.value = false
+    isFetching = false
   }
 }
 
 const triggerLiveSync = async () => {
   const refId = props.referenciaId
   if (!refId) return
+  if (syncing.value) return
 
   try {
     syncing.value = true
@@ -474,8 +516,7 @@ watch(
   () => props.modelValue,
   async (val) => {
     if (val) await fetchData()
-  },
-  { immediate: true }
+  }
 )
 
 watch(
