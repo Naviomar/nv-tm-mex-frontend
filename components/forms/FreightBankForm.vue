@@ -164,6 +164,7 @@ const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -183,6 +184,8 @@ const props = defineProps({
 const api = computed(() => (props.ownerType === 'freight_group' ? $api.freightGroupBanks : $api.freightBanks))
 const ownerIdField = computed(() => (props.ownerType === 'freight_group' ? 'freight_group_id' : 'freight_forwarder_id'))
 const processName = computed(() => (props.ownerType === 'freight_group' ? 'freight-group-bank.upsert' : 'freight-bank.upsert'))
+const editPermission = computed(() => (props.ownerType === 'freight_group' ? 'freight-groups-edit' : 'freight-forwarders-edit'))
+const canDirectWrite = computed(() => hasPermission(editPermission.value))
 const requestReady = ref(false)
 
 const bankAccounts = ref<any>([])
@@ -255,17 +258,48 @@ const editItem = (item: any) => {
   })
 }
 
-// Bank accounts are sensitive — capture no longer writes directly. "Save"
-// only validates the form locally; the actual write happens once an
-// authorization request for this data is granted (see AutoExecuteDispatcher
-// on the backend), never on the user's own submit.
+// Bank accounts are sensitive — capture no longer writes directly by
+// default. "Save" only validates the form locally; the actual write
+// happens once an authorization request for this data is granted (see
+// AutoExecuteDispatcher on the backend), never on the user's own submit —
+// UNLESS the user already holds the catalog's own edit permission, in
+// which case the backend route itself allows the direct write and there
+// is no point routing it through an approval nobody needs to grant.
 const onValidate = async () => {
   const result = await validate()
   if (!result.valid) {
     snackbar.add({ type: 'warning', text: 'Validate form before submit' })
     return
   }
+
+  if (canDirectWrite.value) {
+    await saveDirect()
+    return
+  }
+
   requestReady.value = true
+}
+
+const saveDirect = async () => {
+  if (saving.value) return
+  try {
+    saving.value = true
+    loadingStore.start()
+
+    await api.value.upsert(requestProcessData.value)
+
+    snackbar.add({ type: 'success', text: 'Bank account updated' })
+    toggle()
+    await getData()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error saving bank account' })
+  } finally {
+    saving.value = false
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const onRequestGranted = async () => {

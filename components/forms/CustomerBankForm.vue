@@ -156,6 +156,7 @@ const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps({
   id: {
@@ -173,6 +174,7 @@ const { values, errors, setValues, resetForm, validate } = useForm({
   },
 })
 
+const canDirectWrite = computed(() => hasPermission('customers-edit'))
 const requestReady = ref(false)
 const requestProcessData = computed(() => ({ ...values, consignee_id: Number(props.id) }))
 
@@ -238,7 +240,30 @@ const onValidate = async () => {
     snackbar.add({ type: 'warning', text: 'Validate form before submit' })
     return
   }
+
+  if (canDirectWrite.value) {
+    await saveDirect()
+    return
+  }
+
   requestReady.value = true
+}
+
+const saveDirect = async () => {
+  try {
+    loadingStore.start()
+    await $api.customerBanks.upsert(requestProcessData.value)
+    snackbar.add({ type: 'success', text: 'Bank account updated' })
+    toggle()
+    await getData()
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error saving bank account' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const onRequestGranted = async () => {
