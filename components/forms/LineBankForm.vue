@@ -87,9 +87,22 @@
         </div>
 
         <div class="col-span-2">
-          <div class="flex justify-end items-center">
+          <div v-if="!requestReady" class="flex justify-end items-center">
             <v-btn class="mr-4" color="secondary" @click="toggle"> Cancel </v-btn>
-            <v-btn color="primary" @click="save"> Save </v-btn>
+            <v-btn color="primary" @click="onValidate"> Save </v-btn>
+          </div>
+          <div v-else class="flex justify-end items-center">
+            <v-btn class="mr-4" color="secondary" @click="requestReady = false"> Back </v-btn>
+            <ProcessAuthorizationWrapper
+              processName="line-bank.upsert"
+              :requestKey="String(props.id)"
+              :processData="values"
+              label="Save Bank Account"
+              :displayName="values.name"
+              @refresh="onRequestGranted"
+            >
+              <template #auth><span /></template>
+            </ProcessAuthorizationWrapper>
           </div>
         </div>
       </div>
@@ -123,12 +136,12 @@
                 {{ item.name }}
               </div>
             </td>
-            <td>{{ item.bank.name }}</td>
+            <td>{{ item.bank?.name }}</td>
             <td>{{ item.beneficiary_name }}</td>
             <td>{{ item.beneficiary_address }}</td>
             <td>{{ item.country?.name }}</td>
             <td>{{ item.account_number }}</td>
-            <td>{{ item.currency.name }}</td>
+            <td>{{ item.currency?.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
           </tr>
@@ -153,12 +166,14 @@ const props = defineProps({
 
 const bankAccounts = ref<any>([])
 
-const { handleSubmit, values, errors, setValues, resetForm } = useForm({
+const { values, errors, setValues, resetForm, validate } = useForm({
   validationSchema: schema,
   initialValues: {
     id: null,
   },
 })
+
+const requestReady = ref(false)
 
 const showForm = ref(false)
 const catalogs = ref<any>({
@@ -198,7 +213,7 @@ const editItem = (item: any) => {
   setValues({
     id: item.id,
     name: item.name,
-    bank_id: item.bank.id,
+    bank_id: item.bank?.id,
     beneficiary_name: item.beneficiary_name,
     account_number: item.account_number,
     clabe: item.clabe,
@@ -216,34 +231,20 @@ const editItem = (item: any) => {
   })
 }
 
-const onSuccess = async (values: any) => {
-  try {
-    loadingStore.start()
-
-    const body = {
-      ...values,
-      line_id: Number(props.id),
-    }
-
-    await $api.lines.upsertBank(body)
-
-    snackbar.add({ type: 'success', text: 'Bank account updated' })
-    toggle()
-    await getData()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
+const onValidate = async () => {
+  const result = await validate()
+  if (!result.valid) {
+    snackbar.add({ type: 'warning', text: 'Validate form before submit' })
+    return
   }
+  requestReady.value = true
 }
 
-function onInvalidSubmit({ values, errors, results }: any) {
-  console.log(values) // current form values
-  console.log(errors) // a map of field names and their first error message
-  console.log(results) // a detailed map of field names and their validation results
-  snackbar.add({ type: 'warning', text: 'Validate form before submit' })
+const onRequestGranted = async () => {
+  snackbar.add({ type: 'success', text: 'Bank account request approved and saved' })
+  requestReady.value = false
+  toggle()
+  await getData()
 }
 
 const showConfirmDelete = async (item: any) => {
@@ -276,8 +277,6 @@ const showConfirmDelete = async (item: any) => {
     }
   }
 }
-
-const save = handleSubmit(onSuccess, onInvalidSubmit)
 
 const getData = async () => {
   try {
