@@ -219,7 +219,7 @@ const editItem = (item: any) => {
   setValues({
     id: item.id,
     name: item.name,
-    bank_id: item.bank.id,
+    bank_id: item.bank?.id,
     beneficiary_name: item.beneficiary_name,
     account_number: item.account_number,
     clabe: item.clabe,
@@ -227,7 +227,7 @@ const editItem = (item: any) => {
     beneficiary_address: item.beneficiary_address,
     beneficiary_zip_code: item.beneficiary_zip_code,
     beneficiary_city: item.beneficiary_city,
-    country_id: item.country.id,
+    country_id: item.country?.id,
     aba: item.aba,
     swift: item.swift,
     iban: item.iban,
