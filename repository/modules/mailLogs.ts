@@ -64,6 +64,12 @@ class MailLogsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/voyage-destination-history/${voyageDestinationId}`, fetchOptions)
   }
 
+  // {type} es un alias del whitelist en MailLogController::REQUEST_HISTORY_TYPES
+  // (supplier-request-payment, advance-payment, refund, ff-payment, demurrage, detention)
+  async requestHistory(type: string, id: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/request-history/${type}/${id}`, fetchOptions)
+  }
+
   async exportExcel(params?: Record<string, any>, fetchOptions?: FetchOptions) {
     const query = params ? '?' + new URLSearchParams(params).toString() : ''
     return this.call('GET', `${this.RESOURCE}/export${query}`, {

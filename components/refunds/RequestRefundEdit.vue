@@ -103,6 +103,7 @@
                 <div v-if="!isPaid">
                   <div class="flex justify-start gap-2">
                     <RefundResendNotify :req-refund="reqRefund" />
+                    <MailLogHistory type="refund" :id="reqRefund.id" title="Refund Request History" />
                     <RefundAttachments :req-refund="reqRefund" @refresh="getRequestRefund" />
                   </div>
                 </div>

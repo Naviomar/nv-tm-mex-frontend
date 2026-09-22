@@ -72,7 +72,10 @@
             :class="rowClass(reqDemurrage)"
           >
             <td>
-              <ViewButton :item="reqDemurrage" @click="viewReqDemurrage(reqDemurrage)" />
+              <div class="flex flex-col items-center gap-1">
+                <ViewButton :item="reqDemurrage" @click="viewReqDemurrage(reqDemurrage)" />
+                <MailLogHistory type="demurrage" :id="reqDemurrage.id" title="Demurrage Request History" />
+              </div>
             </td>
             <td>{{ reqDemurrage.folio || '#' + reqDemurrage.id }}</td>
             <td>{{ reqDemurrage.line?.name }}</td>

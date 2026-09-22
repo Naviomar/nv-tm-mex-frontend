@@ -72,7 +72,10 @@
             :class="rowClass(reqDetention)"
           >
             <td>
-              <ViewButton :item="reqDetention" @click="viewReqDemurrage(reqDetention)" />
+              <div class="flex flex-col items-center gap-1">
+                <ViewButton :item="reqDetention" @click="viewReqDemurrage(reqDetention)" />
+                <MailLogHistory type="detention" :id="reqDetention.id" title="Detention Request History" />
+              </div>
             </td>
             <td>{{ reqDetention.folio || '#' + reqDetention.id }}</td>
             <td>{{ reqDetention.line?.name }}</td>

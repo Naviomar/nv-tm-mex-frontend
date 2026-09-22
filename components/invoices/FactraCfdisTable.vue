@@ -479,14 +479,14 @@
                   <ButtonDownloadS3Object2 :s3Path="cfdi.pdf_attachment" />
                 </td>
                 <td>
-                  <template v-for="reqPayId in getUniqueReqPayments(cfdi)" :key="`pay-${reqPayId}`">
+                  <template v-for="reqPay in getUniqueReqPayments(cfdi)" :key="`pay-${reqPay.id}`">
                     <v-chip
                       size="small"
                       color="deep-orange"
                       variant="flat"
-                      :to="`/invoices/suppliers/cfdis/request-payment/view-${reqPayId}`"
+                      :to="`/invoices/suppliers/cfdis/request-payment/view-${reqPay.id}`"
                     >
-                      Req #{{ reqPayId }}
+                      {{ reqPay.folio || `Req #${reqPay.id}` }}
                     </v-chip>
                   </template>
                   <template v-for="reqDem in cfdi.req_demurrages || []" :key="`dem-${reqDem.id}`">
@@ -496,7 +496,7 @@
                       variant="flat"
                       :to="`/invoices/search/lines/demurrages/req-pay-view-${reqDem.id}`"
                     >
-                      Demurrage #{{ reqDem.id }}
+                      {{ reqDem.folio || `Demurrage #${reqDem.id}` }}
                     </v-chip>
                   </template>
                   <template v-for="reqDet in cfdi.req_detentions || []" :key="`det-${reqDet.id}`">
@@ -506,7 +506,7 @@
                       variant="flat"
                       :to="`/invoices/search/lines/detentions/req-pay-view-${reqDet.id}`"
                     >
-                      Detention #{{ reqDet.id }}
+                      {{ reqDet.folio || `Detention #${reqDet.id}` }}
                     </v-chip>
                   </template>
                 </td>
@@ -824,11 +824,15 @@ const isLinkedToReqPayment = (cfdi: any): boolean => {
   )
 }
 
-const getUniqueReqPayments = (cfdi: any): number[] => {
-  const ids = (cfdi.invoices || [])
-    .map((inv: any) => inv.req_pay_invoice?.supplier_req_pay?.id)
+const getUniqueReqPayments = (cfdi: any): { id: number; folio: string | null }[] => {
+  const reqPayments = (cfdi.invoices || [])
+    .map((inv: any) => inv.req_pay_invoice?.supplier_req_pay)
     .filter(Boolean)
-  return [...new Set(ids)]
+  const unique = new Map<number, { id: number; folio: string | null }>()
+  for (const rp of reqPayments) {
+    unique.set(rp.id, { id: rp.id, folio: rp.folio })
+  }
+  return [...unique.values()]
 }
 
 const rfcReceptorNotTM = (cfdi: any) => {

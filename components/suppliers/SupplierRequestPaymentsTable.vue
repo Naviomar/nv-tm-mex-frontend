@@ -70,6 +70,7 @@
                     <TrashButton :item="supReqPayment" @click="showFormCancelReq(supReqPayment)" />
                   </template>
                 </ProcessAuthorizationWrapper>
+                <MailLogHistory type="supplier-request-payment" :id="supReqPayment.id" title="Supplier Request Payment History" />
               </div>
             </td>
             <td>{{ supReqPayment.folio || '#' + supReqPayment.id }}</td>
