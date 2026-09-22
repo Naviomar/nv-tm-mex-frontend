@@ -148,8 +148,9 @@
                       <li><b>+ Debit notes</b> (notas de débito a favor)</li>
                       <li><b>- Supplier invoice</b> (facturas de proveedores)</li>
                       <li>
-                        <b>- Total buy</b> (suma de todos los cargos de compra, incluyendo solamente Prepaid + IVA,
-                        solo si <b>no</b> hay Supplier invoice)
+                        <b>- Total buy (sin facturar)</b> (suma de los cargos de compra Prepaid + IVA que
+                        <b>no</b> están ligados a ninguna factura de proveedor; los cargos ya ligados a una
+                        Supplier invoice se excluyen de aquí porque ya están cubiertos por esa factura)
                       </li>
                       <li><b>- Rebate</b> (rebates aplicados)</li>
                     </ul>
@@ -157,18 +158,21 @@
                     <b>Fórmula:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <b>Con Supplier invoice:</b>
-                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice + Rebate)</code>
-                      </li>
-                      <li>
-                        <b>Sin Supplier invoice:</b>
-                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Total buy + Rebate)</code>
+                        <code
+                          >Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice + Total buy sin
+                          facturar + Rebate)</code
+                        >
                       </li>
                     </ul>
                     <br />
                     <b>Notas:</b>
                     <ul style="padding-left: 1em">
                       <li>Todos los montos se agrupan por moneda.</li>
+                      <li>
+                        Un cargo de compra se considera "facturado" solo si está ligado directamente a esa factura de
+                        proveedor (o a esa línea/concepto de la factura), no por el simple hecho de que exista alguna
+                        Supplier invoice en la referencia.
+                      </li>
                     </ul>
                   </span>
                 </v-tooltip>
@@ -326,6 +330,10 @@ const getSellIVACollect = computed(() => {
   }, {})
 })
 
+const isChargeLinkedToSupplierInvoice = (charge: any) => {
+  return (charge.supplier_invoice_links?.length || 0) > 0
+}
+
 const getBuyPrepaidConceptsWithinBl = computed(() => {
   return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
     if (charge.buy_type === 'P' && charge.fuera_dentro_bl === 'D') {
@@ -338,6 +346,27 @@ const getBuyPrepaidConceptsWithinBl = computed(() => {
 const getBuyPrepaidConceptsOutsideBl = computed(() => {
   return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
     if (charge.buy_type === 'P' && charge.fuera_dentro_bl === 'F') {
+      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_total_no_iva)
+    }
+    return acc
+  }, {})
+})
+
+// Same as getBuyPrepaidConceptsWithinBl/OutsideBl/IVA but excluding charges
+// already covered by a supplier invoice (their cost is accounted for via
+// "(-) Supplier invoice" instead), so only unbilled buy charges hit profit.
+const getBuyPrepaidConceptsWithinBlUnlinked = computed(() => {
+  return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
+    if (charge.buy_type === 'P' && charge.fuera_dentro_bl === 'D' && !isChargeLinkedToSupplierInvoice(charge)) {
+      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_total_no_iva)
+    }
+    return acc
+  }, {})
+})
+
+const getBuyPrepaidConceptsOutsideBlUnlinked = computed(() => {
+  return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
+    if (charge.buy_type === 'P' && charge.fuera_dentro_bl === 'F' && !isChargeLinkedToSupplierInvoice(charge)) {
       acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_total_no_iva)
     }
     return acc
@@ -371,6 +400,15 @@ const getBuyIVAPrepaid = computed(() => {
   }, {})
 })
 
+const getBuyIVAPrepaidUnlinked = computed(() => {
+  return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
+    if (charge.buy_type === 'P' && !isChargeLinkedToSupplierInvoice(charge)) {
+      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_total_only_iva)
+    }
+    return acc
+  }, {})
+})
+
 const getBuyIVACollect = computed(() => {
   return (profitSeaExportRef.value.referencia?.export_charges || []).reduce((acc: any, charge: any) => {
     if (charge.buy_type === 'C') {
@@ -385,6 +423,17 @@ const getBuyTotalPrepaid = computed(() => {
   addToTotals(totals, getBuyPrepaidConceptsWithinBl.value)
   addToTotals(totals, getBuyPrepaidConceptsOutsideBl.value)
   addToTotals(totals, getBuyIVAPrepaid.value)
+  return totals
+})
+
+// Buy prepaid total excluding charges already covered by a supplier invoice;
+// used for profit so only unbilled buy charges hit the calculation, while
+// billed ones are already accounted for via "(-) Supplier invoice".
+const getBuyTotalPrepaidUnlinked = computed(() => {
+  const totals: Record<number, number> = {}
+  addToTotals(totals, getBuyPrepaidConceptsWithinBlUnlinked.value)
+  addToTotals(totals, getBuyPrepaidConceptsOutsideBlUnlinked.value)
+  addToTotals(totals, getBuyIVAPrepaidUnlinked.value)
   return totals
 })
 
@@ -454,15 +503,11 @@ const getTotalBuy = computed(() => {
 const getTotalProfit = computed(() => {
   const totals: Record<number, number> = {}
 
-  const hasSupplierInvoices = (profitSeaExportRef.value.supplierInvoices || []).length > 0
-
   addToTotals(totals, getSellTotalPrepaid.value)
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getSupplierInvoices.value, true)
-  if (!hasSupplierInvoices) {
-    addToTotals(totals, getBuyTotalPrepaid.value, true)
-  }
+  addToTotals(totals, getBuyTotalPrepaidUnlinked.value, true)
   addToTotals(totals, getRebate.value, true)
 
   return totals
