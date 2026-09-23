@@ -363,7 +363,7 @@ const isAgentBankComplete = (bankData: any) => {
   if (getCurrencyName(bankData.currency_id) === 'MXN') {
     return !!bankData.clabe
   }
-  return !!(bankData.swift || bankData.aba || bankData.iban)
+  return true
 }
 
 const agentBankMissing = computed(() => {
