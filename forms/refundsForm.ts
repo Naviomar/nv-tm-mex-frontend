@@ -7,9 +7,9 @@ const schemaBankInfo = toTypedSchema(
     beneficiary_name: yup.string().required('Beneficiary name is required'),
     account_number: yup.string().required('Account number is required'),
     clabe: yup.string().nullable(),
-    aba: yup.string().required('ABA is required'),
-    swift: yup.string().required('SWIFT is required'),
-    iban: yup.string().required('IBAN is required'),
+    aba: yup.string().nullable(),
+    swift: yup.string().nullable(),
+    iban: yup.string().nullable(),
   })
 )
 
