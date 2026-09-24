@@ -102,6 +102,25 @@
               @update:model-value="chargesData[el.id] = $event"
             />
 
+            <!-- charge_builder_combined: multi-charge widget for buy+sell-combined-row models (Sea Export / Air) -->
+            <ChargeBuilderFieldCombined
+              v-else-if="el.type === 'charge_builder_combined'"
+              :model-value="chargesData[el.id] ?? []"
+              :charges-catalog="fieldCatalogs[(el as any).charges_catalog_key] ?? []"
+              :variant="(el as any).variant"
+              @update:model-value="chargesData[el.id] = $event"
+            />
+
+            <!-- charge_builder_buyrate: multi-charge widget for Sea Import buy-rate charges (no buy/sell split) -->
+            <ChargeBuilderFieldBuyRate
+              v-else-if="el.type === 'charge_builder_buyrate'"
+              :model-value="chargesData[el.id] ?? []"
+              :charges-catalog="fieldCatalogs[(el as any).charges_catalog_key] ?? []"
+              :currency-options="fieldCatalogs[(el as any).currencies_catalog_key ?? 'currencies'] ?? []"
+              :master-bl-options="fieldCatalogs[(el as any).master_bls_catalog_key ?? 'master_bls'] ?? []"
+              @update:model-value="chargesData[el.id] = $event"
+            />
+
             <!-- invoice_charge_builder: invoice search + charge picker for credit notes -->
             <InvoiceChargeBuilderField
               v-else-if="el.type === 'invoice_charge_builder'"
@@ -185,6 +204,10 @@ const props = defineProps({
   displayName: { type: String, default: '' },
   refresh: { type: Boolean, default: false },
   processData: { type: Object, default: null },
+  // Current values of the record being edited (e.g. an existing charge), used
+  // to pre-fill the form_field elements when action === 'edit' — otherwise the
+  // dialog always opens empty, even though the user is editing something real.
+  initialFormData: { type: Object, default: null },
   formFields: { type: Array as PropType<IFormField[]>, default: () => [] },
   fieldCatalogs: { type: Object as PropType<Record<string, { label: string; value: any }[]>>, default: () => ({}) },
   // The default layout is inline-flex, sized for a small button/chip in the
@@ -284,6 +307,7 @@ async function fetchUserRequests() {
 const confirmRequestAuthorization = () => {
   // Refresh the template catalog so recent template edits are reflected
   loadCatalog(true)
+  formData.value = props.initialFormData ? { ...props.initialFormData } : {}
   showConfirmDialog.value = true
 }
 
@@ -301,7 +325,10 @@ const onRequestAuthorizationClick = async () => {
     // A charge_builder element means this request is only meaningful once it carries
     // at least one charge — otherwise approval would auto-execute against nothing (see
     // sea-import.add-charge-locked: request #191 shipped with only { referencia_id }).
-    const hasChargeBuilder = tpl.value.elements?.some((el: any) => el.type === 'charge_builder')
+    const hasChargeBuilder = tpl.value.elements?.some(
+      (el: any) =>
+        el.type === 'charge_builder' || el.type === 'charge_builder_combined' || el.type === 'charge_builder_buyrate'
+    )
     const allCharges = Object.values(chargesData.value).flat()
     if (hasChargeBuilder && allCharges.length === 0) {
       snackbar.add({ type: 'error', text: 'Add at least one charge to the list before submitting' })

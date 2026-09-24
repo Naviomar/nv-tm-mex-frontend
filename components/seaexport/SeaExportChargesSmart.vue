@@ -50,6 +50,7 @@
                         action: 'edit',
                         charge_name: exportCharge.charge?.name,
                       }"
+                      :initial-form-data="exportChargeToFormData(exportCharge)"
                       :field-catalogs="lockedFieldCatalogs"
                       @refresh="getExportCharges"
                     />
@@ -378,6 +379,27 @@ const lockedFieldCatalogs = computed(() => ({
   charges: (catalogs.value.charges as any[])?.map((c: any) => ({ label: c.name, value: c.id, code: c.code })) ?? [],
   currencies: (currencies as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
 }))
+
+// Maps an existing ReferenceExportCharge to the form_data shape expected by
+// sea-export.edit-charge-locked's template, so "Request edit" opens pre-filled
+// with the charge's current values instead of an empty form.
+const exportChargeToFormData = (exportCharge: any) => ({
+  inv_type: exportCharge.inv_type,
+  charge_id: exportCharge.charge_id,
+  fuera_dentro_bl: exportCharge.fuera_dentro_bl,
+  charge_type: exportCharge.charge_type,
+  has_sell: !!exportCharge.is_sell,
+  sell_amount: exportCharge.sell_amount,
+  sell_currency_id: exportCharge.sell_currency_id,
+  sell_type: exportCharge.sell_type,
+  is_sell_con_iva: (exportCharge.sell_iva ?? 0) > 0,
+  has_buy: exportCharge.buy_amount != null,
+  buy_owner: exportCharge.buy_owner,
+  buy_amount: exportCharge.buy_amount,
+  buy_currency_id: exportCharge.buy_currency_id,
+  buy_type: exportCharge.buy_type,
+  is_buy_con_iva: (exportCharge.buy_iva ?? 0) > 0,
+})
 
 // Filtrar charges según el tipo de factura seleccionado (TM/WM)
 // TM: solo charges con clave SAT (code no nulo)

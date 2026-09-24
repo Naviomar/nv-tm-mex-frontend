@@ -53,6 +53,38 @@
           </div>
         </div>
 
+        <!-- charge_builder_combined: code-driven widget mockup (Sea Export / Air) -->
+        <div v-else-if="el.type === 'charge_builder_combined'" class="preview-charge-builder">
+          <div class="preview-charge-builder-label">
+            <v-icon size="12" color="teal">mdi-layers-plus</v-icon>
+            Charge builder ({{ (el as any).variant }})
+            <v-chip size="x-small" color="teal" variant="tonal" class="ml-1" style="font-size:9px">code-driven</v-chip>
+          </div>
+          <div class="preview-charge-builder-body">
+            <div class="preview-input mb-1" style="height:22px;width:60%" />
+            <div class="d-flex gap-1">
+              <div class="preview-input" style="height:22px;flex:1" />
+              <div class="preview-input" style="height:22px;flex:1" />
+            </div>
+          </div>
+        </div>
+
+        <!-- charge_builder_buyrate: code-driven widget mockup (Sea Import buy rate) -->
+        <div v-else-if="el.type === 'charge_builder_buyrate'" class="preview-charge-builder">
+          <div class="preview-charge-builder-label">
+            <v-icon size="12" color="teal">mdi-layers-plus</v-icon>
+            Charge builder (buy rate)
+            <v-chip size="x-small" color="teal" variant="tonal" class="ml-1" style="font-size:9px">code-driven</v-chip>
+          </div>
+          <div class="preview-charge-builder-body">
+            <div class="preview-input mb-1" style="height:22px;width:60%" />
+            <div class="d-flex gap-1">
+              <div class="preview-input" style="height:22px;flex:1" />
+              <div class="preview-input" style="height:22px;flex:1" />
+            </div>
+          </div>
+        </div>
+
         <!-- invoice_charge_builder: code-driven invoice search widget mockup -->
         <div v-else-if="el.type === 'invoice_charge_builder'" class="preview-charge-builder" style="border-color: rgba(var(--v-theme-info), 0.5)">
           <div class="preview-charge-builder-label" style="color: rgb(0,188,212); background: rgba(0,188,212,0.08)">

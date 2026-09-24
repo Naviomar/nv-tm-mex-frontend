@@ -28,7 +28,7 @@ export interface IFormField {
 
 // ── Template interfaces ────────────────────────────────────────────────────
 
-export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder' | 'invoice_charge_builder' | 'file_upload'
+export type ITemplateElementType = 'form_field' | 'section' | 'text_block' | 'alert_block' | 'charge_builder' | 'charge_builder_combined' | 'charge_builder_buyrate' | 'invoice_charge_builder' | 'file_upload'
 export type IAlertBlockType = 'info' | 'warning' | 'error' | 'success'
 
 export interface ITemplateElementBase {
@@ -68,6 +68,34 @@ export interface ITemplateElementChargeBuilder extends ITemplateElementBase {
 }
 
 /**
+ * Code-driven element: renders the multi-charge builder for buy+sell-combined-row
+ * models (Sea Export / Air ReferenceExportCharge / AirReferenceCharge), as opposed
+ * to Sea Import's split Compra/Venta rows.
+ * variant: switches labels/fields ('sea-export': F/D BL + charge_type + buy_owner;
+ * 'air': F/D AWB, no charge_type/buy_owner).
+ * charges_catalog_key: key into fieldCatalogs that provides the charges list.
+ */
+export interface ITemplateElementChargeBuilderCombined extends ITemplateElementBase {
+  type: 'charge_builder_combined'
+  variant: 'sea-export' | 'air'
+  charges_catalog_key: string
+}
+
+/**
+ * Code-driven element: renders the multi-charge builder for Sea Import buy-rate
+ * charges (ReferenceBuyrateCharge) — no buy/sell split, just type/master_bl/charge/
+ * amount/currency per row, unlike ITemplateElementChargeBuilder's Compra/Venta toggle.
+ * charges_catalog_key/currencies_catalog_key/master_bls_catalog_key: keys into
+ * fieldCatalogs (currencies/master_bls default to 'currencies'/'master_bls').
+ */
+export interface ITemplateElementChargeBuilderBuyRate extends ITemplateElementBase {
+  type: 'charge_builder_buyrate'
+  charges_catalog_key: string
+  currencies_catalog_key?: string
+  master_bls_catalog_key?: string
+}
+
+/**
  * Code-driven element: renders invoice search + charge picker for credit notes.
  * credit_note_id_key: key in processData that holds the credit note ID.
  */
@@ -91,6 +119,8 @@ export type ITemplateElement =
   | ITemplateElementTextBlock
   | ITemplateElementAlertBlock
   | ITemplateElementChargeBuilder
+  | ITemplateElementChargeBuilderCombined
+  | ITemplateElementChargeBuilderBuyRate
   | ITemplateElementInvoiceChargeBuilder
   | ITemplateElementFileUpload
 

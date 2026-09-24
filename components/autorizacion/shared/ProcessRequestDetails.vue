@@ -59,7 +59,7 @@ const keyLabels: Record<string, string> = {
   referencia_id: 'Referencia',
   air_reference_id: 'Air Reference',
   reference_ids: 'References',
-  charge_id: 'Charge ID',
+  charge_id: 'Charge',
 }
 
 const humanizeKey = (key: string) => keyLabels[key] ?? String(key).replace(/_/g, ' ')

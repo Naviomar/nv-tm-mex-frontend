@@ -202,6 +202,12 @@
                       action: 'edit',
                       charge_name: getChargeName(item.charge_id),
                     }"
+                    :initial-form-data="{
+                      charge_id: item.charge_id,
+                      amount: item.amount,
+                      currency_id: item.currency_id,
+                      is_con_iva: item.is_con_iva == 1,
+                    }"
                     :field-catalogs="lockedChargeFieldCatalogs"
                   />
                   <ProcessAuthorizationWrapper
