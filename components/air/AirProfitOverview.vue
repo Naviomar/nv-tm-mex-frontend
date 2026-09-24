@@ -128,6 +128,28 @@
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
+                      >(-) Pending buy
+                      <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
+                    </span>
+                  </template>
+                  <span>
+                    Estimated cost of <b>buy concepts</b> not yet covered by a Supplier invoice for the same
+                    charge.<br /><br />
+                    <b>Formula (per charge):</b><br />
+                    <code>Buy amount (+ IVA if applicable) - Supplier invoice amount for that charge</code><br />
+                    <br />
+                    Only the positive difference is counted (a charge fully or over-covered by its Supplier
+                    invoice contributes $0).
+                  </span>
+                </v-tooltip>
+              </div>
+              <div class="bg-slate-200 text-right">
+                <TotalsInUsd :amounts="getRemainingBuy" />
+              </div>
+              <div class="bg-slate-300 text-center font-bold">
+                <v-tooltip location="top" open-delay="300">
+                  <template #activator="{ props }">
+                    <span v-bind="props"
                       >Profit (USD)
                       <v-icon size="small" class="ml-1">mdi-information-outline</v-icon>
                     </span>
@@ -142,16 +164,17 @@
                       <li><b>+ Debit notes</b> (notas de débito a favor)</li>
                       <li><b>- Supplier invoice</b> (facturas de proveedores)</li>
                       <li>
-                        <b>- Total buy (sin facturar)</b> (suma de los cargos de compra que <b>no</b> están ligados a
-                        ninguna factura de proveedor; los cargos ya ligados a una Supplier invoice se excluyen de
-                        aquí porque ya están cubiertos por esa factura)
+                        <b>- Pending buy</b> (por cada cargo de compra, el monto de compra que <b>excede</b> lo ya
+                        facturado por el proveedor para ese mismo cargo; si la factura del proveedor cubre o supera
+                        el buy, no se deduce nada extra aquí porque el costo real ya quedó reflejado en
+                        "Supplier invoice")
                       </li>
                     </ul>
                     <br />
                     <b>Fórmula:</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice + Total buy sin facturar)</code>
+                        <code>Profit = (Total sell + Credit notes + Debit notes) - (Supplier invoice + Pending buy)</code>
                       </li>
                     </ul>
                     <br />
@@ -159,9 +182,9 @@
                     <ul style="padding-left: 1em">
                       <li>Todos los montos se agrupan por moneda.</li>
                       <li>
-                        Un cargo de compra se considera "facturado" solo si está ligado directamente a esa factura de
-                        proveedor (o a esa línea/concepto de la factura), no por el simple hecho de que exista alguna
-                        Supplier invoice en la referencia.
+                        El costo de un cargo de compra se calcula por diferencia: monto de compra menos la suma de
+                        sus facturas de proveedor ligadas (solo la parte positiva cuenta como "Pending buy"; el resto
+                        ya está cubierto por "Supplier invoice").
                       </li>
                     </ul>
                   </span>
@@ -189,6 +212,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { hasPermission } = useCheckUser()
+const exchangeRatesStore = useExchangeRatesStore()
 
 const props = defineProps({
   airReferenceId: {
@@ -320,8 +344,36 @@ const getSellIVACollect = computed(() => {
   }, {})
 })
 
-const isChargeLinkedToSupplierInvoice = (charge: any) => {
-  return (charge.supplier_invoice_links?.length || 0) > 0
+// Real cost billed to the supplier for a charge: sum of its linked supplier
+// invoices' real totals (amount_total), each converted to the charge's buy
+// currency. Note: link.amount is NOT the invoiced cost — it stores the sell
+// concept amount reconciled against the invoice (used elsewhere for the
+// Supplier vs Sell profit dialog) — the real cost lives on the linked
+// SupplierInvoice itself. A charge can have several links to the SAME
+// supplier invoice (one per reconciled sell concept), so invoices are
+// deduped by id before summing to avoid counting them more than once.
+const getChargeInvoicedAmount = (charge: any) => {
+  const invoicesById = new Map<number, any>()
+  for (const link of charge.supplier_invoice_links || []) {
+    if (link.supplier_invoice) {
+      invoicesById.set(link.supplier_invoice_id, link.supplier_invoice)
+    }
+  }
+  return Array.from(invoicesById.values()).reduce((sum: number, invoice: any) => {
+    const amount = parseFloat(invoice.amount_total || 0)
+    const rate = exchangeRatesStore.getExchangeRate(invoice.currency_id, charge.buy_currency_id)
+    return sum + amount * rate
+  }, 0)
+}
+
+// Remaining unbilled buy for a charge: buy amount minus what's already
+// invoiced by the supplier. If the supplier invoice is >= the buy amount,
+// the real (higher) cost is already covered via "(-) Supplier invoice",
+// so nothing further is deducted here (never negative).
+const getChargeRemainingBuy = (charge: any) => {
+  const buyTotalAmount = parseFloat(charge.buy_amount || 0) + parseFloat(charge.buy_iva || 0)
+  const invoicedAmount = getChargeInvoicedAmount(charge)
+  return Math.max(buyTotalAmount - invoicedAmount, 0)
 }
 
 const getBuyPrepaidConceptsWithinAWB = computed(() => {
@@ -336,36 +388,6 @@ const getBuyPrepaidConceptsWithinAWB = computed(() => {
 const getBuyPrepaidConceptsOutsideAWB = computed(() => {
   return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
     if (charge.buy_amount != null && charge.buy_ppcc === 'P' && charge.fuera_dentro_awb === 'F') {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_amount)
-    }
-    return acc
-  }, {})
-})
-
-// Same as above but excluding charges already covered by a supplier invoice
-// (their cost is accounted for via "(-) Supplier invoice" instead).
-const getBuyPrepaidConceptsWithinAWBUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (
-      charge.buy_amount != null &&
-      charge.buy_ppcc === 'P' &&
-      charge.fuera_dentro_awb === 'D' &&
-      !isChargeLinkedToSupplierInvoice(charge)
-    ) {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_amount)
-    }
-    return acc
-  }, {})
-})
-
-const getBuyPrepaidConceptsOutsideAWBUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (
-      charge.buy_amount != null &&
-      charge.buy_ppcc === 'P' &&
-      charge.fuera_dentro_awb === 'F' &&
-      !isChargeLinkedToSupplierInvoice(charge)
-    ) {
       acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_amount)
     }
     return acc
@@ -390,46 +412,25 @@ const getBuyCollectConceptsOutsideAWB = computed(() => {
   }, {})
 })
 
-const getBuyCollectConceptsWithinAWBUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (
-      charge.buy_amount != null &&
-      charge.buy_ppcc === 'C' &&
-      charge.fuera_dentro_awb === 'D' &&
-      !isChargeLinkedToSupplierInvoice(charge)
-    ) {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_amount)
+// Granular remaining buy: per buy charge (Prepaid or Collect), the buy
+// amount not yet covered by its linked supplier invoices (never negative —
+// if the supplier invoice exceeds the buy amount, the real cost is already
+// reflected via "(-) Supplier invoice" and nothing extra is deducted here).
+const getRemainingBuy = computed(() => {
+  const totals: Record<number, number> = {}
+  ;(profitAirReference.value.airReference?.charges || []).forEach((charge: any) => {
+    if (charge.buy_amount == null) return
+    const remaining = getChargeRemainingBuy(charge)
+    if (remaining > 0) {
+      totals[charge.buy_currency_id] = (totals[charge.buy_currency_id] || 0) + remaining
     }
-    return acc
-  }, {})
-})
-
-const getBuyCollectConceptsOutsideAWBUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (
-      charge.buy_amount != null &&
-      charge.buy_ppcc === 'C' &&
-      charge.fuera_dentro_awb === 'F' &&
-      !isChargeLinkedToSupplierInvoice(charge)
-    ) {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_amount)
-    }
-    return acc
-  }, {})
+  })
+  return totals
 })
 
 const getBuyIVAPrepaid = computed(() => {
   return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
     if (charge.buy_amount != null && charge.buy_ppcc === 'P') {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_iva)
-    }
-    return acc
-  }, {})
-})
-
-const getBuyIVAPrepaidUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (charge.buy_amount != null && charge.buy_ppcc === 'P' && !isChargeLinkedToSupplierInvoice(charge)) {
       acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_iva)
     }
     return acc
@@ -445,15 +446,6 @@ const getBuyIVACollect = computed(() => {
   }, {})
 })
 
-const getBuyIVACollectUnlinked = computed(() => {
-  return (profitAirReference.value.airReference?.charges || []).reduce((acc: any, charge: any) => {
-    if (charge.buy_amount != null && charge.buy_ppcc === 'C' && !isChargeLinkedToSupplierInvoice(charge)) {
-      acc[charge.buy_currency_id] = (acc[charge.buy_currency_id] || 0) + parseFloat(charge.buy_iva)
-    }
-    return acc
-  }, {})
-})
-
 const getBuyTotalPrepaid = computed(() => {
   const totals: Record<number, number> = {}
   addToTotals(totals, getBuyPrepaidConceptsWithinAWB.value)
@@ -462,38 +454,11 @@ const getBuyTotalPrepaid = computed(() => {
   return totals
 })
 
-// Buy prepaid total excluding charges already covered by a supplier invoice;
-// used for profit so only unbilled buy charges hit the calculation.
-const getBuyTotalPrepaidUnlinked = computed(() => {
-  const totals: Record<number, number> = {}
-  addToTotals(totals, getBuyPrepaidConceptsWithinAWBUnlinked.value)
-  addToTotals(totals, getBuyPrepaidConceptsOutsideAWBUnlinked.value)
-  addToTotals(totals, getBuyIVAPrepaidUnlinked.value)
-  return totals
-})
-
-// Combined buy total (prepaid + collect) excluding charges already covered
-// by a supplier invoice, mirroring getTotalBuy but granular per charge.
-const getTotalBuyUnlinked = computed(() => {
-  const totals: Record<number, number> = {}
-  addToTotals(totals, getBuyTotalCollectUnlinked.value)
-  addToTotals(totals, getBuyTotalPrepaidUnlinked.value)
-  return totals
-})
-
 const getBuyTotalCollect = computed(() => {
   const totals: Record<number, number> = {}
   addToTotals(totals, getBuyCollectConceptsWithinAWB.value)
   addToTotals(totals, getBuyCollectConceptsOutsideAWB.value)
   addToTotals(totals, getBuyIVACollect.value)
-  return totals
-})
-
-const getBuyTotalCollectUnlinked = computed(() => {
-  const totals: Record<number, number> = {}
-  addToTotals(totals, getBuyCollectConceptsWithinAWBUnlinked.value)
-  addToTotals(totals, getBuyCollectConceptsOutsideAWBUnlinked.value)
-  addToTotals(totals, getBuyIVACollectUnlinked.value)
   return totals
 })
 
@@ -559,7 +524,7 @@ const getTotalProfit = computed(() => {
   addToTotals(totals, getCreditFfNotes.value)
   addToTotals(totals, getDebitFfNotes.value)
   addToTotals(totals, getSupplierInvoices.value, true)
-  addToTotals(totals, getTotalBuyUnlinked.value, true)
+  addToTotals(totals, getRemainingBuy.value, true)
 
   return totals
 })
