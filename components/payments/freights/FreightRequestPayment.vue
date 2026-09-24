@@ -97,7 +97,6 @@
               <th class="text-left">SOA (Excel)</th>
               <th class="text-left">Created by</th>
               <th class="text-left">Status</th>
-              <th class="text-left">Payment sent</th>
             </tr>
           </thead>
           <tbody>
@@ -110,14 +109,17 @@
               }"
             >
               <td>
-                <div class="flex flex-col items-center gap-1">
-                  <div class="flex gap-2">
-                    <ViewButton :item="ffpayment" @click="viewFfReqPayment(ffpayment)" />
-                    <div v-if="ffpayment.sent_at == null && ffpayment.deleted_at == null">
-                      <TrashButton :item="ffpayment" @click="deleteFfPayment(ffpayment)" />
-                    </div>
+                <div class="flex gap-2 items-center">
+                  <ViewButton :item="ffpayment" @click="viewFfReqPayment(ffpayment)" />
+                  <div v-if="ffpayment.sent_at == null && ffpayment.deleted_at == null">
+                    <TrashButton :item="ffpayment" @click="deleteFfPayment(ffpayment)" />
                   </div>
-                  <MailLogHistory type="ff-payment" :id="ffpayment.id" title="F.F. Agent Payment Request History" />
+                  <MailLogHistory
+                    type="ff-payment"
+                    :id="ffpayment.id"
+                    title="F.F. Agent Payment Request History"
+                    compact
+                  />
                 </div>
               </td>
               <td>
@@ -126,6 +128,13 @@
                   <v-btn color="green" size="small" variant="tonal" @click="showSendPaymentRequest(ffpayment)">
                     Send payment request
                   </v-btn>
+                </div>
+                <div v-else-if="ffpayment.sent_at != null">
+                  <v-chip color="green" variant="tonal" size="small" prepend-icon="mdi-check">
+                    Payment request sent
+                  </v-chip>
+                  <div class="text-caption">{{ formatDateString(ffpayment.sent_at) }}</div>
+                  <div class="text-caption">{{ ffpayment.sent_user?.name }}</div>
                 </div>
               </td>
               <td>{{ ffpayment.folio || 'Req. Pay#' + ffpayment.id }}</td>
@@ -176,16 +185,6 @@
                     Paid
                   </v-chip>
                   <InvoiceChargePaymentsView v-if="ffpayment.invoice" size="x-small" :invoice="ffpayment.invoice" />
-                </div>
-              </td>
-              <td>
-                <div v-if="ffpayment.sent_at == null">
-                  <v-icon color="orange">mdi-alert</v-icon>
-                </div>
-                <div v-if="ffpayment.sent_at != null">
-                  <v-icon color="green">mdi-check</v-icon>
-                  <div>{{ formatDateString(ffpayment.sent_at) }}</div>
-                  <div>{{ ffpayment.sent_user?.name }}</div>
                 </div>
               </td>
             </tr>
