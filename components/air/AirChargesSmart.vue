@@ -220,6 +220,7 @@
                       label="Request edit"
                       :display-name="`Ref. ${props.airReference?.reference_number} — ${charge.charge?.name ?? ''}`"
                       :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :initial-form-data="airChargeToFormData(charge)"
                       :field-catalogs="lockedFieldCatalogs"
                       @refresh="getAirCharges"
                     />
@@ -535,6 +536,7 @@
                       label="Request edit"
                       :display-name="`Ref. ${props.airReference?.reference_number} — ${charge.charge?.name ?? ''}`"
                       :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :initial-form-data="airChargeToFormData(charge)"
                       :field-catalogs="lockedFieldCatalogs"
                       @refresh="getAirCharges"
                     />
@@ -721,6 +723,7 @@
                       label="Request edit"
                       :display-name="`Ref. ${props.airReference?.reference_number} — ${charge.charge?.name ?? ''}`"
                       :process-data="{ air_reference_id: props.referenciaId, charge_id: charge.id, action: 'edit', charge_name: charge.charge?.name }"
+                      :initial-form-data="airChargeToFormData(charge)"
                       :field-catalogs="lockedFieldCatalogs"
                       @refresh="getAirCharges"
                     />
@@ -894,6 +897,25 @@ const lockedFieldCatalogs = computed(() => ({
   charges: (catalogs.value.charges as any[])?.map((c: any) => ({ label: c.name, value: c.id, code: c.code })) ?? [],
   currencies: (currencies as any[])?.map((c: any) => ({ label: c.name, value: c.id })) ?? [],
 }))
+
+// Maps an existing AirReferenceCharge to the form_data shape expected by
+// air.edit-charge-locked's template, so "Request edit" opens pre-filled with
+// the charge's current values instead of an empty form.
+const airChargeToFormData = (charge: any) => ({
+  inv_type: charge.inv_type,
+  charge_id: charge.charge_id,
+  fuera_dentro_awb: charge.fuera_dentro_awb,
+  has_sell: charge.sell_amount != null,
+  sell_amount: charge.sell_amount,
+  sell_currency_id: charge.sell_currency_id,
+  sell_ppcc: charge.sell_ppcc,
+  is_sell_con_iva: (charge.sell_iva ?? 0) > 0,
+  has_buy: charge.buy_amount != null,
+  buy_amount: charge.buy_amount,
+  buy_currency_id: charge.buy_currency_id,
+  buy_ppcc: charge.buy_ppcc,
+  is_buy_con_iva: (charge.buy_iva ?? 0) > 0,
+})
 
 const fueraDentroBls = [
   { value: 'F', name: 'Fuera AWB' },

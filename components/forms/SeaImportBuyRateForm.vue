@@ -71,7 +71,7 @@
                 </div>
                 <div v-else-if="isLocked">
                   <ProcessAuthorizationWrapper
-                    process-name="sea-import.buy-charge-locked"
+                    process-name="sea-import.add-buy-charge-locked"
                     :request-key="`${props.referencia.id}-buy-charge-new`"
                     label="Request charge"
                     :display-name="`Ref. ${props.referencia.reference_number}`"
@@ -173,10 +173,17 @@
                           label="Request edit"
                           :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
                           :process-data="{ referencia_id: props.referencia.id, action: 'edit', charge_id: charge.id, charge_name: getChargeName(charge.charge_id) }"
+                          :initial-form-data="{
+                            type: charge.type,
+                            master_bl: charge.master_bl,
+                            charge_id: charge.charge_id,
+                            amount: charge.amount,
+                            currency_id: charge.currency_id,
+                          }"
                           :field-catalogs="buyChargeFieldCatalogs"
                         />
                         <ProcessAuthorizationWrapper
-                          process-name="sea-import.buy-charge-locked"
+                          process-name="sea-import.delete-buy-charge-locked"
                           :request-key="`${props.referencia.id}-buy-charge-${charge.id}-delete`"
                           label="Request delete"
                           :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(charge.charge_id)}`"
