@@ -1,37 +1,51 @@
 <template>
   <div class="mt-1">
-    <v-chip
-      v-if="hasHistory"
+    <v-btn
+      v-if="compact"
+      icon="mdi-history"
       size="small"
-      color="info"
-      variant="tonal"
-      class="cursor-pointer"
-      style="white-space: normal; height: auto; padding: 8px 12px"
+      variant="text"
+      :color="hasHistory ? 'info' : hasHistory === false ? 'orange' : 'grey'"
+      :loading="polling"
       @click="showDialog"
-    >
-      <div class="flex items-center gap-2">
-        <v-icon size="small">mdi-clock-outline</v-icon>
-        <div class="flex flex-col">
-          <span>{{ formatDateString(lastLog?.occurred_at) }}</span>
-          <span class="text-xs text-grey-darken-1">by {{ lastLog?.triggered_by?.name ?? 'System' }}</span>
+    />
+
+    <template v-else>
+      <v-chip
+        v-if="hasHistory"
+        size="small"
+        color="info"
+        variant="tonal"
+        class="cursor-pointer"
+        style="white-space: normal; height: auto; padding: 8px 12px"
+        @click="showDialog"
+      >
+        <div class="flex items-center gap-2">
+          <v-icon size="small">mdi-clock-outline</v-icon>
+          <div class="flex flex-col">
+            <span>{{ formatDateString(lastLog?.occurred_at) }}</span>
+            <span class="text-xs text-grey-darken-1">by {{ lastLog?.triggered_by?.name ?? 'System' }}</span>
+          </div>
         </div>
-      </div>
-    </v-chip>
+      </v-chip>
 
-    <v-chip v-else-if="polling" size="small" variant="tonal" color="grey" style="padding: 8px 12px">
-      <v-progress-circular indeterminate size="12" width="2" class="mr-2" />
-      Confirming send…
-    </v-chip>
+      <v-chip v-else-if="polling" size="small" variant="tonal" color="grey" style="padding: 8px 12px">
+        <v-progress-circular indeterminate size="12" width="2" class="mr-2" />
+        Confirming send…
+      </v-chip>
 
-    <v-tooltip v-else-if="fetchFailed" :text="`No se pudo consultar el histórico: ${fetchFailed}`">
-      <template #activator="{ props: tooltipProps }">
-        <v-chip v-bind="tooltipProps" size="small" color="error" variant="tonal" style="padding: 8px 12px">ERROR</v-chip>
-      </template>
-    </v-tooltip>
+      <v-tooltip v-else-if="fetchFailed" :text="`No se pudo consultar el histórico: ${fetchFailed}`">
+        <template #activator="{ props: tooltipProps }">
+          <v-chip v-bind="tooltipProps" size="small" color="error" variant="tonal" style="padding: 8px 12px"
+            >ERROR</v-chip
+          >
+        </template>
+      </v-tooltip>
 
-    <v-chip v-else-if="hasHistory === false" size="small" color="orange" variant="tonal" style="padding: 8px 12px">
-      Not sent
-    </v-chip>
+      <v-chip v-else-if="hasHistory === false" size="small" color="orange" variant="tonal" style="padding: 8px 12px">
+        Not sent
+      </v-chip>
+    </template>
 
     <v-dialog v-model="dialog" max-width="650" scrollable>
       <v-card rounded="lg">
@@ -93,6 +107,9 @@ const props = defineProps<{
   // mail_log con related_id puede tardar unos segundos en existir. Dispara
   // un polling corto en vez de mostrar "sin historial" de entrada.
   justSent?: boolean
+  // true: solo icono clickable (para no duplicar el chip de estado de envío
+  // cuando ya se muestra en otra columna, ej. FreightRequestPayment)
+  compact?: boolean
 }>()
 
 const title = computed(() => props.title ?? 'Notification History')
