@@ -1001,7 +1001,10 @@ const editFfNote = async (creditDebit: any) => {
   const resolvedPartyType = creditDebit.party_type ?? 'App\\Models\\Mexico\\FreightForwarder'
   const resolvedPartyId = creditDebit.party_id ?? creditDebit.forwarder_id
 
-  setValues({ format: creditDebit.format })
+  // party_id must go through vee-validate: AGlobalSearch only resolves and
+  // displays the agent from its set-id (bound to values.party_id), and
+  // upsertFfNote() reads the party from values.party_id, not form.party_id.
+  setValues({ format: creditDebit.format, party_id: resolvedPartyId })
 
   form.value = {
     id: creditDebit.id,
