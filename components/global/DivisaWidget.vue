@@ -6,7 +6,22 @@
       </template>
 
       <v-card :color="darkMode.isDark ? 'cardBackground' : ''" class="opacity-95" max-width="300">
-        <v-card-title class="text-sm! font-bold!">Exchange rates @ {{ formatDateOnlyString(dateRates) }}</v-card-title>
+        <v-card-title class="text-sm! font-bold! d-flex align-center">
+          <span>Exchange rates @ {{ formatDateOnlyString(dateRates) }}</span>
+          <v-spacer />
+          <v-tooltip text="View full history" location="top">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                icon="mdi-history"
+                variant="text"
+                size="x-small"
+                density="comfortable"
+                @click="historyOpen = true"
+              ></v-btn>
+            </template>
+          </v-tooltip>
+        </v-card-title>
         <v-card-text>
           <div class="flex justify-center">
             <v-row no-gutters>
@@ -25,6 +40,8 @@
         </v-card-text>
       </v-card>
     </v-menu>
+
+    <ExchangeRatesHistoryDialog v-model="historyOpen" />
   </div>
 </template>
 
@@ -42,6 +59,7 @@ await exchangeRatesStore.fetchExchangeRates($api)
 
 const dateRates = computed(() => exchangeRatesStore.dateRates)
 const emptyRates = computed(() => exchangeRatesStore.emptyRates)
+const historyOpen = ref(false)
 
 const onClickRefresh = async () => {
   await exchangeRatesStore.fetchExchangeRates($api)
