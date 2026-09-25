@@ -372,6 +372,12 @@ const processResources = {
     description: 'Add Charge to Credit Note',
     keyLabel: 'Credit Note',
   },
+  /** Authorize linking a F.F. note to a payment request that was already sent */
+  FfPaymentAddNoteAfterSent: {
+    processName: 'ff-payment.add-note-after-sent',
+    description: 'Add F.F. Note to Sent Payment Request',
+    keyLabel: 'Payment Request',
+  },
   /** Authorize updating folio/comments on a credit note */
   CreditNoteUpdateMeta: {
     processName: 'credit-note.update-meta',

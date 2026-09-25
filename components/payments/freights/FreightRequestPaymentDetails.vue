@@ -53,6 +53,30 @@
         <div class="font-bold text-base">Freight forwarder notes linked</div>
         <FreightRequestAddFfNote :ffPayment="ffPayment" @addNote="addNoteToReqPayment" />
 
+        <div v-if="ffPayment.sent_at && pendingApprovalNotes.length > 0" class="my-3 pa-3 border rounded">
+          <div class="text-sm font-bold mb-2">Notes pending approval to link (request already sent)</div>
+          <v-chip
+            v-for="note in pendingApprovalNotes"
+            :key="note.id"
+            size="small"
+            closable
+            class="mr-2 mb-2"
+            @click:close="removePendingApprovalNote(note.id)"
+          >
+            {{ note.folio }}
+          </v-chip>
+          <div>
+            <ProcessAuthorizationWrapper
+              process-name="ff-payment.add-note-after-sent"
+              :request-key="String(ffPayment.id)"
+              label="Request to link these note(s)"
+              :display-name="ffPayment.folio"
+              :process-data="{ ff_note_ids: pendingApprovalNotes.map((n) => n.id) }"
+              @refresh="onAddNoteAfterSentApproved"
+            />
+          </div>
+        </div>
+
         <div class="flex gap-2 my-4">
           <v-btn color="primary" size="small" variant="tonal" @click="checkAll"> Check all </v-btn>
           <v-btn color="primary" size="small" variant="tonal" @click="uncheckAll"> Uncheck all </v-btn>
@@ -209,6 +233,9 @@ const confirmSplit = ref<any>({
 })
 
 const ffPayment = ref<any>({})
+// F.F. notes picked while the payment request is already sent — held here until
+// the user submits one approval request that links them all automatically.
+const pendingApprovalNotes = ref<any[]>([])
 
 const pdfViewer = ref<any>(null)
 const pdfViewerDialog = ref<any>({ show: false })
@@ -412,6 +439,17 @@ const saveFfNoteNotes = async () => {
 }
 
 const addNoteToReqPayment = async (ffNote: any) => {
+  // Payment request already sent: linking is blocked server-side, so this note
+  // goes into the pending list instead — the user submits one approval request
+  // below (ProcessAuthorizationWrapper) and it links automatically once granted.
+  if (ffPayment.value.sent_at) {
+    if (!pendingApprovalNotes.value.some((n) => n.id === ffNote.id)) {
+      pendingApprovalNotes.value.push(ffNote)
+    }
+    snackbar.add({ type: 'info', text: 'Note added to the pending approval request below' })
+    return
+  }
+
   try {
     loadingStore.loading = true
     const body = {
@@ -428,6 +466,15 @@ const addNoteToReqPayment = async (ffNote: any) => {
       loadingStore.stop()
     }, 250)
   }
+}
+
+const removePendingApprovalNote = (ffNoteId: number) => {
+  pendingApprovalNotes.value = pendingApprovalNotes.value.filter((n) => n.id !== ffNoteId)
+}
+
+const onAddNoteAfterSentApproved = async () => {
+  pendingApprovalNotes.value = []
+  await getData()
 }
 
 const getData = async () => {
