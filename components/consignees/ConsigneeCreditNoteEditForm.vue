@@ -312,7 +312,8 @@ const buildEditableCharges = () => {
     charge_id: ch.charge_id,
     charge_name: ch.charge?.name || `Concept #${ch.charge_id}`,
     invoice_number: ch.invoice_charge?.invoice?.invoice_number ?? '-',
-    amount: parseFloat(ch.amount) || 0,
+    // Se edita el bruto (neto + IVA); el backend vuelve a repartir el IVA.
+    amount: Math.round(((parseFloat(ch.amount) || 0) + (parseFloat(ch.amount_iva) || 0)) * 100) / 100,
     cn_available_balance: ch.cn_available_balance ?? null,
   }))
 }

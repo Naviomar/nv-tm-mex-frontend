@@ -38,14 +38,6 @@ class ConsigneeCreditNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/create-note`, fetchOptions)
   }
 
-  async createFiscalNote(form: any, fetchOptions?: FetchOptions) {
-    fetchOptions = {
-      body: JSON.stringify(form),
-      ...fetchOptions,
-    }
-    return this.call('POST', `${this.RESOURCE}/create-fiscal-note`, fetchOptions)
-  }
-
   async uploadFiscalCfdi(id: string, files: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(files)
     fetchOptions = {
