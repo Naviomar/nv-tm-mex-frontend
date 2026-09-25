@@ -60,7 +60,19 @@
                   <div class="flex-1">
                     <div class="text-xs text-teal-darken-1 font-semibold mb-1">AVAILABLE</div>
                     <div class="font-bold text-xl">{{ formatToCurrency(creditNote.amount_available) }}</div>
-                    <div class="text-sm mt-1">
+                    <div v-if="creditNote.is_fiscal" class="text-sm mt-1">
+                      <div>
+                        <span class="text-grey-darken-1">Applied to its invoices:</span>
+                        {{ formatToCurrency(creditNote.amount - creditNote.credit_balance_generated) }}
+                      </div>
+                      <div>
+                        <span class="text-grey-darken-1">Credit balance generated:</span>
+                        {{ formatToCurrency(creditNote.credit_balance_generated) }}
+                        · <span class="text-grey-darken-1">Used:</span>
+                        {{ formatToCurrency(creditNote.credit_balance_generated - creditNote.amount_available) }}
+                      </div>
+                    </div>
+                    <div v-else class="text-sm mt-1">
                       <span class="text-grey-darken-1">Used:</span> {{ formatToCurrency(creditNote.amount - creditNote.amount_available) }}
                     </div>
                   </div>
@@ -108,8 +120,11 @@
                     <div class="font-semibold">{{ creditNote.serie || '-' }} {{ creditNote.folio || '-' }}</div>
                   </div>
                   <div>
-                    <div class="text-xs text-grey-darken-1 mb-1">Related invoice UUID</div>
-                    <div class="font-semibold text-xs break-all">{{ creditNote.related_invoice_uuid || '-' }}</div>
+                    <div class="text-xs text-grey-darken-1 mb-1">Related invoice UUID(s)</div>
+                    <div v-for="relUuid in creditNote.related_invoice_uuids || []" :key="relUuid" class="font-semibold text-xs break-all">
+                      {{ relUuid }}
+                    </div>
+                    <div v-if="!creditNote.related_invoice_uuids?.length" class="font-semibold text-xs">-</div>
                   </div>
                 </div>
                 <div class="flex gap-2">
@@ -125,7 +140,7 @@
               <div v-else-if="hasPermission('customer-credit-notes-create-fiscal')">
                 <v-alert density="compact" type="warning" variant="outlined" class="mb-3">
                   This fiscal credit note has no stamped CFDI attached yet. Upload the XML timbrado outside the
-                  system (must reference this invoice via CfdiRelacionados, TipoRelacion 01).
+                  system (must reference every credited invoice via CfdiRelacionados, TipoRelacion 01, and its Total must match the credit note amount).
                 </v-alert>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
                   <FileDropzone @drop-files="(file: any) => (uploadForm.xml_file = file)">
@@ -164,7 +179,7 @@
               <v-icon>mdi-email-outline</v-icon>Email
             </v-btn>
             <v-btn
-              v-if="creditNote.is_fiscal && hasCreditNoteAmountAvailable && !isDeleted"
+              v-if="creditNote.is_fiscal && creditNote.uuid && hasCreditNoteAmountAvailable && !isDeleted"
               color="teal"
               size="small"
               variant="outlined"
