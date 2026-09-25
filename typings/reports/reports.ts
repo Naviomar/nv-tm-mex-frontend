@@ -121,6 +121,8 @@ export interface ContainersByClientShipperFilters {
   start_year: number
   end_year: number
   year: number
+  start_date: string
+  end_date: string
   ejecutivo_id: number | null
   client_id: number | null
   shipper_name: string

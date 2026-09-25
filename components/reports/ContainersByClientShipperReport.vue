@@ -169,17 +169,28 @@
               </v-col>
             </template>
 
-            <!-- Monthly Year Target Input -->
+            <!-- Exact date range -->
             <template v-else>
               <v-col cols="12" md="3">
-                <v-select
-                  v-model="filters.year"
-                  :items="availableYears"
-                  label="Target Year"
+                <v-text-field
+                  v-model="filters.start_date"
+                  type="date"
+                  label="Start Date"
                   variant="outlined"
                   density="compact"
                   hide-details
-                  prepend-inner-icon="mdi-calendar"
+                  prepend-inner-icon="mdi-calendar-start"
+                />
+              </v-col>
+              <v-col cols="12" md="3">
+                <v-text-field
+                  v-model="filters.end_date"
+                  type="date"
+                  label="End Date"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-calendar-end"
                 />
               </v-col>
             </template>
@@ -210,11 +221,11 @@
           This report downloads an Excel workbook with two sheets:
           <ul class="pl-4 mt-1">
             <li>
-              <strong>Summary:</strong> containers by client and supplier (shipper), distributed by month (based on ETA).
-              References without ETA appear in the ADICIONALES column.
+              <strong>Summary:</strong> containers by client and supplier (shipper), showing only the months included
+              in the selected date range (based on ETA). References without ETA appear in the ADICIONALES column.
             </li>
             <li>
-              <strong>Detail:</strong> one row per container with reference, master/house BL, container number and
+              <strong>Detail:</strong> one row per container with reference, house BL, container number and
               type, vessel, voyage, ETA, consignee, supplier (shipper), executive and TEUs — ready to send to the client.
             </li>
             <li>
@@ -238,12 +249,16 @@ const useLegacyData = ref(true)
 const useNewData = ref(true)
 
 const currentYear = new Date().getFullYear()
+const today = new Date().toISOString().slice(0, 10)
+const yearStart = `${currentYear}-01-01`
 
 const filters = ref<ContainersByClientShipperFilters>({
   report_type: 'monthly',
   start_year: 2017,
   end_year: currentYear,
   year: currentYear,
+  start_date: yearStart,
+  end_date: today,
   ejecutivo_id: null,
   client_id: null,
   shipper_name: '',
@@ -270,6 +285,17 @@ const availableYears = computed(() => {
 })
 
 const applyFilters = async () => {
+  if (filters.value.report_type === 'monthly') {
+    if (!filters.value.start_date || !filters.value.end_date) {
+      snackbar.add({ text: 'Start Date and End Date are required.', type: 'error' })
+      return
+    }
+    if (filters.value.start_date > filters.value.end_date) {
+      snackbar.add({ text: 'End Date must be on or after Start Date.', type: 'error' })
+      return
+    }
+  }
+
   try {
     loadingStore.loading = true
 
@@ -281,6 +307,8 @@ const applyFilters = async () => {
         start_year: filters.value.start_year,
         end_year: filters.value.end_year,
         year: filters.value.year,
+        start_date: filters.value.start_date,
+        end_date: filters.value.end_date,
         ejecutivo_id: filters.value.ejecutivo_id,
         client_id: filters.value.client_id,
         shipper_name: filters.value.shipper_name,
@@ -301,7 +329,7 @@ const applyFilters = async () => {
     const downloadName =
       filters.value.report_type === 'yearly'
         ? `contenedores_por_cliente_proveedor_${filters.value.start_year}_${filters.value.end_year}.xlsx`
-        : `contenedores_por_cliente_proveedor_${filters.value.year}.xlsx`
+        : `contenedores_por_cliente_proveedor_${filters.value.start_date}_${filters.value.end_date}.xlsx`
 
     link.setAttribute('download', downloadName)
     document.body.appendChild(link)
@@ -337,6 +365,8 @@ const clearFilters = () => {
   filters.value.start_year = 2017
   filters.value.end_year = currentYear
   filters.value.year = currentYear
+  filters.value.start_date = yearStart
+  filters.value.end_date = today
   filters.value.ejecutivo_id = null
   filters.value.client_id = null
   filters.value.shipper_name = ''
