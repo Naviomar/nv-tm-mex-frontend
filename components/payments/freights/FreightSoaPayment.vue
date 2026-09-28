@@ -24,7 +24,7 @@
             <v-chip color="orange" size="x-small"
               ><span class="inline-block w-3 h-3 bg-yellow-600 mr-1"></span>Check note</v-chip
             >
-            <v-chip color="blue" size="x-small"
+            <v-chip color="deep-purple" size="x-small"
               ><span class="inline-block w-3 h-3 bg-blue-600 mr-1"></span>Payment request</v-chip
             >
             <v-chip color="red" size="x-small"
@@ -170,8 +170,8 @@
                     </div>
                     <v-chip
                       v-if="note.note_payment != null"
-                      color="blue"
-                      size="x-small"
+                      color="deep-purple"
+                      size="small"
                       @click="viewFfReqPayment(note.note_payment)"
                     >
                       <div class="flex gap-1">

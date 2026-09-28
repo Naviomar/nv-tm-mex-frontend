@@ -77,7 +77,7 @@
           </div>
         </div>
 
-        <div class="flex gap-2 my-4">
+        <div v-if="!isFullyPaid" class="flex gap-2 my-4">
           <v-btn color="primary" size="small" variant="tonal" @click="checkAll"> Check all </v-btn>
           <v-btn color="primary" size="small" variant="tonal" @click="uncheckAll"> Uncheck all </v-btn>
 
@@ -89,7 +89,7 @@
           <thead>
             <tr>
               <th class="text-left">Actions</th>
-              <th class="text-left">Split</th>
+              <th v-if="!isFullyPaid" class="text-left">Split</th>
               <th class="text-left">D/C Note #</th>
               <th class="text-left">Service Ref #</th>
               <th class="text-left">F.F. Agent</th>
@@ -117,7 +117,7 @@
                   </v-btn>
                 </div>
               </td>
-              <td class="whitespace-nowrap">
+              <td v-if="!isFullyPaid" class="whitespace-nowrap">
                 <v-checkbox v-model="notePayment.checked_split" density="compact" hide-details> Split </v-checkbox>
               </td>
               <td>
@@ -270,6 +270,9 @@ const paymentStatus = computed((): string => {
   if (totalCharge > 0 && totalPaid >= totalCharge - 0.01) return 'Paid'
   return 'Partial'
 })
+
+// Once the request is fully paid its notes can no longer be split out.
+const isFullyPaid = computed(() => paymentStatus.value === 'Paid')
 
 const hasSplitChecked = computed(() => {
   return ffPayment.value.note_payments?.some((notePayment: any) => notePayment.checked_split)
