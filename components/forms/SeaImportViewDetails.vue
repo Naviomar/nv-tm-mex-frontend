@@ -268,11 +268,11 @@
       </div>
 
       <div class="col-span-2">
-        <div v-if="referencia.demurrage_charges.length <= 0">
-          <v-alert type="info" density="compact"> No demurrage charge(s) found </v-alert>
+        <div v-if="!referencia.containers?.length">
+          <v-alert type="info" density="compact"> No containers found </v-alert>
         </div>
         <SeaImportDemurragesSmart
-          v-if="referencia.demurrage_charges.length > 0"
+          v-else
           :charges="referencia.demurrage_charges"
           :referencia="referencia"
         />
@@ -312,6 +312,10 @@
             <SeaImportSupplierInvoices :referenceId="referencia.id" />
           </v-card-text>
         </v-card>
+      </div>
+
+      <div class="col-span-2">
+        <SeaServiceLineDemDetPayments :referenceId="referencia.id" type="demurrages" />
       </div>
     </div>
 

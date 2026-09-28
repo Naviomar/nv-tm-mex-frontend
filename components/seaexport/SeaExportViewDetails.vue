@@ -347,7 +347,7 @@
               </tbody>
             </v-table>
 
-            <div v-if="hasSomeDetentions" class="col-span-3">
+            <div v-if="referencia.containers?.length" class="col-span-3">
               <div class="font-bold text-lg">Detentions</div>
               <v-table density="compact">
                 <thead>
@@ -363,14 +363,19 @@
                   <tr v-for="(container, index) in referencia.containers" :key="`detention-cont-${index}`">
                     <td>{{ container.container_number }}</td>
                     <td>{{ container.container_type?.name }}</td>
-                    <td>
-                      {{ container.detention?.days }}
-                    </td>
-                    <td>
-                      {{ formatToCurrency(container.detention?.amount_line) }}
-                    </td>
-                    <td>
-                      {{ formatToCurrency(container.detention?.amount_customer) }}
+                    <template v-if="container.detention">
+                      <td>
+                        {{ container.detention.days }}
+                      </td>
+                      <td>
+                        {{ formatToCurrency(container.detention.amount_line) }}
+                      </td>
+                      <td>
+                        {{ formatToCurrency(container.detention.amount_customer) }}
+                      </td>
+                    </template>
+                    <td v-else colspan="3">
+                      <v-chip size="small" color="grey">No detention captured</v-chip>
                     </td>
                   </tr>
                 </tbody>
@@ -414,6 +419,10 @@
             <SeaImportSupplierInvoices :referenceId="referencia.id" />
           </v-card-text>
         </v-card>
+      </div>
+
+      <div class="col-span-2">
+        <SeaServiceLineDemDetPayments :referenceId="referencia.id" type="detentions" />
       </div>
     </div>
 
@@ -492,10 +501,6 @@ const hasBuyCharges = computed(() => {
 
 const hasSellCharges = computed(() => {
   return referencia.value?.sell_rate_breakdown?.length > 0
-})
-
-const hasSomeDetentions = computed(() => {
-  return referencia.value.containers?.some((container: any) => container.detention != null)
 })
 
 const hasCharges = computed(() => {
