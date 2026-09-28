@@ -513,7 +513,7 @@
           <div class="col-span-3">
             <SeaExportChargesSmart :referenciaId="values.id!" :canEdit="canEditCharges" />
           </div>
-          <div v-if="hasSomeDetentions" class="col-span-3">
+          <div v-if="values.containers?.length" class="col-span-3">
             <v-card>
               <v-card-title>Detentions</v-card-title>
               <v-card-text>
@@ -531,14 +531,19 @@
                     <tr v-for="(container, index) in values.containers" :key="`detention-cont-${index}`">
                       <td>{{ container.container_number }}</td>
                       <td>{{ container.container_type?.name }}</td>
-                      <td>
-                        {{ container.detention?.days }}
-                      </td>
-                      <td>
-                        {{ formatToCurrency(container.detention?.amount_line) }}
-                      </td>
-                      <td>
-                        {{ formatToCurrency(container.detention?.amount_customer) }}
+                      <template v-if="container.detention">
+                        <td>
+                          {{ container.detention.days }}
+                        </td>
+                        <td>
+                          {{ formatToCurrency(container.detention.amount_line) }}
+                        </td>
+                        <td>
+                          {{ formatToCurrency(container.detention.amount_customer) }}
+                        </td>
+                      </template>
+                      <td v-else colspan="3">
+                        <v-chip size="small" color="grey">No detention captured</v-chip>
                       </td>
                     </tr>
                   </tbody>
@@ -626,6 +631,8 @@
         <SeaImportSupplierInvoices :referenceId="values.id!" />
       </v-card-text>
     </v-card>
+
+    <SeaServiceLineDemDetPayments :referenceId="values.id!" type="detentions" />
 
     <v-card color="red-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Refunds</div></v-card-title>
@@ -819,10 +826,6 @@ const canEditCharges = computed(() => {
     return true
   }
   return referencia.value.voyage_discharge?.locked_at == null
-})
-
-const hasSomeDetentions = computed(() => {
-  return values.containers?.some((container: any) => container.detention != null)
 })
 
 const customerCurrentExecutive = computed(() => {

@@ -286,6 +286,8 @@
       </v-card-text>
     </v-card>
 
+    <SeaServiceLineDemDetPayments :referenceId="referencia.id" type="demurrages" />
+
     <v-card color="red-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Refunds</div></v-card-title>
       <v-card-text>

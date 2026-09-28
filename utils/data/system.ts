@@ -5,6 +5,7 @@ const permissions = {
   AirProfitTotals: 'air-profit-totals',
   SeaImportProfit: 'sea-import-profit',
   SeaExportProfit: 'sea-export-profit',
+  LineDemDetPaymentsView: 'line-dem-det-payments-view',
   SupportRequestAssit: 'support-requests-assist',
   DemurragesUpdateSellRates: 'demurrages-sell-update-rates',
   DemurragesRateOverrideView: 'demurrages-rate-override-view',

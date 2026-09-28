@@ -617,7 +617,7 @@
           />
 
           <SeaImportDemurragesSmart
-            v-if="values.demurrage_charges!.length > 0"
+            v-if="values.containers?.length"
             :charges="values.demurrage_charges"
             :referencia="values"
           />
@@ -667,6 +667,8 @@
           <SeaImportSupplierInvoices :referenceId="values.id!" />
         </v-card-text>
       </v-card>
+
+      <SeaServiceLineDemDetPayments :referenceId="values.id!" type="demurrages" />
 
       <v-card color="red-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Refunds</div></v-card-title>

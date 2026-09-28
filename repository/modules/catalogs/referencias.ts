@@ -306,6 +306,14 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('GET', `${this.RESOURCE}/sea-service/${id}/line-payments`, fetchOptions)
   }
 
+  async getSeaServiceLineDemurragePayments(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-service/${id}/line-demurrage-payments`, fetchOptions)
+  }
+
+  async getSeaServiceLineDetentionPayments(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-service/${id}/line-detention-payments`, fetchOptions)
+  }
+
   async getAgentFreightNotes(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import/${id}/agent-freight-notes`, fetchOptions)
   }
