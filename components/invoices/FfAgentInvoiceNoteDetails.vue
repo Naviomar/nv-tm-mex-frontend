@@ -143,6 +143,9 @@
               <div>Pending to request payment via SOA.</div>
             </v-alert>
             <v-alert type="info" elevation="2" variant="tonal" density="compact" v-if="ffNote.note_payment">
+              <div class="font-bold text-base mb-1">
+                Payment request {{ ffNote.note_payment?.payment?.folio || '#' + ffNote.note_payment?.ff_payment_id }}
+              </div>
               <div class="font-bold mb-4">
                 Payment requested at {{ formatDateString(ffNote.note_payment?.created_at) }}
               </div>
