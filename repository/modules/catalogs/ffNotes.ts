@@ -37,6 +37,10 @@ class FfNotesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/ff-payments/${id}/delete`, fetchOptions)
   }
 
+  async cancelSentPayment(id: string, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/ff-payments/${id}/cancel-sent`, fetchOptions)
+  }
+
   async getFfNoteByService(form: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(form),

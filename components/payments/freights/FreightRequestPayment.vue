@@ -114,6 +114,18 @@
                   <div v-if="ffpayment.sent_at == null && ffpayment.deleted_at == null">
                     <TrashButton :item="ffpayment" @click="deleteFfPayment(ffpayment)" />
                   </div>
+                  <ProcessAuthorizationWrapper
+                    v-else-if="ffpayment.sent_at != null && ffpayment.deleted_at == null && getFfPaymentStatus(ffpayment) === 'Pending'"
+                    process-name="ff-payment.cancel-after-sent"
+                    :request-key="String(ffpayment.id)"
+                    label="Request Cancellation"
+                    :display-name="ffpayment.folio || 'Req. Pay#' + ffpayment.id"
+                    @refresh="getFreightPayments"
+                  >
+                    <template #auth>
+                      <TrashButton :item="ffpayment" @click="cancelSentFfPayment(ffpayment)" />
+                    </template>
+                  </ProcessAuthorizationWrapper>
                   <MailLogHistory
                     type="ff-payment"
                     :id="ffpayment.id"
@@ -603,6 +615,38 @@ const getFreightPayments = async () => {
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
+  }
+}
+
+const cancelSentFfPayment = async (ffpayment: any) => {
+  const result = await confirm({
+    title: 'Are you sure?',
+    confirmationText: 'Cancel request',
+    content:
+      'This payment request was already sent. Please confirm you want to cancel it; its F.F. notes will be released.',
+    dialogProps: {
+      persistent: true,
+      maxWidth: 500,
+    },
+    confirmationButtonProps: {
+      color: 'error',
+    },
+  })
+
+  if (result) {
+    try {
+      loadingStore.loading = true
+      await $api.ffNotes.cancelSentPayment(ffpayment.id)
+
+      snackbar.add({ type: 'success', text: 'Payment request cancelled' })
+      await getFreightPayments()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTimeout(() => {
+        loadingStore.stop()
+      }, 250)
+    }
   }
 }
 
