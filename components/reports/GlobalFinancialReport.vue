@@ -78,6 +78,19 @@
             </v-col>
           </v-row>
 
+          <v-row class="mt-2">
+            <v-col cols="12" md="3">
+              <v-switch
+                v-model="filters.only_rebate_customers"
+                label="Only customers with rebate"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+              />
+            </v-col>
+          </v-row>
+
           <v-row class="mt-4">
             <v-col cols="12" class="d-flex justify-end gap-2">
               <v-btn variant="outlined" color="grey" @click="clearFilters" prepend-icon="mdi-filter-off">
@@ -152,7 +165,7 @@ const legendGroups = [
     title: 'Venta & Cobranza',
     icon: 'mdi-cash-multiple',
     color: 'blue',
-    description: 'Expected sales, real collections from customers and outstanding balance (por cobrar).',
+    description: 'Expected sales, real collections from customers and outstanding balance (por cobrar). Customer credit notes are deducted from sales (an applied credit note is not counted as collected money). Warranty deposits are shown in their own column (Dep Garantia), outside sales and collections.',
   },
   {
     title: 'Costo proveedores/líneas',
@@ -170,7 +183,7 @@ const legendGroups = [
     title: 'Demoras & Detentions',
     icon: 'mdi-timer-alert-outline',
     color: 'orange',
-    description: 'Cost billed by shipping lines for container demurrages/detentions, and its payment status.',
+    description: 'Demurrages billed to the customer (sale, included in sales and collections) and the cost billed by shipping lines for demurrages/detentions, with their payment status.',
   },
   {
     title: 'Desglose de Conceptos',
@@ -182,13 +195,13 @@ const legendGroups = [
     title: 'Profit Esperado',
     icon: 'mdi-chart-line',
     color: 'green',
-    description: 'Sales minus all expected costs (billed or not), regardless of what has been paid so far.',
+    description: 'Sales minus all expected costs (billed or not) and rebate, regardless of what has been paid so far.',
   },
   {
     title: 'Profit Real',
     icon: 'mdi-cash-check',
     color: 'teal',
-    description: 'Only money actually collected from customers minus money actually paid out.',
+    description: 'Only money actually collected from customers minus money actually paid out and rebate.',
   },
 ]
 
@@ -197,6 +210,7 @@ const filters = ref<any>({
   toDate: lastDayCurrentMonth,
   customer_id: null,
   service_type: null,
+  only_rebate_customers: false,
 })
 
 const applyFilters = async () => {
@@ -208,6 +222,7 @@ const applyFilters = async () => {
       from: formatDate(filters.value.fromDate),
       to: formatDate(filters.value.toDate),
       service_type: filters.value.service_type,
+      only_rebate_customers: filters.value.only_rebate_customers ? 1 : 0,
     }
 
     const response = await $api.reports.getGlobalFinancial({
@@ -250,6 +265,7 @@ const clearFilters = () => {
   filters.value.toDate = lastDayCurrentMonth
   filters.value.customer_id = null
   filters.value.service_type = null
+  filters.value.only_rebate_customers = false
   applyFilters()
 }
 </script>

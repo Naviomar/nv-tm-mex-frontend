@@ -48,6 +48,7 @@ export interface AccountStatementReportItem {
   teus: number
   sell_rate: number
   acobrar: number
+  dep_garantia: number
   pendiente: number
   executive: string
   destination: string
