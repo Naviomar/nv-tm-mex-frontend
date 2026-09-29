@@ -455,7 +455,11 @@ const totalFreightNotesSelected = (linePaySchedule: any) => {
 const getLinkedLineInvoicesTotalPaid = (scheduleRef: any) => {
   let total = 0
   scheduleRef.line_invoice_refs.forEach((lineInvoiceRef: any) => {
-    const invoiceTotal = parseFloat(lineInvoiceRef.invoice?.total || 0)
+    // line_invoice_refs se relaciona solo por ref_mbl_id: excluir facturas de otra referencia
+    // o ya pagadas desde otro schedule (line_pay_schedule_ref_id apunta a otro schedule_ref).
+    if (lineInvoiceRef.referencia_id != scheduleRef.referencia_id) return
+    if (lineInvoiceRef.line_pay_schedule_ref_id && lineInvoiceRef.line_pay_schedule_ref_id !== scheduleRef.id) return
+
     const totalPaidCharges = lineInvoiceRef.invoice?.charges.reduce((acc: any, charge: any) => {
       return acc + parseFloat(charge.amount_paid || 0)
     }, 0)

@@ -576,6 +576,10 @@ const getScheduleLinkedCharges = (paramRef: any): any[] => {
   const charges: any[] = []
   scheduleRefs.forEach((ref: any) => {
     ;(ref.line_invoice_refs || []).forEach((lir: any) => {
+      // line_invoice_refs se relaciona solo por ref_mbl_id: excluir facturas de otra referencia
+      // o pagadas desde otro schedule (line_pay_schedule_ref_id apunta a otro schedule_ref).
+      if (lir.referencia_id != ref.referencia_id) return
+      if (lir.line_pay_schedule_ref_id && lir.line_pay_schedule_ref_id !== ref.id) return
       charges.push(...(lir.invoice?.charges || []))
     })
   })
