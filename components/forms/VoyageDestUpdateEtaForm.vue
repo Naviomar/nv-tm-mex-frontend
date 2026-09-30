@@ -191,7 +191,8 @@ const etaDiffDays = computed(() => {
 
 const hasNewEtaDate = computed(() => etaDiffDays.value !== null)
 
-const canSkipNotification = computed(() => hasNewEtaDate.value && etaDiffDays.value! < 5)
+// Import always notifies the client; only export may skip it for small changes.
+const canSkipNotification = computed(() => !isImport.value && hasNewEtaDate.value && etaDiffDays.value! < 5)
 
 const shouldNotify = computed(() => !canSkipNotification.value || notifyClient.value)
 
