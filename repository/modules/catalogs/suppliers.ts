@@ -262,6 +262,26 @@ class SuppliersModule extends FetchFactory<any> {
     return this.call('DELETE', `${this.RESOURCE}/cfdis/${id}/charges/${chargeId}`, fetchOptions)
   }
 
+  async getLineContainersAvailable(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/cfdis/${id}/line-containers/available`, fetchOptions)
+  }
+
+  async assignLineContainers(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/cfdis/${id}/line-containers`, fetchOptions)
+  }
+
+  async removeLineContainer(id: string, lineContainerId: string, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/cfdis/${id}/line-containers/${lineContainerId}`, fetchOptions)
+  }
+
   /**
    * Valida un CFDI individual con el SAT
    * @param id ID del CFDI

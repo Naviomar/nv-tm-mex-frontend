@@ -1,5 +1,22 @@
 <template>
   <div>
+    <div class="grid grid-cols-8 gap-5 mb-2">
+      <div class="col-span-5">
+        <v-text-field
+          v-model="quickRefs"
+          density="compact"
+          label="Search by reference # (e.g. IM26-3076)"
+          hint="Separate multiple references with commas. Press Enter to search."
+          persistent-hint
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          @keyup.enter="searchByReferenceNumbers"
+        />
+      </div>
+      <div class="col-span-3 ml-4">
+        <v-btn color="primary" variant="tonal" :disabled="!quickRefs" @click="searchByReferenceNumbers">Search</v-btn>
+      </div>
+    </div>
     <div class="grid grid-cols-8 gap-5">
       <div class="col-span-5">
         <v-autocomplete
@@ -119,6 +136,7 @@ const clearForm = () => {
 }
 
 const resetForm = () => {
+  quickRefs.value = null
   form.value.servicio = null
   clearForm()
 }
@@ -147,6 +165,67 @@ const searchReferences = () => {
   }
   // api backend search references
   emit('update', folios.value)
+}
+
+const quickRefs = ref<string | null>(null)
+
+// Parses composite references like IM26-3076 / EA25-0012 and searches them with the existing endpoint.
+// All references must belong to the same service (maritime or air), as the results are handled as one group.
+const searchByReferenceNumbers = async () => {
+  const tokens = (quickRefs.value || '')
+    .toUpperCase()
+    .split(/[\s,;]+/)
+    .filter(Boolean)
+  if (tokens.length === 0) return
+
+  const parsed = tokens.map((token) => token.match(/^([IE])([MA])(\d{2})-?(\d+)$/))
+  const invalid = tokens.filter((_, i) => !parsed[i])
+  if (invalid.length > 0) {
+    snackbar.add({ type: 'warning', text: `Invalid reference format: ${invalid.join(', ')}` })
+    return
+  }
+
+  const serviceKinds = new Set(parsed.map((m) => m![2]))
+  if (serviceKinds.size > 1) {
+    snackbar.add({ type: 'warning', text: 'Search maritime and air references separately.' })
+    return
+  }
+
+  // group by type + year, one request per group
+  const groups: Record<string, { serviceType: string; year: string; folios: string[] }> = {}
+  parsed.forEach((m) => {
+    const [, impoExpo, kind, year, folio] = m!
+    const key = `${impoExpo}${kind}${year}`
+    groups[key] ??= { serviceType: `${impoExpo}${kind}`, year, folios: [] }
+    groups[key].folios.push(String(Number(folio)))
+  })
+
+  try {
+    loadingStore.loading = true
+    const results = await Promise.all(
+      Object.values(groups).map((g) =>
+        $api.systemServices.searchServices({ serviceType: g.serviceType, folios: g.folios, year: g.year }),
+      ),
+    )
+    const services = results.flat() as any[]
+    const kind = [...serviceKinds][0]
+
+    form.value.servicio = servicios.find((s) => s.prefix === kind) || null
+    servicesFound.value = services
+    emit('update', { serviceType: kind, services })
+
+    if (services.length === 0) {
+      snackbar.add({ type: 'warning', text: 'No services found' })
+    } else {
+      snackbar.add({ type: 'success', text: `${services.length} of ${tokens.length} service(s) found` })
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const searchServices = async () => {

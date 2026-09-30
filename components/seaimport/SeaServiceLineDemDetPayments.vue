@@ -16,8 +16,33 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="data.requests.length === 0">
+          <tr v-if="data.requests.length === 0 && data.pre_assigned.length === 0">
             <td colspan="7" class="p-2 text-grey">No payment requests</td>
+          </tr>
+          <tr v-for="inv in data.pre_assigned" :key="`pre-${inv.supplier_cfdi_id}`">
+            <td class="p-2">
+              <div class="flex flex-col items-center">
+                <v-chip color="indigo" size="small">Invoice registered – pending request</v-chip>
+              </div>
+            </td>
+            <td class="p-2 text-grey">-</td>
+            <td class="p-2">
+              <div class="cursor-pointer hover:underline" @click="goToSupplierCfdi(inv)">{{ inv.serie_folio }}</div>
+            </td>
+            <td class="p-2">{{ inv.supplier }}</td>
+            <td class="p-2 whitespace-nowrap">
+              <div>{{ formatToCurrency(inv.amount) }} {{ getCurrencyName(inv.currency_id) }}</div>
+              <div class="text-xs text-grey">
+                Invoice total: {{ formatToCurrency(inv.amount_cfdi) }} {{ getCurrencyName(inv.currency_id) }}
+              </div>
+            </td>
+            <td class="p-2">{{ formatDateOnlyString(inv.invoice_date) }}</td>
+            <td class="p-2">
+              <v-btn size="small" color="secondary" variant="outlined" @click="openPreAssignedDialog(inv)">
+                <v-icon start>mdi-format-list-bulleted</v-icon>
+                View containers
+              </v-btn>
+            </td>
           </tr>
           <tr v-for="req in data.requests" :key="`req-${req.id}`">
             <td class="p-2">
@@ -112,8 +137,11 @@
                     {{ formatToCurrency(Number(c.amount) + Number(c.amount_iva)) }} {{ getCurrencyName(c.currency_id) }}
                   </td>
                   <td class="p-2">
-                    {{ formatToCurrency(Number(c.sell_amount) + Number(c.sell_amount_iva)) }}
-                    {{ getCurrencyName(c.currency_id) }}
+                    <template v-if="c.sell_amount != null">
+                      {{ formatToCurrency(Number(c.sell_amount) + Number(c.sell_amount_iva)) }}
+                      {{ getCurrencyName(c.currency_id) }}
+                    </template>
+                    <template v-else>-</template>
                   </td>
                 </tr>
               </tbody>
@@ -150,13 +178,26 @@ const props = defineProps({
 const isDetention = computed(() => props.type === 'detentions')
 const title = computed(() => (isDetention.value ? 'Line detentions & payments' : 'Line demurrages & payments'))
 
-const data = ref<any>({ requests: [], pending: [] })
+const data = ref<any>({ requests: [], pre_assigned: [], pending: [] })
 const containersDialog = ref(false)
 const selectedRequest = ref<any>(null)
 
 const openContainersDialog = (req: any) => {
   selectedRequest.value = req
   containersDialog.value = true
+}
+
+const openPreAssignedDialog = (inv: any) => {
+  selectedRequest.value = {
+    folio: `Invoice ${inv.serie_folio}`,
+    line: inv.supplier,
+    containers: inv.containers.map((c: any) => ({ ...c, amount_iva: 0, sell_amount: null })),
+  }
+  containersDialog.value = true
+}
+
+const goToSupplierCfdi = (inv: any) => {
+  router.push(`/invoices/suppliers/cfdis/view-${inv.supplier_cfdi_id}`)
 }
 
 const goToRequest = (req: any) => {
