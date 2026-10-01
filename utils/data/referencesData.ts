@@ -128,7 +128,7 @@ const seaImportDemo = {
   pod_id: 354,
   pol_id: 15,
   voyage_departure: 'tesat',
-  vessel_departure_id: 1,
+  vessel_departure_name_id: 1,
   line_id: 1,
   etd_date: '2024-01-29',
   sea_region_id: 2,

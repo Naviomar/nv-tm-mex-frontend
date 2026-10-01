@@ -91,6 +91,18 @@ class VesselsModule extends FetchFactory<IShipperPagination> {
     }
     return this.call('POST', `${this.RESOURCE2}`, fetchOptions)
   }
+
+  async searchVesselNames(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE2}/search`, fetchOptions)
+  }
+
+  async quickCreateVesselName(form: { name: string; force?: boolean }, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE2}/quick-create`, fetchOptions)
+  }
 }
 
 export default VesselsModule

@@ -87,7 +87,7 @@ const hasVoyageDischarge = computed(() => {
 
 const hasVesselDeparture = computed(() => {
   if (props.referencia == null) return false
-  return props.referencia.vessel_departure_id != null
+  return props.referencia.vessel_departure_name_id != null
 })
 
 const hasPpCcSellBuy = computed(() => {
