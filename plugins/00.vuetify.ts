@@ -6,6 +6,7 @@ import colors from 'vuetify/util/colors'
 // import { colors as tmColors } from '@/plugins/00.colors'
 import { createVuetify, type ThemeDefinition } from 'vuetify'
 import { VDateInput } from 'vuetify/labs/VDateInput'
+import { accentInsensitiveFilter } from '~/utils/accentInsensitiveFilter'
 
 
 // const tmLightTheme: ThemeDefinition = {
@@ -69,6 +70,12 @@ export default defineNuxtPlugin((app) => {
       },
     },
     defaults: {
+      VAutocomplete: {
+        customFilter: accentInsensitiveFilter,
+      },
+      VCombobox: {
+        customFilter: accentInsensitiveFilter,
+      },
       VChip: {
         variant: 'elevated',
       },

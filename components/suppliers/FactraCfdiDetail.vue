@@ -343,6 +343,48 @@
               </v-table>
             </div>
 
+            <div v-if="supplierCfdi.line_containers?.length > 0" class="mt-4">
+              <div class="font-bold py-2 flex items-center gap-2">
+                <v-icon size="small" color="indigo">mdi-train-car-container</v-icon>
+                Containers assigned for line payment
+              </div>
+              <v-alert type="info" density="compact" variant="tonal" class="mb-2 text-xs">
+                These containers are not a supplier cost: the line cost is taken from the
+                demurrages/detentions module and paid through its line payment request.
+              </v-alert>
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th class="w-14">Actions</th>
+                    <th>Service Ref#</th>
+                    <th>Container</th>
+                    <th>Concept</th>
+                    <th>Amount</th>
+                    <th>Assigned by</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="lc in supplierCfdi.line_containers" :key="`line-container-${lc.id}`">
+                    <td>
+                      <v-btn
+                        v-if="!hasLinkWithDemurrageAndDetentions"
+                        color="error"
+                        icon="mdi-delete"
+                        size="x-small"
+                        variant="tonal"
+                        @click="confirmRemoveLineContainer(lc)"
+                      />
+                    </td>
+                    <td>{{ lc.referencia?.reference_number }}</td>
+                    <td class="font-mono">{{ lc.reference_container?.container_number }}</td>
+                    <td>{{ lc.charge?.name }}</td>
+                    <td>{{ getCurrencyName(lc.currency_id) }} {{ formatToCurrency(lc.amount) }}</td>
+                    <td>{{ lc.creator?.name }}</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </div>
+
             <!-- Add more concepts to invoice -->
             <div v-if="!supplierCfdi.is_free_format">
               <div v-if="!canAddMoreSupplierPayConcepts">
@@ -388,13 +430,14 @@
                   <div class="col-span-2">
                     <v-autocomplete
                       v-model="newConcept.charge_id"
-                      :items="catalogs.charges"
+                      :items="conceptOptions"
                       item-title="name"
                       item-value="id"
                       label="Concept"
                       density="compact"
                     />
                   </div>
+                  <template v-if="!isLineConcept">
                   <div class="col-span-2">
                     <v-text-field
                       v-model="newConcept.amount"
@@ -506,7 +549,28 @@
                       </v-card-text>
                     </v-card>
                   </div>
+                  </template>
                 </div>
+
+                <SupplierCfdiLineContainersPicker
+                  v-if="isLineConcept"
+                  :supplier-cfdi-id="supplierCfdi.id"
+                  :charge-id="newConcept.charge_id"
+                  :line-type="lineType!"
+                  :referencia-ids="pickerReferenciaIds"
+                  :available-balance="availableBalance"
+                  :currency-id="supplierCfdi.currency_id"
+                  @assigned="onLineContainersAssigned"
+                />
+                <v-alert
+                  v-if="isLineConcept && pickerReferenciaIds.length === 0"
+                  type="info"
+                  density="compact"
+                  variant="tonal"
+                  class="mt-2"
+                >
+                  Line payment concepts only apply to maritime references.
+                </v-alert>
               </div>
 
               <div v-if="form.concepts.length > 0">
@@ -724,12 +788,75 @@ const getLinkName = (link: any) => {
   return 'Unknown link name'
 }
 
+// charge_id => 'demurrage' | 'detention'
+const lineChargeTypes = computed<Record<string, string>>(() => catalogs.value.line_charges || {})
+
+const lineType = computed<'demurrage' | 'detention' | null>(
+  () => (lineChargeTypes.value[newConcept.value.charge_id] as any) || null,
+)
+
+const isLineConcept = computed(() => lineType.value !== null)
+
+// Line payment concepts cannot be mixed with regular supplier concepts in the same invoice
+const conceptOptions = computed(() => {
+  const charges = catalogs.value.charges || []
+  const assigned = supplierCfdi.value.line_containers || []
+  if (assigned.length > 0) {
+    const assignedType = assigned[0].type
+    return charges.filter((c: any) => lineChargeTypes.value[c.id] === assignedType)
+  }
+  if (supplierCfdi.value.invoices?.length > 0 || form.value.concepts.length > 0) {
+    return charges.filter((c: any) => !lineChargeTypes.value[c.id])
+  }
+  return charges
+})
+
+const pickerReferenciaIds = computed<number[]>(() => {
+  if (serviciosFound.value.serviceType !== 'M') return []
+  const services = newConcept.value.service?.length ? newConcept.value.service : serviciosFound.value.services
+  return services.map((s: any) => s.id)
+})
+
+const assignedLineTotal = computed(() =>
+  (supplierCfdi.value.line_containers || []).reduce((acc: number, lc: any) => acc + parseFloat(lc.amount || 0), 0),
+)
+
+const onLineContainersAssigned = async () => {
+  newConcept.value.charge_id = null
+  await getData()
+}
+
+const confirmRemoveLineContainer = async (lineContainer: any) => {
+  const result = await confirm({
+    title: 'Are you sure?',
+    confirmationText: 'Yes, remove',
+    content: `Remove container ${lineContainer.reference_container?.container_number} from this invoice?`,
+    dialogProps: { persistent: true, maxWidth: 500 },
+    confirmationButtonProps: { color: 'error' },
+  })
+  if (!result) return
+  try {
+    loadingStore.start()
+    await $api.suppliers.removeLineContainer(supplierCfdi.value.id.toString(), lineContainer.id.toString())
+    snackbar.add({ type: 'success', text: 'Container removed from invoice' })
+    await getData()
+  } catch (e: any) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: e?.data?.message || 'Error removing container' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
+}
+
 const availableBalance = computed(() => {
   if (supplierCfdi.value.should_apply_cap_limit) {
     return parseFloat(supplierCfdi.value.cap_limit)
   }
   const total =
     amountProvisioned.value -
+    assignedLineTotal.value -
     form.value.concepts.reduce((acc: number, concept: any) => acc + calcTotalWithTaxes(concept), 0)
   // return rounded to 2 decimals
   return Math.round((total + Number.EPSILON) * 100) / 100
@@ -759,6 +886,7 @@ const canMarkAsFreeFormat = computed(() => {
     hasPermission(permissions.MarkSupplierCfdiAsFreeFormat) &&
     !supplierCfdi.value.is_free_format &&
     supplierCfdi.value.invoices?.length === 0 &&
+    !supplierCfdi.value.line_containers?.length &&
     (supplierCfdi.value.tipo_comprobante === 'I' || supplierCfdi.value.tipo_comprobante === 'E') &&
     !supplierCfdi.value.deleted_at
   )

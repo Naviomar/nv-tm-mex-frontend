@@ -77,18 +77,10 @@
                 :items="catalogs.lines"
                 item-title="name_code"
                 item-value="id"
-                @update:model-value="refreshVessels"
               />
             </div>
             <div class="col-span-2">
-              <InputAutocomplete
-                name="vessel_departure_id"
-                density="compact"
-                label="Departure vessel"
-                :items="lineResponsableVessels"
-                item-title="name"
-                item-value="id"
-              />
+              <AVesselDepartureSearch :set-id="values.vessel_departure_name_id || undefined" />
             </div>
             <div>
               <InputText name="voyage_departure" density="compact" label="Departure voyage" />
@@ -721,7 +713,6 @@ const catalogs = ref({
   consignees: [] as any,
   consignee_mbls: [] as any,
   freights: [] as any,
-  vessels: [] as any,
   voyage_destinations: [] as any,
   ports: [] as any,
   shippers: [] as any,
@@ -803,36 +794,6 @@ const formRebate = ref({
 const isRefDeleted = computed(() => {
   return referencia.value?.deleted_at != null
 })
-
-const isFormInitialized = ref(false)
-
-const lineResponsableVessels = computed(() => {
-  const filtered = catalogs.value.vessels.filter((vessel: any) => vessel.line_id === values.line_id)
-
-  // Si hay un vessel seleccionado y no está en la lista filtrada, agregarlo
-  if (values.vessel_departure_id) {
-    const isInFiltered = filtered.some((v: any) => v.id === values.vessel_departure_id)
-    if (!isInFiltered) {
-      const currentVessel = catalogs.value.vessels.find((v: any) => v.id === values.vessel_departure_id)
-      if (currentVessel) {
-        return [currentVessel, ...filtered]
-      }
-    }
-  }
-
-  return filtered
-})
-
-const refreshVessels = async (newLineId: any) => {
-  if (!isFormInitialized.value) return
-  if (values.vessel_departure_id && catalogs.value.vessels.length > 0) {
-    const vesselBelongsToNewLine = catalogs.value.vessels.some(
-      (v: any) => String(v.id) === String(values.vessel_departure_id) && String(v.line_id) === String(newLineId),
-    )
-    if (vesselBelongsToNewLine) return
-  }
-  setValues({ vessel_departure_id: null, voyage_discharge_id: null })
-}
 
 const cargo = computed(() => {
   let total_m3 = containers.value.reduce((acc: any, container: any) => {
@@ -1200,7 +1161,6 @@ const updateRefRebate = async () => {
 }
 
 const getData = async () => {
-  isFormInitialized.value = false
   try {
     loadingStore.start()
     const response = (await $api.referencias.getSeaImportById(props.id)) as any
@@ -1230,7 +1190,6 @@ const getData = async () => {
   } catch (e) {
     console.error(e)
   } finally {
-    isFormInitialized.value = true
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
@@ -1312,7 +1271,7 @@ const onSuccess = async () => {
       incident: values.incident ?? null,
       line_id: values.line_id ?? null,
       voyage_departure: values.voyage_departure ?? null,
-      vessel_departure_id: values.vessel_departure_id || null,
+      vessel_departure_name_id: values.vessel_departure_name_id || null,
       etd_date: values.etd_date ?? null,
       eta_date: values.eta_date ?? null,
       origin_id: values.origin_id ?? null,

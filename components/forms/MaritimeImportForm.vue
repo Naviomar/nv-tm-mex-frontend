@@ -42,15 +42,7 @@
               />
             </div>
             <div>
-              <InputAutocomplete
-                name="vessel_departure_id"
-                density="compact"
-                label="Departure vessel"
-                append-inner-icon="mdi-ray-start-arrow"
-                :items="lineResponsableVessels"
-                item-title="name"
-                item-value="id"
-              />
+              <AVesselDepartureSearch append-inner-icon="mdi-ray-start-arrow" />
             </div>
             <div>
               <InputText
@@ -484,7 +476,6 @@ const catalogs = ref<any>({
   consignees: [],
   consignee_mbls: [],
   freights: [],
-  vessels: [],
   voyage_destinations: [],
   ports: [],
   shippers: [],
@@ -549,10 +540,6 @@ const cargo = computed(() => {
     total_kgs,
     total_packages,
   }
-})
-
-const lineResponsableVessels = computed(() => {
-  return catalogs.value.vessels.filter((vessel: any) => vessel.line_id === seaImportAddFormRef.value?.values.line_id)
 })
 
 const executive = computed(() => {

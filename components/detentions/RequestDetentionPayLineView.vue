@@ -294,6 +294,16 @@
                             multiple
                             label="Containers"
                           />
+                          <v-chip
+                            v-if="supplierCfdi.line_containers?.length"
+                            color="indigo"
+                            size="x-small"
+                            variant="tonal"
+                            class="mt-1"
+                            prepend-icon="mdi-check-all"
+                          >
+                            Pre-assigned: {{ supplierCfdi.line_containers.length }} container(s)
+                          </v-chip>
                         </div>
                       </td>
                       <td>{{ supplierCfdi.supplier?.name }}</td>
@@ -923,6 +933,14 @@ const linkInvoice = async (supplierCfdi: any) => {
   }
 }
 
+// Containers of this request that were pre-assigned to the CFDI from the supplier invoice screen
+const preAssignedReqContainerIds = (supplierCfdi: any) => {
+  const assigned = (supplierCfdi.line_containers || []).map((lc: any) => lc.reference_container_id)
+  return (reqDetention.value.containers || [])
+    .filter((container: any) => assigned.includes(container.reference_container_id))
+    .map((container: any) => container.id)
+}
+
 const onClickSearchSupInvoice = async () => {
   try {
     loadingStore.start()
@@ -938,7 +956,7 @@ const onClickSearchSupInvoice = async () => {
     invoiceForm.value.results = invoiceForm.value.results.map((supplierCfdi: any) => {
       return {
         ...supplierCfdi,
-        containers: [],
+        containers: preAssignedReqContainerIds(supplierCfdi),
       }
     })
   } catch (e) {
