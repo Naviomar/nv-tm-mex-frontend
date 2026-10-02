@@ -35,6 +35,9 @@
 const props = defineProps({
   amounts: { type: Object as PropType<{ [currencyId: string]: number }>, default: () => ({}) },
   isNegative: { type: Boolean, default: false },
+  // Total already converted to USD by the backend (document-date exchange
+  // rates). When given, it is shown instead of converting at today's rate.
+  usd: { type: Number, default: undefined },
 })
 
 const exchangeRatesStore = useExchangeRatesStore()
@@ -45,6 +48,10 @@ const dialog = ref(false)
 const totalInUsd = ref<number | null>(null)
 
 const calculateTotalInUsd = async () => {
+  if (props.usd != null) {
+    totalInUsd.value = parseFloat(props.usd.toFixed(2))
+    return
+  }
   let total = 0
   for (const [currencyId, amount] of Object.entries(props.amounts)) {
     const originCurrencyId = Number(currencyId)
@@ -59,7 +66,7 @@ const calculateTotalInUsd = async () => {
 }
 
 // Recalculate whenever amounts change
-watch(() => props.amounts, calculateTotalInUsd, { immediate: true })
+watch(() => [props.amounts, props.usd], calculateTotalInUsd, { immediate: true })
 
 const currencyName = computed(() => getCurrencyName(usdCurrencyId)) // USD currency name
 </script>

@@ -205,7 +205,7 @@
 
               <div class="bg-slate-300 text-center font-bold">Total sell</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getProfitSell" />
+                <TotalsInUsd :amounts="getProfitSell" :usd="profitUsd?.total_sell" />
               </div>
               <div class="bg-slate-300 text-center font-bold">Total buy</div>
               <div class="bg-slate-200 text-right">
@@ -213,15 +213,15 @@
               </div>
               <div class="bg-slate-300 text-center font-bold">Credit notes</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getCreditFfNotes" />
+                <TotalsInUsd :amounts="getCreditFfNotes" :usd="profitUsd?.credit_notes" />
               </div>
               <div class="bg-slate-300 text-center font-bold">Debit notes</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getDebitFfNotes" :is-negative="true" />
+                <TotalsInUsd :amounts="getDebitFfNotes" :usd="profitUsd ? -profitUsd.debit_notes : undefined" :is-negative="true" />
               </div>
               <div class="bg-slate-300 text-center font-bold">(-) Supplier invoice</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getSupplierInvoices" />
+                <TotalsInUsd :amounts="getSupplierInvoices" :usd="profitUsd?.supplier_invoices" />
               </div>
               <div class="bg-slate-300 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
@@ -243,7 +243,7 @@
                 </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getRemainingBuy" />
+                <TotalsInUsd :amounts="getRemainingBuy" :usd="profitUsd?.remaining_buy" />
               </div>
               <div class="bg-slate-300 text-center font-bold">(-) Rebate</div>
               <div class="bg-slate-200 text-right">
@@ -300,7 +300,7 @@
                 </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getTotalProfit" />
+                <TotalsInUsd :amounts="getTotalProfit" :usd="profitUsd?.operating_profit" />
               </div>
 
               <div class="bg-slate-300 text-center font-bold">
@@ -416,7 +416,7 @@
                 </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getTotalProfitWithDemurrages" />
+                <TotalsInUsd :amounts="getTotalProfitWithDemurrages" :usd="profitUsd?.profit_total" />
               </div>
             </div>
           </div>
@@ -435,6 +435,9 @@
                 <v-list-item><v-list-item-title>- Supplier invoice: {{ formatToCurrency(profitBreakdown.supplierInvoices) }}</v-list-item-title></v-list-item>
                 <v-list-item><v-list-item-title>- Pending buy: {{ formatToCurrency(profitBreakdown.remainingBuy) }}</v-list-item-title></v-list-item>
                 <v-list-item><v-list-item-title>- Rebate: {{ formatToCurrency(profitBreakdown.rebate) }}</v-list-item-title></v-list-item>
+                <v-list-item v-if="profitBreakdown.customerCreditNotes">
+                  <v-list-item-title>- Customer credit notes: {{ formatToCurrency(profitBreakdown.customerCreditNotes) }}</v-list-item-title>
+                </v-list-item>
                 <v-list-item>
                   <v-list-item-title class="font-bold">= Operating Profit: {{ formatToCurrency(profitBreakdown.operatingProfit) }}</v-list-item-title>
                 </v-list-item>
@@ -793,14 +796,15 @@ const getWarrantyDepositConcepts = computed(() => {
     }, {})
 })
 const getProfitSell = computed(() => {
-  // merge getSellTotalCollect and getSellTotalPrepaid
+  // All sell concepts (within and outside BL), without IVA. Not taken from the
+  // Prepaid/Collect columns: those are empty while the reference has no sell
+  // rate type, and the charges already captured would drop out of the profit.
   const totals: Record<number, number> = {}
 
-  addToTotals(totals, getSellPrepaidConceptsWithinBl.value)
-  addToTotals(totals, getSellPrepaidConceptsOutsideBl.value)
-
-  addToTotals(totals, getSellCollectConceptsWithinBl.value)
-  addToTotals(totals, getSellCollectConceptsOutsideBl.value)
+  getRefMergedCharges.value.forEach((charge: any) => {
+    const amount = parseFloat(charge.amount) || 0
+    totals[charge.currency_id] = (totals[charge.currency_id] || 0) + amount
+  })
 
   return totals
 })
@@ -998,6 +1002,7 @@ const profitBreakdown = ref<Record<string, number>>({
   supplierInvoices: 0,
   remainingBuy: 0,
   rebate: 0,
+  customerCreditNotes: 0,
   operatingProfit: 0,
   demurragesProfit: 0,
   profitTotal: 0,
@@ -1019,7 +1024,29 @@ const convertToUsd = async (amounts: Record<number, number> | null | undefined) 
   return parseFloat(total.toFixed(2))
 }
 
+// Profit figures in USD computed by the backend with the same formula as the
+// profit reports (document-date exchange rates), so screen and reports match.
+const profitUsd = computed(() => profitSeaImportRef.value.profitUsd as Record<string, number> | undefined)
+
 const computeProfitBreakdown = async () => {
+  if (profitUsd.value) {
+    const usd = profitUsd.value
+    profitBreakdown.value = {
+      totalSell: usd.total_sell,
+      creditNotes: usd.credit_notes,
+      debitNotes: -usd.debit_notes,
+      warrantyDeposit: usd.warranty_deposit,
+      supplierInvoices: usd.supplier_invoices,
+      remainingBuy: usd.remaining_buy,
+      rebate: usd.rebate,
+      customerCreditNotes: usd.customer_credit_notes,
+      operatingProfit: usd.operating_profit,
+      demurragesProfit: usd.demurrages_profit,
+      profitTotal: usd.profit_total,
+    }
+    return
+  }
+
   const totalSell = await convertToUsd(getProfitSell.value)
   const creditNotes = await convertToUsd(getCreditFfNotes.value)
   const debitNotes = await convertToUsd(getDebitFfNotes.value)
@@ -1042,6 +1069,7 @@ const computeProfitBreakdown = async () => {
     supplierInvoices,
     remainingBuy,
     rebate,
+    customerCreditNotes: 0,
     operatingProfit,
     demurragesProfit,
     profitTotal,
