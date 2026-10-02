@@ -259,6 +259,14 @@
                         >{{ container.container_number }}
                         {{ container.demurrage ? ` - ${container.demurrage.start_date}` : '' }}
                       </span>
+                      <v-icon
+                        v-if="container.demurrage && container.demurrage.cut_status !== 'sent'"
+                        end
+                        size="14"
+                        :color="container.demurrage.cut_status === 'outdated' ? 'warning' : undefined"
+                        :title="container.demurrage.cut_status === 'outdated' ? 'Changed since last cut' : 'Cut pending'"
+                        >mdi-send-clock-outline</v-icon
+                      >
                     </v-chip>
                   </div>
                 </td>

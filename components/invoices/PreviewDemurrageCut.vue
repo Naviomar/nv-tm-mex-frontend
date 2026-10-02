@@ -4,7 +4,7 @@
       color="secondary"
       density="compact"
       :loading="loadingStore.loading"
-      :disabled="loadingStore.loading"
+      :disabled="loadingStore.loading || disabled"
       block
       @click="previewInvoice"
       :size="size"
@@ -40,6 +40,15 @@ const props = defineProps({
     type: String,
     default: 'default',
   },
+  // Sin ids se previsualiza el corte de todos los contenedores con demoras
+  containerIds: {
+    type: Array as PropType<number[]>,
+    default: () => [],
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const pdfViewer = ref<any>(null)
@@ -54,7 +63,7 @@ const previewInvoice = async () => {
   try {
     loadingStore.start()
 
-    const response = await $api.demurrages.showPdfCut(props.referencia.id)
+    const response = await $api.demurrages.showPdfCut(props.referencia.id, props.containerIds)
 
     // console.log(data.value)
     const blob = new Blob([response as any], { type: 'application/pdf' })
