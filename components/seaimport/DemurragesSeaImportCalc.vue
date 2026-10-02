@@ -98,27 +98,29 @@
                     </v-card-title>
                     <v-card-text>
                       <div class="flex flex-col gap-4">
-                        <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
-                          <v-icon>mdi-email-outline</v-icon>
-                          Send email
-                        </v-btn>
+                        <div v-if="cutSummary.total">
+                          <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
+                            <v-icon>mdi-email-outline</v-icon>
+                            Send cut
+                          </v-btn>
+                          <div class="text-caption text-center mt-1" :class="cutSummary.actionable ? 'text-warning' : 'text-success'">
+                            <v-icon size="12">{{ cutSummary.actionable ? 'mdi-send-clock-outline' : 'mdi-check' }}</v-icon>
+                            {{
+                              cutSummary.actionable
+                                ? `${cutSummary.actionable} of ${cutSummary.total} containers need a cut`
+                                : 'All containers have their cut sent'
+                            }}
+                          </div>
+                        </div>
 
                         <PreviewDemurrageCut :referencia="referencia" />
+                        <DemurrageCutHistoryDialog :referencia-id="referencia.id" />
 
-                        <v-dialog v-model="showSendDialog" persistent max-width="600px">
-                          <v-card>
-                            <v-card-title>Ref#{{ referencia.reference_number }} Send demurrages cut</v-card-title>
-                            <v-card-text>
-                              <v-textarea v-model="form.emails" label="Email(s)" rows="5" />
-                            </v-card-text>
-                            <v-card-actions>
-                              <v-btn @click="showSendDialog = false">Close</v-btn>
-                              <v-btn color="primary" @click="sendEmailClick" :loading="loadingStore.loading"
-                                >Send</v-btn
-                              >
-                            </v-card-actions>
-                          </v-card>
-                        </v-dialog>
+                        <DemurrageCutSendDialog
+                          v-model="showSendDialog"
+                          :referencia="referencia"
+                          @sent="onCutSent"
+                        />
                       </div>
                     </v-card-text>
                   </v-card>
@@ -270,6 +272,7 @@
                     <th>Container</th>
                     <th>Type</th>
                     <th>Cálculo</th>
+                    <th>Cut</th>
                     <th>Start date</th>
                     <th>Return empty</th>
                     <th>Start & end date with free days</th>
@@ -315,6 +318,9 @@
                       <v-chip variant="outlined" size="small">
                         {{ item.demurrage?.is_parcial ? 'Parcial' : 'Total' }}
                       </v-chip>
+                    </td>
+                    <td>
+                      <DemurrageCutStatusChip :status="item.demurrage?.cut_status" :last-cut="item.demurrage?.latest_cut" />
                     </td>
                     <td>
                       <v-text-field
@@ -543,6 +549,11 @@
                       <span class="text-caption opacity-70">{{ container.container_type?.name }}</span>
                       <v-icon size="small">mdi-arrow-right</v-icon>
                       <PartialLastCalcShow :container="container" />
+                      <DemurrageCutStatusChip
+                        v-if="container.demurrage"
+                        :status="container.demurrage.cut_status"
+                        :last-cut="container.demurrage.latest_cut"
+                      />
                     </div>
                   </v-expansion-panel-title>
                   <v-expansion-panel-text>
@@ -893,7 +904,6 @@ const form = reactive({
   type_calculation: '',
   is_con_iva: true,
   apply_discount: false,
-  emails: '',
 })
 
 const formDiscount = reactive({
@@ -1312,31 +1322,17 @@ const saveLinePayment = async (container: any) => {
   }
 }
 
-const { hasAtLeastOneValidEmail } = useEmailListValidation()
-
-const sendEmailClick = async () => {
-  if (!hasAtLeastOneValidEmail(form.emails)) {
-    snackbar.add({ type: 'warning', text: 'Enter at least one valid email' })
-    return
+const cutSummary = computed(() => {
+  const withDemurrage = (referencia.value?.containers ?? []).filter((c: any) => c.demurrage)
+  return {
+    total: withDemurrage.length,
+    actionable: withDemurrage.filter((c: any) => c.demurrage.cut_status !== 'sent').length,
   }
-  try {
-    loadingStore.loading = true
-    const body = {
-      emails: form.emails,
-    }
-    const response = (await $api.demurrages.sendEmailDemurrageCut(props.id, body)) as any
-    snackbar.add({ type: 'success', text: response.message })
-    form.emails = ''
-    showSendDialog.value = false
+})
 
-    await getReferencia(props.id)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
+const onCutSent = async () => {
+  // el latest_cut se registra al encolar, no al entregar el correo: no hace falta polling
+  await getReferencia(props.id)
 }
 
 const saveNote = async () => {
