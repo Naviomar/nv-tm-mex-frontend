@@ -106,7 +106,7 @@
             <div class="grid grid-cols-2 divide-x divide-y border divide-slate-400 border-slate-400">
               <div class="bg-slate-300 text-center font-bold">Total sell</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getProfitSell" />
+                <TotalsInUsd :amounts="getProfitSell" :usd="profitUsd?.total_sell" />
               </div>
               <div class="bg-slate-300 text-center font-bold">Total buy</div>
               <div class="bg-slate-200 text-right">
@@ -114,15 +114,15 @@
               </div>
               <div class="bg-slate-300 text-center font-bold">Credit notes</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getCreditFfNotes" />
+                <TotalsInUsd :amounts="getCreditFfNotes" :usd="profitUsd?.credit_notes" />
               </div>
               <div class="bg-slate-300 text-center font-bold">Debit notes</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getDebitFfNotes" :is-negative="true" />
+                <TotalsInUsd :amounts="getDebitFfNotes" :usd="profitUsd ? -profitUsd.debit_notes : undefined" :is-negative="true" />
               </div>
               <div class="bg-slate-300 text-center font-bold">(-) Supplier invoice</div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getSupplierInvoices" />
+                <TotalsInUsd :amounts="getSupplierInvoices" :usd="profitUsd?.supplier_invoices" />
               </div>
               <div class="bg-slate-300 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
@@ -144,7 +144,7 @@
                 </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getRemainingBuy" />
+                <TotalsInUsd :amounts="getRemainingBuy" :usd="profitUsd?.remaining_buy" />
               </div>
               <div class="bg-slate-300 text-center font-bold">(-) Rebate</div>
               <div class="bg-slate-200 text-right">
@@ -164,7 +164,7 @@
                     <b>¿Cómo se calcula?</b><br />
                     <ul style="padding-left: 1em">
                       <li>
-                        <b>+ Total sell</b> (suma de todos los cargos de venta: Prepaid + Collect, cada uno con su IVA)
+                        <b>+ Total sell</b> (suma de todos los cargos de venta: Prepaid + Collect, sin IVA)
                       </li>
                       <li><b>+ Credit notes</b> (notas de crédito a favor)</li>
                       <li><b>+ Debit notes</b> (notas de débito a favor)</li>
@@ -201,7 +201,7 @@
                 </v-tooltip>
               </div>
               <div class="bg-slate-200 text-right">
-                <TotalsInUsd :amounts="getTotalProfit" />
+                <TotalsInUsd :amounts="getTotalProfit" :usd="profitUsd?.operating_profit" />
               </div>
               <div class="bg-slate-300 text-center font-bold">(-) Pending payment</div>
               <div class="bg-slate-200 text-right">
@@ -509,11 +509,14 @@ const getSellTotalCollect = computed(() => {
 })
 
 const getProfitSell = computed(() => {
-  // merge getSellTotalCollect and getSellTotalPrepaid
+  // Sell concepts without IVA: IVA is collected on behalf of the tax
+  // authority, it is not income (same rule as the profit reports).
   const totals: Record<number, number> = {}
 
-  addToTotals(totals, getSellTotalCollect.value)
-  addToTotals(totals, getSellTotalPrepaid.value)
+  addToTotals(totals, getSellCollectConceptsWithinBl.value)
+  addToTotals(totals, getSellCollectConceptsOutsideBl.value)
+  addToTotals(totals, getSellPrepaidConceptsWithinBl.value)
+  addToTotals(totals, getSellPrepaidConceptsOutsideBl.value)
 
   return totals
 })
@@ -733,6 +736,10 @@ const profitSeaExportRef = ref<any>({
   supplierInvoices: [],
   refunds: [],
 })
+
+// Profit figures in USD computed by the backend with the same formula as the
+// profit reports (document-date exchange rates), so screen and reports match.
+const profitUsd = computed(() => profitSeaExportRef.value.profitUsd as Record<string, number> | undefined)
 // const referencia = ref<any>({})
 
 const syncRef = async () => {
