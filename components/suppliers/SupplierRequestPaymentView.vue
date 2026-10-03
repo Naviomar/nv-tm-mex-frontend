@@ -329,12 +329,8 @@
                 <td class="text-red">-{{ formatToCurrency(invoice.amount_ret_isr) }}</td>
                 <td class="font-bold">{{ formatToCurrency(invoice.amount_total) }}</td>
                 <td>
-                  <div class="flex gap-2">
-                    <div v-for="(link, index) in invoice.links" :key="`invoice-link-${index}`">
-                      <v-chip color="primary" size="small" class="mr-2">
-                        {{ getLinkName(link) }}
-                      </v-chip>
-                    </div>
+                  <div class="flex flex-wrap gap-1">
+                    <SupplierInvoiceLinkChip v-for="link in invoice.links" :key="`invoice-link-${link.id}`" :link="link" />
                   </div>
                 </td>
               </tr>
@@ -641,16 +637,6 @@ const getInvoiceEta = (invoice: any) => {
   const referenceable = invoice.referenceable
   if (!referenceable) return null
   return referenceable.voyage_discharge?.eta_date ?? referenceable.eta_date ?? null
-}
-
-const getLinkName = (link: any) => {
-  if (link.chargeable_type.includes('Charge')) {
-    return link.chargeable?.charge?.name
-  }
-  if (link.chargeable_type.includes('FfNote')) {
-    return `F.F. Note #${link.chargeable_id} From TM Debit`
-  }
-  return 'Unknown link name'
 }
 
 const addToSupReqPayment = async (invoice: any) => {

@@ -1,639 +1,487 @@
 <template>
   <div>
-    <v-card :color="darkMode.isDark ? 'cardBackground' : ''">
-      <v-card-title>
-        <h3>Configure supplier CFDI</h3>
-      </v-card-title>
-      <v-card-text>
-        <v-card class="mb-4">
-          <v-card-title>
-            <div class="flex justify-between">
-              <div class="flex items-center gap-2">
-                <v-icon size="x-small">mdi-invoice-outline</v-icon>
-                <div>Supplier CFDI #{{ props.id }}</div>
+    <div class="flex items-center gap-2 mb-3">
+      <v-icon color="primary">mdi-file-cog-outline</v-icon>
+      <h3 class="text-lg font-bold">Configure supplier CFDI</h3>
+    </div>
+
+    <!-- 1. Invoice summary -->
+    <SupplierCfdiSummary
+      :supplier-cfdi="supplierCfdi"
+      :available-balance="availableBalance"
+      can-resync-cap-limit
+      @sat-validated="onSatValidated"
+      @resync-cap-limit="reSyncSupplierCapLimit"
+    >
+      <div class="flex flex-col gap-2">
+        <v-alert v-if="supplierCfdi.sat_status === 'Cancelado'" type="error" variant="flat" density="compact">
+          <div class="font-bold">Este CFDI está CANCELADO en SAT</div>
+          <div class="text-sm">No se puede crear una solicitud de pago para este CFDI. Por favor contacte al proveedor.</div>
+        </v-alert>
+
+        <v-alert v-if="hasParent" type="info" title="Reissued invoice" variant="tonal" density="compact">
+          This invoice is linked / reissued from
+          <NuxtLink :to="`/invoices/suppliers/cfdis/view-${supplierCfdi.parent_deleted?.id}`" target="_blank" class="underline">
+            <v-icon>mdi-open-in-new</v-icon> {{ supplierCfdi.parent_deleted?.serie_folio }}
+          </NuxtLink>
+        </v-alert>
+
+        <v-alert v-if="isDeleted" type="error" title="Invoice is cancelled" density="compact">
+          This invoice is cancelled and linked to
+          <NuxtLink
+            v-for="(children, index) in supplierCfdi.children_deleted"
+            :key="`children-${index}`"
+            :to="`/invoices/suppliers/cfdis/view-${children.id}`"
+            target="_blank"
+            class="underline"
+          >
+            <v-icon>mdi-open-in-new</v-icon> {{ children.serie_folio }}
+          </NuxtLink>
+        </v-alert>
+
+        <v-alert v-if="canMarkAsFreeFormat" type="info" variant="tonal" density="compact">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold">¿Marcar como formato libre?</div>
+              <div class="text-sm">
+                Las facturas de formato libre no requieren desglose a referencias y se pueden pagar directamente.
               </div>
             </div>
-          </v-card-title>
-          <v-card-text>
-            <div class="grid grid-cols-2 mb-4">
-              <div>
-                <div>
-                  <h3 class="font-bold">Supplier</h3>
-                  <div>{{ supplierCfdi.supplier?.name || 'Pending supplier' }} ➡️ {{ supplierCfdi.rfc_emisor }}</div>
-                </div>
-                <div>
-                  <h3 class="font-bold">CFDI date</h3>
-                  <div>{{ formatDateOnlyString(supplierCfdi.invoice_date) }}</div>
-                </div>
-                <div>
-                  <h3 class="font-bold">Serie/Folio</h3>
-                  <div>{{ supplierCfdi.serie_folio }}</div>
-                </div>
-                <div>
-                  <h3 class="font-bold">Received at</h3>
-                  <div>{{ formatDateString(supplierCfdi.created_at) }}</div>
-                </div>
-                <div>
-                  <h3 class="font-bold">Status</h3>
-                  <div>Pending payment</div>
-                </div>
-              </div>
-              <div>
-                <div>
-                  <h3 class="font-bold">Total in CFDI</h3>
-                  <div>{{ formatToCurrency(supplierCfdi.amount_cfdi) }} {{ supplierCfdi.currency?.name }}</div>
-                </div>
-                <div>
-                  <h3 class="font-bold">Available balance</h3>
-                  <div>{{ formatToCurrency(availableBalance) }} {{ supplierCfdi.currency?.name }}</div>
-                  <div v-if="supplierCfdi.should_apply_cap_limit" class="flex gap-2">
-                    <v-chip color="primary" size="small">Cap limit by supplier type</v-chip>
-                    <v-btn icon="mdi-sync" size="x-small" color="purple" @click="reSyncSupplierCapLimit"></v-btn>
-                  </div>
-                </div>
-                <div>
-                  <h3 class="font-bold">CFDI Type</h3>
-                  <div>
-                    {{ supplierCfdi.tipo_comprobante_name }}
-                  </div>
-                </div>
-                <div v-if="supplierCfdi.is_manual">
-                  <v-chip color="purple" size="small">Manual CFDI</v-chip>
-                </div>
-                <div v-if="supplierCfdi.is_free_format">
-                  <v-chip color="deep-purple" size="small">Formato Libre</v-chip>
-                </div>
-                <!-- Estatus SAT -->
-                <div v-if="supplierCfdi.uuid" class="mt-2">
-                  <h3 class="font-bold">Estatus SAT</h3>
-                  <SatValidationStatus
-                    :supplierCfdi="supplierCfdi"
-                    @validated="onSatValidated"
+            <v-btn color="deep-purple" size="small" prepend-icon="mdi-tag-outline" :loading="loadingFreeFormat" @click="toggleFreeFormat(true)">
+              Marcar como formato libre
+            </v-btn>
+          </div>
+        </v-alert>
+
+        <v-alert v-if="supplierCfdi.is_free_format && !canRevertFreeFormat" type="info" variant="tonal" density="compact" color="deep-purple">
+          <div class="font-bold">Este CFDI está marcado como Formato Libre</div>
+          <div class="text-sm">Puede crear una solicitud de pago directamente sin desglosar conceptos.</div>
+        </v-alert>
+
+        <v-alert v-if="canRevertFreeFormat" type="warning" variant="tonal" density="compact">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold">Revertir formato libre</div>
+              <div class="text-sm">Esta factura está marcada como formato libre. Puedes revertirla a formato normal.</div>
+            </div>
+            <v-btn color="orange" size="small" prepend-icon="mdi-undo" :loading="loadingFreeFormat" @click="toggleFreeFormat(false)">
+              Revertir a normal
+            </v-btn>
+          </div>
+        </v-alert>
+      </div>
+    </SupplierCfdiSummary>
+
+    <!-- Free format charges -->
+    <SupplierCfdiSection
+      v-if="supplierCfdi.is_free_format"
+      title="Cargos de formato libre"
+      subtitle="Se pagan directamente, sin desglose a referencias. Las notas son obligatorias."
+      icon="mdi-tag-outline"
+      color="deep-purple"
+    >
+      <v-table v-if="supplierCfdi.cfdi_charges?.length > 0" density="compact" class="mb-4">
+        <thead>
+          <tr>
+            <th class="w-24">Acciones</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Notas</th>
+            <th>Creado por</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="charge in supplierCfdi.cfdi_charges" :key="charge.id">
+            <td>
+              <v-btn icon="mdi-pencil" size="x-small" color="primary" variant="tonal" class="mr-1" @click="editCfdiCharge(charge)" />
+              <v-btn icon="mdi-delete" size="x-small" color="error" variant="tonal" @click="confirmDeleteCfdiCharge(charge)" />
+            </td>
+            <td>{{ charge.charge?.name || 'Sin concepto' }}</td>
+            <td>{{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(charge.amount) }}</td>
+            <td class="text-xs">{{ charge.notes }}</td>
+            <td>{{ charge.creator?.name }}</td>
+          </tr>
+        </tbody>
+      </v-table>
+
+      <div class="rounded tm-border p-4">
+        <div class="font-bold mb-2">{{ editingCharge ? 'Editar cargo' : 'Agregar nuevo cargo' }}</div>
+        <v-row>
+          <v-col cols="12" md="4">
+            <v-autocomplete
+              v-model="newCfdiCharge.charge_id"
+              :items="catalogs.free_format_charges || []"
+              item-title="name"
+              item-value="id"
+              label="Concepto (opcional)"
+              density="compact"
+              clearable
+            />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-text-field
+              v-model.number="newCfdiCharge.amount"
+              type="number"
+              label="Monto *"
+              density="compact"
+              :prefix="getCurrencyName(supplierCfdi.currency_id)"
+              :error-messages="chargeErrors.amount"
+            />
+          </v-col>
+          <v-col cols="12" md="5">
+            <v-combobox
+              v-model="newCfdiCharge.notes"
+              :items="catalogs.previous_notes || []"
+              label="Notas (obligatorio) *"
+              density="compact"
+              clearable
+              :error-messages="chargeErrors.notes"
+            />
+          </v-col>
+        </v-row>
+        <div class="flex gap-2">
+          <v-btn color="deep-purple" size="small" :prepend-icon="editingCharge ? 'mdi-content-save' : 'mdi-plus'" :loading="loadingCharge" @click="saveCfdiCharge">
+            {{ editingCharge ? 'Guardar cambios' : 'Agregar cargo' }}
+          </v-btn>
+          <v-btn v-if="editingCharge" color="grey" size="small" variant="outlined" @click="cancelEditCharge">Cancelar</v-btn>
+        </div>
+      </div>
+    </SupplierCfdiSection>
+
+    <template v-if="!supplierCfdi.is_free_format">
+      <!-- 2. Registered concepts -->
+      <SupplierCfdiSection
+        step="1"
+        title="Concepts registered in this invoice"
+        subtitle="Breakdown already saved: each concept is a cost of one reference."
+        icon="mdi-format-list-checks"
+        color="teal"
+      >
+        <SupplierCfdiConceptsTable
+          :invoices="supplierCfdi.invoices"
+          :currency-id="supplierCfdi.currency_id"
+          :usd-rates="supplierCfdi.usd_rates"
+          deletable
+          @delete="confirmDeleteSupInvoice"
+        />
+
+        <div v-if="supplierCfdi.line_containers?.length > 0" class="mt-4">
+          <div class="font-bold py-2 flex items-center gap-2">
+            <v-icon size="small" color="indigo">mdi-train-car-container</v-icon>
+            Containers assigned for line payment
+          </div>
+          <v-alert type="info" density="compact" variant="tonal" class="mb-2 text-xs">
+            These containers are not a supplier cost: the line cost is taken from the demurrages/detentions module and
+            paid through its line payment request.
+          </v-alert>
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th class="w-14">Actions</th>
+                <th>Service Ref#</th>
+                <th>Container</th>
+                <th>Concept</th>
+                <th>Amount</th>
+                <th>Assigned by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="lc in supplierCfdi.line_containers" :key="`line-container-${lc.id}`">
+                <td>
+                  <v-btn
+                    v-if="!hasLinkWithDemurrageAndDetentions"
+                    color="error"
+                    icon="mdi-delete"
+                    size="x-small"
+                    variant="tonal"
+                    @click="confirmRemoveLineContainer(lc)"
                   />
-                </div>
-              </div>
+                </td>
+                <td>{{ lc.referencia?.reference_number }}</td>
+                <td class="font-mono">{{ lc.reference_container?.container_number }}</td>
+                <td>{{ lc.charge?.name }}</td>
+                <td>{{ getCurrencyName(lc.currency_id) }} {{ formatToCurrency(lc.amount) }}</td>
+                <td>{{ lc.creator?.name }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </SupplierCfdiSection>
+
+      <!-- 3. Add concepts -->
+      <SupplierCfdiSection
+        step="2"
+        title="Add concepts to the invoice"
+        subtitle="Find the reference(s), capture the charge and link it to the sell concept it covers."
+        icon="mdi-playlist-plus"
+        color="primary"
+      >
+        <template #actions>
+          <v-chip :color="availableBalance > 0.01 ? 'warning' : 'success'" variant="tonal" size="small">
+            Available: {{ formatToCurrency(availableBalance) }} {{ cfdiCurrencyName }}
+          </v-chip>
+        </template>
+
+        <v-alert v-if="!canAddMoreSupplierPayConcepts" type="success" variant="tonal" density="compact" class="mb-2">
+          La factura no se puede modificar: el monto total ya se desglosó o no es un CFDI de tipo ingreso/egreso.
+        </v-alert>
+
+        <v-alert v-if="hasLinkWithDemurrageAndDetentions" type="warning" density="compact" color="amber" class="mb-2">
+          This invoice has links with a request payment for demurrage / detentions. Please remove them before adding
+          more concepts.
+        </v-alert>
+
+        <template v-if="canAddMoreSupplierPayConcepts && !hasLinkWithDemurrageAndDetentions">
+          <!-- A. Find references -->
+          <div class="step-label"><span class="step-badge">A</span> Find reference(s)</div>
+          <SearchGlobalServicesGrouped @update="setServicios" />
+
+          <!-- B. Capture charge -->
+          <template v-if="hasServiciosFound">
+            <div class="step-label mt-5">
+              <span class="step-badge">B</span> Capture the charge
+              <v-chip size="x-small" variant="tonal" class="ml-2">{{ getServiciosTypeName }} · {{ countServiciosFound }} found</v-chip>
             </div>
 
-            <!-- Alerta si el CFDI está cancelado en SAT -->
-            <div v-if="supplierCfdi.sat_status === 'Cancelado'" class="mb-4">
-              <v-alert type="error" variant="flat" density="compact">
-                <div class="flex items-center gap-2">
-                  <v-icon>mdi-alert-circle</v-icon>
-                  <div>
-                    <div class="font-bold">Este CFDI está CANCELADO en SAT</div>
-                    <div class="text-sm">
-                      No se puede crear una solicitud de pago para este CFDI. Por favor contacte al proveedor.
-                    </div>
-                  </div>
-                </div>
-              </v-alert>
-            </div>
-
-            <!-- Opción para marcar como formato libre -->
-            <div v-if="canMarkAsFreeFormat" class="mb-4">
-              <v-alert type="info" variant="tonal" density="compact">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="font-bold">¿Marcar como formato libre?</div>
-                    <div class="text-sm">
-                      Las facturas de formato libre no requieren desglose a referencias y se pueden pagar directamente.
-                    </div>
-                  </div>
-                  <v-btn
-                    color="deep-purple"
-                    size="small"
-                    @click="toggleFreeFormat(true)"
-                    :loading="loadingFreeFormat"
-                  >
-                    <v-icon left>mdi-tag-outline</v-icon>
-                    Marcar como Formato Libre
-                  </v-btn>
-                </div>
-              </v-alert>
-            </div>
-
-            <!-- Alerta informativa cuando está marcado como formato libre (sin botón) -->
-            <div v-if="supplierCfdi.is_free_format && !canRevertFreeFormat" class="mb-4">
-              <v-alert type="info" variant="tonal" density="compact" color="deep-purple">
-                <div class="flex items-center gap-2">
-                  <v-icon>mdi-tag-outline</v-icon>
-                  <div>
-                    <div class="font-bold">Este CFDI está marcado como Formato Libre</div>
-                    <div class="text-sm">
-                      Puede crear una solicitud de pago directamente sin desglosar conceptos.
-                    </div>
-                  </div>
-                </div>
-              </v-alert>
-            </div>
-
-            <!-- Opción para revertir formato libre (solo si tiene permiso) -->
-            <div v-if="canRevertFreeFormat" class="mb-4">
-              <v-alert type="warning" variant="tonal" density="compact">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="font-bold">Revertir formato libre</div>
-                    <div class="text-sm">
-                      Esta factura está marcada como formato libre. Puedes revertirla a formato normal.
-                    </div>
-                  </div>
-                  <v-btn
-                    color="orange"
-                    size="small"
-                    @click="toggleFreeFormat(false)"
-                    :loading="loadingFreeFormat"
-                  >
-                    <v-icon left>mdi-undo</v-icon>
-                    Revertir a Normal
-                  </v-btn>
-                </div>
-              </v-alert>
-            </div>
-
-            <div class="grid grid-cols-2">
-              <ButtonDownloadS3Object2 :s3Path="supplierCfdi.xml_attachment" label="Download XML" />
-
-              <ButtonDownloadS3Object2 :s3Path="supplierCfdi.pdf_attachment" label="Download Zip" />
-            </div>
-
-            <div v-if="hasParent">
-              <v-alert type="info" title="Reissued invoice" variant="tonal" density="compact">
-                This invoice is linked / reissued from
-                <NuxtLink
-                  :to="`/invoices/suppliers/cfdis/view-${supplierCfdi.parent_deleted?.id}`"
-                  target="_blank"
-                  class="underline"
-                  ><v-icon>mdi-open-in-new</v-icon> {{ supplierCfdi.parent_deleted?.serie_folio }}
-                </NuxtLink>
-              </v-alert>
-            </div>
-
-            <div v-if="isDeleted">
-              <v-alert type="error" title="Invoice is cancelled" density="compact">
-                This invoice is cancelled and linked to
-                <NuxtLink
-                  v-for="(children, index) in supplierCfdi.children_deleted"
-                  :to="`/invoices/suppliers/cfdis/view-${children.id}`"
-                  target="_blank"
-                  class="underline"
-                  :key="`children-${index}`"
-                  ><v-icon>mdi-open-in-new</v-icon> {{ children.serie_folio }}
-                </NuxtLink>
-              </v-alert>
-            </div>
-
-            <div class="mb-4">
-              <SupplierCfdiNotesForm :supplierCfdi="supplierCfdi" />
-            </div>
-
-            <!-- Sección de cargos manuales para formato libre -->
-            <div v-if="supplierCfdi.is_free_format" class="mb-4">
-              <v-card color="deep-purple-lighten-5" class="dark:bg-deep-purple-darken-4">
-                <v-card-title class="font-bold">
-                  <v-icon>mdi-tag-outline</v-icon>
-                  Cargos de Formato Libre
-                </v-card-title>
-                <v-card-text>
-                  <!-- Lista de cargos existentes -->
-                  <div v-if="supplierCfdi.cfdi_charges?.length > 0" class="mb-4">
-                    <v-table density="compact">
-                      <thead>
-                        <tr>
-                          <th>Acciones</th>
-                          <th>Concepto</th>
-                          <th>Monto</th>
-                          <th>Notas</th>
-                          <th>Creado por</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="charge in supplierCfdi.cfdi_charges" :key="charge.id">
-                          <td>
-                            <v-btn
-                              icon="mdi-pencil"
-                              size="x-small"
-                              color="primary"
-                              variant="tonal"
-                              @click="editCfdiCharge(charge)"
-                              class="mr-1"
-                            />
-                            <v-btn
-                              icon="mdi-delete"
-                              size="x-small"
-                              color="error"
-                              variant="tonal"
-                              @click="confirmDeleteCfdiCharge(charge)"
-                            />
-                          </td>
-                          <td>{{ charge.charge?.name || 'Sin concepto' }}</td>
-                          <td>{{ getCurrencyName(charge.currency_id) }} {{ formatToCurrency(charge.amount) }}</td>
-                          <td class="text-xs">{{ charge.notes }}</td>
-                          <td>{{ charge.creator?.name }}</td>
-                        </tr>
-                      </tbody>
-                    </v-table>
-                  </div>
-
-                  <!-- Formulario para agregar/editar cargo -->
-                  <div class="bg-white dark:bg-grey-darken-4 p-4 rounded">
-                    <div class="font-bold mb-2">{{ editingCharge ? 'Editar Cargo' : 'Agregar Nuevo Cargo' }}</div>
-                    <v-row>
-                      <v-col cols="12" md="4">
-                        <v-autocomplete
-                          v-model="newCfdiCharge.charge_id"
-                          :items="catalogs.free_format_charges || []"
-                          item-title="name"
-                          item-value="id"
-                          label="Concepto (opcional)"
-                          density="compact"
-                          clearable
-                        />
-                      </v-col>
-                      <v-col cols="12" md="3">
-                        <v-text-field
-                          v-model.number="newCfdiCharge.amount"
-                          type="number"
-                          label="Monto *"
-                          density="compact"
-                          :error-messages="chargeErrors.amount"
-                        />
-                      </v-col>
-                      <v-col cols="12" md="5">
-                        <v-combobox
-                          v-model="newCfdiCharge.notes"
-                          :items="catalogs.previous_notes || []"
-                          label="Notas (obligatorio) *"
-                          density="compact"
-                          clearable
-                          :error-messages="chargeErrors.notes"
-                        />
-                      </v-col>
-                    </v-row>
-                    <div class="flex gap-2">
-                      <v-btn
-                        color="deep-purple"
-                        size="small"
-                        @click="saveCfdiCharge"
-                        :loading="loadingCharge"
-                      >
-                        <v-icon left>{{ editingCharge ? 'mdi-content-save' : 'mdi-plus' }}</v-icon>
-                        {{ editingCharge ? 'Guardar Cambios' : 'Agregar Cargo' }}
-                      </v-btn>
-                      <v-btn
-                        v-if="editingCharge"
-                        color="grey"
-                        size="small"
-                        variant="outlined"
-                        @click="cancelEditCharge"
-                      >
-                        Cancelar
-                      </v-btn>
-                    </div>
-                  </div>
-
-                  <v-alert v-if="!supplierCfdi.requested_payment" type="info" density="compact" class="mt-4">
-                    <div class="text-sm">
-                      <strong>Importante:</strong> Las notas son obligatorias. El concepto es opcional para facturas de formato libre.
-                    </div>
-                  </v-alert>
-                </v-card-text>
-              </v-card>
-            </div>
-
-            <div v-if="!supplierCfdi.is_free_format">
-              <div class="font-bold py-4">Current concepts in invoice</div>
-              <v-table density="compact">
-                <thead>
-                  <tr>
-                    <th class="w-14">Actions</th>
-                    <th>Service Ref#</th>
-                    <th>Concept</th>
-                    <th>Amount</th>
-                    <th>IVA</th>
-                    <th>Ret. IVA</th>
-                    <th>Ret. ISR</th>
-                    <th>Subtotal</th>
-                    <th>Sell links.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="supplierCfdi.invoices?.length === 0">
-                    <td colspan="9" class="text-center">No concepts found</td>
-                  </tr>
-                  <tr v-for="(invoice, index) in supplierCfdi.invoices" :key="`current-invoice-${index}`">
-                    <td>
-                      <TrashButton :item="invoice" @click="confirmDeleteSupInvoice" />
-                    </td>
-                    <td>{{ invoice.referenceable?.reference_number }}</td>
-                    <td>{{ invoice.chargeable?.name }}</td>
-                    <td>{{ getCurrencyName(invoice.currency_id) }} {{ formatToCurrency(invoice.amount) }}</td>
-                    <td class="text-green">{{ formatToCurrency(invoice.amount_iva) }}</td>
-                    <td class="text-red">-{{ formatToCurrency(invoice.amount_ret_iva) }}</td>
-                    <td class="text-red">-{{ formatToCurrency(invoice.amount_ret_isr) }}</td>
-                    <td class="font-bold">{{ formatToCurrency(invoice.amount_total) }}</td>
-                    <td>
-                      <div v-for="(link, index) in invoice.links" :key="`invoice-link-${index}`">
-                        <v-chip color="primary" size="small" class="mr-2">
-                          {{ getLinkName(link) }}
-                        </v-chip>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </div>
-
-            <div v-if="supplierCfdi.line_containers?.length > 0" class="mt-4">
-              <div class="font-bold py-2 flex items-center gap-2">
-                <v-icon size="small" color="indigo">mdi-train-car-container</v-icon>
-                Containers assigned for line payment
-              </div>
-              <v-alert type="info" density="compact" variant="tonal" class="mb-2 text-xs">
-                These containers are not a supplier cost: the line cost is taken from the
-                demurrages/detentions module and paid through its line payment request.
-              </v-alert>
-              <v-table density="compact">
-                <thead>
-                  <tr>
-                    <th class="w-14">Actions</th>
-                    <th>Service Ref#</th>
-                    <th>Container</th>
-                    <th>Concept</th>
-                    <th>Amount</th>
-                    <th>Assigned by</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="lc in supplierCfdi.line_containers" :key="`line-container-${lc.id}`">
-                    <td>
-                      <v-btn
-                        v-if="!hasLinkWithDemurrageAndDetentions"
-                        color="error"
-                        icon="mdi-delete"
-                        size="x-small"
-                        variant="tonal"
-                        @click="confirmRemoveLineContainer(lc)"
-                      />
-                    </td>
-                    <td>{{ lc.referencia?.reference_number }}</td>
-                    <td class="font-mono">{{ lc.reference_container?.container_number }}</td>
-                    <td>{{ lc.charge?.name }}</td>
-                    <td>{{ getCurrencyName(lc.currency_id) }} {{ formatToCurrency(lc.amount) }}</td>
-                    <td>{{ lc.creator?.name }}</td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </div>
-
-            <!-- Add more concepts to invoice -->
-            <div v-if="!supplierCfdi.is_free_format">
-              <div v-if="!canAddMoreSupplierPayConcepts">
-                <v-alert type="warning" density="compact">
-                  La factura no se puede modificar, ya que el monto total ya se desglosó o no es un CFDI de tipo
-                  ingreso.
-                </v-alert>
-              </div>
-
-              <v-alert
-                v-if="hasLinkWithDemurrageAndDetentions"
-                type="warning"
-                density="compact"
-                color="amber"
-                class="py-2"
-              >
-                This invoice has links with a request payment for demurrage / detentions. Please remove them before
-                adding more concepts.
-              </v-alert>
-
-              <div v-if="canAddMoreSupplierPayConcepts && !hasLinkWithDemurrageAndDetentions">
-                <div class="font-bold py-4">Find services to attach concepts</div>
-                <SearchGlobalServicesGrouped @update="setServicios" />
-              </div>
-
-              <div v-if="hasServiciosFound" class="py-6">
-                <div class="font-bold text-lg">Add concepts to supplier invoice</div>
-                <div class="mb-4">Service: {{ getServiciosTypeName }} - {{ countServiciosFound }} found.</div>
-
-                <div class="grid grid-cols-8 gap-3">
-                  <div class="col-span-2">
+            <div class="grid grid-cols-12 gap-4">
+              <div class="col-span-12 lg:col-span-8 rounded-lg tm-border p-4">
+                <div class="grid grid-cols-12 gap-3">
+                  <div class="col-span-12 md:col-span-7">
                     <v-autocomplete
                       v-model="newConcept.service"
                       :items="serviciosFound.services"
                       item-title="reference_number"
                       return-object
-                      label="Service Ref#"
+                      label="Service Ref# *"
                       density="compact"
+                      variant="outlined"
                       multiple
-                    />
-                    <v-btn color="primary" size="small" @click="selectAllServices">Select all</v-btn>
+                      chips
+                      closable-chips
+                      :hint="serviceHint"
+                      persistent-hint
+                    >
+                      <template #append-inner>
+                        <v-btn
+                          v-if="serviciosFound.services.length > 1"
+                          size="x-small"
+                          variant="tonal"
+                          color="primary"
+                          @click.stop="selectAllServices"
+                        >
+                          All
+                        </v-btn>
+                      </template>
+                    </v-autocomplete>
                   </div>
-                  <div class="col-span-2">
+                  <div class="col-span-12 md:col-span-5">
                     <v-autocomplete
                       v-model="newConcept.charge_id"
                       :items="conceptOptions"
                       item-title="name"
                       item-value="id"
-                      label="Concept"
+                      label="Concept *"
                       density="compact"
+                      variant="outlined"
+                      hint="Concept the supplier is charging"
+                      persistent-hint
                     />
                   </div>
+
                   <template v-if="!isLineConcept">
-                  <div class="col-span-2">
-                    <v-text-field
-                      v-model="newConcept.amount"
-                      type="number"
-                      label="Amount"
-                      density="compact"
-                      hide-details
-                    />
-                    <v-btn color="primary" variant="tonal" size="small" @click="setMaxAmountAvailable"
-                      >Set max amount</v-btn
-                    >
-                  </div>
-                  <div>
-                    <v-autocomplete
-                      v-model="newConcept.currency_id"
-                      :items="currencies"
-                      item-title="name"
-                      item-value="id"
-                      label="Currency"
-                      density="compact"
-                      readonly
-                    />
-                  </div>
-                  <div>
-                    <v-checkbox v-model="newConcept.is_con_iva" density="compact" label="IVA" />
-                  </div>
-                  <div>
-                    <v-text-field v-model="newConcept.ret_iva_perc" label="Ret. IVA %" density="compact" />
-                  </div>
-                  <div>
-                    <v-checkbox v-model="newConcept.is_ret_isr" density="compact" label="Ret. ISR" />
-                  </div>
-                  <div class="col-span-2">
-                    <div class="flex gap-2">
-                      <div class="">
-                        <v-btn color="primary" @click="addConcept">Add concept</v-btn>
-                        <div>
-                          -> Amount available: {{ formatToCurrency(availableBalance) }}
-                          {{ supplierCfdi.currency?.name }}
-                        </div>
-                      </div>
+                    <div class="col-span-12 md:col-span-5">
+                      <v-text-field
+                        v-model.number="newConcept.amount"
+                        type="number"
+                        label="Amount per reference (before taxes) *"
+                        density="compact"
+                        variant="outlined"
+                        :prefix="cfdiCurrencyName"
+                        :hint="amountUsdHint"
+                        persistent-hint
+                      >
+                        <template #append-inner>
+                          <v-btn size="x-small" variant="tonal" color="primary" @click.stop="setMaxAmountAvailable">Max</v-btn>
+                        </template>
+                      </v-text-field>
                     </div>
-                  </div>
-                  <div class="col-span-2">
-                    <v-card color="amber">
-                      <v-card-title> Total amount </v-card-title>
-                      <v-card-text>
-                        {{ formatToCurrency(newConceptTotalAmount) }}
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                  <div class="col-span-2">
-                    <v-card color="primary" density="compact" variant="outlined">
-                      <v-card-title>
-                        <div class="flex items-center justify-between">
-                          <div>Calculator</div>
-                          <div>
-                            <v-btn icon size="x-small" @click="showCalc = !showCalc" color="blue-grey-darken-2">
-                              <v-icon v-if="showCalc">mdi-eye-outline</v-icon>
-                              <v-icon v-if="!showCalc">mdi-eye-closed</v-icon>
-                            </v-btn>
-                          </div>
-                        </div>
-                      </v-card-title>
-                      <v-card-text v-if="showCalc">
-                        <v-row>
-                          <v-col cols="12">
-                            <v-radio-group v-model="calcIvaMode" row>
-                              <v-radio label="Calcular monto + IVA" value="masIva" />
-                              <v-radio label="Calcular monto sin IVA (precio ya incluye IVA)" value="sinIva" />
-                            </v-radio-group>
-                          </v-col>
-                          <v-col cols="12">
-                            <v-text-field
-                              v-model.number="calcMonto"
-                              prepend-inner-icon="mdi-currency-usd"
-                              label="Cantidad"
-                              type="number"
-                              density="compact"
-                              min="0"
-                              variant="outlined"
-                            />
-                          </v-col>
-                          <v-col cols="12">
-                            <v-table density="compact">
-                              <tbody>
-                                <tr>
-                                  <td class="font-bold">Monto sin IVA</td>
-                                  <td>
-                                    {{ formatToCurrency(calcMontoSinIva) }}
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td class="font-bold">IVA (16%)</td>
-                                  <td>
-                                    {{ formatToCurrency(calcIva) }}
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td class="font-bold">Total con IVA</td>
-                                  <td>
-                                    {{ formatToCurrency(calcTotalConIva) }}
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </v-table>
-                          </v-col>
-                        </v-row>
-                      </v-card-text>
-                    </v-card>
-                  </div>
+                    <div class="col-span-6 md:col-span-2 flex items-center">
+                      <v-switch v-model="newConcept.is_con_iva" color="green" label="IVA 16%" density="compact" hide-details inset />
+                    </div>
+                    <div class="col-span-6 md:col-span-3">
+                      <v-combobox
+                        v-model="newConcept.ret_iva_perc"
+                        :items="[0, 4, 6, 10]"
+                        label="Ret. IVA"
+                        density="compact"
+                        variant="outlined"
+                        suffix="%"
+                        hide-details
+                      />
+                    </div>
+                    <div class="col-span-6 md:col-span-2 flex items-center">
+                      <v-switch v-model="newConcept.is_ret_isr" color="red" label="Ret. ISR 10%" density="compact" hide-details inset />
+                    </div>
                   </template>
                 </div>
 
-                <SupplierCfdiLineContainersPicker
-                  v-if="isLineConcept"
-                  :supplier-cfdi-id="supplierCfdi.id"
-                  :charge-id="newConcept.charge_id"
-                  :line-type="lineType!"
-                  :referencia-ids="pickerReferenciaIds"
-                  :available-balance="availableBalance"
-                  :currency-id="supplierCfdi.currency_id"
-                  @assigned="onLineContainersAssigned"
-                />
-                <v-alert
-                  v-if="isLineConcept && pickerReferenciaIds.length === 0"
-                  type="info"
-                  density="compact"
-                  variant="tonal"
-                  class="mt-2"
-                >
-                  Line payment concepts only apply to maritime references.
-                </v-alert>
+                <v-expansion-panels v-if="!isLineConcept" variant="accordion" class="mt-4">
+                  <v-expansion-panel>
+                    <v-expansion-panel-title class="text-sm">
+                      <v-icon size="small" class="mr-2">mdi-calculator-variant-outline</v-icon> IVA calculator
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <div class="grid grid-cols-12 gap-3 items-center">
+                        <div class="col-span-12 md:col-span-5">
+                          <v-radio-group v-model="calcIvaMode" density="compact" hide-details>
+                            <v-radio label="Monto + IVA" value="masIva" />
+                            <v-radio label="El precio ya incluye IVA" value="sinIva" />
+                          </v-radio-group>
+                        </div>
+                        <div class="col-span-12 md:col-span-3">
+                          <v-text-field v-model.number="calcMonto" label="Cantidad" type="number" density="compact" variant="outlined" hide-details min="0" />
+                        </div>
+                        <div class="col-span-12 md:col-span-4 text-sm">
+                          <div class="flex justify-between"><span>Sin IVA</span><b>{{ formatToCurrency(calcMontoSinIva) }}</b></div>
+                          <div class="flex justify-between"><span>IVA 16%</span><b>{{ formatToCurrency(calcIva) }}</b></div>
+                          <div class="flex justify-between"><span>Con IVA</span><b>{{ formatToCurrency(calcTotalConIva) }}</b></div>
+                          <v-btn size="x-small" color="primary" variant="tonal" class="mt-1" block @click="useCalculatorAmount">
+                            Use {{ formatToCurrency(calcMontoSinIva) }} as amount
+                          </v-btn>
+                        </div>
+                      </div>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
               </div>
 
-              <div v-if="form.concepts.length > 0">
-                <v-table density="compact">
-                  <thead>
-                    <tr>
-                      <th>Actions</th>
-                      <th>Service Ref#</th>
-                      <th>Concept</th>
-                      <th>Amount</th>
-                      <th>Currency</th>
-                      <th>IVA</th>
-                      <th>Ret. IVA %</th>
-                      <th>Ret. ISR</th>
-                      <th>Subtotal</th>
-                      <th>Sell links</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(concept, index) in form.concepts" :key="`concept-${index}`">
-                      <td>
-                        <v-btn
-                          color="error"
-                          icon="mdi-delete"
-                          size="x-small"
-                          variant="tonal"
-                          @click="removeConcept(concept, index)"
-                        >
-                        </v-btn>
-                      </td>
-                      <td>
-                        <div class="text-xs">
-                          {{ getEachServiceRefNumber(concept.service) }}
-                        </div>
-                      </td>
-                      <td>{{ getChargeName(concept.charge_id) }}</td>
-                      <td>{{ formatToCurrency(concept.amount) }}</td>
-                      <td>{{ getCurrencyName(concept.currency_id) }}</td>
-                      <td>{{ concept.is_con_iva ? 'Yes' : 'No' }}</td>
-                      <td>{{ concept.ret_iva_perc }}%</td>
-                      <td>{{ concept.is_ret_isr ? 'Yes' : 'No' }}</td>
-                      <td>{{ formatToCurrency(calcTotalWithTaxes(concept)) }}</td>
-                      <td>
-                        <div v-for="(sellConcept, index) in concept.sell_concepts" :key="`sell-concept-${index}`">
-                          <v-chip color="primary" size="small" class="mr-2">
-                            {{ sellConcept.charge?.name }}
-                          </v-chip>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </v-table>
-
-                <v-btn color="primary" @click="saveCfdiChanges">Save changes</v-btn>
+              <!-- Live total -->
+              <div v-if="!isLineConcept" class="col-span-12 lg:col-span-4">
+                <div class="rounded-lg tm-highlight-warning p-4 h-full flex flex-col">
+                  <div class="text-xs uppercase tracking-wide text-medium-emphasis mb-2">Concept total</div>
+                  <div class="text-sm flex flex-col gap-1">
+                    <div class="flex justify-between"><span>Amount</span><span>{{ formatToCurrency(newConceptBreakdown.amount) }}</span></div>
+                    <div v-if="newConceptBreakdown.iva" class="flex justify-between text-success"><span>+ IVA</span><span>{{ formatToCurrency(newConceptBreakdown.iva) }}</span></div>
+                    <div v-if="newConceptBreakdown.retIva" class="flex justify-between text-error"><span>- Ret. IVA</span><span>{{ formatToCurrency(newConceptBreakdown.retIva) }}</span></div>
+                    <div v-if="newConceptBreakdown.retIsr" class="flex justify-between text-error"><span>- Ret. ISR</span><span>{{ formatToCurrency(newConceptBreakdown.retIsr) }}</span></div>
+                    <v-divider class="my-1" />
+                    <div class="flex justify-between font-medium"><span>Per reference</span><span>{{ formatToCurrency(newConceptBreakdown.perService) }}</span></div>
+                    <div class="flex justify-between text-medium-emphasis"><span>× references</span><span>{{ selectedServicesCount }}</span></div>
+                  </div>
+                  <div class="mt-2 text-2xl font-bold">{{ formatToCurrency(newConceptTotalAmount) }} <small class="text-sm">{{ cfdiCurrencyName }}</small></div>
+                  <div v-if="!isCfdiUsd" class="text-xs text-medium-emphasis">
+                    ≈ {{ formatToCurrency(toUsd(newConceptTotalAmount, supplierCfdi.currency_id)) }} USD · {{ rateLabel(supplierCfdi.currency_id) }}
+                  </div>
+                  <div class="text-xs mt-1" :class="remainingAfterConcept < -0.01 ? 'text-error font-bold' : 'text-medium-emphasis'">
+                    Remaining in invoice after this: {{ formatToCurrency(remainingAfterConcept) }}
+                  </div>
+                  <v-spacer />
+                  <v-btn
+                    color="primary"
+                    class="mt-4"
+                    block
+                    prepend-icon="mdi-link-variant"
+                    :disabled="!canContinueConcept"
+                    @click="addConcept"
+                  >
+                    Continue: link sell concepts
+                  </v-btn>
+                </div>
               </div>
             </div>
-          </v-card-text>
-        </v-card>
-      </v-card-text>
-    </v-card>
+
+            <SupplierCfdiLineContainersPicker
+              v-if="isLineConcept"
+              :supplier-cfdi-id="supplierCfdi.id"
+              :charge-id="newConcept.charge_id"
+              :line-type="lineType!"
+              :referencia-ids="pickerReferenciaIds"
+              :available-balance="availableBalance"
+              :currency-id="supplierCfdi.currency_id"
+              @assigned="onLineContainersAssigned"
+            />
+            <v-alert v-if="isLineConcept && pickerReferenciaIds.length === 0" type="info" density="compact" variant="tonal" class="mt-2">
+              Line payment concepts only apply to maritime references.
+            </v-alert>
+          </template>
+        </template>
+
+        <!-- C. Pending to save -->
+        <template v-if="form.concepts.length > 0">
+          <div class="step-label mt-5"><span class="step-badge">C</span> Review and save</div>
+          <v-table density="compact" class="rounded tm-border">
+            <thead>
+              <tr>
+                <th class="w-12"></th>
+                <th>Service Ref#</th>
+                <th>Concept</th>
+                <th class="text-right">Amount / ref.</th>
+                <th>Taxes</th>
+                <th class="text-right">Total</th>
+                <th>Linked to sell</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(concept, index) in form.concepts" :key="`concept-${index}`">
+                <td>
+                  <v-btn color="error" icon="mdi-delete" size="x-small" variant="tonal" @click="removeConcept(concept, index)" />
+                </td>
+                <td>
+                  <div class="flex flex-wrap gap-1">
+                    <v-chip v-for="service in concept.service" :key="`svc-${index}-${service.id}`" size="x-small" variant="tonal">
+                      {{ service.reference_number }}
+                    </v-chip>
+                  </div>
+                </td>
+                <td>{{ getChargeName(concept.charge_id) }}</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(concept.amount) }} {{ getCurrencyName(concept.currency_id) }}</td>
+                <td>
+                  <div class="flex flex-wrap gap-1">
+                    <v-chip v-if="concept.is_con_iva" size="x-small" color="green" variant="tonal">+IVA</v-chip>
+                    <v-chip v-if="Number(concept.ret_iva_perc)" size="x-small" color="red" variant="tonal">-Ret IVA {{ concept.ret_iva_perc }}%</v-chip>
+                    <v-chip v-if="concept.is_ret_isr" size="x-small" color="red" variant="tonal">-Ret ISR</v-chip>
+                  </div>
+                </td>
+                <td class="text-right font-bold whitespace-nowrap">{{ formatToCurrency(conceptGrandTotal(concept)) }}</td>
+                <td>
+                  <div class="flex flex-wrap gap-1">
+                    <v-chip
+                      v-for="(sellConcept, sIndex) in concept.sell_concepts"
+                      :key="`sell-concept-${index}-${sIndex}`"
+                      size="x-small"
+                      :color="sellConcept.class_name?.includes('FfNote') ? 'orange-darken-2' : 'primary'"
+                      variant="tonal"
+                    >
+                      {{ sellConcept.charge?.name }} · {{ getCurrencyName(sellConcept.currency_id) }} {{ formatToCurrency(sellConcept.amount) }}
+                    </v-chip>
+                    <v-chip v-if="!concept.sell_concepts?.length" size="x-small" color="grey" variant="outlined">Without link</v-chip>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="font-bold tm-row-muted">
+                <td colspan="5" class="text-right">Total to save</td>
+                <td class="text-right whitespace-nowrap">{{ formatToCurrency(draftTotal) }} {{ cfdiCurrencyName }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </v-table>
+          <div class="flex justify-end mt-3">
+            <v-btn color="success" prepend-icon="mdi-content-save" @click="saveCfdiChanges">
+              Save {{ form.concepts.length }} concept(s)
+            </v-btn>
+          </div>
+        </template>
+      </SupplierCfdiSection>
+    </template>
+
+    <SupplierCfdiNotesForm :supplierCfdi="supplierCfdi" />
+
     <SupplierConceptVsSellProfitDialog
       :supplierConcept="dialogVsSellProfit"
       :charges="catalogs.charges"
+      :usd-rates="supplierCfdi.usd_rates"
       @add-concept="addValidatedConcept"
     />
   </div>
@@ -771,11 +619,63 @@ const amountProvisioned = computed(() => {
   return parseFloat(supplierCfdi.value.amount_provisioned)
 })
 
-const isAmountGreaterThanProvisioned = computed(() => {
-  return (
-    form.value.concepts.reduce((acc: number, concept: any) => acc + parseFloat(concept.amount || 0), 0) >
-    amountProvisioned.value
-  )
+const { toUsd, rateLabel } = useCfdiUsdRates(() => supplierCfdi.value.usd_rates)
+
+const cfdiCurrencyName = computed(() => getCurrencyName(supplierCfdi.value.currency_id) || '')
+const isCfdiUsd = computed(() => Number(supplierCfdi.value.currency_id) === 2)
+
+// Each selected reference generates its own supplier invoice row with the same amount.
+const conceptGrandTotal = (concept: any) => calcTotalWithTaxes(concept) * (concept.service?.length || 1)
+
+const draftTotal = computed(() =>
+  form.value.concepts.reduce((acc: number, concept: any) => acc + conceptGrandTotal(concept), 0),
+)
+
+const isAmountGreaterThanProvisioned = computed(() => draftTotal.value - amountProvisioned.value > 0.01)
+
+const selectedServicesCount = computed(() => newConcept.value.service?.length || 0)
+
+const serviceHint = computed(() =>
+  selectedServicesCount.value > 1
+    ? `The amount is charged to each of the ${selectedServicesCount.value} references`
+    : 'Reference that receives the cost',
+)
+
+const amountUsdHint = computed(() => {
+  if (isCfdiUsd.value || !newConcept.value.amount) return 'Amount without IVA / retentions'
+  return `≈ ${formatToCurrency(toUsd(newConcept.value.amount, supplierCfdi.value.currency_id))} USD (${rateLabel(supplierCfdi.value.currency_id)}, CFDI date)`
+})
+
+const newConceptBreakdown = computed(() => {
+  const roundToTwo = (value: number) => Math.round(value * 100) / 100
+  const amount = parseFloat(newConcept.value.amount) || 0
+  const iva = newConcept.value.is_con_iva ? roundToTwo(amount * 0.16) : 0
+  const retIva = Number(newConcept.value.ret_iva_perc) ? roundToTwo(amount * (Number(newConcept.value.ret_iva_perc) / 100)) : 0
+  const retIsr = newConcept.value.is_ret_isr ? roundToTwo(amount * 0.1) : 0
+  return { amount, iva, retIva, retIsr, perService: roundToTwo(amount + iva - retIva - retIsr) }
+})
+
+const remainingAfterConcept = computed(() => Math.round((availableBalance.value - newConceptTotalAmount.value) * 100) / 100)
+
+const canContinueConcept = computed(
+  () => selectedServicesCount.value > 0 && !!newConcept.value.charge_id && Number(newConcept.value.amount) > 0,
+)
+
+const useCalculatorAmount = () => {
+  newConcept.value.amount = calcMontoSinIva.value
+  if (calcIvaMode.value === 'sinIva' || calcIva.value > 0) newConcept.value.is_con_iva = true
+}
+
+const emptyConcept = () => ({
+  service_type: null,
+  // With a single reference found, it is preselected
+  service: serviciosFound.value.services.length === 1 ? [...serviciosFound.value.services] : null,
+  charge_id: null,
+  amount: 0,
+  currency_id: supplierCfdi.value.currency_id,
+  is_con_iva: false,
+  ret_iva_perc: 0,
+  is_ret_isr: false,
 })
 
 const getLinkName = (link: any) => {
@@ -854,10 +754,7 @@ const availableBalance = computed(() => {
   if (supplierCfdi.value.should_apply_cap_limit) {
     return parseFloat(supplierCfdi.value.cap_limit)
   }
-  const total =
-    amountProvisioned.value -
-    assignedLineTotal.value -
-    form.value.concepts.reduce((acc: number, concept: any) => acc + calcTotalWithTaxes(concept), 0)
+  const total = amountProvisioned.value - assignedLineTotal.value - draftTotal.value
   // return rounded to 2 decimals
   return Math.round((total + Number.EPSILON) * 100) / 100
 })
@@ -909,10 +806,17 @@ const getCurrencyName = (id: number) => {
   return currencies.find((currency) => currency.id === id)?.name
 }
 
+// Max amount (before taxes) per reference that still fits in the invoice balance.
 const setMaxAmountAvailable = () => {
-  newConcept.value.amount = availableBalance.value
-  // set to calculator
-  calcMonto.value = availableBalance.value
+  const services = selectedServicesCount.value || 1
+  const ivaFactor =
+    1 +
+    (newConcept.value.is_con_iva ? 0.16 : 0) -
+    (Number(newConcept.value.ret_iva_perc) || 0) / 100 -
+    (newConcept.value.is_ret_isr ? 0.1 : 0)
+  const amount = Math.floor((availableBalance.value / services / (ivaFactor || 1)) * 100) / 100
+  newConcept.value.amount = amount
+  calcMonto.value = amount
 }
 
 const addConcept = () => {
@@ -920,46 +824,26 @@ const addConcept = () => {
     snackbar.add({ type: 'warning', text: 'Amount must be greater than 0' })
     return
   }
-  if (!newConcept.value.service || !newConcept.value.charge_id) {
+  if (!newConcept.value.service?.length || !newConcept.value.charge_id) {
     snackbar.add({ type: 'warning', text: 'Please select a service and concept' })
     return
   }
 
-  const currentConceptTotal = calcTotalWithTaxes(newConcept.value)
-  console.log('currentConceptTotal', currentConceptTotal)
-
-  let grandTotal =
-    form.value.concepts.reduce((acc: number, concept: any) => acc + calcTotalWithTaxes(concept), 0) +
-    currentConceptTotal
-
-  // multiply by number of services selected
-  grandTotal = grandTotal * (newConcept.value.service ? newConcept.value.service.length : 1)
-  console.log('grandTotal', grandTotal)
-  console.log('amountProvisioned', amountProvisioned.value)
-
   // Use tolerance comparison to handle floating-point precision errors
   const epsilon = 0.01 // 1 cent tolerance for currency
-  if (grandTotal - amountProvisioned.value > epsilon) {
+  if (draftTotal.value + conceptGrandTotal(newConcept.value) - amountProvisioned.value > epsilon) {
     snackbar.add({ type: 'warning', text: 'Amount is greater than provisioned' })
     return
   }
 
-  let concept = JSON.parse(JSON.stringify(newConcept.value))
+  const concept = JSON.parse(JSON.stringify(newConcept.value))
+  concept.ret_iva_perc = Number(concept.ret_iva_perc) || 0
   concept.service_type = serviciosFound.value.serviceType
 
   dialogVsSellProfit.value.show = true
   dialogVsSellProfit.value.concept = concept
 
-  // form.value.concepts.push(concept)
-  newConcept.value = {
-    service_type: null,
-    service_id: null,
-    amount: 0,
-    currency_id: supplierCfdi.value.currency_id,
-    is_con_iva: false,
-    ret_iva_perc: 0,
-    is_ret_isr: 0,
-  }
+  newConcept.value = emptyConcept()
 }
 
 const newConceptTotalAmount = computed(() => {
@@ -1011,7 +895,6 @@ const calcTotalWithTaxes = (concept: any) => {
   }
 
   total = total + iva - retIva - retIsr
-  console.log('Tax total', total)
 
   return roundUp(total)
 }
@@ -1197,12 +1080,14 @@ const deleteSupplierInvoiceInCfdi = async (supplierInvoice: any) => {
       supplier_invoice_id: supplierInvoice.id,
     }
     await $api.suppliers.deleteSupplierInvoiceInCfdi(supplierCfdi.value.id, body)
+    // Dynamic UI: drop the row right away, then reload the real state (balance, links, status)
+    supplierCfdi.value.invoices = (supplierCfdi.value.invoices || []).filter((i: any) => i.id !== supplierInvoice.id)
     snackbar.add({ type: 'success', text: 'Supplier invoice removed' })
-
-    await getData()
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    snackbar.add({ type: 'error', text: e?.data?.message || e?.response?._data?.message || 'Error removing the concept' })
   } finally {
+    await getData()
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
@@ -1247,10 +1132,8 @@ const removeConcept = (concept: any, index: number) => {
 }
 
 const setServicios = (servicios: any) => {
-  console.log('set Servicios')
-  console.log(servicios)
-  supplierProvision.clearConcepts
   serviciosFound.value = servicios
+  newConcept.value.service = servicios.services?.length === 1 ? [...servicios.services] : null
 }
 
 const updateSupplierOnCfdi = async () => {
@@ -1341,3 +1224,24 @@ onMounted(async () => {
   }
 })
 </script>
+<style scoped>
+.step-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.step-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: white;
+  background: rgb(var(--v-theme-primary));
+}
+</style>
