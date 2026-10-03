@@ -64,6 +64,10 @@ class AirImportModule extends FetchFactory<IReferenciaPagination> {
    * @param fetchOptions options for `useFetch`
    * @returns
    */
+  async getCalendar(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/calendar`, fetchOptions)
+  }
+
   async getReferences(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}`, fetchOptions)
   }
