@@ -324,3 +324,32 @@
   top: 0;
   z-index: 10;
 }
+/*
+  Theme-aware surfaces (Vuetify CSS vars) for panels/tables that must look right in light and dark.
+  Do not use Tailwind `bg-white` (Vuetify redefines it with !important + color:#000) nor the
+  slate palette for these: they don't follow the Vuetify theme.
+*/
+.tm-panel {
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+.tm-border {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+.tm-muted {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+.tm-row-muted > td {
+  background: rgba(var(--v-theme-on-surface), 0.04) !important;
+}
+.tm-row-selected > td {
+  background: rgba(var(--v-theme-primary), 0.1) !important;
+}
+.tm-row-error > td {
+  background: rgba(var(--v-theme-error), 0.14) !important;
+}
+.tm-highlight-warning {
+  background: rgba(var(--v-theme-warning), 0.08);
+  border: 2px solid rgba(var(--v-theme-warning), 0.7);
+}

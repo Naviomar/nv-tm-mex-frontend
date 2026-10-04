@@ -1,69 +1,95 @@
 <template>
-  <div>
-    <div class="grid grid-cols-8 gap-5 mb-2">
-      <div class="col-span-5">
-        <v-text-field
-          v-model="quickRefs"
-          density="compact"
-          label="Search by reference # (e.g. IM26-3076)"
-          hint="Separate multiple references with commas. Press Enter to search."
-          persistent-hint
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          @keyup.enter="searchByReferenceNumbers"
-        />
-      </div>
-      <div class="col-span-3 ml-4">
-        <v-btn color="primary" variant="tonal" :disabled="!quickRefs" @click="searchByReferenceNumbers">Search</v-btn>
-      </div>
-    </div>
-    <div class="grid grid-cols-8 gap-5">
-      <div class="col-span-5">
+  <div class="rounded-lg tm-panel p-4">
+    <div class="flex flex-wrap items-start gap-3">
+      <div class="w-44 shrink-0">
         <v-autocomplete
-          v-model="form.servicio"
-          :items="servicios"
-          return-object
-          item-title="name"
-          label="Service type"
+          v-model="defaultPrefix"
+          :items="prefixOptions"
+          item-title="value"
+          item-value="value"
+          label="Default prefix"
           density="compact"
-          @update:model-value="clearForm"
+          variant="outlined"
+          hint="Used for numbers typed without prefix"
+          persistent-hint
+          clearable
+        >
+          <template #item="{ props: itemProps, item }">
+            <v-list-item v-bind="itemProps" :subtitle="item.raw.label" density="compact" />
+          </template>
+        </v-autocomplete>
+      </div>
+
+      <div class="flex-1 min-w-[280px]">
+        <v-textarea
+          v-model="rawInput"
+          label="References to search"
+          placeholder="IM26-2932, IM26-2933 2934 ..."
+          density="compact"
+          variant="outlined"
+          rows="1"
+          auto-grow
+          max-rows="4"
+          prepend-inner-icon="mdi-magnify"
+          hint="Paste or type references separated by comma, space or new line. Bare numbers use the previous / default prefix. Enter to search."
+          persistent-hint
+          clearable
+          @keydown.enter.exact.prevent="search"
         />
       </div>
-      <div class="col-span-3 ml-4">
-        <v-btn prepend-icon="mdi-delete-outline" color="red-lighten-3" @click="resetForm">Reset</v-btn>
+
+      <div class="flex gap-2 pt-1">
+        <v-btn color="primary" prepend-icon="mdi-magnify" :disabled="validTokens.length === 0" @click="search">
+          Search {{ validTokens.length || '' }}
+        </v-btn>
+        <v-btn variant="text" color="red" prepend-icon="mdi-restore" @click="resetForm">Reset</v-btn>
       </div>
     </div>
-    <div v-if="form.servicio">
-      <div class="grid grid-cols-6 gap-5">
-        <div class="col-span-2">
-          <v-autocomplete v-model="form.prefixYear" density="compact" :items="prefixYears" label="Prefix" />
-        </div>
-        <div class="col-span-4">
-          <div v-if="form.prefixYear">
-            <v-text-field
-              v-model="form.serviceNumber"
-              density="compact"
-              label="Add Service Ref# to search"
-              hint="Press Enter to add"
-              @keyup.enter="addServiceNumberToSearch"
-            />
-          </div>
-        </div>
-      </div>
-      <div v-if="form.folios.length > 0">
-        <div>Search by</div>
-        <div>
-          <v-chip
-            v-for="(folio, index) in form.folios"
-            :key="`service-folio-${folio}`"
-            closable
-            class="mr-2 mb-2"
-            @click:close="removeFolioToSearch(index)"
-          >
-            {{ form.prefixYear }}-{{ folio }}
-          </v-chip>
-        </div>
-        <v-btn color="primary" class="mt-4" @click="searchServices">Search {{ countFolios }} service(s)</v-btn>
+
+    <!-- Live preview of what is going to be searched -->
+    <div v-if="parsedTokens.length > 0 && !hasSearched" class="flex flex-wrap items-center gap-1 mt-3">
+      <span class="text-xs text-grey mr-1">Will search:</span>
+      <v-chip
+        v-for="token in parsedTokens"
+        :key="`preview-${token.raw}`"
+        size="small"
+        :color="token.valid ? 'primary' : 'error'"
+        :variant="token.valid ? 'tonal' : 'outlined'"
+        :prepend-icon="token.valid ? 'mdi-file-document-outline' : 'mdi-alert-circle-outline'"
+      >
+        {{ token.valid ? token.reference : `${token.raw} (invalid)` }}
+      </v-chip>
+    </div>
+
+    <!-- Result summary -->
+    <div v-if="hasSearched" class="mt-3">
+      <v-alert v-if="mixedKinds" type="warning" density="compact" variant="tonal" class="mb-2">
+        Maritime and air references cannot be mixed in the same invoice breakdown. Search them separately.
+      </v-alert>
+      <div class="flex flex-wrap items-center gap-1">
+        <span class="text-xs text-grey mr-1">
+          {{ servicesFound.length }} of {{ searchedReferences.length }} found:
+        </span>
+        <v-chip
+          v-for="service in servicesFound"
+          :key="`found-${service.id}`"
+          size="small"
+          color="success"
+          variant="tonal"
+          prepend-icon="mdi-check-circle"
+        >
+          {{ service.reference_number }}
+        </v-chip>
+        <v-chip
+          v-for="reference in notFound"
+          :key="`missing-${reference}`"
+          size="small"
+          color="error"
+          variant="outlined"
+          prepend-icon="mdi-close-circle-outline"
+        >
+          {{ reference }}
+        </v-chip>
       </div>
     </div>
   </div>
@@ -73,183 +99,131 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 
-type ServiceType = { id: number; name: string; prefix: string }
-type Servicio = {
-  servicio: ServiceType | null
-  prefixYear: string | null
-  folios: string[]
-  serviceNumber: string | null
-}
-const form = ref<Servicio>({ servicio: null, prefixYear: null, folios: [], serviceNumber: null })
-const servicesFound = ref<any>([])
-
-const initialYear = 2022
-const currentYear = new Date().getFullYear()
-const maxYear = currentYear + 1
-
 const emit = defineEmits(['update'])
 
-const servicios = [
-  { id: 1, name: 'Maritime', prefix: 'M' },
-  { id: 2, name: 'Air', prefix: 'A' },
-]
+type ParsedToken = {
+  raw: string
+  valid: boolean
+  impoExpo?: string
+  kind?: string
+  year?: string
+  folio?: string
+  reference?: string
+}
 
-const prefixYears = computed(() => {
-  const years = []
-  for (let i = initialYear; i <= maxYear; i++) {
-    // last two digits of the year
-    const year = i.toString().slice(-2)
-    years.push(`${form.value.servicio!.prefix}${year}`)
+const SERVICE_LABELS: Record<string, string> = {
+  IM: 'Import maritime',
+  EM: 'Export maritime',
+  IA: 'Import air',
+  EA: 'Export air',
+}
+
+const rawInput = ref<string | null>(null)
+const defaultPrefix = ref<string | null>(null)
+const servicesFound = ref<any[]>([])
+const searchedReferences = ref<string[]>([])
+const hasSearched = ref(false)
+const mixedKinds = ref(false)
+
+const prefixOptions = computed(() => {
+  const maxYear = new Date().getFullYear() + 1
+  const options: { value: string; label: string }[] = []
+  for (let year = maxYear; year >= 2022; year--) {
+    const yy = year.toString().slice(-2)
+    Object.entries(SERVICE_LABELS).forEach(([code, label]) => options.push({ value: `${code}${yy}`, label: `${label} ${year}` }))
   }
-  return years
+  return options
 })
 
-const addServiceNumberToSearch = () => {
-  if (form.value.serviceNumber) {
-    // split by comma and remove empty spaces
-    form.value.serviceNumber = form.value.serviceNumber.replace(/\s/g, '')
-    const refs = Array.from(new Set(form.value.serviceNumber.split(',')))
-    // remove duplicates in refs array using set
+// Tokens like IM26-2932 / IM262932 set the prefix for the following bare numbers (e.g. "IM26-2932 2933 2934").
+const parsedTokens = computed<ParsedToken[]>(() => {
+  const tokens = (rawInput.value || '').toUpperCase().split(/[\s,;]+/).filter(Boolean)
+  let currentPrefix = defaultPrefix.value?.toUpperCase() || null
+  const seen = new Set<string>()
+  const result: ParsedToken[] = []
 
-    refs.forEach((ref) => {
-      form.value.folios.push(ref)
-    })
-    form.value.folios = [...new Set(form.value.folios)]
-    form.value.serviceNumber = ''
-  }
+  tokens.forEach((raw) => {
+    const full = raw.match(/^([IE])([MA])(\d{2})-?(\d+)$/)
+    if (full) currentPrefix = `${full[1]}${full[2]}${full[3]}`
+    const bare = !full && /^\d+$/.test(raw) && currentPrefix ? `${currentPrefix}${raw}` : null
+    const match = full || bare?.match(/^([IE])([MA])(\d{2})(\d+)$/)
+
+    if (!match) {
+      result.push({ raw, valid: false })
+      return
+    }
+    const [, impoExpo, kind, year, folio] = match
+    const reference = `${impoExpo}${kind}${year}-${Number(folio)}`
+    if (seen.has(reference)) return
+    seen.add(reference)
+    result.push({ raw, valid: true, impoExpo, kind, year, folio: String(Number(folio)), reference })
+  })
+  return result
+})
+
+const validTokens = computed(() => parsedTokens.value.filter((t) => t.valid))
+
+const notFound = computed(() => {
+  const found = new Set(servicesFound.value.map((s: any) => normalizeRef(s.reference_number)))
+  return searchedReferences.value.filter((ref) => !found.has(normalizeRef(ref)))
+})
+
+const normalizeRef = (ref: string) => {
+  const m = (ref || '').toUpperCase().match(/^([IE][MA]\d{2})-?0*(\d+)$/)
+  return m ? `${m[1]}-${m[2]}` : (ref || '').toUpperCase()
 }
 
-const removeFolioToSearch = (index: number) => {
-  form.value.folios?.splice(index, 1)
-}
+watch(rawInput, () => {
+  hasSearched.value = false
+})
 
-const removeReference = (reference: any) => {
-  console.log('removeReference')
-  form.value.folios.splice(form.value.folios.indexOf(reference), 1)
-}
-
-const clearForm = () => {
-  form.value.prefixYear = null
-  form.value.folios = []
-  form.value.serviceNumber = null
+const resetForm = () => {
+  rawInput.value = null
+  servicesFound.value = []
+  searchedReferences.value = []
+  hasSearched.value = false
+  mixedKinds.value = false
   emit('update', { serviceType: null, services: [] })
 }
 
-const resetForm = () => {
-  quickRefs.value = null
-  form.value.servicio = null
-  clearForm()
-}
-
-const folios = computed(() => {
-  if (form.value.serviceNumber) {
-    let parts = form.value.serviceNumber.split('\n')
-    parts = parts.map((part) => part.trim())
-    // remove empty strings
-    parts = parts.filter((part) => part)
-    // unique values
-    parts = [...new Set(parts)]
-    return parts
+const search = async () => {
+  const invalid = parsedTokens.value.filter((t) => !t.valid)
+  if (invalid.length > 0) {
+    snackbar.add({ type: 'warning', text: `Invalid reference(s): ${invalid.map((t) => t.raw).join(', ')}` })
   }
-  return []
-})
-
-const countFolios = computed(() => {
-  return form.value.folios.length
-})
-
-const searchReferences = () => {
-  console.log('search References')
-  if (folios.value.length === 0) {
-    return
-  }
-  // api backend search references
-  emit('update', folios.value)
-}
-
-const quickRefs = ref<string | null>(null)
-
-// Parses composite references like IM26-3076 / EA25-0012 and searches them with the existing endpoint.
-// All references must belong to the same service (maritime or air), as the results are handled as one group.
-const searchByReferenceNumbers = async () => {
-  const tokens = (quickRefs.value || '')
-    .toUpperCase()
-    .split(/[\s,;]+/)
-    .filter(Boolean)
+  const tokens = validTokens.value
   if (tokens.length === 0) return
 
-  const parsed = tokens.map((token) => token.match(/^([IE])([MA])(\d{2})-?(\d+)$/))
-  const invalid = tokens.filter((_, i) => !parsed[i])
-  if (invalid.length > 0) {
-    snackbar.add({ type: 'warning', text: `Invalid reference format: ${invalid.join(', ')}` })
+  const kinds = new Set(tokens.map((t) => t.kind))
+  mixedKinds.value = kinds.size > 1
+  if (mixedKinds.value) {
+    hasSearched.value = true
     return
   }
 
-  const serviceKinds = new Set(parsed.map((m) => m![2]))
-  if (serviceKinds.size > 1) {
-    snackbar.add({ type: 'warning', text: 'Search maritime and air references separately.' })
-    return
-  }
-
-  // group by type + year, one request per group
+  // one request per service type + year
   const groups: Record<string, { serviceType: string; year: string; folios: string[] }> = {}
-  parsed.forEach((m) => {
-    const [, impoExpo, kind, year, folio] = m!
-    const key = `${impoExpo}${kind}${year}`
-    groups[key] ??= { serviceType: `${impoExpo}${kind}`, year, folios: [] }
-    groups[key].folios.push(String(Number(folio)))
+  tokens.forEach((t) => {
+    const key = `${t.impoExpo}${t.kind}${t.year}`
+    groups[key] ??= { serviceType: `${t.impoExpo}${t.kind}`, year: t.year!, folios: [] }
+    groups[key].folios.push(t.folio!)
   })
 
   try {
-    loadingStore.loading = true
+    loadingStore.start()
     const results = await Promise.all(
       Object.values(groups).map((g) =>
         $api.systemServices.searchServices({ serviceType: g.serviceType, folios: g.folios, year: g.year }),
       ),
     )
-    const services = results.flat() as any[]
-    const kind = [...serviceKinds][0]
-
-    form.value.servicio = servicios.find((s) => s.prefix === kind) || null
+    const services = (results.flat() as any[]).filter(Boolean)
     servicesFound.value = services
-    emit('update', { serviceType: kind, services })
+    searchedReferences.value = tokens.map((t) => t.reference!)
+    hasSearched.value = true
 
-    if (services.length === 0) {
-      snackbar.add({ type: 'warning', text: 'No services found' })
-    } else {
-      snackbar.add({ type: 'success', text: `${services.length} of ${tokens.length} service(s) found` })
-    }
-  } catch (error) {
-    console.error(error)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
+    emit('update', { serviceType: [...kinds][0], services })
 
-const searchServices = async () => {
-  try {
-    servicesFound.value = []
-    loadingStore.loading = true
-    // get year from prefixYear
-    const year = form.value.prefixYear?.slice(-2)
-    const body = {
-      serviceType: form.value.servicio?.prefix,
-      folios: form.value.folios,
-      prefixYear: form.value.prefixYear,
-      year: year,
-    }
-    const response: any = await $api.systemServices.searchServices(body)
-
-    if (response.length <= 0) {
-      // console.log('No services found', snackbar)
-      snackbar.add({ type: 'warning', text: 'No services found' })
-    }
-
-    servicesFound.value = response
-    emit('update', { serviceType: form.value.servicio?.prefix, services: response })
-    snackbar.add({ type: 'success', text: `${response.length} services found` })
+    if (services.length === 0) snackbar.add({ type: 'warning', text: 'No services found' })
   } catch (error) {
     console.error(error)
   } finally {
