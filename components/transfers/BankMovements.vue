@@ -167,7 +167,7 @@
                   <span class="text-xl">🔏</span> Lock / Unlock
                 </v-btn>
 
-                <div v-if="bankMovement.payments.length > 0">
+                <div v-if="bankMovement.payments_count > 0">
                   <BankMovementPayments :bankMovement="bankMovement" />
                 </div>
                 
@@ -682,7 +682,7 @@ const canRequestCancellation = (bankMovement: any) => {
   // auto-execution failed is treated as if it never happened, so the user can try again.
   return (
     bankMovement.amount === bankMovement.amount_available &&
-    bankMovement.payments.length === 0 &&
+    bankMovement.payments_count === 0 &&
     !pendingCancelIds.value.has(Number(bankMovement.id)) &&
     (!approvedCancelIds.value.has(Number(bankMovement.id)) || cancellationFailed(bankMovement))
   )
