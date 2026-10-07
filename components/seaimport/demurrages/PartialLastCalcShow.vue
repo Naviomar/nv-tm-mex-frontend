@@ -14,6 +14,7 @@
             <th class="text-right">Subtotal</th>
             <th class="text-right">IVA</th>
             <th class="text-right">Total calculated</th>
+            <th class="text-right">Line cost</th>
             <th class="text-center">Paid</th>
             <th>Invoice</th>
           </tr>
@@ -34,6 +35,10 @@
             <td class="text-right">{{ formatToCurrency(lastCalc.amount_iva) }}</td>
             <td class="text-right font-bold">
               {{ formatToCurrency(parseFloat(lastCalc.amount) + parseFloat(lastCalc.amount_iva)) }}
+            </td>
+            <td class="text-right">
+              <template v-if="lineCostTotal > 0">{{ formatToCurrency(lineCostTotal) }}</template>
+              <span v-else class="text-caption opacity-60">—</span>
             </td>
             <td class="text-center">
               <v-chip v-if="containerInvoices.length" :color="isPaid ? 'success' : 'warning'" size="small">
@@ -77,6 +82,15 @@ const lastCalc = computed(() => {
   // return first calculation
   return props.container.demurrage?.calculations?.[0] || null
   // return props.container.demurrage?.calculations?.[props.container.demurrage?.calculations?.length - 1] || null
+})
+
+// Costo naviera con IVA (mismo criterio que getContainerTotalLineCost de DemurragesSeaImportCalc)
+const lineCostTotal = computed(() => {
+  const demurrage = props.container.demurrage
+  const cost = parseFloat(demurrage?.line_cost || 0)
+  const iva = parseFloat(demurrage?.line_iva || 0)
+  if (iva > 0) return cost + iva
+  return demurrage?.line_has_iva ? cost * 1.16 : cost
 })
 
 const containerInvoices = computed(() => {
