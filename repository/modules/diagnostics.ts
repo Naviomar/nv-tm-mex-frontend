@@ -99,6 +99,27 @@ export interface IProbe {
   budget: { time_ms: number; queries: number; memory_mb: number; size_kb: number }
 }
 
+export interface IDatabaseFootprint {
+  tables: { total_mb: number; items: { name: string; rows: number; data_mb: number; index_mb: number; size_mb: number }[] }
+  logs: {
+    retention_days: number
+    active_rows: number
+    archive_rows: number
+    daily: { day: string; rows: number }[]
+    by_type: { type: string; rows: number; payload_mb: number }[]
+  }
+  backup: {
+    scheduled: boolean
+    max_gb: number
+    count: number
+    used_mb: number
+    last_at: string | null
+    error: string | null
+    items: { table: string; month: string; rows: number; mb: number; created_at: string }[]
+  }
+  generated_at: string
+}
+
 class DiagnosticsModule extends FetchFactory<any> {
   private RESOURCE = '/diagnostics'
 
@@ -108,6 +129,10 @@ class DiagnosticsModule extends FetchFactory<any> {
 
   async overview(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/overview`, fetchOptions)
+  }
+
+  async database(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/database`, fetchOptions)
   }
 
   async run(body: { keys?: string[]; category?: string }, fetchOptions?: FetchOptions) {
