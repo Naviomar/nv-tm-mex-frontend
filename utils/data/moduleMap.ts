@@ -58,6 +58,7 @@ export const PAGE_LABEL_MAP: Record<string, { label: string; icon?: string }> = 
   '/tracking/air':                      { label: 'Air Tracking',   icon: 'mdi-airplane' },
   '/configuration':                     { label: 'Config',         icon: 'mdi-cog-outline' },
   '/system/system-logs':                { label: 'System Logs',    icon: 'mdi-text-box-search-outline' },
+  '/system/diagnostics':                { label: 'Diagnostics',    icon: 'mdi-heart-pulse' },
   '/system/alert-categories':           { label: 'Alert Categories', icon: 'mdi-bell-cog-outline' },
   '/system/alert-types':                { label: 'Alert Types',    icon: 'mdi-bell-outline' },
   '/system/users':                      { label: 'Users',          icon: 'mdi-account-group-outline' },
