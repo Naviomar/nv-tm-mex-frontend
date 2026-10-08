@@ -193,6 +193,7 @@ const menuPermissions = {
   SystemAuthRequestTypes: 'menu-system-auth-request-types',
   SystemLogs: 'menu-system-logs',
   SystemAudit: 'menu-system-audit',
+  SystemDiagnostics: 'menu-system-diagnostics',
   Logout: 'menu-logout',
 }
 

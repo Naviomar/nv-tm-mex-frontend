@@ -689,6 +689,7 @@
         <v-list-item v-if="canAccess(menuPermissions.SystemAuthRequestTypes)" title="Auth Request Types" prepend-icon="mdi-key-variant" to="/system/auth-request-types" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="System Logs" prepend-icon="mdi-console" to="/system/system-logs" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAudit)" title="Audit" prepend-icon="mdi-history" to="/system/audit-log" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess(menuPermissions.SystemDiagnostics)" title="Diagnostics" prepend-icon="mdi-heart-pulse" to="/system/diagnostics" rounded="xl" class="mb-1"></v-list-item>
       </v-list-group>
     </v-list>
 
@@ -835,6 +836,7 @@ const systemPermissions = [
   menuPermissions.SystemAuthRequestTypes,
   menuPermissions.SystemLogs,
   menuPermissions.SystemAudit,
+  menuPermissions.SystemDiagnostics,
 ]
 
 const canAccess = (permission: string) => {

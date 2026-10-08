@@ -89,6 +89,7 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import DiagnosticsModule from '~/repository/modules/diagnostics'
 import MailLogsModule from '~/repository/modules/mailLogs'
 import ExportLogsModule from '~/repository/modules/exportLogs'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
@@ -200,6 +201,7 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  diagnostics: DiagnosticsModule
   mailLogs: MailLogsModule
   exportLogs: ExportLogsModule
   ticketMessages: TicketMessagesModule
@@ -308,6 +310,7 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    diagnostics: new DiagnosticsModule(client),
     mailLogs: new MailLogsModule(client),
     exportLogs: new ExportLogsModule(client),
     ticketMessages: new TicketMessagesModule(client),
