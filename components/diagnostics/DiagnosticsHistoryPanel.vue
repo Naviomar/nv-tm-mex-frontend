@@ -2,10 +2,22 @@
   <div>
     <div class="d-flex align-center ga-3 mb-4">
       <v-select v-model="type" :items="types" label="Type" density="compact" hide-details clearable style="max-width: 220px" @update:model-value="load" />
-      <v-btn variant="text" prepend-icon="mdi-refresh" @click="load">Reload</v-btn>
+      <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="load">Reload</v-btn>
     </div>
 
-    <v-card elevation="0" class="tm-panel">
+    <DiagnosticsTrendChart
+      class="mb-5"
+      title="Runs over time"
+      subtitle="Outcome of each stored run"
+      empty="No runs stored yet."
+      type="bar"
+      stacked
+      :categories="chart.labels"
+      :series="chart.series"
+      :height="200"
+    />
+
+    <v-card elevation="0" class="tm-panel" rounded="lg">
       <v-data-table :headers="headers" :items="runs" :loading="loading" density="comfortable" :items-per-page="20" @click:row="(_: any, { item }: any) => open(item.id)">
         <template #item.status="{ item }">
           <DiagnosticsStatusChip :status="overall(item)" />
@@ -15,7 +27,7 @@
           <span v-if="item.summary?.fail !== undefined" class="text-caption">
             {{ item.summary.ok }} ok · {{ item.summary.warn }} warn · {{ item.summary.fail }} fail
           </span>
-          <span v-else class="text-caption">{{ item.label }}</span>
+          <span v-else class="text-caption">{{ item.label ?? 'Click for details' }}</span>
         </template>
       </v-data-table>
     </v-card>
@@ -44,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import { useTheme } from 'vuetify'
 const { $api } = useNuxtApp()
 
 const loading = ref(false)
@@ -63,6 +76,21 @@ const headers = [
   { title: 'Result', key: 'summary', sortable: false },
   { title: 'When', key: 'created_at' },
 ]
+
+const theme = useTheme()
+const chart = computed(() => {
+  const rows = [...runs.value].reverse()
+  const c = theme.current.value.colors
+  const count = (r: any, s: string) => (overall(r) === s ? 1 : 0)
+  return {
+    labels: rows.map((r) => new Date(r.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })),
+    series: [
+      { name: 'OK', data: rows.map((r) => count(r, 'ok')), color: c.success },
+      { name: 'Warning', data: rows.map((r) => count(r, 'warn')), color: c.warning },
+      { name: 'Failed', data: rows.map((r) => count(r, 'fail')), color: c.error },
+    ],
+  }
+})
 
 const overall = (run: any) => run.summary?.overall ?? run.summary?.status ?? (run.status === 'failed' ? 'fail' : 'ok')
 

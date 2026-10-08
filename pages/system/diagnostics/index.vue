@@ -1,16 +1,16 @@
 <template>
   <div class="diagnostics-page">
     <v-container fluid class="pa-6">
-      <div class="d-flex align-center flex-wrap ga-3 mb-6">
-        <v-avatar color="teal-darken-2" size="48" rounded="lg">
-          <v-icon color="white" size="28">mdi-heart-pulse</v-icon>
+      <div class="dp-header mb-6">
+        <v-avatar color="primary" variant="tonal" size="52" rounded="lg">
+          <v-icon size="30">mdi-heart-pulse</v-icon>
         </v-avatar>
         <div>
           <h1 class="text-h4 font-weight-bold">Diagnostics</h1>
           <p class="text-body-2 text-medium-emphasis mb-0">System health, safe email tests, template audit and performance probes</p>
         </div>
         <v-spacer />
-        <v-chip v-if="environment" :color="environment === 'production' ? 'error' : 'info'" variant="tonal" label>
+        <v-chip v-if="environment" :color="environment === 'production' ? 'error' : 'info'" variant="flat" label size="large" class="font-weight-bold text-uppercase">
           <v-icon start size="16">mdi-server</v-icon>{{ environment }}
         </v-chip>
       </div>
@@ -24,7 +24,7 @@
       </v-card>
 
       <template v-else-if="state === 'ready'">
-        <v-tabs v-model="tab" color="primary" class="mb-6">
+        <v-tabs v-model="tab" color="primary" class="mb-6 dp-tabs" show-arrows>
           <v-tab value="health" prepend-icon="mdi-heart-pulse">Health</v-tab>
           <v-tab v-if="canMailTest" value="mail" prepend-icon="mdi-email-fast-outline">Mail sandbox</v-tab>
           <v-tab value="templates" prepend-icon="mdi-email-edit-outline">Email templates</v-tab>
@@ -77,3 +77,8 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.dp-header { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.dp-tabs { border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)); }
+</style>
