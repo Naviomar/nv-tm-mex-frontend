@@ -29,6 +29,7 @@
           <v-tab v-if="canMailTest" value="mail" prepend-icon="mdi-email-fast-outline">Mail sandbox</v-tab>
           <v-tab value="templates" prepend-icon="mdi-email-edit-outline">Email templates</v-tab>
           <v-tab value="probes" prepend-icon="mdi-speedometer">Performance</v-tab>
+          <v-tab value="database" prepend-icon="mdi-database-outline">Database</v-tab>
           <v-tab value="history" prepend-icon="mdi-history">History</v-tab>
         </v-tabs>
 
@@ -37,6 +38,7 @@
           <v-window-item v-if="canMailTest" value="mail"><DiagnosticsMailPanel :initial-scenario="scenario" /></v-window-item>
           <v-window-item value="templates"><DiagnosticsTemplatesPanel @test-scenario="testScenario" /></v-window-item>
           <v-window-item value="probes"><DiagnosticsProbesPanel /></v-window-item>
+          <v-window-item value="database"><DiagnosticsDatabasePanel v-if="tab === 'database'" /></v-window-item>
           <v-window-item value="history"><DiagnosticsHistoryPanel /></v-window-item>
         </v-window>
       </template>
