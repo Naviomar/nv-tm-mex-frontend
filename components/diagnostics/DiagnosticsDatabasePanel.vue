@@ -67,37 +67,32 @@
         <v-col cols="12" md="6">
           <v-card elevation="0" class="tm-panel h-100" rounded="lg">
             <v-card-title class="d-flex align-center text-subtitle-1 font-weight-bold">
-              <v-icon start>mdi-cloud-upload-outline</v-icon>Log backups
+              <v-icon start>mdi-broom</v-icon>Log retention
               <v-spacer />
-              <v-chip size="small" label :color="data.backup.scheduled ? 'success' : 'secondary'" variant="tonal">
-                {{ data.backup.scheduled ? 'monthly schedule on' : 'schedule off' }}
+              <v-chip size="small" label :color="data.logs.prune_scheduled ? 'success' : 'secondary'" variant="tonal">
+                {{ data.logs.prune_scheduled ? 'daily prune on' : 'prune off' }}
               </v-chip>
             </v-card-title>
             <v-divider />
-            <v-alert v-if="data.backup.error" type="warning" variant="tonal" class="ma-3" density="compact">{{ data.backup.error }}</v-alert>
-            <div v-else class="pa-4">
-              <div class="d-flex justify-space-between text-body-2 mb-1">
-                <span class="text-medium-emphasis">Bucket usage</span>
-                <span><b>{{ data.backup.used_mb }} MB</b> of {{ data.backup.max_gb }} GB cap</span>
+            <div class="pa-4">
+              <div class="d-flex justify-space-between text-body-2 mb-2">
+                <span class="text-medium-emphasis">Kept in the database</span>
+                <b>{{ data.logs.retention_days }} days</b>
               </div>
-              <v-progress-linear :model-value="(data.backup.used_mb / (data.backup.max_gb * 1024)) * 100" height="6" rounded color="success" class="mb-3" />
-              <div class="text-body-2 mb-2">
-                Last backup:
-                <b v-if="data.backup.last_at">{{ new Date(data.backup.last_at).toLocaleString() }}</b>
-                <b v-else class="text-warning">none yet</b>
+              <div class="d-flex justify-space-between text-body-2 mb-2">
+                <span class="text-medium-emphasis">Oldest log</span>
+                <b>{{ data.logs.oldest_at ? new Date(data.logs.oldest_at.replace(' ', 'T')).toLocaleDateString() : '—' }}</b>
               </div>
+              <div class="d-flex justify-space-between text-body-2 mb-3">
+                <span class="text-medium-emphasis">Rows past the retention</span>
+                <b :class="data.logs.over_retention_rows ? 'text-warning' : 'text-success'">{{ data.logs.over_retention_rows.toLocaleString() }}</b>
+              </div>
+              <v-alert v-if="data.logs.over_retention_rows" type="warning" variant="tonal" density="compact">
+                Run <code>php artisan logs:prune</code> on the server to see the plan; add <code>--execute</code> to delete.
+                History stays in the daily database backups.
+              </v-alert>
+              <v-alert v-else type="success" variant="tonal" density="compact">Nothing past the retention.</v-alert>
             </div>
-            <v-table v-if="data.backup.items.length" density="compact">
-              <thead><tr><th>Table</th><th>Month</th><th class="text-right">Rows</th><th class="text-right">MB</th></tr></thead>
-              <tbody>
-                <tr v-for="b in data.backup.items" :key="b.table + b.month + b.created_at">
-                  <td>{{ b.table }}</td><td>{{ b.month }}</td><td class="text-right">{{ b.rows.toLocaleString() }}</td><td class="text-right">{{ b.mb }}</td>
-                </tr>
-              </tbody>
-            </v-table>
-            <p v-else-if="!data.backup.error" class="text-caption text-medium-emphasis px-4 pb-4 mb-0">
-              Run <code>php artisan logs:backup-prune</code> on the server to see the plan.
-            </p>
           </v-card>
         </v-col>
       </v-row>

@@ -103,19 +103,13 @@ export interface IDatabaseFootprint {
   tables: { total_mb: number; items: { name: string; rows: number; data_mb: number; index_mb: number; size_mb: number }[] }
   logs: {
     retention_days: number
+    prune_scheduled: boolean
     active_rows: number
     archive_rows: number
+    over_retention_rows: number
+    oldest_at: string | null
     daily: { day: string; rows: number }[]
     by_type: { type: string; rows: number; payload_mb: number }[]
-  }
-  backup: {
-    scheduled: boolean
-    max_gb: number
-    count: number
-    used_mb: number
-    last_at: string | null
-    error: string | null
-    items: { table: string; month: string; rows: number; mb: number; created_at: string }[]
   }
   generated_at: string
 }
