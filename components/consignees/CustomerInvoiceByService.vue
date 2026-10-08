@@ -183,7 +183,7 @@
                       <td>{{ service.reference_number }}</td>
                       <td>
                         <v-chip class="mr-2">{{ sell_charge.inv_type }}</v-chip> {{ sell_charge.charge?.name }}
-                        <span v-if="sell_charge.class_name.includes('ContainerDetention')" class="ml-2">{{
+                        <span v-if="sell_charge.reference_container?.container_number" class="ml-2">{{
                           sell_charge.reference_container.container_number
                         }}</span>
                       </td>
@@ -342,7 +342,7 @@
                           >mdi-ferry</v-icon
                         >
                         {{ charge.charge?.name }}
-                        <span v-if="charge.class_name.includes('ContainerDetention')" class="ml-2">{{
+                        <span v-if="charge.reference_container?.container_number" class="ml-2">{{
                           charge.reference_container.container_number
                         }}</span>
                       </td>
