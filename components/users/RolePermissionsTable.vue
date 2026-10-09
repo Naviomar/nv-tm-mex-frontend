@@ -152,7 +152,7 @@
           Every permission in the system and what it allows. To change what a role grants use the
           <v-icon size="14">mdi-key-variant</v-icon> button above.
         </div>
-        <PermissionsGrid :permissions="permissions" :model-value="[]" readonly guide />
+        <RolePermissionsPanel :permissions="permissions" guide />
       </v-card-text>
     </v-card>
 
@@ -177,10 +177,8 @@
             prepend-inner-icon="mdi-shield"
             :rules="[v => !!v || 'Role name is required']"
           />
-          <div class="text-caption text-medium-emphasis mb-2">
-            Permissions ({{ role.permissions.length }} selected, optional)
-          </div>
-          <PermissionsGrid :permissions="permissions" v-model="role.permissions" />
+          <div class="text-caption text-medium-emphasis mb-2">Permissions (optional, you can change them later)</div>
+          <RolePermissionsPanel :permissions="permissions" v-model="role.permissions" />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
           <v-spacer />
@@ -248,9 +246,10 @@
           </v-btn>
         </v-toolbar>
         <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
-          <PermissionsGrid
+          <RolePermissionsPanel
             :permissions="permissions"
             v-model="editPermissionsModal.selectedIds"
+            :affected-users="editPermissionsModal.role?.users_count"
           />
         </v-card-text>
       </v-card>
@@ -437,12 +436,19 @@ const saveRole = async () => {
   }
 }
 
+const sameIds = (a: number[], b: number[]) => a.length === b.length && new Set([...a, ...b]).size === a.length
+
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(
   () => editPermissionsModal.value.selectedIds,
   (ids) => {
     if (!editPermissionsModal.value.role || !editPermissionsModal.value.show) return
+    // Opening the dialog also replaces selectedIds: don't save when nothing changed.
+    if (sameIds(ids, (editPermissionsModal.value.role.permissions ?? []).map((p: any) => p.id))) {
+      if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
+      return
+    }
     if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
     saveDebounceTimer = setTimeout(async () => {
       try {
@@ -450,6 +456,7 @@ watch(
         savedPermissions.value = false
         await $api.users.syncRolePermissions(editPermissionsModal.value.role.id, ids)
         savedPermissions.value = true
+        editPermissionsModal.value.role.permissions = permissions.value.filter((p: any) => ids.includes(p.id))
         await getRolesAndPermissions()
         setTimeout(() => { savedPermissions.value = false }, 2000)
       } catch (e) {
