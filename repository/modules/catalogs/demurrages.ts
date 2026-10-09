@@ -96,6 +96,13 @@ class DemurragesModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/sea-import-references/${id}/cut-pdf`, fetchOptions)
   }
 
+  async previewEmailCut(id: string, containerIds?: number[], fetchOptions?: FetchOptions) {
+    if (containerIds?.length) {
+      fetchOptions = { query: { 'container_ids[]': containerIds }, ...fetchOptions }
+    }
+    return this.call('GET', `${this.RESOURCE}/sea-import-references/${id}/cut-preview`, fetchOptions)
+  }
+
   async getDemurrageCuts(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import-references/${id}/cuts`, fetchOptions)
   }
