@@ -249,7 +249,7 @@
             <tbody>
               <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
                 <td>{{ charge.id }}</td>
-                <td>{{ charge.serviceable?.reference_number }}</td>
+                <td>{{ chargeServiceNumber(charge) }}</td>
                 <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
                 <td class="text-right">{{ formatToCurrency(charge.amount) }}</td>
                 <td class="text-right">{{ formatToCurrency(getWmConceptTotal(charge)) }}</td>
@@ -454,6 +454,20 @@ const cancel = ref<any>({
 const invoiceWm = ref<any>({})
 const chargeCfdiNames = ref<any>([])
 const showCancelDialog = ref(false)
+
+// Al cancelar, el concepto pierde su servicio; se recupera del vínculo borrado si es uno solo.
+const chargeServiceNumber = (charge: any) => {
+  if (charge.serviceable?.reference_number) return charge.serviceable.reference_number
+  if (!invoiceWm.value?.cancelled_at) return undefined
+  const numbers = [
+    ...new Set(
+      (invoiceWm.value.services_all || [])
+        .map((service: any) => (service.referencia ?? service.air_reference)?.reference_number)
+        .filter(Boolean)
+    ),
+  ]
+  return numbers.length === 1 ? numbers[0] : undefined
+}
 
 const getReferenceNumber = (referenciaId: number) => {
   return (invoiceWm.value?.services || []).find((service: any) => service.air_reference_id === referenciaId)
