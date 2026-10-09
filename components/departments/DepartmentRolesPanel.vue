@@ -174,7 +174,7 @@
           <div class="text-caption text-grey-darken-1 mb-2">
             Select permissions from the admin scope for this role:
           </div>
-          <PermissionsGrid
+          <RolePermissionsPanel
             v-if="scopePermissions.length > 0"
             :permissions="scopePermissions"
             v-model="createDialog.selectedPermissionIds"
@@ -215,10 +215,11 @@
           <v-btn icon @click="editDialog.show = false"><v-icon>mdi-close</v-icon></v-btn>
         </v-toolbar>
         <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
-          <PermissionsGrid
+          <RolePermissionsPanel
             v-if="scopePermissions.length > 0"
             :permissions="scopePermissions"
             v-model="editDialog.selectedPermissionIds"
+            :affected-users="membersWithRole(editDialog.role?.id)"
           />
         </v-card-text>
       </v-card>
@@ -407,6 +408,12 @@ watch(
   () => editDialog.value.selectedPermissionIds,
   (ids) => {
     if (!editDialog.value.role || !editDialog.value.show) return
+    // Opening the dialog also replaces selectedPermissionIds: don't save when nothing changed.
+    const saved = (editDialog.value.role.permissions ?? []).map((p: any) => p.id)
+    if (ids.length === saved.length && new Set([...ids, ...saved]).size === ids.length) {
+      if (editRoleDebounceTimer) clearTimeout(editRoleDebounceTimer)
+      return
+    }
     if (editRoleDebounceTimer) clearTimeout(editRoleDebounceTimer)
     editRoleDebounceTimer = setTimeout(async () => {
       try {
@@ -417,6 +424,7 @@ watch(
           permission_ids: ids,
         })
         await loadRoles()
+        editDialog.value.role.permissions = scopePermissions.value.filter((p: any) => ids.includes(p.id))
         emit('roles-changed')
         editDialog.value.saved = true
         setTimeout(() => { editDialog.value.saved = false }, 2000)

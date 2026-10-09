@@ -147,7 +147,7 @@
         <v-window-item value="glossary">
           <div class="text-body-2 text-medium-emphasis mb-3">Qué permite cada permiso del sistema.</div>
           <div v-if="loadingGlossary" class="text-center py-6"><v-progress-circular indeterminate /></div>
-          <PermissionsGrid v-else :permissions="catalog" :model-value="[]" readonly guide />
+          <RolePermissionsPanel v-else :permissions="catalog" guide />
         </v-window-item>
       </v-window>
     </div>

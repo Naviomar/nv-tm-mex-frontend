@@ -1,5 +1,5 @@
 // Agrupa el catálogo plano de permisos ("customs-agents-view") en módulo > submódulo
-// > etiqueta legible. Compartido por PermissionsGrid y UserAccessPanel para que ambos
+// > etiqueta legible. Compartido por UserAccessPanel y RolePermissionsPanel para que ambos
 // muestren la misma jerarquía.
 
 export interface RawPermission {

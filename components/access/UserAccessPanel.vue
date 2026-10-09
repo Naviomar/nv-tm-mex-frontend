@@ -86,113 +86,91 @@
       </div>
 
       <!-- Groups -->
-      <v-expansion-panels v-model="open" multiple variant="accordion" class="access-groups">
-        <v-expansion-panel v-for="group in filteredGroups" :key="group.label" :value="group.label" elevation="0">
-          <v-expansion-panel-title class="access-group-title">
-            <span class="font-weight-bold text-body-2 text-uppercase">{{ group.label }}</span>
-            <v-chip size="x-small" variant="tonal" color="primary" class="ml-3">
-              {{ groupStats(group).allowed }}/{{ groupStats(group).total }}
+      <PermissionGroupsList v-model="open" :groups="filteredGroups" :row-class="(p) => `access-row--${stateOf(p.id)}`">
+        <template #group-stats="{ group }">
+          <v-chip size="x-small" variant="tonal" color="primary" class="ml-3">
+            {{ groupStats(group).allowed }}/{{ groupStats(group).total }}
+          </v-chip>
+          <v-chip v-if="groupStats(group).revoked" size="x-small" variant="flat" color="error" class="ml-2">
+            {{ groupStats(group).revoked }} revoked
+          </v-chip>
+          <v-chip v-if="groupStats(group).extra" size="x-small" variant="tonal" color="deep-purple" class="ml-2">
+            {{ groupStats(group).extra }} extra
+          </v-chip>
+        </template>
+
+        <template #main="{ perm }">
+          <div class="d-flex align-center flex-wrap gap-2">
+            <span class="font-weight-medium text-body-2">{{ perm.humanLabel }}</span>
+
+            <v-tooltip v-if="stateOf(perm.id) === 'inherited'" location="top">
+              <template #activator="{ props: tp }">
+                <v-chip v-bind="tp" size="x-small" color="primary" variant="tonal" prepend-icon="mdi-shield-account">
+                  {{ roleLabel(perm.id) }}
+                </v-chip>
+              </template>
+              Granted by: {{ (rolesByPermission.get(perm.id) ?? []).join(', ') }}
+            </v-tooltip>
+
+            <v-chip v-else-if="stateOf(perm.id) === 'extra'" size="x-small" color="deep-purple" variant="tonal" prepend-icon="mdi-account-plus-outline">
+              Extra
             </v-chip>
-            <v-chip v-if="groupStats(group).revoked" size="x-small" variant="flat" color="error" class="ml-2">
-              {{ groupStats(group).revoked }} revoked
-            </v-chip>
-            <v-chip v-if="groupStats(group).extra" size="x-small" variant="tonal" color="deep-purple" class="ml-2">
-              {{ groupStats(group).extra }} extra
-            </v-chip>
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <div v-for="sub in group.subgroups" :key="sub.label" class="mb-3">
-              <div v-if="sub.label !== ROOT_SUBGROUP" class="d-flex align-center gap-2 mb-1">
-                <div class="subgroup-bar" />
-                <span class="text-body-2 font-weight-medium text-primary">{{ sub.label }}</span>
-              </div>
 
-              <div
-                v-for="perm in sub.permissions"
-                :key="perm.id"
-                class="access-row"
-                :class="`access-row--${stateOf(perm.id)}`"
-              >
-                <div class="access-row__main">
-                  <div class="d-flex align-center flex-wrap gap-2">
-                    <span class="font-weight-medium text-body-2">{{ perm.humanLabel }}</span>
-
-                    <v-tooltip v-if="stateOf(perm.id) === 'inherited'" location="top">
-                      <template #activator="{ props: tp }">
-                        <v-chip v-bind="tp" size="x-small" color="primary" variant="tonal" prepend-icon="mdi-shield-account">
-                          {{ roleLabel(perm.id) }}
-                        </v-chip>
-                      </template>
-                      Granted by: {{ (rolesByPermission.get(perm.id) ?? []).join(', ') }}
-                    </v-tooltip>
-
-                    <v-chip v-else-if="stateOf(perm.id) === 'extra'" size="x-small" color="deep-purple" variant="tonal" prepend-icon="mdi-account-plus-outline">
-                      Extra
-                    </v-chip>
-
-                    <v-tooltip v-else-if="isRevoked(perm.id)" location="top">
-                      <template #activator="{ props: tp }">
-                        <v-chip
-                          v-bind="tp"
-                          size="x-small"
-                          color="error"
-                          :variant="stateOf(perm.id) === 'revoked' ? 'flat' : 'outlined'"
-                          prepend-icon="mdi-cancel"
-                        >
-                          {{ stateOf(perm.id) === 'revoked' ? 'Revoked' : 'Revoked · no role grants it now' }}
-                        </v-chip>
-                      </template>
-                      <div>
-                        <div v-if="stateOf(perm.id) === 'revoked'">
-                          The role still grants it, but this user can't use it.
-                        </div>
-                        <div v-else>No role grants it right now; it will stay denied if a role gives it again.</div>
-                        <div v-if="revocationOf(perm.id)?.reason">Reason: {{ revocationOf(perm.id)?.reason }}</div>
-                        <div v-if="revocationOf(perm.id)?.created_at">Since {{ formatDate(revocationOf(perm.id)?.created_at) }}</div>
-                      </div>
-                    </v-tooltip>
-                  </div>
-                  <div class="text-caption text-medium-emphasis access-row__desc">
-                    {{ perm.description || 'No description yet.' }}
-                    <span class="access-row__code">{{ perm.name }}</span>
-                  </div>
+            <v-tooltip v-else-if="isRevoked(perm.id)" location="top">
+              <template #activator="{ props: tp }">
+                <v-chip
+                  v-bind="tp"
+                  size="x-small"
+                  color="error"
+                  :variant="stateOf(perm.id) === 'revoked' ? 'flat' : 'outlined'"
+                  prepend-icon="mdi-cancel"
+                >
+                  {{ stateOf(perm.id) === 'revoked' ? 'Revoked' : 'Revoked · no role grants it now' }}
+                </v-chip>
+              </template>
+              <div>
+                <div v-if="stateOf(perm.id) === 'revoked'">
+                  The role still grants it, but this user can't use it.
                 </div>
-
-                <div class="access-row__actions">
-                  <v-progress-circular v-if="busy.has(perm.id)" indeterminate size="18" width="2" />
-                  <template v-else>
-                    <v-btn
-                      v-if="isRevoked(perm.id) && canEdit && isManageable(perm.id)"
-                      size="x-small"
-                      variant="tonal"
-                      color="primary"
-                      @click="restore(perm)"
-                    >
-                      {{ stateOf(perm.id) === 'revoked' ? 'Undo' : 'Clear' }}
-                    </v-btn>
-                    <v-tooltip :disabled="!switchHint(perm.id)" location="left">
-                      <template #activator="{ props: tp }">
-                        <span v-bind="tp">
-                          <v-switch
-                            :model-value="isAllowed(perm.id)"
-                            :disabled="!canEdit || !isManageable(perm.id) || (isRevoked(perm.id) && stateOf(perm.id) === 'revoked-dormant')"
-                            :color="stateOf(perm.id) === 'extra' ? 'deep-purple' : 'primary'"
-                            density="compact"
-                            hide-details
-                            inset
-                            @update:model-value="(v: any) => onToggle(perm, !!v)"
-                          />
-                        </span>
-                      </template>
-                      {{ switchHint(perm.id) }}
-                    </v-tooltip>
-                  </template>
-                </div>
+                <div v-else>No role grants it right now; it will stay denied if a role gives it again.</div>
+                <div v-if="revocationOf(perm.id)?.reason">Reason: {{ revocationOf(perm.id)?.reason }}</div>
+                <div v-if="revocationOf(perm.id)?.created_at">Since {{ formatDate(revocationOf(perm.id)?.created_at) }}</div>
               </div>
-            </div>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
+            </v-tooltip>
+          </div>
+        </template>
+
+        <template #actions="{ perm }">
+          <v-progress-circular v-if="busy.has(perm.id)" indeterminate size="18" width="2" />
+          <template v-else>
+            <v-btn
+              v-if="isRevoked(perm.id) && canEdit && isManageable(perm.id)"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+              @click="restore(perm)"
+            >
+              {{ stateOf(perm.id) === 'revoked' ? 'Undo' : 'Clear' }}
+            </v-btn>
+            <v-tooltip :disabled="!switchHint(perm.id)" location="left">
+              <template #activator="{ props: tp }">
+                <span v-bind="tp">
+                  <v-switch
+                    :model-value="isAllowed(perm.id)"
+                    :disabled="!canEdit || !isManageable(perm.id) || (isRevoked(perm.id) && stateOf(perm.id) === 'revoked-dormant')"
+                    :color="stateOf(perm.id) === 'extra' ? 'deep-purple' : 'primary'"
+                    density="compact"
+                    hide-details
+                    inset
+                    @update:model-value="(v: any) => onToggle(perm, !!v)"
+                  />
+                </span>
+              </template>
+              {{ switchHint(perm.id) }}
+            </v-tooltip>
+          </template>
+        </template>
+      </PermissionGroupsList>
     </template>
 
     <!-- Revoke confirmation -->
@@ -234,7 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { groupPermissions, ROOT_SUBGROUP } from '~/utils/permissions/groupPermissions'
+import { groupPermissions } from '~/utils/permissions/groupPermissions'
 import type { PermissionGroup, PermissionNode } from '~/utils/permissions/groupPermissions'
 
 type AccessState = 'inherited' | 'extra' | 'revoked' | 'revoked-dormant' | 'none'
@@ -543,74 +521,6 @@ watch(
 </script>
 
 <style scoped>
-.access-groups {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.access-group-title {
-  min-height: 44px;
-}
-
-.subgroup-bar {
-  width: 3px;
-  height: 16px;
-  border-radius: 2px;
-  background: rgb(var(--v-theme-primary));
-  opacity: 0.7;
-}
-
-.access-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-}
-
-.access-row + .access-row {
-  margin-top: 2px;
-}
-
-.access-row:hover {
-  background: rgba(var(--v-theme-on-surface), 0.04);
-}
-
-.access-row--revoked,
-.access-row--revoked-dormant {
-  background: rgba(var(--v-theme-error), 0.08);
-  border-color: rgba(var(--v-theme-error), 0.3);
-}
-
-.access-row--extra {
-  background: rgba(var(--v-theme-secondary), 0.05);
-}
-
-.access-row__main {
-  min-width: 0;
-}
-
-.access-row__desc {
-  line-height: 1.35;
-}
-
-.access-row__code {
-  margin-left: 6px;
-  opacity: 0.6;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-}
-
-.access-row__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 .filter-chip--active {
   color: rgb(var(--v-theme-primary));
   border-color: rgb(var(--v-theme-primary));
