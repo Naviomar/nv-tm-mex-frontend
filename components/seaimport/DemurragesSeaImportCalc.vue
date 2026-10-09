@@ -198,8 +198,23 @@
                     </v-card-subtitle>
                   </v-card-item>
                   <v-card-text v-show="showEditFreeDays">
-                    <v-text-field v-model="form.freeDays" label="Días libres" density="compact" />
-                    <v-btn @click="saveFreeDays" size="small" color="primary">Actualizar días libres</v-btn>
+                    <v-text-field v-model="form.freeDays" label="Días libres" type="number" min="0" density="compact" />
+                    <div class="flex flex-wrap gap-2">
+                      <v-btn @click="saveFreeDays(false)" size="small" color="primary">Aplicar a todos</v-btn>
+                      <v-btn
+                        @click="saveFreeDays(true)"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        :disabled="!hasContainerDaysSelected"
+                      >
+                        Aplicar a seleccionados ({{ selectedContainersCount }})
+                      </v-btn>
+                    </div>
+                    <div class="text-xs text-medium-emphasis mt-2">
+                      "Aplicar a todos" también cambia el valor base de la referencia. A los seleccionados solo se les
+                      cambian sus propios días (no aplica a contenedores con demoras facturadas).
+                    </div>
                   </v-card-text>
                 </v-card>
 
@@ -271,6 +286,7 @@
                     <th class="w-8"></th>
                     <th>Container</th>
                     <th>Type</th>
+                    <th>Free days</th>
                     <th>Cálculo</th>
                     <th>Cut</th>
                     <th>Start date</th>
@@ -314,6 +330,15 @@
                     </td>
                     <td>{{ item.container_number }}</td>
                     <td>{{ item.container_type?.name }}</td>
+                    <td>
+                      <v-chip
+                        variant="outlined"
+                        size="small"
+                        :color="containerFreeDays(item) !== referenceFreeDays ? 'warning' : undefined"
+                      >
+                        {{ containerFreeDays(item) }} day(s)
+                      </v-chip>
+                    </td>
                     <td>
                       <v-chip variant="outlined" size="small">
                         {{ item.demurrage?.is_parcial ? 'Parcial' : 'Total' }}
@@ -1004,9 +1029,14 @@ const onDiscountClick = async () => {
   showDiscountDialog.value = !showDiscountDialog.value
 }
 
+// Días libres propios del contenedor; si aún no tiene demoras usa el valor base de la referencia
+const containerFreeDays = (container: any) => {
+  return Number(container.demurrage?.free_days ?? referenceFreeDays.value)
+}
+
 const remainingFreeDays = (container: any) => {
   const date = moment.tz(container.demurrage?.start_date, 'America/Mexico_City')
-  date.add(referenceFreeDays.value, 'days')
+  date.add(containerFreeDays(container), 'days')
   const today = moment.tz(new Date(), 'America/Mexico_City')
   const diff = date.diff(today, 'days')
   const days = Math.ceil(diff / (1000 * 3600 * 24))
@@ -1038,7 +1068,7 @@ const remainingDaysUntilEmptyDate = (container: any) => {
 
 const freeDaysUntilDate = (container: any) => {
   const date = moment.tz(container.demurrage?.start_date, 'America/Mexico_City')
-  date.add(referenceFreeDays.value - 1, 'days')
+  date.add(containerFreeDays(container) - 1, 'days')
   return date
 }
 
@@ -1059,6 +1089,10 @@ const setStartDateToAll = () => {
 
 const hasContainerDaysSelected = computed(() => {
   return referencia.value.containers.some((container: any) => container.selected_days)
+})
+
+const selectedContainersCount = computed(() => {
+  return referencia.value.containers.filter((container: any) => container.selected_days).length
 })
 
 const containersSelected = computed(() => {
@@ -1231,7 +1265,7 @@ const getSourceLabel = (source: string) => {
 const syncFreeDays = async () => {
   const confirmed = await confirm({
     title: '¿Sincronizar días libres?',
-    content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente.`,
+    content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente. Esto sobrescribe los días libres de todos los contenedores, incluidos los ajustados individualmente.`,
     confirmationText: 'Sincronizar',
     dialogProps: { persistent: true, maxWidth: 500 },
     confirmationButtonProps: { color: 'primary' },
@@ -1256,11 +1290,20 @@ const syncFreeDays = async () => {
   }
 }
 
-const saveFreeDays = async () => {
+const saveFreeDays = async (onlySelected = false) => {
+  if (form.freeDays === '' || Number(form.freeDays) < 0) {
+    snackbar.add({ type: 'error', text: 'Enter a valid number of free days.' })
+    return
+  }
   try {
     loadingStore.loading = true
-    const body = {
+    const body: any = {
       freeDays: form.freeDays,
+    }
+    if (onlySelected) {
+      body.container_ids = referencia.value.containers
+        .filter((container: any) => container.selected_days)
+        .map((container: any) => container.id)
     }
     const response = (await $api.demurrages.saveReferenciaFreeDays(props.id, body)) as any
     snackbar.add({ type: 'success', text: 'Free days updated successfully.' })
