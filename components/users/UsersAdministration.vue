@@ -63,6 +63,19 @@
 
                     <EditButton :item="user" permission="users-edit" @click="editUserClick(user)" />
 
+                    <v-tooltip v-if="hasPermission('users-edit')" text="Permissions">
+                      <template v-slot:activator="{ props: tooltipProps }">
+                        <v-btn
+                          color="deep-purple"
+                          size="x-small"
+                          variant="elevated"
+                          v-bind="tooltipProps"
+                          icon="mdi-key-variant"
+                          @click="onClickUserPermissions(user)"
+                        ></v-btn>
+                      </template>
+                    </v-tooltip>
+
                     <v-tooltip v-if="hasPermission('users-manage-notifications')" text="Notifications">
                       <template v-slot:activator="{ props: tooltipProps }">
                         <v-btn
@@ -160,6 +173,24 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="permissionsDialog.show" max-width="980" scrollable>
+          <v-card>
+            <v-card-title class="d-flex align-center justify-space-between">
+              <div>
+                <v-icon color="primary" class="mr-2">mdi-key-variant</v-icon>
+                Permissions — {{ permissionsDialog.user?.name || permissionsDialog.user?.email }}
+              </div>
+              <v-btn icon="mdi-close" size="small" variant="text" @click="permissionsDialog.show = false" />
+            </v-card-title>
+            <v-card-text style="max-height: 78vh">
+              <UserAccessPanel
+                v-if="permissionsDialog.show && permissionsDialog.user"
+                :user-id="permissionsDialog.user.id"
+              />
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+
         <v-dialog v-model="showNotificationsDialog" max-width="1200" scrollable>
           <v-card>
             <v-card-title class="d-flex align-center justify-space-between">
@@ -196,6 +227,7 @@ const showDeleteDialog = ref(false)
 const userToDelete = ref<any>(null)
 const showNotificationsDialog = ref(false)
 const userForNotifications = ref<any>(null)
+const permissionsDialog = ref({ show: false, user: null as any })
 // let usersPaged = ref<any>({})
 
 const onClickResetFilters = async () => {
@@ -205,6 +237,10 @@ const onClickResetFilters = async () => {
   }
 
   await getUsers()
+}
+
+const onClickUserPermissions = (user: any) => {
+  permissionsDialog.value = { show: true, user }
 }
 
 const onClickCreateUser = async () => {

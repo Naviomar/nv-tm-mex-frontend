@@ -145,7 +145,10 @@
                       <v-chip
                         v-for="(permission, index2) in role.permissions"
                         :key="`role-${index}-permission-${index2}`"
-                        color="primary"
+                        :color="isRevoked(permission.id) ? 'error' : 'primary'"
+                        :variant="isRevoked(permission.id) ? 'outlined' : 'elevated'"
+                        :class="{ 'text-decoration-line-through': isRevoked(permission.id) }"
+                        :title="isRevoked(permission.id) ? 'Revoked for this user' : undefined"
                         class="mr-2 mb-2"
                       >
                         {{ permission.name }}
@@ -282,6 +285,10 @@ const form = reactive({
 })
 
 const user = ref<any>(null)
+
+// Permissions revoked to this user stay listed under their role but don't apply.
+const revokedIds = computed(() => new Set<number>(((user.value as any)?.permission_revocations ?? []).map((r: any) => r.permission_id)))
+const isRevoked = (id: number) => revokedIds.value.has(id)
 const avatarDialog = ref(false)
 
 const getUserAvatar = computed(() => {

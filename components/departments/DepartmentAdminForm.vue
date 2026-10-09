@@ -12,26 +12,15 @@
           Roles & Permissions
         </v-tab>
       </v-tabs>
-      <div class="d-flex gap-2">
-        <v-btn
-          variant="tonal"
-          color="deep-purple"
-          prepend-icon="mdi-sitemap-outline"
-          size="small"
-          @click="howItWorksModal.show = true"
-        >
-          How Roles & Permissions Work
-        </v-btn>
-        <v-btn
-          variant="tonal"
-          color="secondary"
-          prepend-icon="mdi-help-circle-outline"
-          size="small"
-          @click="openPermissionsGuide"
-        >
-          Permissions Guide
-        </v-btn>
-      </div>
+      <v-btn
+        variant="tonal"
+        color="primary"
+        prepend-icon="mdi-book-open-page-variant-outline"
+        size="small"
+        @click="pageDocs.open('access-control')"
+      >
+        How access works
+      </v-btn>
     </div>
     <v-divider class="mb-4" />
 
@@ -127,7 +116,7 @@
                       <v-icon size="16">mdi-shield-account</v-icon> Roles
                     </span>
                   </th>
-                  <th style="width: 110px">
+                  <th style="width: 190px">
                     <span class="d-flex align-center gap-2 text-caption font-weight-bold text-grey-darken-1">
                       <v-icon size="16">mdi-key-variant</v-icon> Permissions
                     </span>
@@ -179,29 +168,69 @@
                     />
                   </td>
                   <td>
-                    <div class="d-flex flex-wrap gap-1">
+                    <div class="d-flex flex-wrap align-center gap-1">
                       <v-chip
                         v-for="role in member.roles"
                         :key="role.id"
                         size="x-small"
                         :color="role.name?.includes('Admin') ? 'amber-darken-2' : 'secondary'"
                         variant="tonal"
+                        :closable="isDepartmentRole(role.id)"
+                        @click:close="removeRole(member, role)"
                       >
                         {{ role.name }}
                       </v-chip>
-                      <span v-if="!member.roles?.length" class="text-caption text-grey-darken-1">—</span>
+                      <span v-if="!member.roles?.length" class="text-caption text-medium-emphasis">No role</span>
+
+                      <v-menu v-if="assignableRoles(member).length" location="bottom start">
+                        <template #activator="{ props: mProps }">
+                          <v-btn
+                            v-bind="mProps"
+                            size="x-small"
+                            variant="tonal"
+                            color="success"
+                            icon="mdi-plus"
+                            title="Add a role"
+                            :loading="assigningTo === member.id"
+                          />
+                        </template>
+                        <v-list density="compact">
+                          <v-list-subheader>Add a role</v-list-subheader>
+                          <v-list-item
+                            v-for="role in assignableRoles(member)"
+                            :key="role.id"
+                            :title="role.name"
+                            :subtitle="role.role_type === 'admin' ? 'Admin role' : 'Member role'"
+                            @click="addRole(member, role)"
+                          >
+                            <template #prepend>
+                              <v-icon size="small" :color="role.role_type === 'admin' ? 'amber-darken-2' : 'primary'">
+                                {{ role.role_type === 'admin' ? 'mdi-shield-crown' : 'mdi-shield-account' }}
+                              </v-icon>
+                            </template>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
                     </div>
                   </td>
                   <td>
-                    <v-btn
-                      size="x-small"
-                      variant="tonal"
-                      :color="totalPermCount(member) ? 'primary' : 'grey'"
-                      prepend-icon="mdi-key-variant"
-                      @click="openEditPermissionsModal(member)"
-                    >
-                      {{ totalPermCount(member) }}
-                    </v-btn>
+                    <div class="d-flex align-center flex-wrap gap-1">
+                      <v-btn
+                        size="x-small"
+                        variant="tonal"
+                        :color="totalPermCount(member) ? 'primary' : 'grey'"
+                        prepend-icon="mdi-key-variant"
+                        @click="openAccessModal(member)"
+                      >
+                        {{ totalPermCount(member) }}
+                      </v-btn>
+                      <v-chip v-if="directCount(member)" size="x-small" color="deep-purple" variant="tonal" title="Extra permissions given directly">
+                        +{{ directCount(member) }} extra
+                      </v-chip>
+                      <v-chip v-if="revokedCount(member)" size="x-small" color="error" variant="flat" title="Permissions revoked even though a role grants them">
+                        -{{ revokedCount(member) }} revoked
+                      </v-chip>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="linkedUsers.length === 0">
@@ -228,134 +257,31 @@
     </v-window>
   </div>
 
-  <!-- Modal: Edit User Permissions -->
-  <v-dialog v-model="editPermissionsModal.show" max-width="1200" persistent scrollable>
+  <!-- Modal: user access (roles' permissions, extras and revocations) -->
+  <v-dialog v-model="accessModal.show" max-width="980" scrollable>
     <v-card class="rounded-lg">
       <v-toolbar color="primary" density="comfortable" class="rounded-t-lg">
         <v-toolbar-title>
           <v-icon class="mr-2">mdi-key-variant</v-icon>
-          Permissions: {{ editPermissionsModal.user?.name }}
+          Permissions: {{ accessModal.user?.name }}
         </v-toolbar-title>
         <v-spacer />
-        <div v-if="editPermissionsModal.saving" class="d-flex align-center mr-3 text-white text-caption">
-          <v-progress-circular indeterminate size="14" width="2" color="white" class="mr-1" />
-          Saving...
-        </div>
-        <div v-else-if="editPermissionsModal.saved" class="d-flex align-center mr-3 text-white text-caption">
-          <v-icon size="14" class="mr-1">mdi-check</v-icon>
-          Saved
-        </div>
-        <!-- Legend: role vs direct -->
-        <div class="d-flex align-center gap-3 mr-3 text-white text-caption">
-          <span class="d-flex align-center gap-1">
-            <v-icon size="12" color="white">mdi-shield-account</v-icon>
-            Via role
-          </span>
-          <span class="d-flex align-center gap-1">
-            <v-icon size="12" color="white">mdi-account-key</v-icon>
-            Direct ({{ editPermissionsModal.selectedIds.length }})
-          </span>
-        </div>
-        <v-btn icon @click="editPermissionsModal.show = false">
+        <v-btn icon @click="accessModal.show = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
-      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4 rounded-b-lg">
-        <div v-if="editPermissionsModal.loading" class="text-center py-6">
+      <v-card-text style="max-height: 78vh; overflow-y: auto" class="pa-4 rounded-b-lg">
+        <div v-if="accessModal.loading" class="text-center py-6">
           <v-progress-circular indeterminate color="primary" />
         </div>
-        <div v-else-if="scopePermissions.length > 0">
-          <!-- Role permissions (read-only, shown as context) -->
-          <div v-if="editPermissionsModal.rolePermissionIds.length > 0" class="mb-4">
-            <div class="d-flex align-center gap-2 mb-2">
-              <v-icon size="18" color="secondary">mdi-shield-account</v-icon>
-              <span class="text-subtitle-2 font-weight-bold text-secondary">
-                Permissions via role (read-only)
-              </span>
-              <v-chip size="x-small" color="secondary" variant="tonal">
-                {{ editPermissionsModal.rolePermissionIds.length }}
-              </v-chip>
-            </div>
-            <PermissionsGrid
-              :permissions="scopePermissions.filter(p => editPermissionsModal.rolePermissionIds.includes(p.id))"
-              :model-value="editPermissionsModal.rolePermissionIds"
-              :readonly="true"
-            />
-          </div>
-
-          <!-- Direct permissions (editable) -->
-          <div>
-            <div class="d-flex align-center gap-2 mb-2" :class="editPermissionsModal.rolePermissionIds.length > 0 ? 'mt-4' : ''">
-              <v-icon size="18" color="primary">mdi-account-key</v-icon>
-              <span class="text-subtitle-2 font-weight-bold text-primary">
-                Direct permissions (editable)
-              </span>
-              <v-chip size="x-small" color="primary" variant="tonal">
-                {{ editPermissionsModal.selectedIds.length }}
-              </v-chip>
-            </div>
-            <PermissionsGrid
-              :permissions="directScopePermissions"
-              v-model="editPermissionsModal.selectedIds"
-            />
-          </div>
-        </div>
-        <div v-else class="text-center py-6 text-grey">
-          No permissions available in admin scope.
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <!-- Modal: Permissions Guide (read-only reference, what each permission does) -->
-  <v-dialog v-model="permissionsGuideModal.show" max-width="1200" scrollable>
-    <v-card class="rounded-lg">
-      <v-toolbar color="secondary" density="comfortable" class="rounded-t-lg">
-        <v-toolbar-title>
-          <v-icon class="mr-2">mdi-help-circle-outline</v-icon>
-          Permissions Guide
-        </v-toolbar-title>
-        <v-spacer />
-        <v-btn icon @click="permissionsGuideModal.show = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4 rounded-b-lg">
-        <div class="text-caption text-grey-darken-1 mb-3">
-          What each permission available to this department lets a user do.
-        </div>
-        <div v-if="permissionsGuideModal.loading" class="text-center py-6">
-          <v-progress-circular indeterminate color="primary" />
-        </div>
-        <PermissionsGrid
-          v-else-if="scopePermissions.length > 0"
-          :permissions="scopePermissions"
-          :model-value="[]"
-          readonly
-          guide
+        <UserAccessPanel
+          v-else-if="accessModal.user"
+          :user-id="accessModal.user.id"
+          :department-id="props.id"
+          :scope-permissions="scopePermissions"
+          :department-role-ids="deptRoles.map((r: any) => r.id)"
+          @updated="onAccessUpdated"
         />
-        <div v-else class="text-center py-6 text-grey">
-          No permissions available in admin scope.
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <!-- Modal: How Roles & Permissions Work (visual/interactive explainer) -->
-  <v-dialog v-model="howItWorksModal.show" max-width="1000" scrollable>
-    <v-card class="rounded-lg">
-      <v-toolbar color="deep-purple" density="comfortable" class="rounded-t-lg">
-        <v-toolbar-title>
-          <v-icon class="mr-2">mdi-sitemap-outline</v-icon>
-          How Roles & Permissions Work
-        </v-toolbar-title>
-        <v-spacer />
-        <v-btn icon @click="howItWorksModal.show = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <v-card-text style="max-height: 80vh; overflow-y: auto" class="pa-4 rounded-b-lg">
-        <PermissionsExplainer :linked-users="linkedUsers" />
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -366,6 +292,7 @@ const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const confirm = $notifications.useConfirm()
+const pageDocs = usePageDocs()
 
 const props = defineProps({
   id: {
@@ -380,13 +307,6 @@ const allUsers = ref<any[]>([])
 const scopePermissions = ref<any[]>([])
 const updatingType = ref<number | null>(null)
 
-// Excluye del grid editable los permisos que el usuario ya tiene vía rol,
-// para que no se puedan otorgar dos veces por dos mecanismos distintos
-// (bug: contador "Direct" inflado con permisos ya cubiertos por el rol).
-const directScopePermissions = computed(() =>
-  scopePermissions.value.filter((p: any) => !editPermissionsModal.value.rolePermissionIds.includes(p.id))
-)
-
 const form = reactive({
   user: null as number | null,
   department_type: null as string | null,
@@ -397,39 +317,89 @@ const departmentTypes = [
   { label: 'Coordinator', value: 'coordinator' },
 ]
 
-const editPermissionsModal = ref({
+const accessModal = ref({
   show: false,
   user: null as any,
-  selectedIds: [] as number[],
-  rolePermissionIds: [] as number[],
-  loading: false,
-  saving: false,
-  saved: false,
-})
-
-const permissionsGuideModal = ref({
-  show: false,
   loading: false,
 })
 
-const howItWorksModal = ref({
-  show: false,
-})
+// Roles linked to this department (admin + member): the ones that can be added/removed inline.
+const deptRoles = ref<any[]>([])
+const assigningTo = ref<number | null>(null)
 
-async function openPermissionsGuide() {
-  permissionsGuideModal.value.show = true
-  if (scopePermissions.value.length === 0) {
-    permissionsGuideModal.value.loading = true
-    await loadScopePermissions()
-    permissionsGuideModal.value.loading = false
+async function loadDeptRoles() {
+  if (!props.id) return
+  try {
+    deptRoles.value = (await $api.departments.getDepartmentRoles(props.id)) as any[]
+  } catch (e) {
+    console.error(e)
   }
 }
 
+const isDepartmentRole = (roleId: number) => deptRoles.value.some((r: any) => r.id === roleId)
+
+const assignableRoles = (member: any) =>
+  deptRoles.value.filter((r: any) => !(member.roles ?? []).some((mr: any) => mr.id === r.id))
+
+async function addRole(member: any, role: any) {
+  try {
+    assigningTo.value = member.id
+    await $api.departments.assignRoleToUser(props.id!, { user_id: member.id, role_id: role.id })
+    await reloadDepartment()
+    snackbar.add({ type: 'success', text: `Role "${role.name}" added to ${member.name}` })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error adding role' })
+  } finally {
+    assigningTo.value = null
+  }
+}
+
+async function removeRole(member: any, role: any) {
+  const ok = await confirm({
+    title: 'Remove role?',
+    confirmationText: 'Remove',
+    content: `Remove role "${role.name}" from ${member.name}? They will lose the permissions it grants.`,
+    dialogProps: { persistent: true, maxWidth: 420 },
+    confirmationButtonProps: { color: 'error' },
+  })
+  if (!ok) return
+  try {
+    assigningTo.value = member.id
+    await $api.departments.revokeRoleFromUser(props.id!, { user_id: member.id, role_id: role.id })
+    await reloadDepartment()
+    snackbar.add({ type: 'success', text: 'Role removed' })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error removing role' })
+  } finally {
+    assigningTo.value = null
+  }
+}
+
+const revokedIdsOf = (member: any): Set<number> =>
+  new Set((member.permission_revocations ?? []).map((r: any) => r.permission_id))
+
+const roleIdsOf = (member: any): number[] =>
+  (member.roles ?? []).flatMap((r: any) => (r.permissions ?? []).map((p: any) => p.id))
+
+// Effective permissions: roles + direct - revoked.
 function totalPermCount(member: any): number {
-  const directIds = new Set((member.permissions ?? []).map((p: any) => p.id))
-  const roleIds = (member.roles ?? []).flatMap((r: any) => (r.permissions ?? []).map((p: any) => p.id))
-  roleIds.forEach((id: number) => directIds.add(id))
-  return directIds.size
+  const ids = new Set<number>([...(member.permissions ?? []).map((p: any) => p.id), ...roleIdsOf(member)])
+  revokedIdsOf(member).forEach((id) => ids.delete(id))
+  return ids.size
+}
+
+// Extra (direct) permissions that no role already grants.
+function directCount(member: any): number {
+  const fromRoles = new Set(roleIdsOf(member))
+  return (member.permissions ?? []).filter((p: any) => !fromRoles.has(p.id)).length
+}
+
+// Only revocations that are still hiding something a role grants.
+function revokedCount(member: any): number {
+  const fromRoles = new Set(roleIdsOf(member))
+  return [...revokedIdsOf(member)].filter((id) => fromRoles.has(id)).length
 }
 
 function getInitials(name: string): string {
@@ -450,6 +420,7 @@ async function reloadDepartment() {
   try {
     const response = (await $api.departments.getById(props.id)) as any
     linkedUsers.value = response.users ?? []
+    await loadDeptRoles()
   } catch (e) {
     console.error(e)
   }
@@ -472,6 +443,7 @@ watch(
         loadingStore.start()
         const response = (await $api.departments.getById(id)) as any
         linkedUsers.value = response.users ?? []
+        await loadDeptRoles()
       } catch (e) {
         console.error(e)
       } finally {
@@ -542,62 +514,26 @@ async function unlinkUser(member: any) {
   }
 }
 
-async function openEditPermissionsModal(member: any) {
-  editPermissionsModal.value = {
-    show: true,
-    user: member,
-    selectedIds: [],
-    rolePermissionIds: [],
-    loading: true,
-    saving: false,
-    saved: false,
-  }
+async function openAccessModal(member: any) {
+  accessModal.value = { show: true, user: member, loading: true }
   try {
     await loadScopePermissions()
-    const userDetail = (await $api.users.getUserById(member.id)) as any
-    editPermissionsModal.value.selectedIds = userDetail.permissions?.map((p: any) => p.id) ?? []
-    // Collect all permission IDs granted via roles
-    const rolePermIds = (userDetail.roles ?? [])
-      .flatMap((r: any) => (r.permissions ?? []).map((p: any) => p.id))
-    editPermissionsModal.value.rolePermissionIds = [...new Set(rolePermIds)] as number[]
-  } catch (e) {
-    console.error(e)
   } finally {
-    editPermissionsModal.value.loading = false
+    accessModal.value.loading = false
   }
 }
 
-let permDebounceTimer: ReturnType<typeof setTimeout> | null = null
-
-watch(
-  () => editPermissionsModal.value.selectedIds,
-  (ids) => {
-    if (!editPermissionsModal.value.user || !editPermissionsModal.value.show || editPermissionsModal.value.loading) return
-    if (permDebounceTimer) clearTimeout(permDebounceTimer)
-    permDebounceTimer = setTimeout(async () => {
-      try {
-        editPermissionsModal.value.saving = true
-        editPermissionsModal.value.saved = false
-        await $api.users.updateUserPermissions(editPermissionsModal.value.user.id, {
-          permissions: ids,
-          department_id: props.id,
-        })
-        const idx = linkedUsers.value.findIndex((u: any) => u.id === editPermissionsModal.value.user.id)
-        if (idx >= 0) {
-          linkedUsers.value[idx].permissions = scopePermissions.value.filter((p: any) => ids.includes(p.id))
-        }
-        editPermissionsModal.value.saved = true
-        setTimeout(() => { editPermissionsModal.value.saved = false }, 2000)
-      } catch (e) {
-        console.error(e)
-        snackbar.add({ type: 'error', text: 'Error saving permissions' })
-      } finally {
-        editPermissionsModal.value.saving = false
-      }
-    }, 600)
-  },
-  { deep: true }
-)
+// The access panel saves on its own; mirror its result in the members table.
+function onAccessUpdated(updated: any) {
+  const idx = linkedUsers.value.findIndex((u: any) => u.id === updated.id)
+  if (idx < 0) return
+  linkedUsers.value[idx] = {
+    ...linkedUsers.value[idx],
+    roles: updated.roles,
+    permissions: updated.permissions,
+    permission_revocations: updated.permission_revocations,
+  }
+}
 
 onMounted(async () => {
   allUsers.value = (await $api.users.getAllUsers()) as any[]

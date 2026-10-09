@@ -25,6 +25,15 @@ export const pageDocs: PageDoc[] = [
     match: ['/invoices/suppliers/cfdis', '/advance-payments', '/payments/suppliers'],
     component: () => import('~/components/suppliers/SupplierPaymentsModuleGuide.vue'),
   },
+  {
+    id: 'access-control',
+    title: '¿Cómo funciona? Roles y permisos',
+    subtitle: 'Qué da cada rol, cómo agregar extras y cómo revocar un permiso',
+    icon: 'mdi-shield-key-outline',
+    color: 'primary',
+    match: ['/system/departments', '/system/admin-department', '/system/role-permissions', '/system/users'],
+    component: () => import('~/components/docs/AccessControlGuide.vue'),
+  },
 ]
 
 export const docsForPath = (path: string): PageDoc[] =>

@@ -67,7 +67,10 @@
                       <v-chip
                         v-for="(permission, index2) in role.permissions"
                         :key="`role-${index}-permission-${index2}`"
-                        color="primary"
+                        :color="isRevoked(permission.id) ? 'error' : 'primary'"
+                        :variant="isRevoked(permission.id) ? 'outlined' : 'elevated'"
+                        :class="{ 'text-decoration-line-through': isRevoked(permission.id) }"
+                        :title="isRevoked(permission.id) ? 'Revoked for this user' : undefined"
                         class="mr-2 mb-2"
                       >
                         {{ permission.name }}
@@ -140,6 +143,10 @@ const tab = ref(0)
 
 const response = await $api.users.getUserById(route.params.id as string)
 const user = ref(response)
+
+// Permissions revoked to this user stay listed under their role but don't apply.
+const revokedIds = computed(() => new Set<number>(((user.value as any)?.permission_revocations ?? []).map((r: any) => r.permission_id)))
+const isRevoked = (id: number) => revokedIds.value.has(id)
 
 const updatePasswordClick = async () => {
   console.log('updatePasswordClick')
