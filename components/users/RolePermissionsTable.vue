@@ -3,10 +3,10 @@
     <!-- Header Actions -->
     <div class="flex flex-wrap gap-3 items-center justify-between">
       <div class="flex gap-3">
-        <v-btn color="primary" prepend-icon="mdi-shield-plus" @click="onClickCreateRole">
+        <v-btn v-if="hasPermission('roles-create')" color="primary" prepend-icon="mdi-shield-plus" @click="onClickCreateRole">
           Create Role
         </v-btn>
-        <v-btn color="secondary" variant="outlined" prepend-icon="mdi-key-plus" @click="onClickCreatePermission">
+        <v-btn v-if="hasPermission('permissions-create')" color="secondary" variant="outlined" prepend-icon="mdi-key-plus" @click="onClickCreatePermission">
           Create Permission
         </v-btn>
       </div>
@@ -33,8 +33,10 @@
           <thead>
             <tr class="bg-grey-lighten-4">
               <th class="text-left" style="width: 250px">Role Name</th>
+              <th class="text-left">Departments</th>
+              <th class="text-center" style="width: 90px">Users</th>
               <th class="text-center" style="width: 120px">Permissions</th>
-              <th class="text-center" style="width: 200px">Actions</th>
+              <th class="text-center" style="width: 240px">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -45,6 +47,27 @@
                   <span class="font-weight-medium">{{ role.name }}</span>
                   <v-chip v-if="role.name === 'Super Admin'" size="x-small" color="amber" class="ml-2">Super</v-chip>
                 </div>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  <v-chip
+                    v-for="dept in role.department_links"
+                    :key="`${role.id}-${dept.id}`"
+                    size="x-small"
+                    :color="dept.role_type === 'admin' ? 'amber-darken-2' : 'primary'"
+                    variant="tonal"
+                    :title="dept.role_type === 'admin' ? 'Admin role of this department' : 'Member role of this department'"
+                  >
+                    <v-icon start size="12">{{ dept.role_type === 'admin' ? 'mdi-shield-crown' : 'mdi-shield-account' }}</v-icon>
+                    {{ dept.name }}
+                  </v-chip>
+                  <span v-if="!role.department_links?.length" class="text-caption text-medium-emphasis">No department</span>
+                </div>
+              </td>
+              <td class="text-center">
+                <v-chip size="small" :color="role.users_count > 0 ? 'info' : 'grey'" variant="tonal">
+                  {{ role.users_count ?? 0 }}
+                </v-chip>
               </td>
               <td class="text-center">
                 <v-chip size="small" :color="role.permissions?.length > 0 ? 'success' : 'grey'">
@@ -61,7 +84,20 @@
                         variant="tonal"
                         color="primary"
                         icon="mdi-key-variant"
+                        :disabled="!hasPermission('roles-edit')"
                         @click="openEditPermissionsModal(role)"
+                      />
+                    </template>
+                  </v-tooltip>
+                  <v-tooltip v-if="hasPermission('roles-create')" text="Duplicate role" location="top">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        size="small"
+                        variant="tonal"
+                        color="secondary"
+                        icon="mdi-content-copy"
+                        @click="onClickDuplicateRole(role)"
                       />
                     </template>
                   </v-tooltip>
@@ -95,7 +131,7 @@
               </td>
             </tr>
             <tr v-if="filterRoles.length === 0">
-              <td colspan="3" class="text-center py-8 text-grey">
+              <td colspan="5" class="text-center py-8 text-grey">
                 <v-icon size="48" color="grey-lighten-1">mdi-shield-off</v-icon>
                 <div class="mt-2">No roles found</div>
               </td>
@@ -105,46 +141,23 @@
       </v-card-text>
     </v-card>
 
-    <!-- Permissions Section -->
+    <!-- Permissions catalog -->
     <v-card>
-      <v-card-title class="bg-secondary d-flex align-center justify-space-between">
-        <div class="d-flex align-center">
-          <v-icon class="mr-2">mdi-key</v-icon>
-          Permissions ({{ filterPermissions.length }})
-        </div>
-        <v-text-field
-          v-model="filters.permissionName"
-          prepend-inner-icon="mdi-magnify"
-          placeholder="Search permissions..."
-          density="compact"
-          hide-details
-          clearable
-          class="max-w-xs"
-          variant="solo"
-          bg-color="white"
-        />
+      <v-card-title class="bg-secondary d-flex align-center">
+        <v-icon class="mr-2">mdi-key</v-icon>
+        Permissions catalog ({{ permissions.length }})
       </v-card-title>
       <v-card-text class="pa-4">
-        <div class="d-flex flex-wrap gap-2">
-          <v-chip
-            v-for="perm in filterPermissions"
-            :key="perm.id"
-            size="small"
-            variant="outlined"
-            color="primary"
-          >
-            <v-icon start size="small">mdi-key-variant</v-icon>
-            {{ perm.name }}
-          </v-chip>
-          <div v-if="filterPermissions.length === 0" class="text-center w-100 py-4 text-grey">
-            No permissions found
-          </div>
+        <div class="text-caption text-medium-emphasis mb-3">
+          Every permission in the system and what it allows. To change what a role grants use the
+          <v-icon size="14">mdi-key-variant</v-icon> button above.
         </div>
+        <PermissionsGrid :permissions="permissions" :model-value="[]" readonly guide />
       </v-card-text>
     </v-card>
 
     <!-- Modal: Create Role -->
-    <v-dialog v-model="showDialogRole" max-width="600" persistent>
+    <v-dialog v-model="showDialogRole" max-width="1100" persistent scrollable>
       <v-card>
         <v-toolbar color="primary" density="compact">
           <v-toolbar-title>
@@ -164,18 +177,10 @@
             prepend-inner-icon="mdi-shield"
             :rules="[v => !!v || 'Role name is required']"
           />
-          <v-autocomplete
-            v-model="role.permissions"
-            label="Initial Permissions (optional)"
-            :items="permissions"
-            item-value="id"
-            item-title="name"
-            multiple
-            chips
-            closable-chips
-            variant="outlined"
-            prepend-inner-icon="mdi-key-variant"
-          />
+          <div class="text-caption text-medium-emphasis mb-2">
+            Permissions ({{ role.permissions.length }} selected, optional)
+          </div>
+          <PermissionsGrid :permissions="permissions" v-model="role.permissions" />
         </v-card-text>
         <v-card-actions class="pa-4 pt-0">
           <v-spacer />
@@ -307,7 +312,6 @@ const role = ref<{ name: string; permissions: any[] }>({ name: '', permissions: 
 
 const filters = ref({
   roleName: '',
-  permissionName: '',
 })
 
 const showDialogRole = ref(false)
@@ -315,7 +319,6 @@ const showDialogPermission = ref(false)
 const loadingUsers = ref<number | null>(null)
 const savingPermissions = ref(false)
 const savedPermissions = ref(false)
-const roleUserCounts = ref<Record<number, number>>({})
 
 // Edit Permissions Modal
 const editPermissionsModal = ref({
@@ -339,29 +342,11 @@ const filterRoles = computed(() => {
   })
 })
 
-const filterPermissions = computed(() => {
-  if (!filters.value.permissionName) return permissions.value
-  return permissions.value.filter((permission) => {
-    return permission.name.toLowerCase().includes(filters.value.permissionName.toLowerCase())
-  })
-})
+const { hasPermission } = useCheckUser()
 
+const canDeleteRoles = computed(() => hasPermission('roles-delete'))
 
-const { user } = useCheckUser()
-
-const canDeleteRoles = computed(() => {
-  const permissionName = 'roles-delete'
-  const hasDirectPermission = user.value?.permissions?.some((p: any) => p.name === permissionName) ?? false
-  const hasRolePermission = user.value?.roles?.some((role: any) =>
-    role.permissions?.some((p: any) => p.name === permissionName)
-  ) ?? false
-  return hasDirectPermission || hasRolePermission
-})
-
-const roleUsersTooltip = (role: any) => {
-  const count = roleUserCounts.value[role.id] ?? 0
-  return `View Users (${count})`
-}
+const roleUsersTooltip = (role: any) => `View Users (${role.users_count ?? 0})`
 
 const getInitials = (name: string) => {
   return name
@@ -374,6 +359,14 @@ const getInitials = (name: string) => {
 
 const onClickCreateRole = () => {
   role.value = { name: '', permissions: [] }
+  showDialogRole.value = true
+}
+
+const onClickDuplicateRole = (source: any) => {
+  role.value = {
+    name: `${source.name} (copy)`,
+    permissions: (source.permissions ?? []).map((p: any) => p.id),
+  }
   showDialogRole.value = true
 }
 
@@ -396,7 +389,6 @@ const showRoleUsers = async (roleData: any) => {
   try {
     loadingUsers.value = roleData.id
     const users = await $api.users.getRoleUsers(roleData.id)
-    roleUserCounts.value[roleData.id] = users?.length || 0
     usersModal.value = {
       show: true,
       role: roleData,
@@ -503,16 +495,6 @@ const getRolesAndPermissions = async () => {
     ])
     roles.value = rolesApi || []
     permissions.value = permissionsApi || []
-    
-    // Preload user counts for all roles
-    roles.value.forEach(async (role) => {
-      try {
-        const users = await $api.users.getRoleUsers(role.id)
-        roleUserCounts.value[role.id] = users?.length || 0
-      } catch (e) {
-        roleUserCounts.value[role.id] = 0
-      }
-    })
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error loading data' })

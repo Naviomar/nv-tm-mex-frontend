@@ -132,28 +132,8 @@
 </template>
 
 <script setup lang="ts">
-interface RawPermission {
-  id: number
-  name: string
-  [key: string]: any
-}
-
-interface PermissionNode {
-  id: number
-  name: string
-  humanLabel: string
-  description?: string | null
-}
-
-interface SubGroup {
-  label: string
-  permissions: PermissionNode[]
-}
-
-interface Group {
-  label: string
-  subgroups: SubGroup[]
-}
+import { groupPermissions } from '~/utils/permissions/groupPermissions'
+import type { PermissionGroup as Group, PermissionSubGroup as SubGroup, RawPermission } from '~/utils/permissions/groupPermissions'
 
 const props = defineProps<{
   permissions: RawPermission[]
@@ -170,73 +150,7 @@ const emit = defineEmits<{
 const search = ref('')
 const collapsedGroups = ref<string[]>([])
 
-function normalize(name: string): string[] {
-  // Support both '-' and '.' as separators by splitting on either
-  return name.split(/[-.]/)
-}
-
-function humanize(str: string): string {
-  return str
-    .split(/[-.]/)
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(' ')
-}
-
-const grouped = computed((): Group[] => {
-  const perms = props.permissions
-
-  // Count 2-segment prefixes (normalized)
-  const prefixCount: Record<string, number> = {}
-  for (const p of perms) {
-    const parts = normalize(p.name)
-    if (parts.length >= 2) {
-      const key = `${parts[0]}-${parts[1]}`
-      prefixCount[key] = (prefixCount[key] ?? 0) + 1
-    }
-  }
-
-  // Build tree
-  const groupMap: Record<string, Record<string, PermissionNode[]>> = {}
-
-  for (const p of perms) {
-    const parts = normalize(p.name)
-    const groupLabel = humanize(parts[0])
-
-    let subLabel = '__root__'
-    if (parts.length >= 2) {
-      const prefix = `${parts[0]}-${parts[1]}`
-      if (prefixCount[prefix] >= 2) {
-        subLabel = humanize(parts[1])
-      }
-    }
-
-    if (!groupMap[groupLabel]) groupMap[groupLabel] = {}
-    if (!groupMap[groupLabel][subLabel]) groupMap[groupLabel][subLabel] = []
-
-    // Human label = everything except the already-used group/subgroup prefix
-    let labelParts = parts.slice(1)
-    if (subLabel !== '__root__') labelParts = parts.slice(2)
-    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-    const humanLabel = (labelParts.length > 0 ? labelParts : [parts[parts.length - 1]])
-      .map(capitalize)
-      .join(' ')
-
-    groupMap[groupLabel][subLabel].push({ id: p.id, name: p.name, humanLabel, description: p.description })
-  }
-
-  return Object.entries(groupMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, subs]) => ({
-      label,
-      subgroups: Object.entries(subs)
-        .sort(([a], [b]) => {
-          if (a === '__root__') return -1
-          if (b === '__root__') return 1
-          return a.localeCompare(b)
-        })
-        .map(([subLabel, permissions]) => ({ label: subLabel, permissions })),
-    }))
-})
+const grouped = computed((): Group[] => groupPermissions(props.permissions))
 
 const filteredGroups = computed((): Group[] => {
   if (!search.value) return grouped.value

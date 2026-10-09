@@ -6,6 +6,7 @@
         <thead>
           <tr>
             <th class="text-left">Status</th>
+            <th class="text-left">Request</th>
             <th class="text-left">Invoice folio</th>
             <th class="text-left">Line</th>
             <th class="text-left">Amount</th>
@@ -15,7 +16,7 @@
         </thead>
         <tbody>
           <tr v-if="invoices.length === 0">
-            <td colspan="6" class="p-2 text-grey">No line invoices linked to this reference</td>
+            <td colspan="7" class="p-2 text-grey">No line invoices linked to this reference</td>
           </tr>
           <tr v-for="inv in invoices" :key="inv.key">
             <td class="p-2">
@@ -24,6 +25,15 @@
                 <v-chip v-else-if="inv.payment_notified" color="warning" size="small">Pending payment</v-chip>
                 <v-chip v-else-if="inv.requested" color="orange" size="small">Requested</v-chip>
                 <v-chip v-else color="indigo" size="small">Registered</v-chip>
+              </div>
+            </td>
+            <td class="p-2">
+              <div v-if="inv.request_id" class="cursor-pointer hover:underline" @click="goToRequest(inv.request_id)">
+                {{ inv.request_folio || `#${inv.request_id}` }}
+              </div>
+              <span v-else class="text-grey">-</span>
+              <div v-if="inv.requested_at" class="text-xs text-grey">
+                Requested {{ formatDateOnlyString(inv.requested_at) }}
               </div>
             </td>
             <td class="p-2">
@@ -100,7 +110,10 @@ const invoices = computed(() => {
       serie_folio: inv.serie_folio,
       tipo_comprobante: inv.tipo_comprobante,
       line: req.line,
-      amount: req.amount,
+      request_id: req.id,
+      request_folio: req.folio,
+      requested_at: req.created_at,
+      amount: inv.amount,
       amount_cfdi: inv.amount_cfdi,
       currency_id: inv.currency_id,
       invoice_date: inv.invoice_date,
@@ -108,7 +121,7 @@ const invoices = computed(() => {
       payment_notified: req.payment_notified,
       is_paid: req.is_paid,
       paid_at: req.paid_at,
-      containers: (req.containers || []).map((c: any) => c.container_number),
+      containers: inv.containers || [],
     })),
   )
 
@@ -117,6 +130,11 @@ const invoices = computed(() => {
 
 const goToSupplierCfdi = (id: number) => {
   router.push(`/invoices/suppliers/cfdis/view-${id}`)
+}
+
+const goToRequest = (id: number) => {
+  const section = isDetention.value ? 'detentions' : 'demurrages'
+  router.push(`/invoices/search/lines/${section}/req-pay-view-${id}`)
 }
 
 const getData = async () => {

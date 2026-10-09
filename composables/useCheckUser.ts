@@ -4,6 +4,9 @@ type User = {
     email: string
     permissions: []
     roles: []
+    // Efectivos (roles + directos - revocados), calculados por el backend.
+    permission_names?: string[]
+    permission_revocations?: { permission_id: number }[]
     departments?: { name: string }[]
 }
 
@@ -105,14 +108,19 @@ export function useCheckUser() {
     }
 
     function hasPermission(permissionName: string) {
-        // console.log('hasPermission user', user.value)
-        // console.log('user roles', user.value?.roles)
         if (!isAuthenticated.value) return false
         if (isSuperAdminRole()) return true
 
-        const hasDirectPermission = user.value?.permissions.some((p: any) => p.name === permissionName)
+        // El backend ya resta las revocaciones: es la fuente de verdad.
+        const effective = user.value?.permission_names
+        if (effective) return effective.includes(permissionName)
+
+        // Respaldo para una sesión cargada antes de que existiera permission_names:
+        // roles + directos, descontando manualmente los revocados.
+        const revokedIds = new Set((user.value?.permission_revocations ?? []).map((r: any) => r.permission_id))
+        const hasDirectPermission = user.value?.permissions.some((p: any) => p.name === permissionName && !revokedIds.has(p.id))
         const hasRolePermission = user.value?.roles.some((role: any) =>
-            role.permissions.some((p: any) => p.name === permissionName)
+            role.permissions.some((p: any) => p.name === permissionName && !revokedIds.has(p.id))
         )
         return hasDirectPermission || hasRolePermission
     }
