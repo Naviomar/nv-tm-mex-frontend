@@ -448,6 +448,13 @@ const confirmDeleteRequestAuthorization = () => {
 
 // 0 is a legitimate answer (days, amounts); only an untouched field counts as missing
 const isEmptyValue = (v: any) => v === undefined || v === null || v === ''
+// Mirrors DynamicRequestFormFields: a hidden field (show_when) is never required
+const isFieldRequired = (field: any) => {
+  if (!field) return false
+  if (field.show_when && formData.value[field.show_when.field] !== field.show_when.equals) return false
+  if (field.required) return true
+  return !!field.required_when && formData.value[field.required_when.field] === field.required_when.equals
+}
 
 const onRequestAuthorizationClick = async () => {
   try {
@@ -470,7 +477,7 @@ const onRequestAuthorizationClick = async () => {
     }
 
     const missingField = tpl.value.elements?.find(
-      (el: any) => el.type === 'form_field' && el.field?.required && isEmptyValue(formData.value[el.field.name])
+      (el: any) => el.type === 'form_field' && isFieldRequired(el.field) && isEmptyValue(formData.value[el.field.name])
     )
     if (missingField) {
       snackbar.add({ type: 'error', text: `Please fill in "${missingField.field.label}" before submitting` })

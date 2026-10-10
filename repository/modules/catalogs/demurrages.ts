@@ -115,13 +115,6 @@ class DemurragesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/sea-import-references/${id}/send-email-cut`, fetchOptions)
   }
 
-  async requestDiscount(id: string, data: any, fetchOptions?: FetchOptions) {
-    fetchOptions = {
-      body: JSON.stringify(data),
-      ...fetchOptions,
-    }
-    return this.call('POST', `${this.RESOURCE}/${id}/set-demurrage-discount`, fetchOptions)
-  }
 
   async exportXlsxReport(fetchOptions?: FetchOptions) {
     fetchOptions = {

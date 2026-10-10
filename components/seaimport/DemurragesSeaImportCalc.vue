@@ -74,18 +74,14 @@
                   </div>
 
                   <div class="mx-auto max-w-64 pt-4">
-                    <AuthorizeProcessSmart
-                      ref="authorizeProcess"
+                    <!-- The amount / percentage travels with the request; the discount is registered on approval -->
+                    <ProcessAuthorizationWrapper
+                      process-name="maritime-demurrages.discount"
+                      :request-key="String(referencia.id)"
                       label="Request a discount"
-                      :resource="authorizeResources.DemurrageDiscount.resource"
-                      :resourceId="referencia.id"
-                      :refresh="refreshAuthReqs"
-                      :resourceData="{ reference_number: referencia.reference_number }"
-                    >
-                      <template #auth>
-                        <v-btn color="error" size="small" @click="onDiscountClick">Set discount</v-btn>
-                      </template>
-                    </AuthorizeProcessSmart>
+                      :display-name="`Ref. ${referencia.reference_number}`"
+                      @refresh="getReferencia(props.id)"
+                    />
                   </div>
                 </div>
                 <div>
@@ -771,61 +767,6 @@
         </div>
       </div>
     </div>
-    <v-dialog v-model="showDiscountDialog" max-width="400">
-      <v-card>
-        <v-card-title>Demurrages discount</v-card-title>
-        <v-card-text>
-          <div>Please complete the form.</div>
-
-          <!-- Toggle between Amount or Percentage -->
-          <v-radio-group v-model="formDiscount.type" row>
-            <v-radio label="Amount (USD)" value="amount"></v-radio>
-            <v-radio label="Percentage (%)" value="percentage"></v-radio>
-          </v-radio-group>
-
-          <!-- Amount Field -->
-          <v-text-field
-            v-if="formDiscount.type === 'amount'"
-            v-model="formDiscount.amount"
-            label="Amount (USD)"
-            hint="Please provide the amount of the discount"
-            prepend-inner-icon="mdi-currency-usd"
-            type="number"
-            clearable
-          />
-
-          <!-- Percentage Field -->
-          <v-text-field
-            v-if="formDiscount.type === 'percentage'"
-            v-model="formDiscount.percentage"
-            label="Percentage (%)"
-            hint="Please provide the percentage of the discount"
-            prepend-inner-icon="mdi-percent"
-            type="number"
-            min="1"
-            max="99"
-            clearable
-          />
-
-          <!-- Reason Field -->
-          <v-textarea
-            v-model="formDiscount.reason"
-            label="Reason"
-            hint="Please provide a reason for the discount"
-            counter
-            rows="3"
-            clearable
-          ></v-textarea>
-        </v-card-text>
-        <v-card-actions>
-          <div class="w-full flex justify-around">
-            <v-btn @click="showDiscountDialog = !showDiscountDialog">No, go back</v-btn>
-            <v-btn color="error" @click="requestDiscountConfirm">Yes, request a discount</v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <v-dialog v-model="showInvoicesDialog" max-width="750px">
       <v-card>
         <v-card-title>
@@ -918,7 +859,6 @@ const props = defineProps({
   },
 })
 
-const authorizeProcess = ref<any>(null)
 const authorizeRevertToPartial = ref<any>(null)
 
 const form = reactive({
@@ -931,20 +871,12 @@ const form = reactive({
   apply_discount: false,
 })
 
-const formDiscount = reactive({
-  type: 'amount',
-  amount: 0,
-  percentage: 0,
-  reason: '',
-})
-
 const showRefDetail = ref(false)
 const showSendDialog = ref(false)
 const showLogs = ref(false)
 const showEditFreeDays = ref(false)
 const referencia = ref<any>({})
 const containerCalcs = ref<any>([])
-const showDiscountDialog = ref(false)
 const showInvoicesDialog = ref(false)
 const refreshAuthReqs = ref(false)
 const freeDaysConfig = ref<any>(null)
@@ -1023,10 +955,6 @@ const getContainerTotalLineCost = (container: any) => {
     return parseFloat(container.demurrage.line_cost) * 1.16
   }
   return parseFloat(container.demurrage.line_cost)
-}
-
-const onDiscountClick = async () => {
-  showDiscountDialog.value = !showDiscountDialog.value
 }
 
 // Días libres propios del contenedor; si aún no tiene demoras usa el valor base de la referencia
@@ -1146,42 +1074,6 @@ const getContainerTotalRate = (container: any) => {
 const referenciaContainersWithDemurrages = computed(() => {
   return referencia.value.containers.filter((container: any) => container.demurrage)
 })
-
-const requestDiscountConfirm = async () => {
-  try {
-    if (formDiscount.type === 'amount' && (!formDiscount.amount || formDiscount.amount <= 0)) {
-      snackbar.add({ type: 'error', text: 'Amount is required.' })
-      return
-    }
-    if (formDiscount.type === 'percentage' && (formDiscount.percentage < 1 || formDiscount.percentage > 99)) {
-      snackbar.add({ type: 'error', text: 'Please enter a percentage between 1 and 99.' })
-      return
-    }
-    if (!formDiscount.reason) {
-      snackbar.add({ type: 'error', text: 'Reason is required.' })
-      return
-    }
-
-    loadingStore.loading = true
-    const body = {
-      referencia_id: referencia.value.id,
-      amount: formDiscount.amount,
-      percentage: formDiscount.percentage,
-      reason: formDiscount.reason,
-    }
-    const response = (await $api.demurrages.requestDiscount(referencia.value.id, body)) as any
-    snackbar.add({ type: 'success', text: 'Discount requested successfully.' })
-    showDiscountDialog.value = false
-    refreshAuthReqs.value = true
-    await getReferencia(props.id)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
 const getContainerRatesByChange = (container: any) => {
   refreshContainerRates([container.id], container.demurrage.start_date)
