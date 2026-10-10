@@ -243,6 +243,7 @@
                   >
                     Cancel
                   </button>
+                  <Can permission="charges-similar-names-add">
                   <button
                     type="button"
                     @click="saveCfdiName"
@@ -250,6 +251,7 @@
                   >
                     Save
                   </button>
+                  </Can>
                 </div>
               </div>
             </div>

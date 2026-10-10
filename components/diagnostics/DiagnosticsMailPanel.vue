@@ -136,7 +136,9 @@
         <v-card-actions>
           <v-spacer />
           <v-btn @click="confirmOpen = false">Cancel</v-btn>
-          <v-btn color="primary" @click="execute">Send</v-btn>
+          <Can permission="diagnostics-mail-test">
+            <v-btn color="primary" @click="execute">Send</v-btn>
+          </Can>
         </v-card-actions>
       </v-card>
     </v-dialog>

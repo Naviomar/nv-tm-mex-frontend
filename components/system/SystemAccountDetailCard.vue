@@ -8,17 +8,19 @@
       prepend-icon="mdi-bank-outline"
     >
       <template v-slot:append>
-        <v-hover>
-          <template v-slot:default="{ isHovering, props }">
-            <v-icon
-              v-bind="props"
-              :color="isHovering ? 'lime-darken-4' : 'green'"
-              class="cursor-pointer"
-              @click="onClickAddBankAccount"
-              >mdi-bank-plus</v-icon
-            >
-          </template>
-        </v-hover>
+        <Can permission="bank-accounts-create">
+          <v-hover>
+            <template v-slot:default="{ isHovering, props }">
+              <v-icon
+                v-bind="props"
+                :color="isHovering ? 'lime-darken-4' : 'green'"
+                class="cursor-pointer"
+                @click="onClickAddBankAccount"
+                >mdi-bank-plus</v-icon
+              >
+            </template>
+          </v-hover>
+        </Can>
       </template>
       <v-card-text>
         <div class="border m-2 p-1">
@@ -79,10 +81,14 @@
               <div>Zipcode: {{ bankAccount.zip_code }}</div>
             </v-card-text>
             <v-card-actions>
-              <v-btn color="red" variant="outlined" @click="onClickDelete(bankAccount)">
-                {{ bankAccount.deleted_at ? 'Restore' : 'Delete' }}
-              </v-btn>
-              <v-btn color="primary" variant="outlined" @click="onClickEdit(bankAccount)"> Edit </v-btn>
+              <Can permission="bank-accounts-delete">
+                <v-btn color="red" variant="outlined" @click="onClickDelete(bankAccount)">
+                  {{ bankAccount.deleted_at ? 'Restore' : 'Delete' }}
+                </v-btn>
+              </Can>
+              <Can permission="bank-accounts-edit">
+                <v-btn color="primary" variant="outlined" @click="onClickEdit(bankAccount)"> Edit </v-btn>
+              </Can>
             </v-card-actions>
           </v-card>
         </div>

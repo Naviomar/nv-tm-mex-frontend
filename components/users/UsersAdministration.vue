@@ -89,16 +89,23 @@
                       </template>
                     </v-tooltip>
 
-                    <div v-if="user.is_active === 0">
-                      <v-chip color="red" text-color="white" size="small" @click="onClickDeleteUser(user)"
-                        ><v-icon>mdi-delete-empty-outline</v-icon>Inactive</v-chip
-                      >
-                    </div>
-                    <div v-if="user.is_active === 1">
-                      <v-chip color="green" text-color="white" size="small" @click="onClickDeleteUser(user)">
-                        <v-icon>mdi-delete-outline</v-icon>Active</v-chip
-                      >
-                    </div>
+                    <Can permission="users-delete">
+                      <div v-if="user.is_active === 0">
+                        <v-chip color="red" text-color="white" size="small" @click="onClickDeleteUser(user)"
+                          ><v-icon>mdi-delete-empty-outline</v-icon>Inactive</v-chip
+                        >
+                      </div>
+                      <div v-if="user.is_active === 1">
+                        <v-chip color="green" text-color="white" size="small" @click="onClickDeleteUser(user)">
+                          <v-icon>mdi-delete-outline</v-icon>Active</v-chip
+                        >
+                      </div>
+                      <template #denied>
+                        <v-chip :color="user.is_active ? 'green' : 'red'" text-color="white" size="small">
+                          {{ user.is_active ? 'Active' : 'Inactive' }}
+                        </v-chip>
+                      </template>
+                    </Can>
                   </div>
                 </td>
                 <td>{{ user.name }}</td>

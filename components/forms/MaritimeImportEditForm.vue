@@ -592,7 +592,9 @@
                     type="number"
                     hide-details
                   />
-                  <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                  <Can permission="sea-import-update-rebate">
+                    <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                  </Can>
                 </div>
               </v-card-text>
             </v-card>
@@ -679,7 +681,9 @@
         <div class="text-center font-bold flex justify-center p-2">Ref #<ServiceNumberLabel :service="values" /></div>
         <div class="flex justify-end items-center">
           <v-btn class="mr-4" color="error" to="/maritime/import"> Return </v-btn>
-          <v-btn color="primary" @click="onSaveSeaImportClick"> Save changes </v-btn>
+          <Can permission="sea-import-references-edit">
+            <v-btn color="primary" @click="onSaveSeaImportClick"> Save changes </v-btn>
+          </Can>
         </div>
       </DraggableDiv>
     </div>

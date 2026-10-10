@@ -1,6 +1,8 @@
 <template>
   <div class="">
-    <v-btn color="orange" size="small" @click="showDialog">Add Credit Note</v-btn>
+    <Can permission="party-invoices-edit">
+      <v-btn color="orange" size="small" @click="showDialog">Add Credit Note</v-btn>
+    </Can>
     <v-dialog v-model="dialog" max-width="900">
       <v-card>
         <v-card-title> Add credit note </v-card-title>

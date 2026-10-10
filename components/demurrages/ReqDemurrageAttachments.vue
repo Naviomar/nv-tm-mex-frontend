@@ -26,7 +26,7 @@
               </tr>
               <tr v-for="(attach, index) in attachments" :key="`proof-${index}`">
                 <td>
-                  <TrashButton :item="attach" @click="showConfirmDelete" />
+                  <TrashButton :item="attach" permission="maritime-demurrages-edit" @click="showConfirmDelete" />
                 </td>
                 <td>
                   <ButtonDownloadS3Object :s3Path="attach.attachment" />

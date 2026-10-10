@@ -28,7 +28,9 @@
           </div>
 
           <div class="py-4">
-            <VesselNameAddButtonForm @refresh="getVesselNames" />
+            <Can permission="vessel-names-create">
+              <VesselNameAddButtonForm @refresh="getVesselNames" />
+            </Can>
           </div>
         </div>
         <v-table density="compact">

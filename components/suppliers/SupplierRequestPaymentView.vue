@@ -274,7 +274,9 @@
           </div>
           
           <div v-if="!hasInvoiceAmountPaid">
-            <SupplierReqPayAddInvoice :supReqPayment="supReqPayment" @addInvoice="addToSupReqPayment" />
+            <Can permission="supplier-req-payments-edit">
+              <SupplierReqPayAddInvoice :supReqPayment="supReqPayment" @addInvoice="addToSupReqPayment" />
+            </Can>
           </div>
 
           <div class="font-bold">Linked invoices</div>

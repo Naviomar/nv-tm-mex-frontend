@@ -92,6 +92,23 @@ for (const [, key, cls] of factory.matchAll(/(\w+):\s*new\s+(\w+)\(/g)) {
 const routeRules = readFileSync(join(FE, 'utils/data/routePermissions.ts'), 'utf8')
 const pageGuarded = new Set([...routeRules.matchAll(/'([a-z0-9]+(?:-[a-z0-9]+)+)'/g)].map((m) => m[1]))
 
+// Permission names exposed through constants (e.g. `menuPermissions.X`, `permissions.DemurragesRateOverrideEdit`):
+// a file that references the constant counts as mentioning the permission.
+const constantsByPermission = {}
+for (const file of walk(join(FE, 'utils'), ['.ts'])) {
+  for (const m of readFileSync(file, 'utf8').matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s*:\s*['"]([a-z0-9]+(?:-[a-z0-9]+)+)['"]/g)) {
+    ;(constantsByPermission[m[2]] ??= new Set()).add(m[1])
+  }
+}
+// Buttons that carry their own permission logic by service type.
+const trashButtonSrc = readFileSync(join(FE, 'components/common/TrashButton.vue'), 'utf8')
+
+function mentions(src, perm) {
+  if (src.includes(perm) || pageGuarded.has(perm)) return true
+  if (src.includes('<TrashButton') && trashButtonSrc.includes(perm)) return true
+  return [...(constantsByPermission[perm] ?? [])].some((name) => new RegExp('\\.' + name + '\\b').test(src))
+}
+
 // ── call sites ───────────────────────────────────────────────────
 const files = ['components', 'pages', 'layouts', 'composables'].flatMap((d) => walk(join(FE, d), ['.vue', '.ts']))
 const offenders = []
@@ -102,7 +119,7 @@ for (const file of files) {
     const info = apiMethods[`${m[1]}.${m[2]}`]
     if (!info || (!args.has('--include-reads') && !WRITE_METHODS.has(info.http))) continue
     for (const perm of info.route.perms) {
-      if (src.includes(perm) || seen.has(perm) || pageGuarded.has(perm)) continue
+      if (seen.has(perm) || mentions(src, perm)) continue
       seen.add(perm)
       offenders.push({ file: relative(FE, file), permission: perm, call: `${m[1]}.${m[2]}`, route: `${info.http} ${info.route.uri}` })
     }

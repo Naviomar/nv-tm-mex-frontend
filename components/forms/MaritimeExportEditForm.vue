@@ -591,7 +591,9 @@
                   type="number"
                   hide-details
                 />
-                <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                <Can permission="sea-export-update-rebate">
+                  <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                </Can>
               </div>
             </v-card-text>
           </v-card>
@@ -649,7 +651,9 @@
       <div class="text-center font-bold py-2">Ref #{{ values.reference_number }}</div>
       <div class="flex justify-end items-center">
         <v-btn class="mr-4" color="error" to="/maritime/export"> Return </v-btn>
-        <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
+        <Can permission="sea-export-references-edit">
+          <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
+        </Can>
       </div>
     </DraggableDiv>
   </div>

@@ -99,10 +99,12 @@
                     <v-card-text>
                       <div class="flex flex-col gap-4">
                         <div v-if="cutSummary.total">
-                          <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
-                            <v-icon>mdi-email-outline</v-icon>
-                            Send cut
-                          </v-btn>
+                          <Can permission="demurrages-cut-totalize">
+                            <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
+                              <v-icon>mdi-email-outline</v-icon>
+                              Send cut
+                            </v-btn>
+                          </Can>
                           <div class="text-caption text-center mt-1" :class="cutSummary.actionable ? 'text-warning' : 'text-success'">
                             <v-icon size="12">{{ cutSummary.actionable ? 'mdi-send-clock-outline' : 'mdi-check' }}</v-icon>
                             {{
@@ -243,10 +245,12 @@
                         difieren de la configuración del cliente ({{ freeDaysConfig?.configured_free_days }}).
                       </div>
                     </v-alert>
-                    <v-btn @click="syncFreeDays" size="small" color="primary" block>
-                      <v-icon size="small" class="mr-1">mdi-sync</v-icon>
-                      Sincronizar a {{ freeDaysConfig?.configured_free_days }} días
-                    </v-btn>
+                    <Can permission="demurrages-free-days-init">
+                      <v-btn @click="syncFreeDays" size="small" color="primary" block>
+                        <v-icon size="small" class="mr-1">mdi-sync</v-icon>
+                        Sincronizar a {{ freeDaysConfig?.configured_free_days }} días
+                      </v-btn>
+                    </Can>
                   </v-card-text>
                 </v-card>
               </div>

@@ -123,6 +123,42 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/configuration/warehouses/edit-:id', permission: ['warehouses-edit', 'warehouses-view'] },
   { path: '/configuration/warehouses/view-:id', permission: 'warehouses-view' },
 
+  // referencias (alta)
+  { path: '/air/export/add', permission: 'air-export-references-create' },
+  { path: '/air/import/add', permission: 'air-import-references-create' },
+  { path: '/maritime/import/add', permission: 'sea-import-references-create' },
+  { path: '/maritime/export/add', permission: 'sea-export-references-create' },
+
+  // captura de facturas, solicitudes de pago y pagos (la acción principal de la página)
+  { path: '/invoices/capture/air-:id-invoice', permission: 'customer-invoices-create' },
+  { path: '/invoices/capture/sea-import-:id-invoice', permission: 'customer-invoices-create' },
+  { path: '/invoices/capture/sea-import-:id-demurrage-invoice', permission: 'customer-invoices-create' },
+  { path: '/invoices/capture/consignee/by-service', permission: 'customer-invoices-create' },
+  { path: '/invoices/capture/free-format', permission: 'party-invoices-create' },
+  { path: '/invoices/capture/lines/demurrages', permission: 'maritime-demurrages-create' },
+  { path: '/invoices/capture/lines/detentions', permission: 'maritime-detentions-create' },
+  { path: '/invoices/lines/notes/add', permission: 'line-payments-create-fn' },
+  { path: '/advance-payments/add', permission: 'advance-payments-create' },
+  { path: '/adminpack/upload-invoices-tm', permission: 'tm-invoices-create' },
+  { path: '/transfers/global/upload', permission: 'bank-movements-upload' },
+  { path: '/transfers/global/bank-movement-:id/pay-bl-schedule', permission: 'bank-movements-apply-payments' },
+  { path: '/payments/customers/register/:service/:id', permission: 'customer-payments-add' },
+  { path: '/maritime/import/demurrages/register-:id-init-day', permission: 'demurrages-free-days-init' },
+
+  // voyage destinations: editar, o editar con candado / asistencia (ver VoyageDestEditForm)
+  {
+    path: '/configuration/voyages/destination-:id',
+    permission: { any: ['voyage-destinations-edit', 'voyage-destinations-edit-with-lock', 'support-requests-assist'] },
+  },
+
+  // sistema
+  { path: '/system/users/create', permission: 'users-create' },
+  { path: '/system/users/edit/:id', permission: 'users-edit' },
+  { path: '/system/departments/add', permission: 'departments-create' },
+  { path: '/system/departments/edit-:id', permission: 'departments-edit' },
+  { path: '/system/mail-notifications/edit-:id', permission: 'mail-notifications-edit' },
+  { path: '/system/email-templates/edit/:id', permission: 'email-templates-edit' },
+
   // páginas cuya ruta no sigue el patrón add / edit-:id / view-:id
   { path: '/configuration/shippers/edit/:id', permission: 'shippers-edit' },
   { path: '/configuration/customers/groups/:id', permission: 'consignee-groups-edit' },
@@ -131,8 +167,9 @@ export const routePermissions: RoutePermissionRule[] = [
 
 const compiled = routePermissions.map((rule) => ({
   rule,
-  // `:id` matches numeric ids only, so '/voyages/:id' doesn't swallow '/voyages/add'.
-  regex: new RegExp('^' + rule.path.replace(/:[A-Za-z]+/g, '[0-9]+') + '/?$'),
+  // `:id` matches numeric ids only, so '/voyages/:id' doesn't swallow '/voyages/add'; any other
+  // `:name` matches one path segment.
+  regex: new RegExp('^' + rule.path.replace(/:([A-Za-z]+)/g, (_, name) => (name === 'id' ? '[0-9]+' : '[^/]+')) + '/?$'),
 }))
 
 /** Permisos que exige una ruta, o null si no tiene regla. */

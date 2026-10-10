@@ -61,17 +61,19 @@
       <v-btn size="small" variant="tonal" color="amber-darken-2" prepend-icon="mdi-check-decagram-outline" @click="validate">
         Validar
       </v-btn>
-      <v-btn
-        size="small"
-        variant="flat"
-        color="primary"
-        prepend-icon="mdi-publish"
-        :loading="publishing"
-        :disabled="working?.status === 'published'"
-        @click="publish"
-      >
-        Publicar
-      </v-btn>
+      <Can permission="email-templates-publish">
+        <v-btn
+          size="small"
+          variant="flat"
+          color="primary"
+          prepend-icon="mdi-publish"
+          :loading="publishing"
+          :disabled="working?.status === 'published'"
+          @click="publish"
+        >
+          Publicar
+        </v-btn>
+      </Can>
 
       <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
 

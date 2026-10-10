@@ -36,7 +36,7 @@
           <tr v-for="(notyEmail, index) in notyType.notification_types_emails" :key="`notif-email-${index}`">
             <td>
               <div class="flex gap-2">
-                <TrashButton :item="notyEmail" @click="deleteNotyEmail" />
+                <TrashButton :item="notyEmail" permission="notifications-types-delete" @click="deleteNotyEmail" />
               </div>
             </td>
             <td>{{ notyEmail.email }}</td>
