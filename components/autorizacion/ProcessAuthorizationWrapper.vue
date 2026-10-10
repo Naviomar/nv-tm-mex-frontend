@@ -30,15 +30,20 @@
           </v-chip>
         </template>
       </v-tooltip>
+      <span v-if="pendingRequest" class="paw-requester text-caption text-medium-emphasis ml-2">
+        Requested by <strong>{{ requesterName }}</strong> · {{ formatDateString(pendingRequest.created_at) }}
+      </span>
       <v-btn
+        v-if="canWithdraw"
         variant="text"
         color="error"
         size="x-small"
         class="ml-1"
+        title="Withdraw your approval request (does not change the record itself)"
         @click="confirmDeleteRequestAuthorization"
       >
-        <v-icon size="14">mdi-close</v-icon>
-        Cancel
+        <v-icon size="14">mdi-undo-variant</v-icon>
+        Withdraw request
       </v-btn>
     </div>
 
@@ -167,20 +172,23 @@
       </v-card>
     </v-dialog>
 
-    <!-- Cancel dialog -->
-    <v-dialog v-model="showConfirmDelReqDialog" max-width="400">
+    <!-- Withdraw dialog -->
+    <v-dialog v-model="showConfirmDelReqDialog" max-width="440">
       <v-card class="chip-velvet">
         <v-card-title class="text-h6">
-          <v-icon>mdi-shield-lock-outline</v-icon> Cancel Process Auth
+          <v-icon>mdi-undo-variant</v-icon> Withdraw approval request
         </v-card-title>
         <v-card-text class="bg-surface-light pt-2">
-          <div class="leading-none">Are you sure you want to cancel this authorization request?</div>
-          <v-textarea label="Reason" v-model="form.reason_deleted" counter rows="3" clearable />
+          <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+            This only withdraws <strong>your request for approval</strong>. It does not cancel, delete or change
+            "{{ props.displayName || props.label }}".
+          </v-alert>
+          <v-textarea label="Why are you withdrawing it?" v-model="form.reason_deleted" counter rows="3" clearable />
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
-            <v-btn color="error" @click="showConfirmDelReqDialog = false">Close</v-btn>
-            <v-btn color="success" @click="onRequestCancelAuthorizationClick">Cancel</v-btn>
+            <v-btn variant="text" @click="showConfirmDelReqDialog = false">Keep request</v-btn>
+            <v-btn color="warning" variant="flat" @click="onRequestCancelAuthorizationClick">Withdraw request</v-btn>
           </div>
         </v-card-actions>
       </v-card>
@@ -242,6 +250,14 @@ const processNameKey = computed(() =>
 const hasPendingRequest = computed(() =>
   requestForProcess.value.some((r: any) => r.status === 'pending')
 )
+const { user: currentUser, isAdminRole } = useCheckUser()
+const pendingRequest = computed(() => requestForProcess.value.find((r: any) => r.status === 'pending') ?? null)
+const requesterName = computed(() => pendingRequest.value?.user?.name ?? pendingRequest.value?.requested?.name ?? 'someone')
+// Only whoever asked (or an administrator) can withdraw a request
+const canWithdraw = computed(() => {
+  if (!pendingRequest.value) return false
+  return pendingRequest.value.user_id === currentUser.value?.id || !!isAdminRole()
+})
 const hasGrantedRequest = computed(() =>
   userRequests.value.some(
     (req: any) =>
@@ -391,17 +407,21 @@ const onRequestAuthorizationClick = async () => {
 const onRequestCancelAuthorizationClick = async () => {
   try {
     if (!form.value.reason_deleted.trim()) {
-      snackbar.add({ type: 'error', text: 'Please provide a reason for the cancellation' })
+      snackbar.add({ type: 'error', text: 'Please tell us why you are withdrawing the request' })
       return
     }
     loadingStore.loading = true
 
     const reason_deleted = { reason_deleted: form.value.reason_deleted.trim() }
-    for (const req of requestForProcess.value) {
+    // Only the pending requests this user is allowed to withdraw (never someone else's)
+    const mine = requestForProcess.value.filter(
+      (r: any) => r.status === 'pending' && (r.user_id === currentUser.value?.id || isAdminRole())
+    )
+    for (const req of mine) {
       await ($api as any).authProcessRequests.cancelAuth(req.id, reason_deleted)
     }
 
-    snackbar.add({ type: 'success', text: 'Authorization request was canceled' })
+    snackbar.add({ type: 'success', text: 'Your approval request was withdrawn' })
     showConfirmDelReqDialog.value = false
     form.value.reason_deleted = ''
     stopPolling()
@@ -446,6 +466,8 @@ watch(
 .paw-pending {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 
 .paw-chip-pending {
