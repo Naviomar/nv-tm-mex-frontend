@@ -37,6 +37,7 @@
       </v-tooltip>
       <span v-if="pendingRequest" class="paw-requester text-caption text-medium-emphasis ml-2">
         Requested by <strong>{{ requesterName }}</strong> · {{ formatDateString(pendingRequest.created_at) }}
+        <template v-if="assignmentSummary"> · also for: {{ assignmentSummary }}</template>
       </span>
       <v-btn
         v-if="canWithdraw"
@@ -59,6 +60,7 @@
         <v-icon start size="14">mdi-shield-check</v-icon>
         Authorized until {{ formatDateString(activeAuthorization?.expires_at) }}
       </v-chip>
+      <span v-if="grantedNote" class="text-caption text-medium-emphasis">{{ grantedNote }}</span>
     </div>
 
     <!-- Request dialog -->
@@ -167,6 +169,43 @@
             clearable
             class="mt-2"
           />
+
+          <!-- Who will carry the action out once it is approved (only when a person does it) -->
+          <template v-if="showAssignment">
+            <v-divider class="my-3" />
+            <div class="text-caption text-uppercase font-weight-bold text-disabled mb-1">Who will carry it out once approved?</div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              You can always do it yourself. Add a department (any of its members can do it) and/or specific people.
+            </div>
+            <v-autocomplete
+              v-model="assignment.departmentId"
+              :items="departmentOptions"
+              item-title="name"
+              item-value="id"
+              label="Department (optional)"
+              :loading="loadingAssignment"
+              prepend-inner-icon="mdi-domain"
+              density="compact"
+              clearable
+              hide-details
+              class="mb-3"
+            />
+            <v-autocomplete
+              v-model="assignment.userIds"
+              :items="userOptions"
+              item-title="name"
+              item-value="id"
+              label="People (optional)"
+              :loading="loadingAssignment"
+              prepend-inner-icon="mdi-account-multiple-plus-outline"
+              density="compact"
+              multiple
+              chips
+              closable-chips
+              clearable
+              hide-details
+            />
+          </template>
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
@@ -281,6 +320,51 @@ async function loadEligibility() {
     eligibility.value = null // on doubt, keep the request flow
   }
 }
+// ── Assignment (departments / people who can carry the action out) ───────────────
+// Auto-executed types are carried out by the approver, so there is nobody to assign.
+const showAssignment = computed(() => policy.value?.kind === 'process' && policy.value?.automatable !== true)
+const assignment = ref<{ departmentId: number | null; userIds: number[] }>({ departmentId: null, userIds: [] })
+const departmentOptions = ref<any[]>([])
+const userOptions = ref<any[]>([])
+const loadingAssignment = ref(false)
+async function loadAssignmentOptions() {
+  if (!showAssignment.value || (departmentOptions.value.length && userOptions.value.length)) return
+  loadingAssignment.value = true
+  try {
+    const [departments, users] = await Promise.all([
+      ($api as any).departments.getAllDepartments(),
+      ($api as any).users.getAllUsers(),
+    ])
+    departmentOptions.value = (departments as any[]) ?? []
+    userOptions.value = ((users as any[]) ?? []).filter((u: any) => u.id !== currentUser.value?.id)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingAssignment.value = false
+  }
+}
+const assignmentSummary = computed(() => {
+  const req = pendingRequest.value ?? activeAuthorization.value
+  if (!req) return ''
+  const parts: string[] = []
+  if (req.department?.name) parts.push(req.department.name)
+  for (const e of req.executors ?? []) parts.push(e.name)
+  return parts.join(', ')
+})
+
+// Who asked for it / who else can carry it out, shown next to an approved request
+const grantedNote = computed(() => {
+  const req = activeAuthorization.value
+  if (!req) return ''
+  const parts: string[] = []
+  if (req.user_id !== currentUser.value?.id && req.user?.name) parts.push(`Requested by ${req.user.name}`)
+  const others: string[] = []
+  if (req.department?.name) others.push(req.department.name)
+  for (const e of req.executors ?? []) others.push(e.name)
+  if (others.length) parts.push(`for ${others.join(', ')}`)
+  return parts.join(' · ')
+})
+
 const pendingRequest = computed(() => requestForProcess.value.find((r: any) => r.status === 'pending') ?? null)
 const requesterName = computed(() => pendingRequest.value?.user?.name ?? pendingRequest.value?.requested?.name ?? 'someone')
 // Only whoever asked (or an administrator) can withdraw a request
@@ -353,6 +437,7 @@ async function fetchUserRequests() {
 const confirmRequestAuthorization = () => {
   // Refresh the template catalog so recent template edits are reflected
   loadCatalog(true)
+  loadAssignmentOptions()
   formData.value = props.initialFormData ? { ...props.initialFormData } : {}
   showConfirmDialog.value = true
 }
@@ -416,6 +501,12 @@ const onRequestAuthorizationClick = async () => {
       body.files = filesData.value
     }
 
+    // Who else can carry the action out once approved
+    if (showAssignment.value) {
+      if (assignment.value.departmentId) body.department_id = assignment.value.departmentId
+      if (assignment.value.userIds.length > 0) body.executor_user_ids = assignment.value.userIds
+    }
+
     await ($api as any).authProcessRequests.requestAuthorization(body)
 
     snackbar.add({ type: 'success', text: 'Authorization request sent' })
@@ -424,6 +515,7 @@ const onRequestAuthorizationClick = async () => {
     formData.value = {}
     chargesData.value = {}
     filesData.value = []
+    assignment.value = { departmentId: null, userIds: [] }
 
     await fetchUserRequests()
     startPolling()
