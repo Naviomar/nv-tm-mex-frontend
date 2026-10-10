@@ -23,6 +23,14 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/by-process?process_name=${params.process_name}&request_key=${params.request_key}`)
   }
 
+  /** Same decision the server applies in the `approval:` middleware: act directly or request? */
+  async getEligibility(params: { process_name: string; request_key: string }) {
+    return this.call(
+      'GET',
+      `${this.RESOURCE}/eligibility?process_name=${encodeURIComponent(params.process_name)}&request_key=${encodeURIComponent(params.request_key)}`
+    )
+  }
+
   async respondRequest(id: string, data: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(data),

@@ -1,8 +1,13 @@
 <template>
   <div class="paw-root" :class="{ 'paw-root--block': block }">
+    <!-- The approval policy says this user can act without a request -->
+    <div v-if="canActDirectly" class="paw-direct">
+      <slot name="auth"></slot>
+    </div>
+
     <!-- No request yet -->
     <v-btn
-      v-if="!hasPendingRequest && !hasGrantedRequest"
+      v-else-if="!hasPendingRequest && !hasGrantedRequest"
       variant="tonal"
       color="amber-darken-2"
       size="small"
@@ -203,7 +208,7 @@ import type { IFormField } from '~/repository/modules/catalogs/authRequestTypes'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
-const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+const { getTemplate, getType, loadCatalog } = useRequestTypeCatalog()
 
 const props = defineProps({
   processName: { type: String, required: true },
@@ -250,7 +255,32 @@ const processNameKey = computed(() =>
 const hasPendingRequest = computed(() =>
   requestForProcess.value.some((r: any) => r.status === 'pending')
 )
-const { user: currentUser, isAdminRole } = useCheckUser()
+const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
+
+// ── Approval policy (auth_request_types.approval_mode) ─────────────────────────
+// permission: holders of the permission act directly (known client-side).
+// state: the server decides from the record's state (eligibility endpoint).
+// always / no policy: always the request flow, as before.
+const policy = computed(() => getType(props.processName))
+const eligibility = ref<{ can_act_directly: boolean } | null>(null)
+const canActDirectly = computed(() => {
+  const mode = policy.value?.approval_mode
+  if (mode === 'permission') return !!policy.value?.approval_permission && hasPermission(policy.value.approval_permission)
+  if (mode === 'state') return eligibility.value?.can_act_directly === true
+  return false
+})
+async function loadEligibility() {
+  await loadCatalog()
+  if (policy.value?.approval_mode !== 'state') return
+  try {
+    eligibility.value = (await ($api as any).authProcessRequests.getEligibility({
+      process_name: props.processName,
+      request_key: String(props.requestKey ?? ''),
+    })) as any
+  } catch {
+    eligibility.value = null // on doubt, keep the request flow
+  }
+}
 const pendingRequest = computed(() => requestForProcess.value.find((r: any) => r.status === 'pending') ?? null)
 const requesterName = computed(() => pendingRequest.value?.user?.name ?? pendingRequest.value?.requested?.name ?? 'someone')
 // Only whoever asked (or an administrator) can withdraw a request
@@ -435,7 +465,7 @@ const onRequestCancelAuthorizationClick = async () => {
 }
 
 onMounted(() => {
-  loadCatalog()
+  loadEligibility() // also loads the catalog
   fetchUserRequests()
 })
 
@@ -461,6 +491,11 @@ watch(
 .paw-btn {
   font-size: 12px;
   letter-spacing: 0.01em;
+}
+
+.paw-direct {
+  display: inline-flex;
+  align-items: center;
 }
 
 .paw-pending {

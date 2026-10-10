@@ -157,6 +157,9 @@ export interface IAuthRequestType {
   color: string | null
   is_active: boolean
   automatable?: boolean | null
+  /** always = every request needs approval; permission = holders of approval_permission skip it; state = server rule + permission; null = legacy. */
+  approval_mode?: 'always' | 'permission' | 'state' | null
+  approval_permission?: string | null
   default_expiration_hours?: number | null
   sort_order: number
   form_fields?: IFormField[] | null

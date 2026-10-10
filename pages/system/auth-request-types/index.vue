@@ -74,6 +74,14 @@
                   {{ type.is_active ? 'Active' : 'Inactive' }}
                 </v-chip>
                 <v-chip
+                  size="x-small"
+                  :color="approvalChip(type).color"
+                  variant="tonal"
+                  :title="approvalChip(type).hint"
+                >
+                  <v-icon start size="12">mdi-gavel</v-icon>{{ approvalChip(type).label }}
+                </v-chip>
+                <v-chip
                   v-if="type.automatable !== null"
                   size="x-small"
                   :color="type.automatable ? 'info' : 'warning'"
@@ -241,6 +249,29 @@
                   label="Post-approval action"
                   hint="Can this request type's business action run automatically once granted?"
                   persistent-hint
+                />
+              </v-col>
+              <v-col v-if="form.kind === 'process'" cols="12" md="6">
+                <v-select
+                  v-model="form.approval_mode"
+                  :items="approvalModes"
+                  label="Who needs approval"
+                  hint="Always: nobody skips it. Permission: holders of the permission skip it. State: depends on the record (decided by the server)."
+                  persistent-hint
+                  clearable
+                  @update:model-value="onApprovalModeChange"
+                />
+              </v-col>
+              <v-col v-if="form.kind === 'process' && form.approval_mode && form.approval_mode !== 'always'" cols="12" md="6">
+                <v-autocomplete
+                  v-model="form.approval_permission"
+                  :items="permissionNames"
+                  label="Permission"
+                  :hint="form.approval_mode === 'permission'
+                    ? 'Who has it acts directly, without a request.'
+                    : 'Acts directly while the record allows it. When the record is closed, everyone requests.'"
+                  persistent-hint
+                  clearable
                 />
               </v-col>
               <v-col v-if="form.kind !== 'support'" cols="12" md="6">
@@ -552,9 +583,35 @@ const form = ref({
   color: '',
   is_active: true,
   automatable: null as boolean | null,
+  approval_mode: null as 'always' | 'permission' | 'state' | null,
+  approval_permission: null as string | null,
   default_expiration_hours: null as number | null,
   form_fields: [] as IFormField[],
 })
+
+const approvalModes = [
+  { title: 'Always request (nobody skips it)', value: 'always' },
+  { title: 'Permission holders skip it', value: 'permission' },
+  { title: 'Depends on the record state', value: 'state' },
+]
+const permissionNames = ref<string[]>([])
+
+const onApprovalModeChange = (mode: string | null) => {
+  if (mode === 'always' || !mode) form.value.approval_permission = null
+}
+
+const approvalChip = (type: IAuthRequestType) => {
+  switch (type.approval_mode) {
+    case 'always':
+      return { label: 'Always request', color: 'error', hint: 'Every request needs approval; nobody skips it.' }
+    case 'permission':
+      return { label: 'Permission skips', color: 'success', hint: `Holders of ${type.approval_permission ?? 'the permission'} act without a request.` }
+    case 'state':
+      return { label: 'By record state', color: 'info', hint: `The server decides by the record state; ${type.approval_permission ?? 'a permission'} acts directly while it is open.` }
+    default:
+      return { label: 'Legacy rule', color: 'grey', hint: 'No approval policy: the route keeps its own middleware.' }
+  }
+}
 
 const usesHourBasedExpiration = computed(() => form.value.default_expiration_hours != null)
 
@@ -599,7 +656,7 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, default_expiration_hours: null, form_fields: [] }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, approval_mode: null, approval_permission: null, default_expiration_hours: null, form_fields: [] }
   showDialog.value = true
 }
 
@@ -808,7 +865,14 @@ function moveField(idx: number, direction: -1 | 1) {
   ;[fields[idx], fields[swapIdx]] = [fields[swapIdx], fields[idx]]
 }
 
-onMounted(() => loadTypes())
+onMounted(async () => {
+  loadTypes()
+  try {
+    permissionNames.value = ((await $api.users.getPermissions()) as any[]).map((p) => p.name).sort()
+  } catch {
+    // The policy editor still works without autocomplete suggestions.
+  }
+})
 </script>
 
 <style scoped>
