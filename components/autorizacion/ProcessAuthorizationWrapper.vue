@@ -446,6 +446,9 @@ const confirmDeleteRequestAuthorization = () => {
   showConfirmDelReqDialog.value = true
 }
 
+// 0 is a legitimate answer (days, amounts); only an untouched field counts as missing
+const isEmptyValue = (v: any) => v === undefined || v === null || v === ''
+
 const onRequestAuthorizationClick = async () => {
   try {
     if (tpl.value.reason.show && tpl.value.reason.required && !form.value.reason.trim()) {
@@ -467,7 +470,7 @@ const onRequestAuthorizationClick = async () => {
     }
 
     const missingField = tpl.value.elements?.find(
-      (el: any) => el.type === 'form_field' && el.field?.required && !formData.value[el.field.name]
+      (el: any) => el.type === 'form_field' && el.field?.required && isEmptyValue(formData.value[el.field.name])
     )
     if (missingField) {
       snackbar.add({ type: 'error', text: `Please fill in "${missingField.field.label}" before submitting` })
