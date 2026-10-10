@@ -31,7 +31,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="currency" @click="viewCurrency(currency)" />
+                  <ViewButton permission="currencies-view" :item="currency" @click="viewCurrency(currency)" />
                   <TrashButton v-if="false" :item="currency" @click="showConfirmDelete" />
                 </div>
               </td>

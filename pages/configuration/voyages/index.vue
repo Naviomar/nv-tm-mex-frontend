@@ -2,7 +2,9 @@
   <v-container fluid>
     <h1 class="text-xl font-bold">Voyages destinations</h1>
     <div class="flex justify-end gap-3">
-      <v-btn to="/configuration/voyages/add" color="success"><v-icon>mdi-plus</v-icon> Add new voyage </v-btn>
+      <Can permission="voyages-create">
+        <v-btn to="/configuration/voyages/add" color="success"><v-icon>mdi-plus</v-icon> Add new voyage </v-btn>
+      </Can>
     </div>
     <div class="pt-4">
       <VoyageTable />

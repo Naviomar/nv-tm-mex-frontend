@@ -200,6 +200,7 @@
                     <div>
                       <InputText
                         name="rebate"
+                        :readonly="!hasPermission('customers-update-import-rebate')"
                         type="number"
                         density="compact"
                         variant="solo-filled"
@@ -210,6 +211,7 @@
                     <div>
                       <InputAutocomplete
                         name="line_id"
+                        :readonly="!hasPermission('customers-update-import-rebate')"
                         density="compact"
                         label="Lines"
                         :items="catalogs.lines"
@@ -224,13 +226,15 @@
                     </div>
                   </div>
                   <div class="mb-4">
-                    <button
-                      type="button"
-                      @click="updateRebateImport"
-                      class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-                    >
-                      Update Rebate
-                    </button>
+                    <Can permission="customers-update-import-rebate">
+                      <button
+                        type="button"
+                        @click="updateRebateImport"
+                        class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+                      >
+                        Update Rebate
+                      </button>
+                    </Can>
                   </div>
 
                   <div class="font-bold text-lg">Maritime Export</div>
@@ -238,6 +242,7 @@
                     <div>
                       <InputText
                         name="rebate_export"
+                        :readonly="!hasPermission('customers-update-export-rebate')"
                         type="number"
                         density="compact"
                         variant="solo-filled"
@@ -248,6 +253,7 @@
                     <div>
                       <InputAutocomplete
                         name="line_export_id"
+                        :readonly="!hasPermission('customers-update-export-rebate')"
                         density="compact"
                         label="Lines"
                         :items="catalogs.lines"
@@ -262,13 +268,15 @@
                     </div>
                   </div>
                   <div class="mb-4">
-                    <button
-                      type="button"
-                      @click="updateRebateExport"
-                      class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-                    >
-                      Update Rebate
-                    </button>
+                    <Can permission="customers-update-export-rebate">
+                      <button
+                        type="button"
+                        @click="updateRebateExport"
+                        class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+                      >
+                        Update Rebate
+                      </button>
+                    </Can>
                   </div>
                 </v-card-text>
               </v-card>
@@ -315,13 +323,15 @@
             <div class="flex justify-between">
               <div>Executive(s)</div>
               <div>
-                <button
-                  type="button"
-                  @click="toggleExecutiveForm"
-                  class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
-                >
-                  +
-                </button>
+                <Can permission="customers-update-executive">
+                  <button
+                    type="button"
+                    @click="toggleExecutiveForm"
+                    class="inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-1 text-xs font-medium text-white shadow-sm hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
+                  >
+                    +
+                  </button>
+                </Can>
               </div>
             </div>
           </v-card-title>
@@ -481,6 +491,7 @@ const { $api, $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
 
 const id = route.params.id!
 

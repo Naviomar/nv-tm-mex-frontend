@@ -3,12 +3,14 @@
     <v-card-title>
       <div class="flex justify-between">
         <div>Address book</div>
-        <div>
-          <v-btn icon size="x-small" @click="toggle" :color="showForm ? 'black' : 'success'">
-            <v-icon v-if="showForm">mdi-close</v-icon>
-            <v-icon v-if="!showForm">mdi-plus</v-icon>
-          </v-btn>
-        </div>
+        <Can permission="customers-update-address">
+          <div>
+            <v-btn icon size="x-small" @click="toggle" :color="showForm ? 'black' : 'success'">
+              <v-icon v-if="showForm">mdi-close</v-icon>
+              <v-icon v-if="!showForm">mdi-plus</v-icon>
+            </v-btn>
+          </div>
+        </Can>
       </div>
     </v-card-title>
     <v-card-text>
@@ -75,14 +77,16 @@
             <td>
               <div class="flex gap-2">
                 <div class="flex">
-                  <v-btn
-                    size="small"
-                    variant="text"
-                    icon="mdi-pencil-outline"
-                    color="green-lighten-2"
-                    density="comfortable"
-                    @click="editAddress(item)"
-                  ></v-btn>
+                  <Can permission="customers-update-address">
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      icon="mdi-pencil-outline"
+                      color="green-lighten-2"
+                      density="comfortable"
+                      @click="editAddress(item)"
+                    ></v-btn>
+                  </Can>
                   <v-btn
                     size="small"
                     variant="text"

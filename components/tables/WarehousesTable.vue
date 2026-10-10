@@ -42,7 +42,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="warehouse" @click="viewWarehouse(warehouse)" />
+                  <ViewButton permission="warehouses-view" :item="warehouse" @click="viewWarehouse(warehouse)" />
                   <EditButton :item="warehouse" permission="warehouses-edit" @click="editWarehouse(warehouse)" />
                   <TrashButton :item="warehouse" permission="warehouses-delete" @click="showConfirmDelete" />
                 </div>

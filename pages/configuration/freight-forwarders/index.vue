@@ -7,9 +7,11 @@
           <v-btn color="secondary" to="/configuration/freight-forwarders/groups">
             <v-icon>mdi-account-group-outline</v-icon> Freight forwarder groups
           </v-btn>
-          <v-btn color="success" @click="openCreateModal">
-            <v-icon>mdi-plus</v-icon>Add freight forwarder
-          </v-btn>
+          <Can permission="freight-forwarders-create">
+            <v-btn color="success" @click="openCreateModal">
+              <v-icon>mdi-plus</v-icon>Add freight forwarder
+            </v-btn>
+          </Can>
         </div>
       </div>
     </div>

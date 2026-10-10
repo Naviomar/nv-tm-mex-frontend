@@ -43,7 +43,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="seaRegion" @click="viewSeaRegion(seaRegion)" />
+                  <ViewButton permission="sea-regions-view" :item="seaRegion" @click="viewSeaRegion(seaRegion)" />
                   <EditButton :item="seaRegion" permission="sea-regions-edit" @click="editSeaRegion(seaRegion)" />
                   <TrashButton :item="seaRegion" permission="sea-regions-delete" @click="showConfirmDelete" />
                 </div>

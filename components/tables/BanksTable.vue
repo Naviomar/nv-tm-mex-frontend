@@ -33,7 +33,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="bank" @click="viewBank(bank)" />
+                  <ViewButton permission="banks-view" :item="bank" @click="viewBank(bank)" />
                   <EditButton :item="bank" permission="banks-edit" @click="editBank(bank)" />
                   <TrashButton :item="bank" permission="banks-delete" @click="showConfirmDelete" />
                 </div>

@@ -5,7 +5,9 @@
         <div class="text-xl">Suppliers</div>
         <div class="flex gap-4">
           <v-btn color="secondary" to="/configuration/suppliers/types"> Supplier types </v-btn>
-          <v-btn color="primary" to="/configuration/suppliers/add"> Add supplier </v-btn>
+          <Can permission="suppliers-create">
+            <v-btn color="primary" to="/configuration/suppliers/add"> Add supplier </v-btn>
+          </Can>
         </div>
       </div>
     </div>

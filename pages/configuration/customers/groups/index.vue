@@ -7,7 +7,9 @@
       >
     </div>
     <div class="flex justify-end gap-3">
-      <v-btn to="/configuration/customers/groups/add" color="success"><v-icon>mdi-plus</v-icon> Add new group </v-btn>
+      <Can permission="consignee-groups-create">
+        <v-btn to="/configuration/customers/groups/add" color="success"><v-icon>mdi-plus</v-icon> Add new group </v-btn>
+      </Can>
     </div>
     <div class="pt-4">
       <ConsigneeGroupsTable />

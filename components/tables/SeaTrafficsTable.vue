@@ -116,16 +116,23 @@ const clearFilters = async () => {
           <tbody>
             <tr v-for="(seaTraffic, index) in seaTraffics.data" :key="`seaTraffic-${index}`">
               <td>
-                <div v-if="seaTraffic.deleted_at">
-                  <v-chip color="red" text-color="white" small @click="showConfirmDelete(seaTraffic)"
-                    ><v-icon>mdi-delete-empty-outline</v-icon>Deleted</v-chip
-                  >
-                </div>
-                <div v-if="!seaTraffic.deleted_at">
-                  <v-chip color="green" text-color="white" small @click="showConfirmDelete(seaTraffic)">
-                    <v-icon>mdi-delete-outline</v-icon>Active</v-chip
-                  >
-                </div>
+                <Can permission="sea-traffics-delete">
+                  <div v-if="seaTraffic.deleted_at">
+                    <v-chip color="red" text-color="white" small @click="showConfirmDelete(seaTraffic)"
+                      ><v-icon>mdi-delete-empty-outline</v-icon>Deleted</v-chip
+                    >
+                  </div>
+                  <div v-if="!seaTraffic.deleted_at">
+                    <v-chip color="green" text-color="white" small @click="showConfirmDelete(seaTraffic)">
+                      <v-icon>mdi-delete-outline</v-icon>Active</v-chip
+                    >
+                  </div>
+                  <template #denied>
+                    <v-chip :color="seaTraffic.deleted_at ? 'red' : 'green'" text-color="white" small>
+                      {{ seaTraffic.deleted_at ? 'Deleted' : 'Active' }}
+                    </v-chip>
+                  </template>
+                </Can>
               </td>
               <td>{{ seaTraffic.name }}</td>
               <td>{{ seaTraffic.created_at }}</td>

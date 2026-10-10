@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Ports</div>
-        <v-btn color="primary" to="/configuration/ports/add"> Add port </v-btn>
+        <Can permission="ports-edit">
+          <v-btn color="primary" to="/configuration/ports/add"> Add port </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

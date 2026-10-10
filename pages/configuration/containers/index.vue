@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Containers</div>
-        <v-btn color="primary" to="/configuration/containers/add"> Add container </v-btn>
+        <Can permission="containers-create">
+          <v-btn color="primary" to="/configuration/containers/add"> Add container </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

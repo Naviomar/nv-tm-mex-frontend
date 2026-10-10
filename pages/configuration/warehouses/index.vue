@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Warehouses</div>
-        <v-btn color="primary" to="/configuration/warehouses/add"> Add warehouse </v-btn>
+        <Can permission="warehouses-create">
+          <v-btn color="primary" to="/configuration/warehouses/add"> Add warehouse </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

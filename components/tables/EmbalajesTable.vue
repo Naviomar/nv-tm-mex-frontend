@@ -50,7 +50,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="embalaje" @click="viewEmbalaje(embalaje)" />
+                  <ViewButton permission="embalajes-view" :item="embalaje" @click="viewEmbalaje(embalaje)" />
                   <EditButton :item="embalaje" permission="embalajes-edit" @click="editEmbalaje(embalaje)" />
                   <TrashButton :item="embalaje" permission="embalajes-delete" @click="showConfirmDelete" />
                 </div>
