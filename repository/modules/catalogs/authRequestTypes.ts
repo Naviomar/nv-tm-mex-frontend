@@ -13,7 +13,7 @@ export interface IFormFieldOption {
 }
 
 export interface IFormField {
-  type: 'text' | 'textarea' | 'radio' | 'select' | 'checkbox' | 'number' | 'autocomplete'
+  type: 'text' | 'textarea' | 'radio' | 'select' | 'checkbox' | 'number' | 'autocomplete' | 'date'
   name: string
   label: string
   required?: boolean
