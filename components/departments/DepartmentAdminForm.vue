@@ -28,71 +28,73 @@
       <!-- ====== USERS TAB ====== -->
       <v-window-item value="users">
         <!-- Add user row -->
-        <v-card variant="flat" class="mb-4 rounded-lg" bg-color="blue-grey-lighten-5">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center gap-2 mb-4">
-              <v-avatar color="primary" size="32" rounded="lg">
-                <v-icon size="18" color="white">mdi-account-plus</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-subtitle-1 font-weight-bold">Add member</div>
-                <div class="text-caption text-grey-darken-1">Link a user to this department</div>
+        <Can permission="departments-edit">
+          <v-card variant="flat" class="mb-4 rounded-lg" bg-color="blue-grey-lighten-5">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center gap-2 mb-4">
+                <v-avatar color="primary" size="32" rounded="lg">
+                  <v-icon size="18" color="white">mdi-account-plus</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">Add member</div>
+                  <div class="text-caption text-grey-darken-1">Link a user to this department</div>
+                </div>
               </div>
-            </div>
-            <v-row dense align="center">
-              <v-col cols="12" md="5">
-                <v-autocomplete
-                  v-model="form.user"
-                  density="compact"
-                  :items="availableUsers"
-                  item-title="email"
-                  item-value="id"
-                  label="Search user by email or name"
-                  variant="outlined"
-                  bg-color="white"
-                  hide-details
-                  clearable
-                >
-                  <template #item="{ props: aProps, item }">
-                    <v-list-item v-bind="aProps">
-                      <template #prepend>
-                        <v-avatar size="28" color="primary">
-                          <span class="text-white text-caption">{{ getInitials(item.raw.name) }}</span>
-                        </v-avatar>
-                      </template>
-                      <v-list-item-subtitle>{{ item.raw.name }}</v-list-item-subtitle>
-                    </v-list-item>
-                  </template>
-                </v-autocomplete>
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="form.department_type"
-                  density="compact"
-                  :items="departmentTypes"
-                  item-title="label"
-                  item-value="value"
-                  label="Type"
-                  variant="outlined"
-                  bg-color="white"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  block
-                  :disabled="!form.user || !form.department_type"
-                  @click="linkUser"
-                  prepend-icon="mdi-account-plus"
-                >
-                  Add to Department
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
+              <v-row dense align="center">
+                <v-col cols="12" md="5">
+                  <v-autocomplete
+                    v-model="form.user"
+                    density="compact"
+                    :items="availableUsers"
+                    item-title="email"
+                    item-value="id"
+                    label="Search user by email or name"
+                    variant="outlined"
+                    bg-color="white"
+                    hide-details
+                    clearable
+                  >
+                    <template #item="{ props: aProps, item }">
+                      <v-list-item v-bind="aProps">
+                        <template #prepend>
+                          <v-avatar size="28" color="primary">
+                            <span class="text-white text-caption">{{ getInitials(item.raw.name) }}</span>
+                          </v-avatar>
+                        </template>
+                        <v-list-item-subtitle>{{ item.raw.name }}</v-list-item-subtitle>
+                      </v-list-item>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" md="3">
+                  <v-select
+                    v-model="form.department_type"
+                    density="compact"
+                    :items="departmentTypes"
+                    item-title="label"
+                    item-value="value"
+                    label="Type"
+                    variant="outlined"
+                    bg-color="white"
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    block
+                    :disabled="!form.user || !form.department_type"
+                    @click="linkUser"
+                    prepend-icon="mdi-account-plus"
+                  >
+                    Add to Department
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </Can>
 
         <!-- Members table -->
         <v-card variant="flat" class="rounded-lg" bg-color="grey-lighten-5">
@@ -126,18 +128,20 @@
               <tbody>
                 <tr v-for="(member, index) in linkedUsers" :key="`user-${index}`">
                   <td>
-                    <v-tooltip text="Remove from department" location="top">
-                      <template #activator="{ props: tProps }">
-                        <v-btn
-                          v-bind="tProps"
-                          size="x-small"
-                          variant="tonal"
-                          color="error"
-                          icon="mdi-account-minus"
-                          @click="unlinkUser(member)"
-                        />
-                      </template>
-                    </v-tooltip>
+                    <Can permission="departments-edit">
+                      <v-tooltip text="Remove from department" location="top">
+                        <template #activator="{ props: tProps }">
+                          <v-btn
+                            v-bind="tProps"
+                            size="x-small"
+                            variant="tonal"
+                            color="error"
+                            icon="mdi-account-minus"
+                            @click="unlinkUser(member)"
+                          />
+                        </template>
+                      </v-tooltip>
+                    </Can>
                   </td>
                   <td>
                     <div class="d-flex align-center gap-2 py-1">
@@ -164,6 +168,7 @@
                       hide-details
                       style="min-width: 140px"
                       :loading="updatingType === member.id"
+                      :disabled="!hasPermission('departments-edit')"
                       @update:model-value="(val) => changeUserType(member, val)"
                     />
                   </td>
@@ -175,14 +180,14 @@
                         size="x-small"
                         :color="role.name?.includes('Admin') ? 'amber-darken-2' : 'secondary'"
                         variant="tonal"
-                        :closable="isDepartmentRole(role.id)"
+                        :closable="isDepartmentRole(role.id) && canManageRoles"
                         @click:close="removeRole(member, role)"
                       >
                         {{ role.name }}
                       </v-chip>
                       <span v-if="!member.roles?.length" class="text-caption text-medium-emphasis">No role</span>
 
-                      <v-menu v-if="assignableRoles(member).length" location="bottom start">
+                      <v-menu v-if="canManageRoles && assignableRoles(member).length" location="bottom start">
                         <template #activator="{ props: mProps }">
                           <v-btn
                             v-bind="mProps"
@@ -293,6 +298,9 @@ const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const confirm = $notifications.useConfirm()
 const pageDocs = usePageDocs()
+const { hasPermission } = useCheckUser()
+// assign / revoke department roles (backend: system-admin-department + managing the department)
+const canManageRoles = computed(() => hasPermission('system-admin-department'))
 
 const props = defineProps({
   id: {

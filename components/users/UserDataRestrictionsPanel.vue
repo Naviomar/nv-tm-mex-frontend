@@ -143,7 +143,7 @@
               density="compact"
               hide-details
               :loading="togglingScope === rest.id"
-              :disabled="togglingScope === rest.id"
+              :disabled="togglingScope === rest.id || !hasPermission('users-manage-data-restrictions')"
               @update:model-value="toggleCreateInvoiceScope(rest)"
             />
             <v-chip
@@ -215,6 +215,7 @@
 </template>
 
 <script setup lang="ts">
+const { hasPermission } = useCheckUser()
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()

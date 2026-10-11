@@ -22,7 +22,9 @@
       </div>
       <div class="my-2 flex gap-2">
         <v-btn color="red" @click="emits('cancel')" class="mb-4">Cancel</v-btn>
-        <v-btn color="green-darken-4" @click="upatePartyConcept" class="mb-4">Save changes</v-btn>
+        <Can permission="party-invoices-edit">
+          <v-btn color="green-darken-4" @click="upatePartyConcept" class="mb-4">Save changes</v-btn>
+        </Can>
       </div>
     </div>
   </div>

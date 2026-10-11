@@ -177,21 +177,23 @@
             <div class="flex justify-between">
               <div>Invoice similar name(s)</div>
               <!-- A new name goes through a request: once approved it is added automatically -->
-              <ProcessAuthorizationWrapper
-                process-name="charge-similar-names"
-                :request-key="String(props.id)"
-                label="Request to add a name"
-                :display-name="charge?.name || ''"
-                @refresh="getData"
-              >
-                <!-- Only reached by whoever may act without a request (Super Admin) -->
-                <template #auth>
-                  <v-btn size="x-small" color="success" variant="tonal" @click="openAddName">
-                    <v-icon start size="14">mdi-plus</v-icon>
-                    Add name
-                  </v-btn>
-                </template>
-              </ProcessAuthorizationWrapper>
+              <Can permission="charges-similar-names-add">
+                <ProcessAuthorizationWrapper
+                  process-name="charge-similar-names"
+                  :request-key="String(props.id)"
+                  label="Request to add a name"
+                  :display-name="charge?.name || ''"
+                  @refresh="getData"
+                >
+                  <!-- Only reached by whoever may act without a request (Super Admin) -->
+                  <template #auth>
+                    <v-btn size="x-small" color="success" variant="tonal" @click="openAddName">
+                      <v-icon start size="14">mdi-plus</v-icon>
+                      Add name
+                    </v-btn>
+                  </template>
+                </ProcessAuthorizationWrapper>
+              </Can>
             </div>
           </v-card-title>
           <v-card-text>

@@ -14,12 +14,16 @@
         </div>
       </div>
       <div class="d-flex gap-2">
-        <v-btn variant="tonal" color="primary" prepend-icon="mdi-link-variant" size="small" @click="linkDialog.show = true">
-          Link existing role
-        </v-btn>
-        <v-btn color="primary" prepend-icon="mdi-shield-plus" size="small" @click="openCreateDialog">
-          Create member role
-        </v-btn>
+        <Can permission="departments-edit">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-link-variant" size="small" @click="linkDialog.show = true">
+            Link existing role
+          </v-btn>
+        </Can>
+        <Can permission="system-admin-department">
+          <v-btn color="primary" prepend-icon="mdi-shield-plus" size="small" @click="openCreateDialog">
+            Create member role
+          </v-btn>
+        </Can>
       </div>
     </div>
 

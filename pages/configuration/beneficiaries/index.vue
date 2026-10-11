@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Beneficiaries</div>
-        <v-btn color="primary" to="/configuration/beneficiaries/add"> Add beneficiary </v-btn>
+        <Can permission="refunds-create">
+          <v-btn color="primary" to="/configuration/beneficiaries/add"> Add beneficiary </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

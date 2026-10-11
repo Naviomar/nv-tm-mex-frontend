@@ -22,7 +22,9 @@
               label="Select a name"
               return-object
             />
-            <v-btn size="small" density="compact" color="grey" @click="saveCfdiName">Save</v-btn>
+            <Can permission="customer-invoices-edit">
+              <v-btn size="small" density="compact" color="grey" @click="saveCfdiName">Save</v-btn>
+            </Can>
           </div>
         </div>
       </div>
