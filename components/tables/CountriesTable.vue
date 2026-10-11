@@ -50,12 +50,12 @@
               <td>
                 <div class="flex items-center gap-2">
                   <ViewButton :item="country" @click="viewCountry(country)" />
-                  <EditButton :item="country" @click="editCountry(country)" />
+                  <EditButton :item="country" permission="countries-edit" @click="editCountry(country)" />
                   <div v-if="importantCountries.includes(country.id)">
                     <v-icon color="amber">mdi-star</v-icon>
                   </div>
                   <div v-if="!importantCountries.includes(country.id)">
-                    <TrashButton :item="country" @click="showConfirmDelete" />
+                    <TrashButton :item="country" permission="countries-delete" @click="showConfirmDelete" />
                   </div>
                 </div>
               </td>

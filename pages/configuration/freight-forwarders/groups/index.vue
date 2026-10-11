@@ -11,9 +11,11 @@
 
     <div class="flex justify-between gap-3">
       <h1 class="text-xl font-bold">Freight Forwarder groups</h1>
-      <v-btn color="success" @click="openCreateModal"
-        ><v-icon>mdi-plus</v-icon> Add new group
-      </v-btn>
+      <Can permission="freight-groups-create">
+        <v-btn color="success" @click="openCreateModal"
+          ><v-icon>mdi-plus</v-icon> Add new group
+        </v-btn>
+      </Can>
     </div>
     <div class="pt-4">
       <FreightForwardersGroupsTable ref="freightForwardersGroupsTableRef" />

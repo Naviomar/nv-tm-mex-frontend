@@ -43,13 +43,15 @@
               </v-list-item> -->
             </v-list>
           </v-menu>
-          <v-btn
+          <Can permission="charges-create">
+            <v-btn
             color="primary"
             to="/configuration/charges/add"
             prepend-icon="mdi-plus"
           >
             Add Charge
           </v-btn>
+          </Can>
         </div>
       </div>
       <v-divider class="mt-4" />

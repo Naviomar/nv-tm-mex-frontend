@@ -58,7 +58,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="container" @click="viewContainer(container)" />
+                  <ViewButton permission="containers-view" :item="container" @click="viewContainer(container)" />
                   <EditButton :item="container" permission="containers-edit" @click="editContainer(container)" />
                   <TrashButton :item="container" permission="containers-delete" @click="showConfirmDelete" />
                 </div>

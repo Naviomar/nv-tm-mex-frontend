@@ -29,7 +29,7 @@
 
     <!-- Botón de validación manual -->
     <v-btn
-      v-if="showValidateButton"
+      v-if="showValidateButton && hasPermission('supplier-cfdi-validate-sat')"
       icon
       size="x-small"
       :color="needsValidation ? 'warning' : 'primary'"
@@ -44,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+const { hasPermission } = useCheckUser()
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
 

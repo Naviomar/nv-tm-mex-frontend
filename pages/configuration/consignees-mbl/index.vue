@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Consignee MBLs</div>
-        <v-btn color="primary" to="/configuration/consignees-mbl/add"> Add consignee MBL </v-btn>
+        <Can permission="consignee-mbl-create">
+          <v-btn color="primary" to="/configuration/consignees-mbl/add"> Add consignee MBL </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

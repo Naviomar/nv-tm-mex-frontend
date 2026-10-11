@@ -57,9 +57,22 @@ class FetchFactory<T> {
       ...fetchOptions,
     }
 
+    // Tell the API which screen fired the call, so a rejected action (403) can be traced back
+    // to the interface that offered it (see app-mex:report-permission-denials).
+    const headers = new Headers(fetchOptions?.headers as HeadersInit | undefined)
+    if (import.meta.client && !headers.has('X-UI-Route')) {
+      try {
+        const route = useRoute()
+        headers.set('X-UI-Route', (route.matched.at(-1)?.path || route.path).slice(0, 190))
+      } catch (e) {
+        // no-op: never break a real call over diagnostics
+      }
+    }
+
     return this.$fetch<T>(url, {
       method,
       ...fetchOptions,
+      headers,
     })
   }
 }

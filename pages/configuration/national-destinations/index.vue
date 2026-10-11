@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Destinations</div>
-        <v-btn to="/configuration/national-destinations/add"> Add destinations </v-btn>
+        <Can permission="locations-create">
+          <v-btn to="/configuration/national-destinations/add"> Add destinations </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

@@ -54,7 +54,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="destination" @click="viewDestination(destination)" />
+                  <ViewButton permission="locations-view" :item="destination" @click="viewDestination(destination)" />
                   <EditButton :item="destination" permission="locations-edit" @click="editDestination(destination)" />
                   <TrashButton :item="destination" permission="locations-delete" @click="showConfirmDelete" />
                 </div>

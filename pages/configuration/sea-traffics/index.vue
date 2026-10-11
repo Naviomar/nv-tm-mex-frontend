@@ -4,7 +4,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Sea traffics</div>
-        <v-btn color="primary" to="/configuration/sea-traffics/add"> Add sea traffic </v-btn>
+        <Can permission="sea-traffics-create">
+          <v-btn color="primary" to="/configuration/sea-traffics/add"> Add sea traffic </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

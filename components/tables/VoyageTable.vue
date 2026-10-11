@@ -190,11 +190,11 @@
                 </div>
               </td>
               <td>
-                <ViewButton v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVessel(voyageDest.voyage?.vessel_id)" />
+                <ViewButton permission="vessel-lines-view" v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVessel(voyageDest.voyage?.vessel_id)" />
                 {{ voyageDest.voyage?.vessel?.name }} ({{ voyageDest.voyage?.vessel?.line?.commercial_name }})
               </td>
               <td>
-                <ViewButton v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVoyage(voyageDest.voyage?.id)" />
+                <ViewButton permission="voyages-view" v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVoyage(voyageDest.voyage?.id)" />
                 {{ voyageDest.voyage?.name }}
               </td>
               <td>

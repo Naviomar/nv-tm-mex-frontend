@@ -44,7 +44,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="executive" @click="viewExecutive(executive)" />
+                  <ViewButton permission="executives-view" :item="executive" @click="viewExecutive(executive)" />
                   <EditButton :item="executive" permission="executives-edit" @click="editExecutive(executive)" />
                   <TrashButton :item="executive" permission="executives-delete" @click="showConfirmDelete" />
                 </div>
