@@ -63,6 +63,17 @@
       <span v-if="grantedNote" class="text-caption text-medium-emphasis">{{ grantedNote }}</span>
     </div>
 
+    <!-- The last approved request could not be applied automatically -->
+    <div
+      v-if="failedRequest && !canActDirectly && !hasPendingRequest && !hasGrantedRequest"
+      class="paw-failed text-caption text-error mt-1"
+    >
+      <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
+      Approved on {{ formatDateString(failedRequest.granted_at) }} but not applied:
+      {{ failedRequest.automation_error || 'the action could not be completed automatically.' }}
+      Please submit the request again.
+    </div>
+
     <!-- Request dialog -->
     <v-dialog v-model="showConfirmDialog" max-width="500">
       <v-card>
@@ -372,20 +383,34 @@ const canWithdraw = computed(() => {
   if (!pendingRequest.value) return false
   return pendingRequest.value.user_id === currentUser.value?.id || !!isAdminRole()
 })
+// An approved request whose automatic action failed did not change anything: it is not an
+// active authorization (the user has to ask again) and the reason is shown instead.
+const automationFailed = (req: any) => req.automation_status === 'failed'
 const hasGrantedRequest = computed(() =>
   userRequests.value.some(
     (req: any) =>
       req.process_name_key === processNameKey.value &&
       req.status === 'granted' &&
       req.is_granted &&
-      !req.used_at
+      !req.used_at &&
+      !automationFailed(req)
   )
 )
 const activeAuthorization = computed(() =>
   userRequests.value.find(
-    (req: any) => req.process_name_key === processNameKey.value && req.status === 'granted' && req.is_granted
+    (req: any) =>
+      req.process_name_key === processNameKey.value &&
+      req.status === 'granted' &&
+      req.is_granted &&
+      !automationFailed(req)
   )
 )
+const failedRequest = computed(() => {
+  const failed = requestForProcess.value
+    .filter((req: any) => req.status === 'granted' && automationFailed(req) && !req.used_at)
+    .sort((a: any, b: any) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')))
+  return failed[0] ?? null
+})
 
 // ── Polling ──────────────────────────────────────────────────────────────────
 
@@ -397,7 +422,15 @@ const { hasPending, isPolling, fetchOnce, startPolling, stopPolling } = useReque
     const freshHasGranted = fresh.some((r: any) => r.status === 'granted')
 
     if (prevPending && freshHasGranted) {
-      snackbar.add({ type: 'success', text: 'Your request was approved. The action has been executed.' })
+      const failed = fresh.find((r: any) => r.status === 'granted' && r.automation_status === 'failed')
+      if (failed) {
+        snackbar.add({
+          type: 'warning',
+          text: `Your request was approved but the action could not be applied: ${failed.automation_error || 'please submit it again'}`,
+        })
+      } else {
+        snackbar.add({ type: 'success', text: 'Your request was approved. The action has been executed.' })
+      }
       emit('refresh')
     }
 
@@ -584,6 +617,14 @@ watch(
 .paw-root {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Reason shown under the request button when the last approved request could not be applied */
+.paw-failed {
+  flex: 1 0 100%;
+  max-width: 28rem;
+  white-space: normal;
 }
 
 .paw-root--block {
