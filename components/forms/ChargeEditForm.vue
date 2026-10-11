@@ -183,7 +183,15 @@
                 label="Request to add a name"
                 :display-name="charge?.name || ''"
                 @refresh="getData"
-              />
+              >
+                <!-- Only reached by whoever may act without a request (Super Admin) -->
+                <template #auth>
+                  <v-btn size="x-small" color="success" variant="tonal" @click="openAddName">
+                    <v-icon start size="14">mdi-plus</v-icon>
+                    Add name
+                  </v-btn>
+                </template>
+              </ProcessAuthorizationWrapper>
             </div>
           </v-card-title>
           <v-card-text>
@@ -223,6 +231,20 @@
       </div>
     </div>
     
+    <v-dialog v-model="showAddName" max-width="420">
+      <v-card>
+        <v-card-title class="text-h6">Add similar name</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="newName" variant="filled" label="Name *" autofocus @keyup.enter="saveCfdiName" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="showAddName = false">Cancel</v-btn>
+          <v-btn color="primary" :disabled="!newName.trim()" @click="saveCfdiName">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <SimilarItemsDialog v-model="showSimilarDialog" :similar-items="similiarCharges" @proceed="confirmUpdate" />
   </div>
 </template>
@@ -240,6 +262,30 @@ const props = defineProps({
     required: true,
   },
 })
+
+// Direct add (Super Admin only: the server rejects anyone else without an approved request)
+const showAddName = ref(false)
+const newName = ref('')
+const openAddName = () => {
+  newName.value = ''
+  showAddName.value = true
+}
+const saveCfdiName = async () => {
+  const name = newName.value.trim()
+  if (!name) return
+  try {
+    loadingStore.start()
+    await $api.charges.addCfdiName(props.id, { name })
+    showAddName.value = false
+    await getData()
+    snackbar.add({ type: 'success', text: 'Cfdi name created' })
+  } catch (error) {
+    console.error(error)
+    snackbar.add({ type: 'error', text: 'Error adding CFDI name. Please try again.' })
+  } finally {
+    setTimeout(() => loadingStore.stop(), 250)
+  }
+}
 
 const charge = ref<any>({})
 const similiarCharges = ref<any>([])

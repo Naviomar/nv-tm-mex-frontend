@@ -305,7 +305,7 @@ const processNameKey = computed(() =>
 const hasPendingRequest = computed(() =>
   requestForProcess.value.some((r: any) => r.status === 'pending')
 )
-const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
+const { user: currentUser, isAdminRole, isSuperAdminRole, hasPermission } = useCheckUser()
 
 // ── Approval policy (auth_request_types.approval_mode) ─────────────────────────
 // permission: holders of the permission act directly (known client-side).
@@ -314,6 +314,8 @@ const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
 const policy = computed(() => getType(props.processName))
 const eligibility = ref<{ can_act_directly: boolean } | null>(null)
 const canActDirectly = computed(() => {
+  // Types flagged super_admin_bypass let the Super Admin act without a request
+  if (policy.value?.super_admin_bypass && isSuperAdminRole()) return true
   const mode = policy.value?.approval_mode
   if (mode === 'permission') return !!policy.value?.approval_permission && hasPermission(policy.value.approval_permission)
   if (mode === 'state') return eligibility.value?.can_act_directly === true

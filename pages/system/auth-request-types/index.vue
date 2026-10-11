@@ -262,6 +262,16 @@
                   @update:model-value="onApprovalModeChange"
                 />
               </v-col>
+              <v-col v-if="form.kind === 'process' && form.approval_mode" cols="12" md="6">
+                <v-switch
+                  v-model="form.super_admin_bypass"
+                  color="primary"
+                  density="compact"
+                  label="Super Admin skips the request"
+                  hint="The Super Admin acts directly (it is logged); everyone else follows the rule above."
+                  persistent-hint
+                />
+              </v-col>
               <v-col v-if="form.kind === 'process' && form.approval_mode && form.approval_mode !== 'always'" cols="12" md="6">
                 <v-autocomplete
                   v-model="form.approval_permission"
@@ -585,6 +595,7 @@ const form = ref({
   automatable: null as boolean | null,
   approval_mode: null as 'always' | 'permission' | 'state' | null,
   approval_permission: null as string | null,
+  super_admin_bypass: false,
   default_expiration_hours: null as number | null,
   form_fields: [] as IFormField[],
 })
@@ -656,7 +667,7 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, approval_mode: null, approval_permission: null, default_expiration_hours: null, form_fields: [] }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, approval_mode: null, approval_permission: null, super_admin_bypass: false, default_expiration_hours: null, form_fields: [] }
   showDialog.value = true
 }
 
