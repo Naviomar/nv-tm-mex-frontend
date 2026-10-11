@@ -1,7 +1,7 @@
 <template>
   <div class="paw-root" :class="{ 'paw-root--block': block }">
     <!-- The approval policy says this user can act without a request -->
-    <div v-if="canActDirectly" class="paw-direct">
+    <div v-if="canActDirectly && hasAuthSlot" class="paw-direct">
       <slot name="auth"></slot>
     </div>
 
@@ -256,6 +256,9 @@ import { getProcessDisplayName } from '~/utils/data/system'
 import type { IFormField } from '~/repository/modules/catalogs/authRequestTypes'
 
 const { $api } = useNuxtApp()
+const slots = useSlots()
+// Types the server runs by itself have no direct screen: they keep the request form (approved on the spot for bypass users)
+const hasAuthSlot = computed(() => !!slots.auth)
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { getTemplate, getType, loadCatalog } = useRequestTypeCatalog()
@@ -305,7 +308,8 @@ const processNameKey = computed(() =>
 const hasPendingRequest = computed(() =>
   requestForProcess.value.some((r: any) => r.status === 'pending')
 )
-const { user: currentUser, isAdminRole, isSuperAdminRole, hasPermission } = useCheckUser()
+const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
+const canBypassApprovals = computed(() => hasPermission('approval-bypass'))
 
 // ── Approval policy (auth_request_types.approval_mode) ─────────────────────────
 // permission: holders of the permission act directly (known client-side).
@@ -314,8 +318,8 @@ const { user: currentUser, isAdminRole, isSuperAdminRole, hasPermission } = useC
 const policy = computed(() => getType(props.processName))
 const eligibility = ref<{ can_act_directly: boolean } | null>(null)
 const canActDirectly = computed(() => {
-  // Types flagged super_admin_bypass let the Super Admin act without a request
-  if (policy.value?.super_admin_bypass && isSuperAdminRole()) return true
+  // Whoever skips approvals system-wide (Super Admin, or anyone granted `approval-bypass`) acts directly
+  if (canBypassApprovals.value) return true
   const mode = policy.value?.approval_mode
   if (mode === 'permission') return !!policy.value?.approval_permission && hasPermission(policy.value.approval_permission)
   if (mode === 'state') return eligibility.value?.can_act_directly === true
@@ -552,9 +556,17 @@ const onRequestAuthorizationClick = async () => {
       if (assignment.value.userIds.length > 0) body.executor_user_ids = assignment.value.userIds
     }
 
-    await ($api as any).authProcessRequests.requestAuthorization(body)
+    const created: any = await ($api as any).authProcessRequests.requestAuthorization(body)
 
-    snackbar.add({ type: 'success', text: 'Authorization request sent' })
+    // Whoever skips approvals gets the automatic action done on the spot (approved by the server)
+    const executedNow = created?.status === 'granted'
+    if (executedNow && created.automation_status === 'failed') {
+      snackbar.add({ type: 'warning', text: `The action could not be applied: ${created.automation_error || 'please try again'}` })
+    } else if (executedNow) {
+      snackbar.add({ type: 'success', text: 'Done. The action was executed.' })
+    } else {
+      snackbar.add({ type: 'success', text: 'Authorization request sent' })
+    }
     showConfirmDialog.value = false
     form.value.reason = ''
     formData.value = {}
@@ -563,7 +575,11 @@ const onRequestAuthorizationClick = async () => {
     assignment.value = { departmentId: null, userIds: [] }
 
     await fetchUserRequests()
-    startPolling()
+    if (executedNow) {
+      emit('refresh')
+    } else {
+      startPolling()
+    }
   } catch (e) {
     console.error(e)
   } finally {

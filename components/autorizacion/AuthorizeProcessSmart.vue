@@ -43,7 +43,9 @@
         <div v-if="hasGrantedRequest" class="text-center text-xs text-green-900">
           <slot name="auth"></slot>
           <div class="italic mt-2">
-            <v-icon>mdi-shield-check</v-icon>Authorized until {{ formatDateString(authorizationRequest?.expires_at) }}
+            <v-icon>mdi-shield-check</v-icon>
+            <template v-if="canBypassApprovals && !authorizationRequest">No authorization needed</template>
+            <template v-else>Authorized until {{ formatDateString(authorizationRequest?.expires_at) }}</template>
           </div>
         </div>
       </div>
@@ -165,7 +167,9 @@ const userAuthRequests = ref<any>([])
 const requestsByResource = ref<any>([])
 const form = ref<any>({ request_reason: '', files: [] , reason_deleted: ''})
 
-const { user: currentUser, isAdminRole } = useCheckUser()
+const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
+// Whoever skips approvals system-wide (Super Admin, or anyone granted `approval-bypass`) needs no request
+const canBypassApprovals = computed(() => hasPermission('approval-bypass'))
 
 // Pending = waiting for an answer (is_authorized not set yet); a granted-but-unused request is not "pending".
 const pendingRequest = computed(
@@ -182,6 +186,7 @@ const hasPendigRequest = computed(() => {
 })
 
 const hasGrantedRequest = computed(() => {
+  if (canBypassApprovals.value) return true
   return userAuthRequests.value.some(
     (request: any) =>
       request.resource === props.resource &&

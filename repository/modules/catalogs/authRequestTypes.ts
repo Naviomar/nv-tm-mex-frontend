@@ -160,8 +160,6 @@ export interface IAuthRequestType {
   /** always = every request needs approval; permission = holders of approval_permission skip it; state = server rule + permission; null = legacy. */
   approval_mode?: 'always' | 'permission' | 'state' | null
   approval_permission?: string | null
-  /** The Super Admin acts without a request in this type */
-  super_admin_bypass?: boolean
   default_expiration_hours?: number | null
   sort_order: number
   form_fields?: IFormField[] | null

@@ -335,6 +335,7 @@ const router = useRouter()
 const loadingStore = useLoadingStore()
 const { $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps<{ id: string }>()
 
@@ -353,6 +354,7 @@ const userRequests = ref<any[]>([])
 // ── Authorization check ───────────────────────────────────────────────────────
 
 const hasActiveChargeAuth = computed(() =>
+  hasPermission('approval-bypass') ||
   userRequests.value.some(
     (r: any) =>
       r.process_name === 'invoices.lines.update' &&
