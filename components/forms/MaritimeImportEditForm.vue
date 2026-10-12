@@ -538,6 +538,7 @@
         <v-card-text>
           <div class="grid grid-cols-3 gap-2 mb-4">
             <SeaImportBuyRateForm
+              v-if="!isPendingSaved"
               :charges="catalogs.charges"
               :referencia="values"
               :currencies="currencies"
@@ -546,6 +547,7 @@
               @refresh="getData"
               :initData="initBuyRate"
             />
+            <PendingConsigneeLock v-else title="Buy rate / costs" />
 
             <SeaImportSellRateForm
               v-if="!isPendingSaved"
@@ -625,6 +627,7 @@
           />
 
           <FfNotesForm
+            v-if="!isPendingSaved"
             ref="ffNotesFormRef"
             :referenciaId="values.id!"
             serviceType="sea"
@@ -656,21 +659,21 @@
         </v-card-text>
       </v-card>
 
-      <v-card color="light-blue-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Line invoices & payments</div></v-card-title>
         <v-card-text>
           <SeaImportLinePaymentsDetails :referencia="values" />
         </v-card-text>
       </v-card>
 
-      <v-card color="light-blue-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Supplier invoices & payments</div></v-card-title>
         <v-card-text>
           <SeaImportSupplierInvoices :referenceId="values.id!" />
         </v-card-text>
       </v-card>
 
-      <SeaServiceLineDemDetPayments :referenceId="values.id!" type="demurrages" />
+      <SeaServiceLineDemDetPayments v-if="!isPendingSaved" :referenceId="values.id!" type="demurrages" />
 
       <v-card v-if="!isPendingSaved" color="red-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Refunds</div></v-card-title>

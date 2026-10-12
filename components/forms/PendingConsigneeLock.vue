@@ -4,7 +4,7 @@
       <v-icon size="large">mdi-lock-outline</v-icon>
       <div>
         <div class="font-bold">{{ title }}</div>
-        <div class="text-caption">Locked: register the customer on this reference to unlock it.</div>
+        <div class="text-caption">Locked: register the customer to unlock it.</div>
       </div>
     </v-card-text>
   </v-card>

@@ -10,10 +10,7 @@
   >
     <div class="text-subtitle-1 font-bold">CUSTOMER NOT REGISTERED — restricted reference</div>
     <div class="text-sm">
-      This reference was captured without a customer only so operations can register it.
-      Everything that depends on the customer is blocked until it is assigned: customer emails (arrival notice,
-      revalidation, alerts, intermodal), sell rates and customer charges, invoicing, release and demurrages. It is also
-      left out of profit and customer reports.
+      Register the customer to unlock this reference.
       <span v-if="executiveName">Responsible executive: <b>{{ executiveName }}</b>.</span>
     </div>
   </v-alert>

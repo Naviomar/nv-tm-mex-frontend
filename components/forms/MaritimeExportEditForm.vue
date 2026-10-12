@@ -514,10 +514,8 @@
       <v-card-text>
         <div class="grid grid-cols-3 gap-2 mb-4">
           <div class="col-span-3">
-            <v-alert v-if="isPendingSaved" type="warning" variant="tonal" density="compact" class="mb-2">
-              Customer not registered: only buy-side costs can be captured. Sell charges unlock once the customer is assigned.
-            </v-alert>
-            <SeaExportChargesSmart :referenciaId="values.id!" :canEdit="canEditCharges" />
+            <SeaExportChargesSmart v-if="!isPendingSaved" :referenciaId="values.id!" :canEdit="canEditCharges" />
+            <PendingConsigneeLock v-else title="Charges and costs" />
           </div>
           <div v-if="values.containers?.length && !isPendingSaved" class="col-span-3">
             <v-card>
@@ -607,6 +605,7 @@
         </div>
 
         <FfNotesForm
+          v-if="!isPendingSaved"
           ref="ffNotesFormRef"
           :referenciaId="values.id!"
           serviceType="sea"
@@ -627,21 +626,21 @@
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Line invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaImportLinePaymentsDetails :referencia="values" />
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Supplier invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaImportSupplierInvoices :referenceId="values.id!" />
       </v-card-text>
     </v-card>
 
-    <SeaServiceLineDemDetPayments :referenceId="values.id!" type="detentions" />
+    <SeaServiceLineDemDetPayments v-if="!isPendingSaved" :referenceId="values.id!" type="detentions" />
 
     <v-card v-if="!isPendingSaved" color="red-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Refunds</div></v-card-title>
