@@ -191,12 +191,6 @@ const setCustomerEmails = (emails: string) => {
 
 const fillBodyWithData = () => {
   const containers = referencia.value.bkg_containers?.map((container: any) => container.container_name).join(', ') || ''
-  const totalWeightContainers = referencia.value.containers.reduce((acc: number, container: any) => {
-    return acc + parseFloat(container.weight)
-  }, 0)
-  const totalBultosContainers = referencia.value.containers.reduce((acc: number, container: any) => {
-    return acc + parseFloat(container.num_packages)
-  }, 0)
   const poNum = referencia.value.po_num ? `P.O. ${referencia.value.po_num}` : ''
 
   const origin = referencia.value.origin?.name || ''
@@ -229,12 +223,11 @@ const fillBodyWithData = () => {
   const body = tmp
     .replace('{po}', referencia.value.po_num || '')
     .replace('{shipper}', referencia.value.consignee?.name || '')
+    .replace('{naviera}', referencia.value.line?.name || '')
     .replace('{bkgline}', referencia.value.booking_number || '')
     .replace('{bkgtm}', referencia.value.booking_tm || '')
     .replace('{equipo}', containers)
-    .replace('{peso}', totalWeightContainers.toString())
     .replace('{mercancia}', referencia.value.commodity || '')
-    .replace('{bultos}', totalBultosContainers.toString())
     .replace('{bm}', `${referencia.value.voyage_discharge?.print_bl_name}`)
     .replace('{eta}', referencia.value.voyage_discharge?.eta_date || '')
     .replace('{fechaDocs}', referencia.value.doc_closing_date || '')
