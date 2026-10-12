@@ -166,6 +166,8 @@ export interface IAuthRequestType {
   template?: IRequestTemplate | null
   default_cc_users?: IDefaultCcUser[]
   approvers?: IDefaultCcUser[]
+  /** Requests raised with this type: how many, how many are waiting, and when the last one came in. */
+  activity?: { total: number; pending: number; last_at: string | null }
   created_at: string
   updated_at: string
   /** Computed live from the route table — never stored, never stale. */

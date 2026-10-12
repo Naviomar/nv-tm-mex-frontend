@@ -10,10 +10,18 @@
                 <v-icon size="20">mdi-message-text-outline</v-icon>
               </v-avatar>
               <div class="d-flex flex-column">
-                <span class="chat-card__title">Live Chats</span>
-                <span class="chat-card__subtitle">Follow up on your request chats</span>
+                <span class="chat-card__title">Requests inbox</span>
+                <span class="chat-card__subtitle">New requests and unread chats</span>
               </div>
             </div>
+            <v-spacer />
+            <v-btn
+              icon="mdi-refresh"
+              variant="text"
+              size="small"
+              :loading="inbox.isLoading"
+              @click="inbox.refresh()"
+            />
             <v-btn
               icon="mdi-close"
               variant="text"
@@ -24,7 +32,7 @@
           </v-card-title>
           <v-divider class="chat-card__divider" />
           <v-card-text class="pa-0 chat-card__body">
-            <LiveChatsPanel v-if="drawer" hide-header inline />
+            <RequestInboxPanel v-if="drawer" @navigate="drawer = false" />
           </v-card-text>
         </v-card>
       </div>
@@ -41,6 +49,7 @@ const props = defineProps({
   },
 })
 
+const inbox = useRequestInboxStore()
 const drawer = ref(false)
 const emit = defineEmits(['new-message', 'close'])
 
@@ -55,7 +64,8 @@ watch(
 watch(
   () => drawer.value,
   (val) => {
-    if (!val) emit('close')
+    if (val) inbox.refresh()
+    else emit('close')
   }
 )
 </script>
@@ -66,7 +76,7 @@ watch(
   right: 24px;
   bottom: 88px;
   top: 80px;
-  max-width: 420px;
+  max-width: 520px;
   width: 100%;
   z-index: 3000;
 }

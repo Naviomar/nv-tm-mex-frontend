@@ -29,18 +29,26 @@
           <!-- Alerts Button -->
           <AlertsButton />
 
-          <!-- Chat Button with Badge -->
-          <v-badge v-if="showNewMessage" color="red" content="!" overlap offset-x="8" offset-y="8">
-            <v-btn variant="text" icon="mdi-message-fast-outline" @click.stop="toggleChatDrawer" />
+          <!-- Requests inbox: new requests to attend + unread chats -->
+          <v-badge
+            :model-value="inbox.total > 0"
+            :content="inbox.total > 99 ? '99+' : inbox.total"
+            color="error"
+            overlap
+            offset-x="8"
+            offset-y="8"
+          >
+            <v-btn
+              variant="text"
+              :icon="inbox.total > 0 ? 'mdi-message-badge' : 'mdi-message-fast-outline'"
+              title="Requests inbox"
+              @click.stop="toggleChatDrawer"
+            />
           </v-badge>
-
-          <!-- Fallback button if no new message -->
-          <v-btn v-else variant="text" icon="mdi-message-fast-outline" @click.stop="toggleChatDrawer" />
         </v-app-bar>
 
         <NavRightDrawer
           :show="drawerRight"
-          @new-message="showNewMessage = $event"
           @close="drawerRight = false"
         />
         <AlertsDrawer />
@@ -90,7 +98,7 @@ const currentYear = computed(() => new Date().getFullYear())
 const appName = computed(() => config.public.appName)
 const drawer = ref(true)
 const drawerRight = ref(false)
-const showNewMessage = ref(false)
+const inbox = useRequestInboxStore()
 const showRepositionDraggable = ref(false)
 const tabsStore = useTabsStore()
 
@@ -103,7 +111,6 @@ useSystemTab()
 
 const toggleChatDrawer = () => {
   drawerRight.value = !drawerRight.value
-  showNewMessage.value = false // clear badge when user toggles chat
 }
 
 const repositionDraggable = () => {
@@ -132,6 +139,7 @@ onMounted(() => {
   
   // Connect to alerts socket
   connectAlertsSocket()
+  inbox.startPolling()
   
   // Connect to system presence (global)
   connectPresence()
@@ -143,6 +151,7 @@ onBeforeUnmount(() => {
   
   // Disconnect alerts socket
   disconnectAlertsSocket()
+  inbox.stopPolling()
   
   // Disconnect system presence
   disconnectPresence()
