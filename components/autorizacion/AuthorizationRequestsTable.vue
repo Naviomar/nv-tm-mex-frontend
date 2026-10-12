@@ -1,78 +1,95 @@
 <template>
   <v-card variant="flat">
-    <v-card-text>
-      <div class="mb-4" @keyup.enter="onClickFilters">
-        <div class="grid grid-cols-6 gap-4">
-          <div class="col-span-2">
-            <v-text-field v-model="filters.id" type="number" density="compact" label="By ID" />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.search" density="compact" label="Search in comments" />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              v-model="filters.requestedBy"
-              :items="catalogs.users"
-              item-title="name"
-              item-value="id"
-              density="compact"
-              label="Requested by"
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Status"
-              v-model="filters.deleted_status"
-              :items="deletedStatus"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              v-model="filters.resource"
-              :items="resourceTypeItems"
-              item-title="description"
-              item-value="resource"
-              density="compact"
-              label="Resource type"
-              clearable
-            />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.resourceId" density="compact" label="Reference / Invoice #" clearable />
-          </div>
+    <v-card-text class="px-0">
+      <RequestFilterCard @search="onClickFilters" @clear="clearFilters">
+        <v-text-field
+          v-model="filters.search"
+          class="req-filters__wide"
+          density="compact"
+          label="Search"
+          placeholder="Reason, requester, invoice or reference number…"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          hide-details
+        />
+        <v-text-field v-model="filters.id" type="number" density="compact" label="Request ID" hide-details />
+        <v-text-field v-model="filters.resourceId" density="compact" label="Invoice / reference #" clearable hide-details />
+        <v-autocomplete
+          v-model="filters.resource"
+          :items="resourceTypeItems"
+          item-title="description"
+          item-value="resource"
+          density="compact"
+          label="Request type"
+          clearable
+          hide-details
+        />
+        <v-autocomplete
+          v-model="filters.requestedBy"
+          :items="catalogs.users"
+          item-title="name"
+          item-value="id"
+          density="compact"
+          label="Requested by"
+          clearable
+          hide-details
+        />
+        <v-autocomplete
+          density="compact"
+          label="Records"
+          v-model="filters.deleted_status"
+          :items="deletedStatus"
+          item-title="name"
+          item-value="value"
+          hide-details
+        />
+        <template #quick>
+          <v-chip
+            v-for="opt in decisionOptions"
+            :key="opt.value ?? 'all'"
+            size="small"
+            :color="opt.color"
+            :variant="filters.decision === opt.value ? 'flat' : 'tonal'"
+            @click="setDecision(opt.value)"
+          >{{ opt.label }}</v-chip>
+        </template>
+      </RequestFilterCard>
+
+      <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+        <div class="text-caption text-medium-emphasis">
+          Showing {{ authRequests.from ?? 0 }}–{{ authRequests.to ?? 0 }} of {{ authRequests.total ?? 0 }} requests
         </div>
-        <div class="grid grid-cols-1 pt-4">
-          <div class="flex gap-2">
-            <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-            <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
-          </div>
-        </div>
+        <v-pagination
+          v-model="authRequests.current_page"
+          :length="authRequests.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
       </div>
 
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
-      <div class="text-xs">
-        Showing {{ authRequests.from }} to {{ authRequests.to }} from {{ authRequests.total }} total records
-      </div>
-      <v-table density="compact">
+      <v-card variant="flat" border rounded="lg">
+      <v-table density="comfortable" class="req-table" fixed-header>
+        <colgroup>
+          <col style="width: 56px" />
+          <col style="width: 130px" />
+          <col style="width: 270px" />
+          <col style="width: 180px" />
+          <col style="width: 300px" />
+          <col style="width: 180px" />
+          <col style="width: 190px" />
+          <col style="width: 130px" />
+        </colgroup>
         <thead>
           <tr>
-            <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Chat</th>
+            <th class="text-left">ID</th>
+            <th class="text-left">Actions</th>
+            <th class="text-left">Request</th>
             <th class="text-left">Requested by</th>
-            <th class="text-left">Resource</th>
             <th class="text-left">
               <div class="d-flex align-center gap-1">
-                Comments
+                Reason
                 <v-btn
                   size="x-small"
                   variant="text"
@@ -82,15 +99,9 @@
                 />
               </div>
             </th>
-            <th class="text-left">Attachment(s)</th>
-            <th v-show="false" class="text-left">Resource</th>
-            <th v-show="false" class="text-left">Resource ID</th>
-            <th class="text-left">Granted?</th>
-            <th class="text-left">Used?</th>
-            <th class="text-left">Expired?</th>
-            <th class="text-left">Expiration date</th>
-            <th class="text-left">User auth</th>
-            <th class="text-left">Created at</th>
+            <th class="text-left">Attachments</th>
+            <th class="text-left">Status</th>
+            <th class="text-left">Valid until</th>
           </tr>
         </thead>
         <tbody>
@@ -103,10 +114,10 @@
               'bg-green-50! dark:bg-green-950!': !authRequest.deleted_at && isPendingToGrant(authRequest),
             }"
           >
-            <td>{{ authRequest.id }}</td>
+            <td class="text-medium-emphasis">{{ authRequest.id }}</td>
             <td>
               <div class="d-flex gap-1">
-                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                <v-btn icon size="small" variant="text" color="primary" title="Open chat" @click="openChat(authRequest)">
                   <v-badge
                     v-if="authRequest.unread_count"
                     :content="authRequest.unread_count"
@@ -119,8 +130,8 @@
                 </v-btn>
                 <v-btn
                   v-if="isPendingToGrant(authRequest) && hasPermission('authorization-requests-respond')"
-                  icon size="small" variant="text" color="primary"
-                  title="Respond"
+                  icon size="small" variant="text" color="success"
+                  title="Approve or deny"
                   @click="showFormGrant(authRequest)"
                 >
                   <v-icon>mdi-check-circle-outline</v-icon>
@@ -128,17 +139,17 @@
                 <v-btn
                   v-if="canDelete(authRequest)"
                   icon size="small" variant="text" color="error"
-                  title="Cancel"
+                  title="Cancel request"
                   @click="showFormCancel(authRequest)"
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
                 </v-btn>
               </div>
             </td>
-            <td class="whitespace-nowrap">{{ authRequest.requested?.name }}</td>
-            <td class="whitespace-nowrap">
-              <div class="flex items-center gap-2">
-                <span>{{ getResourceName(authRequest.resource) }} #{{ authRequest.invoice_number || authRequest.resource_id }}</span>
+            <td>
+              <div class="cell-title">{{ getResourceName(authRequest.resource) }}</div>
+              <div class="d-flex align-center gap-1">
+                <span class="cell-sub">#{{ authRequest.invoice_number || authRequest.resource_id }}</span>
                 <v-btn
                   v-if="hasInvoiceCancellationHistory(authRequest)"
                   size="x-small"
@@ -183,76 +194,58 @@
                 </div>
               </div>
             </td>
-            <td style="max-width: 280px;">
-              <div v-if="authRequest.request_reason">
-                <div
-                  :ref="(el) => setCommentRef(authRequest.id, el as HTMLElement)"
-                  class="comment-text text-body-2"
-                  :class="{ 'comment-collapsed': !isExpanded(authRequest.id) }"
-                >{{ authRequest.request_reason }}</div>
-                <button
-                  v-if="isCommentTruncated(authRequest.id)"
-                  class="comment-toggle-btn text-caption"
-                  :class="isExpanded(authRequest.id) ? 'text-grey-darken-1' : 'text-primary'"
-                  @click.stop="toggleComment(authRequest.id)"
-                >
-                  <span v-if="!isExpanded(authRequest.id)">
-                    <v-icon size="12">mdi-chevron-down</v-icon> Show more
-                  </span>
-                  <span v-else>
-                    <v-icon size="12">mdi-chevron-up</v-icon> Show less
-                  </span>
-                </button>
-              </div>
-              <span v-else class="text-caption text-grey">—</span>
-            </td>
             <td>
-              <div v-if="authRequest.files.length <= 0">
-                <v-chip size="small" color="warning">No attachments</v-chip>
-              </div>
-              <div v-if="authRequest.files.length > 0">
-                <div v-for="(file, index) in authRequest.files" :key="`file-${index}`">
-                  <ButtonDownloadS3Object :s3Path="file.attachment" />
-                </div>
-              </div>
-            </td>
-
-            <td v-show="false">{{ authRequest.resource }}</td>
-            <td v-show="false">{{ authRequest.resource_id }}</td>
-            <td>
-              <DecisionChip :decision="authRequest.decision" :reason="authRequest.authorized_reason" :siga-link="authRequest.siga_ticket_link" />
-            </td>
-            <td>
-              <div v-if="authRequest.used_at">
-                <v-chip size="small" color="primary" v-if="authRequest.used_at">
-                  {{ formatDateString(authRequest.used_at) }}
-                </v-chip>
-              </div>
-            </td>
-            <td>
-              <div v-if="!authRequest.used_at">
-                <v-chip size="small" color="primary">
-                  {{ authRequest.expired ? 'Yes' : 'No' }}
-                </v-chip>
-              </div>
-            </td>
-            <td>{{ formatDateString(authRequest.expires_at) }}</td>
-            <td class="whitespace-nowrap">{{ authRequest.authorized?.name }}</td>
-            <td class="whitespace-nowrap">
               <UserInfoBadge :item="authRequest" createdByKey="requested_by">
-                {{ formatDateString(authRequest.created_at) }}
+                <div class="cell-title">{{ authRequest.requested?.name }}</div>
+                <div class="cell-sub">{{ formatDateString(authRequest.created_at) }}</div>
               </UserInfoBadge>
             </td>
+            <td>
+              <ExpandableText
+                :text="authRequest.request_reason"
+                :lines="3"
+                :expanded="expandedComments.has(authRequest.id)"
+                @update:expanded="toggleComment(authRequest.id)"
+                @truncated="(v: boolean) => setTruncated(authRequest.id, v)"
+              />
+            </td>
+            <td>
+              <div v-if="!authRequest.files?.length" class="text-caption text-disabled">No attachments</div>
+              <div v-else class="d-flex flex-column gap-1">
+                <ButtonDownloadS3Object v-for="(file, fi) in authRequest.files" :key="`file-${fi}`" :s3Path="file.attachment" />
+              </div>
+            </td>
+            <td>
+              <RequestStatusCell
+                :decision="authRequest.decision"
+                :used-at="authRequest.used_at"
+                :expired="authRequest.expired"
+                :reason="authRequest.decision !== 'pending' ? authRequest.authorized_reason : null"
+                :siga-link="authRequest.siga_ticket_link"
+              />
+              <div v-if="authRequest.authorized?.name" class="cell-sub mt-1">by {{ authRequest.authorized.name }}</div>
+            </td>
+            <td>
+              <span v-if="authRequest.expires_at">{{ formatDateString(authRequest.expires_at) }}</span>
+              <span v-else class="text-disabled">—</span>
+            </td>
+          </tr>
+          <tr v-if="!authRequests.data?.length">
+            <td colspan="8" class="text-center py-8 text-medium-emphasis">No requests match the current filters.</td>
           </tr>
         </tbody>
       </v-table>
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
+      </v-card>
+      <div class="d-flex justify-end mt-2">
+        <v-pagination
+          v-model="authRequests.current_page"
+          :length="authRequests.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
+      </div>
 
       <GrantDenyDialog
         v-model="showGrantDialog"
@@ -339,10 +332,25 @@ const filters = ref({
   id: null,
   search: '',
   deleted_status: 'active',
+  decision: null as string | null,
   requestedBy: null,
   resource: null,
   resourceId: '',
 })
+
+useDebouncedSearch(() => filters.value.search, () => onClickFilters())
+
+const decisionOptions = [
+  { value: null, label: 'All', color: 'primary' },
+  { value: 'pending', label: 'Waiting for approval', color: 'warning' },
+  { value: 'granted', label: 'Approved', color: 'success' },
+  { value: 'denied', label: 'Denied', color: 'error' },
+]
+
+const setDecision = (value: string | null) => {
+  filters.value.decision = value
+  onClickFilters()
+}
 
 const catalogs = ref<any>({
   users: [],
@@ -560,6 +568,7 @@ const clearFilters = async () => {
     id: null,
     search: '',
     deleted_status: 'active',
+    decision: null,
     requestedBy: null,
     resource: null,
     resourceId: '',
@@ -571,9 +580,6 @@ const clearFilters = async () => {
 onMounted(async () => {
   await getAuthRequests()
   await getAuthReqCatalogs()
-  nextTick(() => {
-    measureTruncation()
-  })
   openChatFromQuery()
 })
 
@@ -589,110 +595,29 @@ watch(() => route.query.openChat, (val) => {
   if (val === '1') openChatFromQuery()
 })
 
-// ── Collapsible Comments ──────────────────────────────────────────────────
+// ── Collapsible reasons ───────────────────────────────────────────────────
 
 const expandedComments = ref<Set<number>>(new Set())
-const commentRefs = ref<Map<number, HTMLElement>>(new Map())
-const truncatableComments = ref<Set<number>>(new Set())
-
-const isExpanded = (id: number) => expandedComments.value.has(id)
-
-const setCommentRef = (id: number, el: HTMLElement | null) => {
-  if (el) {
-    commentRefs.value.set(id, el)
-  } else {
-    commentRefs.value.delete(id)
-    truncatableComments.value.delete(id)
-  }
-}
-
-const measureTruncation = () => {
-  commentRefs.value.forEach((el, id) => {
-    const isTruncated = el.scrollHeight > el.clientHeight
-    if (isTruncated) {
-      truncatableComments.value.add(id)
-    } else {
-      truncatableComments.value.delete(id)
-    }
-  })
-}
-
-watch(() => authRequests.value.data, () => {
-  nextTick(() => {
-    measureTruncation()
-  })
-}, { deep: true })
-
-const isCommentTruncated = (id: number) => {
-  // Use cached DOM measurement if available, otherwise fall back to character count
-  if (truncatableComments.value.has(id)) {
-    return true
-  }
-  // Fallback: estimate based on character count
-  const authRequest = (authRequests.value.data as any[]).find((r: any) => r.id === id)
-  if (!authRequest?.request_reason) return false
-  // Estimate: 2 lines ~80-100 chars, but use lower threshold to be safe
-  return authRequest.request_reason.length > 60
-}
+const truncatable = ref<Set<number>>(new Set())
 
 const toggleComment = (id: number) => {
-  const s = new Set(expandedComments.value)
-  if (s.has(id)) {
-    s.delete(id)
-  } else {
-    s.add(id)
-  }
-  expandedComments.value = s
+  const next = new Set(expandedComments.value)
+  if (!next.delete(id)) next.add(id)
+  expandedComments.value = next
 }
 
-const allExpanded = computed(() => {
-  const ids = (authRequests.value.data as any[])
-    .filter((r: any) => isCommentTruncated(r.id))
-    .map((r: any) => r.id)
-  return ids.length > 0 && ids.every((id: number) => expandedComments.value.has(id))
-})
+const setTruncated = (id: number, value: boolean) => {
+  const next = new Set(truncatable.value)
+  if (value) next.add(id)
+  else next.delete(id)
+  truncatable.value = next
+}
+
+const allExpanded = computed(
+  () => truncatable.value.size > 0 && [...truncatable.value].every((id) => expandedComments.value.has(id)),
+)
 
 const toggleAll = () => {
-  const ids = (authRequests.value.data as any[])
-    .filter((r: any) => isCommentTruncated(r.id))
-    .map((r: any) => r.id)
-  if (allExpanded.value) {
-    expandedComments.value = new Set()
-  } else {
-    expandedComments.value = new Set(ids)
-  }
+  expandedComments.value = allExpanded.value ? new Set() : new Set(truncatable.value)
 }
 </script>
-
-<style scoped>
-.comment-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.45;
-}
-
-.comment-collapsed {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  white-space: normal;
-}
-
-.comment-toggle-btn {
-  background: none;
-  border: none;
-  padding: 2px 0 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-
-.comment-toggle-btn:hover {
-  opacity: 0.75;
-}
-</style>

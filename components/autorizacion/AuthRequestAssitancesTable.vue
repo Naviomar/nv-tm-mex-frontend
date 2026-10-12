@@ -1,68 +1,78 @@
 <template>
   <v-card variant="flat">
-    <v-card-text>
-      <div class="mb-4" @keyup.enter="onClickFilters">
-        <div class="grid grid-cols-6 gap-4">
-          <div v-if="isAdminRole()" class="col-span-2">
-            <AUserSearch v-model="filters.created_by" label="Requested by" />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.id" type="number" density="compact" label="By ID" />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Status"
-              v-model="filters.status"
-              :items="estatuses"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Active / Inactive"
-              v-model="filters.deleted_status"
-              :items="deletedStatus"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
+    <v-card-text class="px-0">
+      <RequestFilterCard @search="onClickFilters" @clear="clearFilters">
+        <v-text-field
+          v-model="filters.text"
+          class="req-filters__wide"
+          density="compact"
+          label="Search"
+          placeholder="Message, screen, requester or team response…"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          hide-details
+        />
+        <v-text-field v-model="filters.id" type="number" density="compact" label="Request ID" hide-details />
+        <div v-if="isAdminRole()">
+          <AUserSearch v-model="filters.created_by" label="Requested by" />
         </div>
-        <div class="grid grid-cols-1 pt-4">
-          <div class="flex gap-2">
-            <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-            <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
-          </div>
+        <v-autocomplete
+          density="compact"
+          label="Records"
+          v-model="filters.deleted_status"
+          :items="deletedStatus"
+          item-title="name"
+          item-value="value"
+          hide-details
+        />
+        <template #quick>
+          <v-chip
+            v-for="opt in statusOptions"
+            :key="opt.value ?? 'all'"
+            size="small"
+            :color="opt.color"
+            :variant="filters.status === opt.value ? 'flat' : 'tonal'"
+            @click="setStatus(opt.value)"
+          >{{ opt.label }}</v-chip>
+        </template>
+      </RequestFilterCard>
+
+      <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+        <div class="text-caption text-medium-emphasis">
+          Showing {{ reqAssistances.from ?? 0 }}–{{ reqAssistances.to ?? 0 }} of {{ reqAssistances.total ?? 0 }} requests
         </div>
+        <v-pagination
+          v-model="reqAssistances.current_page"
+          :length="reqAssistances.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
       </div>
 
-      <v-pagination
-        v-model="reqAssistances.current_page"
-        :length="reqAssistances.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
-      <div class="text-xs">
-        Showing {{ reqAssistances.from }} to {{ reqAssistances.to }} from {{ reqAssistances.total }} total records
-      </div>
-      <v-table density="compact">
+      <v-card variant="flat" border rounded="lg">
+      <v-table density="comfortable" class="req-table" fixed-header>
+        <colgroup>
+          <col style="width: 56px" />
+          <col style="width: 130px" />
+          <col style="width: 200px" />
+          <col style="width: 180px" />
+          <col style="width: 360px" />
+          <col style="width: 170px" />
+          <col style="width: 160px" />
+          <col style="width: 280px" />
+        </colgroup>
         <thead>
           <tr>
-            <th class="text-left" width="20">ID</th>
-            <th class="text-left" width="50">Chat</th>
+            <th class="text-left">ID</th>
+            <th class="text-left">Actions</th>
+            <th class="text-left">Screen</th>
             <th class="text-left">Requested by</th>
-            <th class="text-left">Route</th>
             <th class="text-left">Message</th>
             <th class="text-left">Attachments</th>
             <th class="text-left">Status</th>
-            <th class="text-left">Assisted by</th>
-            <th class="text-left">Comments</th>
-            <th class="text-left">Created at</th>
+            <th class="text-left">Team response</th>
           </tr>
         </thead>
         <tbody>
@@ -75,10 +85,10 @@
               'bg-green-50! dark:bg-green-950!': !reqAssist.deleted_at && isPendingToGrant(reqAssist),
             }"
           >
-            <td>{{ reqAssist.id }}</td>
+            <td class="text-medium-emphasis">{{ reqAssist.id }}</td>
             <td>
               <div class="d-flex gap-1">
-                <v-btn icon size="small" variant="text" color="primary" @click="openChat(reqAssist)">
+                <v-btn icon size="small" variant="text" color="primary" title="Open chat" @click="openChat(reqAssist)">
                   <v-badge
                     v-if="reqAssist.unread_count"
                     :content="reqAssist.unread_count"
@@ -91,7 +101,7 @@
                 </v-btn>
                 <v-btn
                   v-if="isPendingToGrant(reqAssist) && hasPermission('support-requests-manage')"
-                  icon size="small" variant="text" color="primary"
+                  icon size="small" variant="text" color="success"
                   title="Respond"
                   @click="showFormGrant(reqAssist)"
                 >
@@ -100,57 +110,63 @@
                 <v-btn
                   v-if="canDelete(reqAssist)"
                   icon size="small" variant="text" color="error"
-                  title="Cancel"
+                  title="Cancel request"
                   @click="showFormCancel(reqAssist)"
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
                 </v-btn>
               </div>
             </td>
-            <td class="whitespace-nowrap">{{ reqAssist.user?.name }}</td>
 
-            <td class="whitespace-nowrap">
-              <nuxt-link :to="`${reqAssist.route}`" target="_blank" class="flex items-center">
-                <v-icon size="x-small" class="mr-1">mdi-open-in-new</v-icon>
-                {{ reqAssist.route }}
+            <td>
+              <nuxt-link :to="`${reqAssist.route}`" target="_blank" class="d-flex align-center gap-1" :title="reqAssist.route">
+                <v-icon size="14">mdi-open-in-new</v-icon>
+                <span class="cell-clip">{{ reqAssist.route }}</span>
               </nuxt-link>
             </td>
 
-            <td class="whitespace-nowrap">{{ reqAssist.message }}</td>
+            <td>
+              <UserInfoBadge :item="reqAssist" createdByKey="created_by">
+                <div class="cell-title">{{ reqAssist.user?.name }}</div>
+                <div class="cell-sub">{{ formatDateString(reqAssist.created_at) }}</div>
+              </UserInfoBadge>
+            </td>
 
-            <td class="whitespace-nowrap">
-              <div v-if="reqAssist.files.length <= 0">
-                <v-chip color="warning">No attachments</v-chip>
-              </div>
-              <div v-if="reqAssist.files.length > 0" class="flex flex-col gap-1">
-                <div v-for="(file, fileIndex) in reqAssist.files" :key="`file-${fileIndex}`">
-                  <ButtonDownloadS3Object :s3Path="file.file_path" />
-                </div>
+            <td>
+              <ExpandableText :text="reqAssist.message" :lines="3" empty="No message" />
+            </td>
+
+            <td>
+              <div v-if="!reqAssist.files?.length" class="text-caption text-disabled">No attachments</div>
+              <div v-else class="d-flex flex-column gap-1">
+                <ButtonDownloadS3Object v-for="(file, fileIndex) in reqAssist.files" :key="`file-${fileIndex}`" :s3Path="file.file_path" />
               </div>
             </td>
 
             <td>
-              <v-chip size="x-small" color="primary">{{ reqAssist.status }}</v-chip>
+              <RequestStatusCell :decision="supportDecision(reqAssist)" support />
+              <div v-if="reqAssist.assisted_by?.name" class="cell-sub mt-1">by {{ reqAssist.assisted_by.name }}</div>
             </td>
-            <td class="whitespace-nowrap">{{ reqAssist.assisted_by?.name }}</td>
-            <td class="">
-              {{ reqAssist.comments }}
+            <td>
+              <ExpandableText :text="reqAssist.comments" :lines="3" empty="No response yet" />
             </td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="reqAssist" createdByKey="created_by">
-                {{ formatDateString(reqAssist.created_at) }}
-              </UserInfoBadge>
-            </td>
+          </tr>
+          <tr v-if="!reqAssistances.data?.length">
+            <td colspan="8" class="text-center py-8 text-medium-emphasis">No requests match the current filters.</td>
           </tr>
         </tbody>
       </v-table>
-      <v-pagination
-        v-model="reqAssistances.current_page"
-        :length="reqAssistances.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
+      </v-card>
+      <div class="d-flex justify-end mt-2">
+        <v-pagination
+          v-model="reqAssistances.current_page"
+          :length="reqAssistances.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
+      </div>
 
       <v-dialog v-model="showGrantDialog" max-width="500" persistent>
         <v-card>
@@ -239,10 +255,28 @@ const loadingStore = useLoadingStore()
 
 const filters = ref<any>({
   id: null,
-  search: '',
+  text: '',
+  status: null as string | null,
   deleted_status: 'active',
   created_by: null,
 })
+
+useDebouncedSearch(() => filters.value.text, () => onClickFilters())
+
+const statusOptions = [
+  { value: null, label: 'All', color: 'primary' },
+  { value: 'open', label: 'Open', color: 'warning' },
+  { value: 'granted', label: 'Attended', color: 'success' },
+  { value: 'denied', label: 'Rejected', color: 'error' },
+]
+
+const setStatus = (value: string | null) => {
+  filters.value.status = value
+  onClickFilters()
+}
+
+const supportDecision = (reqAssist: any): 'pending' | 'granted' | 'denied' =>
+  ({ granted: 'granted', denied: 'denied' } as const)[reqAssist.status as 'granted' | 'denied'] ?? 'pending'
 
 const estatuses = ref<any>([
   { name: 'Open', value: 'open' },
@@ -418,7 +452,8 @@ const getRequestAssistances = async () => {
 const clearFilters = async () => {
   filters.value = {
     id: null,
-    search: '',
+    text: '',
+    status: null,
     deleted_status: 'active',
     created_by: null,
   }

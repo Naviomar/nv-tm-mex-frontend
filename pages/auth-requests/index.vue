@@ -1,14 +1,8 @@
 <template>
   <v-container fluid>
-    <GrantAuthLinks />
-    <div class="flex items-center gap-2">
-      <v-icon>mdi-security</v-icon>
-      <h1 class="text-xl font-bold">Authorization Requests</h1>
-    </div>
-    <div class="pt-4">
-      <LiveChatsPanel ticket-type="authorization-request" />
-      <AuthorizationRequestsTable />
-    </div>
+    <RequestsModuleHeader />
+    <LiveChatsPanel ticket-type="authorization-request" />
+    <AuthorizationRequestsTable />
   </v-container>
 </template>
 

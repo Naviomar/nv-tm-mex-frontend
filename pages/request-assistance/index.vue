@@ -1,14 +1,8 @@
 <template>
   <v-container fluid>
-    <GrantAuthLinks />
-    <div class="flex items-center gap-2">
-      <v-icon>mdi-handshake-outline</v-icon>
-      <h1 class="text-xl font-bold">Request Assistance</h1>
-    </div>
-    <div class="pt-4">
-      <LiveChatsPanel ticket-type="support-assistance" />
-      <AuthRequestAssitancesTable />
-    </div>
+    <RequestsModuleHeader />
+    <LiveChatsPanel ticket-type="support-assistance" />
+    <AuthRequestAssitancesTable />
   </v-container>
 </template>
 
