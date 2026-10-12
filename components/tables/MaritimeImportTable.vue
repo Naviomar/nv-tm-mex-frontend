@@ -334,6 +334,7 @@
                 'dark:hover:bg-gray-700 hover:bg-slate-300': true,
                 'bg-pink-100! dark:bg-pink-900!': isSystemTracker(item),
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
+                'tm-row-error': !item.consignee_id && !item.deleted_at,
               }"
             >
               <template v-for="col in visibleColumns" :key="col.key">
@@ -712,11 +713,12 @@
                 <td v-else-if="col.key === 'consignee'">
                   <v-icon v-if="isSystemTracker(item)" size="small" color="pink">mdi-storefront-outline</v-icon>
                   {{ item.consignee?.name }}
-                  <v-chip v-if="!item.consignee_id" size="x-small" color="warning" variant="flat" prepend-icon="mdi-account-question-outline">Pending customer</v-chip>
+                  <v-chip v-if="!item.consignee_id" size="x-small" color="error" variant="flat" prepend-icon="mdi-account-alert-outline" class="font-bold">CUSTOMER NOT REGISTERED</v-chip>
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
                 <td v-else-if="col.key === 'arrivalNotification'">
-                  <div v-if="item.arrival_notys?.length <= 0">
+                  <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
+                  <div v-else-if="item.arrival_notys?.length <= 0">
                     <v-chip size="small" color="error">Not sent</v-chip>
                   </div>
                   <div v-if="item.arrival_notys?.length > 0" class="flex flex-col gap-1">
@@ -732,7 +734,8 @@
                   </div>
                 </td>
                 <td v-else-if="col.key === 'revalidation'">
-                  <div v-if="!item.revalidation">
+                  <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
+                  <div v-else-if="!item.revalidation">
                     <v-chip size="small" color="error">Pending</v-chip>
                   </div>
                   <div v-if="item.revalidation && item.revalidation?.sent_at == null">

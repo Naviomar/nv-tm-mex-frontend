@@ -1,6 +1,7 @@
 <template>
   <div>
     <CancelledReferenceBanner :deleted-at="referencia?.deleted_at" :reference-number="referencia?.reference_number" />
+    <PendingConsigneeBanner :referencia="referencia" />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <v-card class="mb-4">
@@ -61,7 +62,12 @@
           <v-card-text>
             <div class="grid grid-cols-[auto_1fr] space-x-2">
               <div>Consignee</div>
-              <div>{{ referencia.consignee?.name }}</div>
+              <div>
+                <v-chip v-if="referencia.id && !referencia.consignee_id" color="error" size="small" variant="flat" prepend-icon="mdi-account-alert-outline">
+                  NOT REGISTERED
+                </v-chip>
+                <span v-else>{{ referencia.consignee?.name }}</span>
+              </div>
 
               <div>
                 <v-icon size="small">mdi-account-tie-outline</v-icon>

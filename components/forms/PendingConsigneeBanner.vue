@@ -1,9 +1,19 @@
 <template>
-  <v-alert v-if="pending" type="warning" variant="tonal" density="compact" class="mb-3" icon="mdi-account-question-outline">
-    <div class="font-bold">Pending customer</div>
+  <v-alert
+    v-if="pending"
+    type="error"
+    variant="tonal"
+    border="start"
+    prominent
+    class="mb-3 pending-consignee-banner"
+    icon="mdi-account-alert-outline"
+  >
+    <div class="text-subtitle-1 font-bold">CUSTOMER NOT REGISTERED — restricted reference</div>
     <div class="text-sm">
-      This reference was captured without a customer. Customer emails (arrival notice, revalidation, alerts),
-      invoicing and credit / free days calculations stay blocked until a customer is assigned.
+      This reference was captured without a customer only so operations can register it.
+      Everything that depends on the customer is blocked until it is assigned: customer emails (arrival notice,
+      revalidation, alerts, intermodal), sell rates and customer charges, invoicing, release and demurrages. It is also
+      left out of profit and customer reports.
       <span v-if="executiveName">Responsible executive: <b>{{ executiveName }}</b>.</span>
     </div>
   </v-alert>
@@ -19,6 +29,7 @@ const props = defineProps({
   },
 })
 
-const pending = computed(() => !!props.referencia && !props.referencia.consignee_id)
+// Solo se evalúa cuando la referencia ya cargó (tiene id): un objeto vacío no es "sin cliente"
+const pending = computed(() => !!props.referencia?.id && !props.referencia.consignee_id)
 const executiveName = computed(() => props.referencia?.executive?.name || '')
 </script>

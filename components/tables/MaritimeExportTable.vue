@@ -313,6 +313,7 @@
                 'dark:hover:bg-gray-700 hover:bg-slate-300': true,
                 'bg-pink-100': isSystemTracker(item),
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
+                'tm-row-error': !item.consignee_id && !item.deleted_at,
               }"
             >
               <template v-for="col in visibleColumns" :key="col.key">
@@ -366,7 +367,7 @@
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
                 <td v-else-if="col.key === 'shipper'">
                   {{ item.consignee?.name }}
-                  <v-chip v-if="!item.consignee_id" size="x-small" color="warning" variant="flat" prepend-icon="mdi-account-question-outline">Pending customer</v-chip>
+                  <v-chip v-if="!item.consignee_id" size="x-small" color="error" variant="flat" prepend-icon="mdi-account-alert-outline" class="font-bold">CUSTOMER NOT REGISTERED</v-chip>
                 </td>
                 <td v-else-if="col.key === 'consignee'">{{ item.shipper?.name }}</td>
                 <td v-else-if="col.key === 'masterBls'">

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PendingConsigneeBanner :referencia="values" />
+    <PendingConsigneeBanner :referencia="referencia" />
     <v-card class="mb-4">
       <v-card-title>
         <div class="flex justify-between">
@@ -326,7 +326,8 @@
               </div>
             </div>
 
-            <div>Reference credit days: {{ values.credit_days }}</div>
+            <div v-if="!isPendingSaved">Reference credit days: {{ values.credit_days }}</div>
+            <PendingConsigneeLock v-else title="Credit days" />
           </div>
           <div class="col-span-2">
             <v-card density="compact" color="blue-grey-lighten-5">
@@ -513,9 +514,12 @@
       <v-card-text>
         <div class="grid grid-cols-3 gap-2 mb-4">
           <div class="col-span-3">
+            <v-alert v-if="isPendingSaved" type="warning" variant="tonal" density="compact" class="mb-2">
+              Customer not registered: only buy-side costs can be captured. Sell charges unlock once the customer is assigned.
+            </v-alert>
             <SeaExportChargesSmart :referenciaId="values.id!" :canEdit="canEditCharges" />
           </div>
-          <div v-if="values.containers?.length" class="col-span-3">
+          <div v-if="values.containers?.length && !isPendingSaved" class="col-span-3">
             <v-card>
               <v-card-title>Detentions</v-card-title>
               <v-card-text>
@@ -554,7 +558,7 @@
             </v-card>
           </div>
 
-          <v-card density="compact">
+          <v-card v-if="!isPendingSaved" density="compact">
             <v-card-title class="font-semibold text-lg">
               <v-icon class="mr-2">mdi-cash-refund</v-icon>
               Rebate
@@ -599,6 +603,7 @@
               </div>
             </v-card-text>
           </v-card>
+          <PendingConsigneeLock v-else title="Rebate and detentions" />
         </div>
 
         <FfNotesForm
@@ -615,7 +620,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Customer invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaServiceCustomerInvoices :referenceId="values.id!" />
@@ -638,7 +643,7 @@
 
     <SeaServiceLineDemDetPayments :referenceId="values.id!" type="detentions" />
 
-    <v-card color="red-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="red-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Refunds</div></v-card-title>
       <v-card-text>
         <SeaImportRefunds :referenceId="values.id!" />
@@ -856,6 +861,9 @@ const consigneeLabel = computed(() =>
     ? 'Shipper (can be assigned later)'
     : 'Shipper *'
 )
+
+// Estado guardado en el servidor: elegir un cliente en el formulario no desbloquea nada hasta guardarlo
+const isPendingSaved = computed(() => !!referencia.value?.id && !referencia.value.consignee_id)
 
 const canUpdateExecutive = computed(() => {
   if (consigneeInfo.value?.executive_active?.executive) {
