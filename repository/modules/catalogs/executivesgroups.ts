@@ -23,6 +23,7 @@ type IExecutiveGroupsPagination = {
 type IExecutiveGroups = {
   id: number
   name: string
+  share_notifications?: boolean
 }
 
 class ExecutivesGroupsModule extends FetchFactory<IExecutiveGroupsPagination> {
@@ -44,6 +45,15 @@ class ExecutivesGroupsModule extends FetchFactory<IExecutiveGroupsPagination> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}`, fetchOptions)
+  }
+
+  async update(id: number | string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      method: 'POST',
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/update`, fetchOptions)
   }
 
   async delete(id: string, fetchOptions?: FetchOptions) {

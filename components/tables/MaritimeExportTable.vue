@@ -183,6 +183,18 @@
             @keyup.enter.stop="onClickFilters"
           />
         </template>
+        <template #pendingConsignee>
+          <v-autocomplete
+            v-model="filters.pendingConsignee"
+            density="compact"
+            label="Pending customer"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
         <template #hasTmInvoices>
           <v-autocomplete
             v-model="filters.hasTmInvoices"
@@ -352,7 +364,10 @@
                   </v-chip>
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
-                <td v-else-if="col.key === 'shipper'">{{ item.consignee?.name }}</td>
+                <td v-else-if="col.key === 'shipper'">
+                  {{ item.consignee?.name }}
+                  <v-chip v-if="!item.consignee_id" size="x-small" color="warning" variant="flat" prepend-icon="mdi-account-question-outline">Pending customer</v-chip>
+                </td>
                 <td v-else-if="col.key === 'consignee'">{{ item.shipper?.name }}</td>
                 <td v-else-if="col.key === 'masterBls'">
                   <div class="flex flex-col gap-1">
@@ -487,6 +502,7 @@ const initialFilters = {
   ffNoteFolio: '',
   poNum: '',
   hasTmInvoices: null as number | null,
+  pendingConsignee: null as number | null,
   hasWmInvoices: null as number | null,
   source_system_id: null as number | null,
 }
@@ -519,6 +535,7 @@ const filterLayoutDefs = [
   { key: 'invoiceNumber', label: 'Invoice #', span: 2, visible: false },
   { key: 'ffNoteFolio', label: 'CN/DN #', span: 2, visible: false },
   { key: 'poNum', label: 'PO #', span: 2, visible: false },
+  { key: 'pendingConsignee', label: 'Pending customer', span: 2, visible: false },
   { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
   { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
   { key: 'sourceSystem', label: 'Source system', span: 2, visible: false },
@@ -547,6 +564,7 @@ const filterModelKeys: Record<string, string[]> = {
   ffNoteFolio: ['ffNoteFolio'],
   poNum: ['poNum'],
   hasTmInvoices: ['hasTmInvoices'],
+  pendingConsignee: ['pendingConsignee'],
   hasWmInvoices: ['hasWmInvoices'],
   sourceSystem: ['source_system_id'],
 }

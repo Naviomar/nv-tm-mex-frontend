@@ -179,6 +179,18 @@
             @keyup.enter.stop="onClickFilters"
           />
         </template>
+        <template #pendingConsignee>
+          <v-autocomplete
+            v-model="filters.pendingConsignee"
+            density="compact"
+            label="Pending customer"
+            :items="yesNoItems"
+            item-title="name"
+            item-value="value"
+            hide-details
+            @keyup.enter.stop="onClickFilters"
+          />
+        </template>
         <template #hasTmInvoices>
           <v-autocomplete
             v-model="filters.hasTmInvoices"
@@ -700,6 +712,7 @@
                 <td v-else-if="col.key === 'consignee'">
                   <v-icon v-if="isSystemTracker(item)" size="small" color="pink">mdi-storefront-outline</v-icon>
                   {{ item.consignee?.name }}
+                  <v-chip v-if="!item.consignee_id" size="x-small" color="warning" variant="flat" prepend-icon="mdi-account-question-outline">Pending customer</v-chip>
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
                 <td v-else-if="col.key === 'arrivalNotification'">
@@ -829,6 +842,7 @@ const initialFilters = {
   destination: '',
   poNum: '',
   hasTmInvoices: null as number | null,
+  pendingConsignee: null as number | null,
   hasWmInvoices: null as number | null,
   hasDemurrage: null as number | null,
   source_system_id: null as number | null,
@@ -863,6 +877,7 @@ const filterLayoutDefs = [
   { key: 'origin', label: 'Origin (POL)', span: 2, visible: false },
   { key: 'destination', label: 'Destination (POD)', span: 2, visible: false },
   { key: 'poNum', label: 'PO #', span: 2, visible: false },
+  { key: 'pendingConsignee', label: 'Pending customer', span: 2, visible: false },
   { key: 'hasTmInvoices', label: 'Has TM invoices', span: 2, visible: false },
   { key: 'hasWmInvoices', label: 'Has WM invoices', span: 2, visible: false },
   { key: 'hasDemurrage', label: 'Has demurrage', span: 2, visible: false },
@@ -893,6 +908,7 @@ const filterModelKeys: Record<string, string[]> = {
   destination: ['destination'],
   poNum: ['poNum'],
   hasTmInvoices: ['hasTmInvoices'],
+  pendingConsignee: ['pendingConsignee'],
   hasWmInvoices: ['hasWmInvoices'],
   hasDemurrage: ['hasDemurrage'],
   sourceSystem: ['source_system_id'],

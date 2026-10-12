@@ -20,6 +20,7 @@
             <tr>
               <th class="text-left" width="50">Actions</th>
               <th class="text-left">Name Group</th>
+              <th class="text-left">Team shares notifications</th>
               <th class="text-left">Created at</th>
             </tr>
           </thead>
@@ -32,6 +33,16 @@
                 </div>
               </td>
               <td>{{ executiveGroup.name }}</td>
+              <td>
+                <v-switch
+                  :model-value="!!executiveGroup.share_notifications"
+                  :disabled="!hasPermission('executive-groups-create')"
+                  density="compact"
+                  color="primary"
+                  hide-details
+                  @update:model-value="toggleShareNotifications(executiveGroup, $event)"
+                />
+              </td>
               <td>{{ formatDateString(executiveGroup.created_at) }}</td>
             </tr>
           </tbody>
@@ -50,6 +61,7 @@
 <script setup lang="ts">
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()
+const { hasPermission } = useCheckUser()
 const confirm = $notifications.useConfirm()
 const router = useRouter()
 
@@ -67,6 +79,22 @@ const groupsExecutives = ref({
   perPage: 10,
   last_page: 1,
 })
+
+// Con el equipo compartiendo, los ejecutivos del grupo se reciben alertas y correos entre sí
+const toggleShareNotifications = async (executiveGroup: any, value: boolean | null) => {
+  const previous = !!executiveGroup.share_notifications
+  executiveGroup.share_notifications = !!value
+  try {
+    await $api.executivesGroups.update(executiveGroup.id, { share_notifications: !!value })
+    snackbar.add({
+      type: 'success',
+      text: value ? 'Team notifications shared' : 'Team notifications no longer shared',
+    })
+  } catch (e) {
+    executiveGroup.share_notifications = previous
+    console.error(e)
+  }
+}
 
 const viewExecutiveGroup = async (executiveGroup: any) => {
   router.push(`/configuration/executives/groups/${executiveGroup.id}`)

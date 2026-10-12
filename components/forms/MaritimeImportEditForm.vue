@@ -25,6 +25,7 @@
       </v-card>
     </div>
     <div v-if="!isRefDeleted">
+      <PendingConsigneeBanner :referencia="referencia" />
       <v-card class="mb-4">
         <v-card-title>
           <div class="flex justify-between">
@@ -248,14 +249,15 @@
                   <AGlobalSearch
                     :onSearch="searchCustomers"
                     validate-key="consignee_id"
-                    label="Consignee *"
+                    :label="consigneeLabel"
                     :set-id="values.consignee_id || undefined"
                     @update:model-value="onConsigneeChange"
                   />
                 </div>
 
                 <div>
-                  <div class="flex flex-col">
+                  <ReferenceExecutiveField v-if="allowsPendingConsignee" :executives="catalogs.executives" />
+                  <div v-else class="flex flex-col">
                     <div class="">Service executive:</div>
                     <div class="font-bold">
                       <span v-if="!values.executive_id">No executive</span>
@@ -328,7 +330,7 @@
               </div>
             </div>
             <div class="col-span-2">
-              <SeaImportNotifyArrival :referencia="values" @refresh="getData" />
+              <SeaImportNotifyArrival v-if="values.consignee_id" :referencia="values" @refresh="getData" />
 
               <v-card density="compact" color="blue-grey-lighten-5">
                 <v-card-title>
@@ -673,7 +675,7 @@
 
       <SeaImportProfitOverview ref="profitOverviewRef" :referencia-id="values.id!" />
 
-      <SeaImportReleaseProcess :reference="values" @update-reference="getData" />
+      <SeaImportReleaseProcess v-if="values.consignee_id" :reference="values" @update-reference="getData" />
 
       <SeaImportNotesForm :reference="values" />
 
@@ -711,6 +713,8 @@ const props = defineProps({
 })
 
 const catalogs = ref({
+  pending_consignee_enabled: false,
+  executives: [] as any,
   lines: [] as any,
   sea_regions: [] as any,
   sea_import_pod_country_ids: [] as number[],
@@ -860,6 +864,14 @@ const customerCurrentExecutive = computed(() => {
   }
   return ''
 })
+
+// Sin cliente (y con el módulo habilitado) el ejecutivo se captura a mano: es obligatorio y recibe la alerta
+const allowsPendingConsignee = computed(() => !values.consignee_id && !!catalogs.value.pending_consignee_enabled)
+const consigneeLabel = computed(() =>
+  !referencia.value?.consignee_id && catalogs.value.pending_consignee_enabled
+    ? 'Consignee (can be assigned later)'
+    : 'Consignee *'
+)
 
 const canUpdateExecutive = computed(() => {
   if (consigneeInfo.value?.executive_active?.executive) {

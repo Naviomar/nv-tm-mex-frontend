@@ -12,11 +12,11 @@
         @update:model-value="onTabChange"
       >
         <v-tab text="Details" prepend-icon="mdi-book-open-page-variant" value="1" :disabled="isCancelled"></v-tab>
-        <v-tab text="Bkg confirmation" prepend-icon="mdi-ticket-confirmation-outline" value="2" :disabled="isCancelled"> </v-tab>
+        <v-tab text="Bkg confirmation" prepend-icon="mdi-ticket-confirmation-outline" value="2" :disabled="isCancelled || isPendingConsignee"> </v-tab>
         <v-tab text="Release" prepend-icon="mdi-receipt-text-send-outline" value="3" :disabled="isCancelled"> </v-tab>
         <v-tab text="Print BL" prepend-icon="mdi-printer-outline" value="4" :disabled="isCancelled"> </v-tab>
         <v-tab text="Ship sail check" prepend-icon="mdi-ferry" value="5" :disabled="isCancelled"> </v-tab>
-        <v-tab text="Alerts" prepend-icon="mdi-bell-alert-outline" value="6" :disabled="isCancelled"> </v-tab>
+        <v-tab text="Alerts" prepend-icon="mdi-bell-alert-outline" value="6" :disabled="isCancelled || isPendingConsignee"> </v-tab>
         <v-tab text="Detentions" prepend-icon="mdi-timer-alert-outline" value="7" :disabled="isCancelled"> </v-tab>
         <v-tab text="Cancel" prepend-icon="mdi-delete-outline" value="8"> </v-tab>
       </v-tabs>
@@ -65,10 +65,13 @@ const currentTab = ref('1')
 const referenceData = ref<any>(null)
 
 const isCancelled = computed(() => !!referenceData.value?.deleted_at)
+// Sin cliente no hay a quién enviar confirmación de booking ni alertas
+const isPendingConsignee = computed(() => !!referenceData.value && !referenceData.value.consignee_id)
 
 const seaExportPrintBl = ref<any>(null)
 
 const onTabChange = (newTab: any) => {
+  fetchReference() // el cliente pudo asignarse desde Details
   if (seaExportPrintBl.value && newTab === '4') {
     seaExportPrintBl.value.getSeaExportDetails
   }

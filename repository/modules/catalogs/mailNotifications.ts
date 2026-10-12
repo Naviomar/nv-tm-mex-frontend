@@ -108,6 +108,18 @@ class MailNotificationsModule extends FetchFactory<any> {
     return this.call('DELETE', `${this.RESOURCE}/${id}/extra-emails/${extraEmailId}`, fetchOptions)
   }
 
+  async getExecutiveRecipients(id: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/executive-recipients`, fetchOptions)
+  }
+
+  async setExecutiveRecipients(id: string, types: string[], fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify({ types }),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/executive-recipients`, fetchOptions)
+  }
+
   async getConsigneeEmails(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/consignee-emails`, fetchOptions)
   }

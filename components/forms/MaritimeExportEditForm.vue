@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PendingConsigneeBanner :referencia="values" />
     <v-card class="mb-4">
       <v-card-title>
         <div class="flex justify-between">
@@ -260,14 +261,15 @@
                 <AGlobalSearch
                   :onSearch="searchCustomers"
                   validate-key="consignee_id"
-                  label="Shipper *"
+                  :label="consigneeLabel"
                   :set-id="values.consignee_id || undefined"
                   @update:model-value="onConsigneeChange"
                 />
               </div>
 
               <div>
-                <div class="flex flex-col">
+                <ReferenceExecutiveField v-if="allowsPendingConsignee" :executives="catalogs.executives" />
+                <div v-else class="flex flex-col">
                   <div class="">Service executive:</div>
                   <div class="font-bold">
                     <span v-if="!values.executive_id">No executive</span>
@@ -684,6 +686,8 @@ const props = defineProps({
 })
 
 const catalogs = ref({
+  pending_consignee_enabled: false,
+  executives: [] as any,
   lines: [] as any,
   sea_regions: [] as any,
   consignees: [] as any,
@@ -844,6 +848,14 @@ const customerCurrentExecutive = computed(() => {
   }
   return ''
 })
+
+// Sin cliente (y con el módulo habilitado) el ejecutivo se captura a mano: es obligatorio y recibe la alerta
+const allowsPendingConsignee = computed(() => !values.consignee_id && !!catalogs.value.pending_consignee_enabled)
+const consigneeLabel = computed(() =>
+  !values.consignee_id && catalogs.value.pending_consignee_enabled
+    ? 'Shipper (can be assigned later)'
+    : 'Shipper *'
+)
 
 const canUpdateExecutive = computed(() => {
   if (consigneeInfo.value?.executive_active?.executive) {
@@ -1051,7 +1063,10 @@ const searchPodPorts = async (search: SearchParams) => {
 }
 
 const onConsigneeChange = async (value: any) => {
-  if (!value) return
+  if (!value) {
+    consigneeInfo.value = null
+    return
+  }
   try {
     loadingStore.start()
     const response = await $api.consignees.getDetailsForReference(value)

@@ -15,7 +15,8 @@
         <div>
           <InputText name="name" label="Name *" density="compact" />
         </div>
-        <div class="flex justify-center items-center">
+        <ExecutiveRecipientsEditor v-model:user-ids="userIds" v-model:members="members" :users="catalogs.users" />
+        <div class="flex justify-center items-center mt-4">
           <NuxtLink
             to="/configuration/executives"
             class="mr-4 inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
@@ -87,6 +88,16 @@ watch(
     if (id) {
       const response = (await $api.executives.getById(id)) as any
       setValues(response)
+      userIds.value = (response.users ?? []).map((user: any) => user.id)
+      members.value = (response.distribution_members ?? []).map((member: any, index: number) => ({
+        key: `loaded-${index}`,
+        id: member.id,
+        kind: member.user_id ? 'user' : 'email',
+        user_id: member.user_id,
+        email: member.email ?? '',
+        name: member.name ?? '',
+        notes: member.notes ?? '',
+      }))
     }
   },
   { immediate: true }
@@ -98,6 +109,24 @@ const { handleSubmit, setValues, values } = useForm({
 
 const catalogs = ref<any>({
   executive_groups: [],
+  users: [],
+})
+
+// Destinatarios del ejecutivo: sus usuarios y su lista de distribución
+const userIds = ref<number[]>([])
+const members = ref<any[]>([])
+
+const recipientsPayload = () => ({
+  user_ids: userIds.value,
+  distribution_members: members.value
+    .filter((member) => (member.kind === 'user' ? member.user_id : member.email))
+    .map((member) => ({
+      id: member.id,
+      user_id: member.kind === 'user' ? member.user_id : null,
+      email: member.kind === 'email' ? member.email : null,
+      name: member.name || null,
+      notes: member.notes || null,
+    })),
 })
 
 const getExecutiveCatalogs = async () => {
@@ -137,14 +166,14 @@ const validateBeforeCreate = async () => {
 
 const onSuccess = async (values: any) => {
   if (props.id) {
-    await $api.executives.update(props.id, values)
+    await $api.executives.update(props.id, { ...values, ...recipientsPayload() })
     snackbar.add({ type: 'success', text: 'Executive updated' })
     router.push('/configuration/executives')
     return
   }
 
   if (!props.id) {
-    await $api.executives.create(values)
+    await $api.executives.create({ ...values, ...recipientsPayload() })
     snackbar.add({ type: 'success', text: 'Executive created' })
     router.push('/configuration/executives')
   }
