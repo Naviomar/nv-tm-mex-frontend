@@ -1,5 +1,7 @@
 export function useAlertsSocket() {
   const alertsStore = useAlertsStore()
+  const inboxStore = useRequestInboxStore()
+  let inboxTimer: ReturnType<typeof setTimeout> | null = null
   const { user } = useSanctumAuth()
 
   let channel: any = null
@@ -23,6 +25,10 @@ export function useAlertsSocket() {
       channel = echo.private(`alerts.user.${userId}`)
       
       channel.listen('.alert.created', (event: any) => {
+        // New request / chat message alerts change what the inbox drawer shows
+        if (inboxTimer) clearTimeout(inboxTimer)
+        inboxTimer = setTimeout(() => inboxStore.refresh(), 1500)
+
         if (event.alert) {
           alertsStore.addAlert({
             id: event.alert.id,

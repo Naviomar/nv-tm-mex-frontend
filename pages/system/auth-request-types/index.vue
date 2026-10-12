@@ -52,131 +52,126 @@
       </v-card-text>
     </v-card>
 
-    <!-- Card grid -->
-    <v-row v-if="!loading">
-      <v-col v-for="type in filteredTypes" :key="type.id" cols="12" sm="6" md="4" lg="3">
-        <v-card
-          rounded="lg"
-          border
-          class="h-100 d-flex flex-column type-card"
-          :class="{ 'type-card--inactive': !type.is_active }"
-        >
-          <v-card-text class="flex-grow-1">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <v-avatar :color="type.color || kindColor(type.kind)" size="38" variant="tonal">
-                <v-icon :icon="type.icon || 'mdi-shield-key-outline'" />
-              </v-avatar>
-              <div class="d-flex gap-1">
-                <v-chip size="x-small" :color="kindColor(type.kind)" variant="tonal">
-                  {{ kindLabel(type.kind) }}
-                </v-chip>
-                <v-chip size="x-small" :color="type.is_active ? 'success' : 'grey'" variant="tonal">
-                  {{ type.is_active ? 'Active' : 'Inactive' }}
-                </v-chip>
-                <v-chip
-                  size="x-small"
-                  :color="approvalChip(type).color"
-                  variant="tonal"
-                  :title="approvalChip(type).hint"
-                >
-                  <v-icon start size="12">mdi-gavel</v-icon>{{ approvalChip(type).label }}
-                </v-chip>
-                <v-chip
-                  v-if="type.automatable !== null"
-                  size="x-small"
-                  :color="type.automatable ? 'info' : 'warning'"
-                  variant="tonal"
-                >
-                  {{ type.automatable ? 'Automatable' : 'Manual only' }}
-                </v-chip>
-              </div>
-            </div>
-
-            <div class="text-subtitle-1 font-weight-medium mb-1">{{ type.description }}</div>
-            <code class="text-caption text-medium-emphasis d-block mb-3">{{ type.code }}</code>
-
-            <div class="mb-2">
-              <div class="text-caption text-medium-emphasis d-flex align-center gap-1 mb-1">
-                <v-icon size="14">mdi-account-multiple-plus-outline</v-icon> CC users
-              </div>
-              <div class="d-flex flex-wrap gap-1">
-                <v-avatar v-for="u in type.default_cc_users ?? []" :key="u.id" size="22" color="primary" variant="tonal" :title="u.name">
-                  <span class="text-caption">{{ initials(u.name) }}</span>
-                </v-avatar>
-                <span v-if="!(type.default_cc_users?.length)" class="text-caption text-disabled">—</span>
-              </div>
-            </div>
-
-            <div>
-              <div class="text-caption text-medium-emphasis d-flex align-center gap-1 mb-1">
-                <v-icon size="14">mdi-shield-check-outline</v-icon> Approvers
-              </div>
-              <div class="d-flex flex-wrap gap-1">
-                <v-avatar v-for="u in type.approvers ?? []" :key="u.id" size="22" color="success" variant="tonal" :title="u.name">
-                  <span class="text-caption">{{ initials(u.name) }}</span>
-                </v-avatar>
-                <span v-if="!(type.approvers?.length)" class="text-caption text-disabled">Falls back to permission holders</span>
-              </div>
-            </div>
-
-            <div class="mt-2">
-              <div class="text-caption text-medium-emphasis d-flex align-center gap-1 mb-1">
-                <v-icon size="14">mdi-lock-outline</v-icon> Server-side permission gate
-              </div>
-              <div v-if="type.route_permission_info?.enforced">
-                <div v-if="type.route_permission_info.permissions.length" class="d-flex flex-wrap gap-1">
-                  <v-chip
-                    v-for="perm in type.route_permission_info.permissions"
-                    :key="perm"
-                    size="x-small"
-                    color="teal"
-                    variant="tonal"
-                    :title="`Execution route also requires permission '${perm}'`"
-                  >
-                    <v-icon start size="12">mdi-shield-check</v-icon> {{ perm }}
+    <!-- Catalog table -->
+    <v-card v-if="!loading" variant="flat" rounded="lg" border>
+      <div class="types-scroll">
+        <table class="types-table">
+          <colgroup>
+            <col style="width: 300px" />
+            <col style="width: 110px" />
+            <col style="width: 90px" />
+            <col style="width: 180px" />
+            <col style="width: 170px" />
+            <col style="width: 170px" />
+            <col style="width: 130px" />
+            <col style="width: 150px" />
+            <col style="width: 120px" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th v-for="col in columns" :key="col.key" :class="{ 'is-sortable': col.sortable }" @click="col.sortable && toggleSort(col.key)">
+                {{ col.label }}
+                <v-icon v-if="col.sortable && sortKey === col.key" size="14">{{ sortDir === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</v-icon>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="type in sortedTypes" :key="type.id">
+              <tr :class="{ 'row-inactive': !type.is_active }">
+                <!-- Request -->
+                <td>
+                  <div class="d-flex align-center gap-3">
+                    <v-avatar :color="type.color || kindColor(type.kind)" size="34" variant="tonal" class="flex-shrink-0">
+                      <v-icon size="20" :icon="type.icon || 'mdi-shield-key-outline'" />
+                    </v-avatar>
+                    <div class="min-w-0">
+                      <div class="cell-title" :title="type.description">{{ type.description }}</div>
+                      <code class="cell-sub" :title="type.code">{{ type.code }}</code>
+                    </div>
+                  </div>
+                </td>
+                <!-- Kind -->
+                <td>
+                  <v-chip size="small" :color="kindColor(type.kind)" variant="tonal">{{ kindLabel(type.kind) }}</v-chip>
+                </td>
+                <!-- Status -->
+                <td>
+                  <v-chip size="small" :color="type.is_active ? 'success' : 'grey'" variant="tonal">
+                    {{ type.is_active ? 'Active' : 'Inactive' }}
                   </v-chip>
-                </div>
-                <span v-else class="text-caption text-disabled">Authorization-only, no extra permission required</span>
-              </div>
-              <span v-else class="text-caption text-disabled" title="No route was found gating this code with check.authorization/check.process — it may still be enforced manually inside a service">
-                Not detected on a route (may be enforced in code)
-              </span>
-            </div>
-          </v-card-text>
-
-          <v-divider />
-          <v-card-actions class="px-3">
-            <v-btn size="small" variant="text" prepend-icon="mdi-pencil" color="primary" @click="openEditDialog(type)">Edit</v-btn>
-            <v-btn
-              size="small"
-              variant="text"
-              :prepend-icon="showFlowForId.has(type.id) ? 'mdi-chevron-up' : 'mdi-sitemap'"
-              color="secondary"
-              @click="toggleFlow(type.id)"
-            >Flow</v-btn>
-            <v-btn
-              size="small"
-              variant="text"
-              prepend-icon="mdi-palette-outline"
-              color="deep-purple"
-              @click="openTemplateEditor(type)"
-            >Template</v-btn>
-          </v-card-actions>
-          <v-expand-transition>
-            <div v-if="showFlowForId.has(type.id)" class="px-3 pb-3">
-              <v-divider class="mb-2" />
-              <RequestFlowDiagram :auto-execute="type.automatable === true" />
-            </div>
-          </v-expand-transition>
-        </v-card>
-      </v-col>
-
-      <v-col v-if="!filteredTypes.length" cols="12">
-        <v-alert type="info" variant="tonal" border="start">
-          No request types match the current filters.
-        </v-alert>
-      </v-col>
-    </v-row>
+                </td>
+                <!-- Approval rule -->
+                <td>
+                  <div class="cell-title">{{ approvalChip(type).label }}</div>
+                  <div class="cell-sub" :title="approvalChip(type).hint">{{ approvalChip(type).short }}</div>
+                </td>
+                <!-- After approval -->
+                <td>
+                  <v-chip
+                    v-if="type.automatable !== null"
+                    size="small"
+                    :color="type.automatable ? 'info' : 'warning'"
+                    variant="tonal"
+                  >
+                    <v-icon start size="14">{{ type.automatable ? 'mdi-flash-outline' : 'mdi-hand-back-right-outline' }}</v-icon>
+                    {{ type.automatable ? 'Runs automatically' : 'Done manually' }}
+                  </v-chip>
+                  <span v-else class="text-disabled">—</span>
+                </td>
+                <!-- Approvers -->
+                <td>
+                  <div v-if="type.approvers?.length" class="cell-title" :title="namesOf(type.approvers)">{{ summarizeNames(type.approvers) }}</div>
+                  <div v-else class="cell-sub">Any permission holder</div>
+                </td>
+                <!-- CC -->
+                <td>
+                  <div v-if="type.default_cc_users?.length" class="cell-title" :title="namesOf(type.default_cc_users)">{{ summarizeNames(type.default_cc_users) }}</div>
+                  <span v-else class="text-disabled">—</span>
+                </td>
+                <!-- Activity -->
+                <td>
+                  <div class="d-flex align-center gap-2">
+                    <v-chip v-if="type.activity?.pending" size="small" color="error" variant="flat">{{ type.activity.pending }} pending</v-chip>
+                    <span v-if="type.activity?.total" class="cell-sub">{{ type.activity.total }} total</span>
+                    <span v-else class="text-disabled">No requests yet</span>
+                  </div>
+                  <div v-if="type.activity?.last_at" class="cell-sub">Last: {{ formatShortDate(type.activity.last_at) }}</div>
+                </td>
+                <!-- Actions -->
+                <td class="actions-cell">
+                  <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" title="Edit" @click="openEditDialog(type)" />
+                  <v-btn
+                    :icon="showFlowForId.has(type.id) ? 'mdi-chevron-up' : 'mdi-sitemap'"
+                    size="small"
+                    variant="text"
+                    color="secondary"
+                    title="Approval flow"
+                    @click="toggleFlow(type.id)"
+                  />
+                  <v-btn icon="mdi-palette-outline" size="small" variant="text" color="deep-purple" title="Form template" @click="openTemplateEditor(type)" />
+                </td>
+              </tr>
+              <tr v-if="showFlowForId.has(type.id)" class="flow-row">
+                <td :colspan="columns.length">
+                  <div class="pa-3 d-flex flex-column gap-3">
+                    <div v-if="type.route_permission_info?.enforced && type.route_permission_info.permissions.length" class="d-flex align-center gap-2 flex-wrap">
+                      <span class="text-caption text-medium-emphasis">Also requires on execution:</span>
+                      <v-chip v-for="perm in type.route_permission_info.permissions" :key="perm" size="x-small" color="teal" variant="tonal">
+                        <v-icon start size="12">mdi-shield-check</v-icon>{{ perm }}
+                      </v-chip>
+                    </div>
+                    <RequestFlowDiagram :auto-execute="type.automatable === true" />
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <tr v-if="!sortedTypes.length">
+              <td :colspan="columns.length" class="text-center py-8 text-medium-emphasis">No request types match the current filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </v-card>
     <div v-else class="d-flex justify-center py-12">
       <v-progress-circular indeterminate color="primary" />
     </div>
@@ -603,13 +598,13 @@ const onApprovalModeChange = (mode: string | null) => {
 const approvalChip = (type: IAuthRequestType) => {
   switch (type.approval_mode) {
     case 'always':
-      return { label: 'Always request', color: 'error', hint: 'Every request needs approval; nobody skips it.' }
+      return { label: 'Always needs approval', short: 'Nobody can skip it', color: 'error', hint: 'Every request needs approval; nobody skips it.' }
     case 'permission':
-      return { label: 'Permission skips', color: 'success', hint: `Holders of ${type.approval_permission ?? 'the permission'} act without a request.` }
+      return { label: 'Skipped with permission', short: type.approval_permission ?? '', color: 'success', hint: `Holders of ${type.approval_permission ?? 'the permission'} act without a request.` }
     case 'state':
-      return { label: 'By record state', color: 'info', hint: `The server decides by the record state; ${type.approval_permission ?? 'a permission'} acts directly while it is open.` }
+      return { label: 'Depends on the record', short: type.approval_permission ? `Skipped with ${type.approval_permission} while open` : 'Decided by the system', color: 'info', hint: `The server decides by the record state; ${type.approval_permission ?? 'a permission'} acts directly while it is open.` }
     default:
-      return { label: 'Legacy rule', color: 'grey', hint: 'No approval policy: the route keeps its own middleware.' }
+      return { label: 'Needs approval', short: 'Standard flow', color: 'grey', hint: 'No approval policy: the route keeps its own middleware.' }
   }
 }
 
@@ -635,6 +630,54 @@ const filteredTypes = computed(() => {
     return true
   })
 })
+
+const columns = [
+  { key: 'description', label: 'Request', sortable: true },
+  { key: 'kind', label: 'Kind', sortable: true },
+  { key: 'is_active', label: 'Status', sortable: true },
+  { key: 'approval', label: 'Approval rule', sortable: false },
+  { key: 'automatable', label: 'After approval', sortable: false },
+  { key: 'approvers', label: 'Approvers', sortable: false },
+  { key: 'cc', label: 'Default CC', sortable: false },
+  { key: 'activity', label: 'Activity', sortable: true },
+  { key: 'actions', label: '', sortable: false },
+]
+
+// Pending first by default: what needs attention goes on top
+const sortKey = ref('activity')
+const sortDir = ref<'asc' | 'desc'>('desc')
+
+const toggleSort = (key: string) => {
+  if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  else {
+    sortKey.value = key
+    sortDir.value = key === 'activity' ? 'desc' : 'asc'
+  }
+}
+
+const sortedTypes = computed(() => {
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  const value = (t: IAuthRequestType): string | number => {
+    switch (sortKey.value) {
+      case 'kind': return t.kind
+      case 'is_active': return t.is_active ? 1 : 0
+      case 'activity': return (t.activity?.pending ?? 0) * 1e6 + (t.activity?.total ?? 0)
+      default: return (t.description ?? '').toLowerCase()
+    }
+  }
+  return [...filteredTypes.value].sort((a, b) => {
+    const va = value(a)
+    const vb = value(b)
+    return (va < vb ? -1 : va > vb ? 1 : 0) * dir
+  })
+})
+
+const namesOf = (users: { name: string }[]) => users.map(u => u.name).join(', ')
+const summarizeNames = (users: { name: string }[]) =>
+  users.length <= 2 ? namesOf(users) : `${users[0]!.name}, ${users[1]!.name} +${users.length - 2}`
+
+const formatShortDate = (value: string) =>
+  new Date(value.replace(' ', 'T') + (value.includes('Z') ? '' : 'Z')).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
 
 const initials = (name?: string) => {
   if (!name) return '?'
@@ -876,14 +919,78 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.type-card {
-  transition: box-shadow 0.15s, transform 0.15s;
+.types-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 290px);
 }
-.type-card:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+.types-table {
+  width: 100%;
+  min-width: 1420px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85rem;
 }
-.type-card--inactive {
-  opacity: 0.6;
+.types-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: rgb(var(--v-theme-surface));
+  border-bottom: 2px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+.types-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.types-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+}
+.types-table tbody tr:not(.flow-row):hover {
+  background: rgba(var(--v-theme-primary), 0.05);
+}
+.row-inactive {
+  opacity: 0.55;
+}
+.cell-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-sub {
+  display: block;
+  font-size: 0.74rem;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.min-w-0 {
+  min-width: 0;
+}
+.actions-cell {
+  position: sticky;
+  right: 0;
+  text-align: right;
+  white-space: nowrap;
+  background: rgb(var(--v-theme-surface));
+  border-left: 1px solid rgba(var(--v-border-color), 0.12);
+}
+.types-table th:last-child {
+  right: 0;
+  z-index: 2;
+}
+.flow-row td {
+  background: rgba(var(--v-theme-on-surface), 0.03);
 }
 </style>
