@@ -134,7 +134,7 @@
           density="compact"
           class="mb-3 text-caption"
         >
-          To remove or add services, you need an active authorization for this invoice.
+          To remove, add or change the amount of services, you need an active authorization for this invoice.
         </v-alert>
 
         <v-table density="compact">
@@ -158,7 +158,37 @@
               <td class="whitespace-nowrap">{{ lineInvRef.referencia?.reference_number }}</td>
               <td>{{ lineInvRef.master_bl?.name }}</td>
               <td>{{ lineInvRef.tm_wm }}</td>
-              <td>{{ formatToCurrency(lineInvRef.amount) }}</td>
+              <td class="whitespace-nowrap">
+                <div v-if="hasActiveChargeAuth && editingAmountId === lineInvRef.id" class="d-flex align-center gap-1">
+                  <v-text-field
+                    v-model="editingAmount"
+                    type="number"
+                    density="compact"
+                    hide-details
+                    autofocus
+                    style="min-width:110px"
+                    @keyup.enter="saveRefAmount(lineInvRef)"
+                  />
+                  <v-btn icon size="x-small" variant="text" color="primary" :loading="savingAmount" @click="saveRefAmount(lineInvRef)">
+                    <v-icon>mdi-check</v-icon>
+                  </v-btn>
+                  <v-btn icon size="x-small" variant="text" @click="editingAmountId = null">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </div>
+                <template v-else>
+                  {{ formatToCurrency(lineInvRef.amount) }}
+                  <v-btn
+                    v-if="hasActiveChargeAuth"
+                    icon
+                    size="x-small"
+                    variant="text"
+                    @click="startEditAmount(lineInvRef)"
+                  >
+                    <v-icon size="14">mdi-pencil-outline</v-icon>
+                  </v-btn>
+                </template>
+              </td>
               <td>
                 <div v-for="(charge, idx) in lineInvRef.invoice?.charges" :key="`charge-${idx}`">
                   <div v-for="(payment, idx2) in charge.payments" :key="`payment-${idx2}`">
@@ -170,8 +200,8 @@
                 </div>
               </td>
               <td>
-                <v-chip :color="isPaid(lineInvRef) ? 'green' : 'red'" size="x-small">
-                  {{ isPaid(lineInvRef) ? 'Paid' : 'Pending' }}
+                <v-chip :color="isPaid(lineInvRef) ? 'green' : isPartial(lineInvRef) ? 'orange' : 'red'" size="x-small">
+                  {{ isPaid(lineInvRef) ? 'Paid' : isPartial(lineInvRef) ? 'Partially paid' : 'Pending' }}
                 </v-chip>
               </td>
               <td class="whitespace-nowrap">
@@ -398,6 +428,39 @@ const filters = ref<any>({ masterBl: '', masterbls: [] })
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const isPaid = (lineInvRef: any) => lineInvRef.invoice?.is_paid === 1
+const isPartial = (lineInvRef: any) => !isPaid(lineInvRef) && parseFloat(lineInvRef.invoice?.amount_paid ?? 0) > 0
+
+// ── Edit amount (requires active auth; paid invoices become partially paid) ───
+
+const editingAmountId = ref<number | null>(null)
+const editingAmount = ref<any>(null)
+const savingAmount = ref(false)
+
+const startEditAmount = (lineInvRef: any) => {
+  editingAmountId.value = lineInvRef.id
+  editingAmount.value = lineInvRef.amount
+}
+
+const saveRefAmount = async (lineInvRef: any) => {
+  if (!(parseFloat(editingAmount.value) > 0)) {
+    snackbar.add({ type: 'error', text: 'Amount must be greater than zero' }); return
+  }
+  try {
+    savingAmount.value = true
+    await ($api as any).linePayments.updateLineInvoiceRefAmount({
+      id: lineInvRef.id,
+      line_invoice_id: lineInvoice.value.id,
+      amount: editingAmount.value,
+    })
+    snackbar.add({ type: 'success', text: 'Amount updated' })
+    editingAmountId.value = null
+    await getData()
+  } catch (e: any) {
+    snackbar.add({ type: 'error', text: e?.data?.message ?? 'Error updating amount' })
+  } finally {
+    savingAmount.value = false
+  }
+}
 
 const viewPayment = (payment: any) => {
   if (payment.paymentable_type?.includes('BankMovement')) {

@@ -138,6 +138,14 @@ class LinePaymentsModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/invoices/remove-ref`, fetchOptions)
   }
 
+  async updateLineInvoiceRefAmount(data: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(data),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/invoices/update-ref-amount`, fetchOptions)
+  }
+
   async getAttachments(id: string | number, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/get-attachments`, fetchOptions)
   }

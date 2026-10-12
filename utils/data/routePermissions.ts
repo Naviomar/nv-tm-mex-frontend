@@ -138,6 +138,7 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/invoices/capture/lines/demurrages', permission: 'maritime-demurrages-create' },
   { path: '/invoices/capture/lines/detentions', permission: 'maritime-detentions-create' },
   { path: '/invoices/lines/notes/add', permission: 'line-payments-create-fn' },
+  { path: '/invoices/lines/notes/edit-:id', permission: 'line-payments-edit' },
   { path: '/advance-payments/add', permission: 'advance-payments-create' },
   { path: '/adminpack/upload-invoices-tm', permission: 'tm-invoices-create' },
   { path: '/transfers/global/upload', permission: 'bank-movements-upload' },

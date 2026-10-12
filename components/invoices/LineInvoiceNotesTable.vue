@@ -119,7 +119,7 @@
                     
                     <ViewButton :item="item" @click="viewLineInvoice(item)" />
 
-                    <EditButton v-if="!isPaid(item) || canEditAfterPaid(item)" :item="item" @click="editLineInvoice(item)" />
+                    <EditButton :item="item" permission="line-payments-edit" @click="editLineInvoice(item)" />
 
                     <ProcessAuthorizationWrapper
                       v-if="!isPaid(item)"
