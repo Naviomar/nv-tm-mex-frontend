@@ -470,8 +470,8 @@ async function linkUser() {
       department_type: form.department_type,
     }
     await $api.departments.linkUser(props.id!, body)
-    const user = allUsers.value.find((u: any) => u.id === form.user)
-    linkedUsers.value.push({ ...user, pivot: { department_type: form.department_type }, roles: [], permissions: [] })
+    // The backend assigns the department role on link; reload so the row shows it.
+    await reloadDepartment()
     form.user = null
     form.department_type = null
     snackbar.add({ type: 'success', text: 'User added to department' })
