@@ -384,12 +384,13 @@
                 <div
                   v-if="
                     !creditDebit.deleted_at &&
-                    (canCancelFfNotes || canReplaceFfNotes) &&
                     (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                   "
                   class="flex items-center gap-1"
                 >
-                  <template v-if="canCancelFfNotes">
+                  <!-- The approval policy (not the permission) decides direct vs. request: users without
+                       ff-notes-cancel must still be able to request the cancellation. -->
+                  <template>
                     <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
                       <template #activator="{ props: tooltipProps }">
                         <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
@@ -397,7 +398,7 @@
                     </v-tooltip>
 
                     <v-btn
-                      v-else-if="canCancelDirect(creditDebit)"
+                      v-else-if="canCancelDirect(creditDebit) && canCancelFfNotes"
                       icon
                       color="red"
                       @click="confirmDelete(creditDebit)"
