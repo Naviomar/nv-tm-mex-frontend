@@ -25,6 +25,7 @@
       </v-card>
     </div>
     <div v-if="!isRefDeleted">
+      <PendingConsigneeBanner :referencia="referencia" />
       <v-card class="mb-4">
         <v-card-title>
           <div class="flex justify-between">
@@ -248,14 +249,15 @@
                   <AGlobalSearch
                     :onSearch="searchCustomers"
                     validate-key="consignee_id"
-                    label="Consignee *"
+                    :label="consigneeLabel"
                     :set-id="values.consignee_id || undefined"
                     @update:model-value="onConsigneeChange"
                   />
                 </div>
 
                 <div>
-                  <div class="flex flex-col">
+                  <ReferenceExecutiveField v-if="allowsPendingConsignee" :executives="catalogs.executives" />
+                  <div v-else class="flex flex-col">
                     <div class="">Service executive:</div>
                     <div class="font-bold">
                       <span v-if="!values.executive_id">No executive</span>
@@ -317,7 +319,7 @@
                   label="Credit days *"
                 />
               </div>
-              <div class="flex gap-2">
+              <div v-if="!isPendingSaved" class="flex gap-2">
                 <v-chip size="small" class="chip-gradient"
                   >Reference demurrage free days: <strong>{{ values.demurrage_days }}</strong></v-chip
                 >
@@ -326,9 +328,10 @@
                 >
                 <SeaImportUpdateDemurrageDays :referencia="values" @refresh="getData" />
               </div>
+              <PendingConsigneeLock v-else title="Credit and demurrage free days" />
             </div>
             <div class="col-span-2">
-              <SeaImportNotifyArrival :referencia="values" @refresh="getData" />
+              <SeaImportNotifyArrival v-if="!isPendingSaved" :referencia="values" @refresh="getData" />
 
               <v-card density="compact" color="blue-grey-lighten-5">
                 <v-card-title>
@@ -535,6 +538,7 @@
         <v-card-text>
           <div class="grid grid-cols-3 gap-2 mb-4">
             <SeaImportBuyRateForm
+              v-if="!isPendingSaved"
               :charges="catalogs.charges"
               :referencia="values"
               :currencies="currencies"
@@ -543,8 +547,10 @@
               @refresh="getData"
               :initData="initBuyRate"
             />
+            <PendingConsigneeLock v-else title="Buy rate / costs" />
 
             <SeaImportSellRateForm
+              v-if="!isPendingSaved"
               :charges="catalogs.charges"
               :referencia="values"
               :currencies="currencies"
@@ -552,8 +558,9 @@
               @refresh="getData"
               :initData="initSellRate"
             />
+            <PendingConsigneeLock v-else title="Sell rate" />
 
-            <v-card density="compact">
+            <v-card v-if="!isPendingSaved" density="compact">
               <v-card-title class="font-semibold text-lg">
                 <v-icon class="mr-2">mdi-cash-refund</v-icon>
                 Rebate
@@ -598,9 +605,11 @@
                 </div>
               </v-card-text>
             </v-card>
+            <PendingConsigneeLock v-else title="Rebate" />
           </div>
 
           <SeaImportChargesSmart
+            v-if="!isPendingSaved"
             :referenciaId="values.id"
             :referencia="values"
             :currentCharges="values.charges"
@@ -609,14 +618,16 @@
             @update:charges="charges = $event"
             @refresh="getData"
           />
+          <PendingConsigneeLock v-else title="Customer charges" class="mb-4" />
 
           <SeaImportDemurragesSmart
-            v-if="values.containers?.length"
+            v-if="values.containers?.length && !isPendingSaved"
             :charges="values.demurrage_charges"
             :referencia="values"
           />
 
           <FfNotesForm
+            v-if="!isPendingSaved"
             ref="ffNotesFormRef"
             :referenciaId="values.id!"
             serviceType="sea"
@@ -641,30 +652,30 @@
         <v-card-text> Rates are locked invoices are present, authorization process to update rates here. </v-card-text>
       </v-card>
 
-      <v-card color="light-blue-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Customer invoices & payments</div></v-card-title>
         <v-card-text>
           <SeaServiceCustomerInvoices :referenceId="values.id!" />
         </v-card-text>
       </v-card>
 
-      <v-card color="light-blue-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Line invoices & payments</div></v-card-title>
         <v-card-text>
           <SeaImportLinePaymentsDetails :referencia="values" />
         </v-card-text>
       </v-card>
 
-      <v-card color="light-blue-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Supplier invoices & payments</div></v-card-title>
         <v-card-text>
           <SeaImportSupplierInvoices :referenceId="values.id!" />
         </v-card-text>
       </v-card>
 
-      <SeaServiceLineDemDetPayments :referenceId="values.id!" type="demurrages" />
+      <SeaServiceLineDemDetPayments v-if="!isPendingSaved" :referenceId="values.id!" type="demurrages" />
 
-      <v-card color="red-lighten-4" class="mb-4">
+      <v-card v-if="!isPendingSaved" color="red-lighten-4" class="mb-4">
         <v-card-title><div class="font-bold">Refunds</div></v-card-title>
         <v-card-text>
           <SeaImportRefunds :referenceId="values.id!" />
@@ -673,7 +684,7 @@
 
       <SeaImportProfitOverview ref="profitOverviewRef" :referencia-id="values.id!" />
 
-      <SeaImportReleaseProcess :reference="values" @update-reference="getData" />
+      <SeaImportReleaseProcess v-if="!isPendingSaved" :reference="values" @update-reference="getData" />
 
       <SeaImportNotesForm :reference="values" />
 
@@ -711,6 +722,8 @@ const props = defineProps({
 })
 
 const catalogs = ref({
+  pending_consignee_enabled: false,
+  executives: [] as any,
   lines: [] as any,
   sea_regions: [] as any,
   sea_import_pod_country_ids: [] as number[],
@@ -860,6 +873,17 @@ const customerCurrentExecutive = computed(() => {
   }
   return ''
 })
+
+// Sin cliente (y con el módulo habilitado) el ejecutivo se captura a mano: es obligatorio y recibe la alerta
+const allowsPendingConsignee = computed(() => !values.consignee_id && !!catalogs.value.pending_consignee_enabled)
+const consigneeLabel = computed(() =>
+  !referencia.value?.consignee_id && catalogs.value.pending_consignee_enabled
+    ? 'Consignee (can be assigned later)'
+    : 'Consignee *'
+)
+
+// Estado guardado en el servidor: elegir un cliente en el formulario no desbloquea nada hasta guardarlo
+const isPendingSaved = computed(() => !!referencia.value?.id && !referencia.value.consignee_id)
 
 const canUpdateExecutive = computed(() => {
   if (consigneeInfo.value?.executive_active?.executive) {

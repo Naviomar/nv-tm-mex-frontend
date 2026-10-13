@@ -359,6 +359,37 @@
       </v-card-text>
     </v-card>
 
+    <!-- Executive of the reference: dynamic recipient resolved at send time -->
+    <v-card class="mb-6 section-card" rounded="lg" elevation="0">
+      <v-card-text>
+        <div class="d-flex align-center justify-space-between mb-1">
+          <div class="d-flex align-center gap-2">
+            <v-icon color="primary">mdi-account-tie-outline</v-icon>
+            <span class="text-subtitle-1 font-weight-bold">Executive of the reference</span>
+          </div>
+          <v-chip size="small" color="primary" variant="tonal">{{ executiveTypes.length }}</v-chip>
+        </div>
+        <p class="text-caption text-medium-emphasis mb-3">
+          The executive assigned to the reference (their users and distribution list, plus the team when the group
+          shares notifications) is added automatically as the recipient types checked here. No need to type their
+          email in each customer's email catalog. Only applies to notifications sent for a single reference.
+        </p>
+        <div class="d-flex align-center gap-4">
+          <v-checkbox
+            v-for="type in ['TO', 'CC', 'BCC']"
+            :key="type"
+            v-model="executiveTypes"
+            :value="type"
+            :label="type"
+            density="compact"
+            hide-details
+            :disabled="savingExecutiveTypes"
+            @update:model-value="saveExecutiveTypes"
+          />
+        </div>
+      </v-card-text>
+    </v-card>
+
     <!-- Consignee emails: catalog-driven customer addresses -->
     <v-card class="mb-6 section-card" rounded="lg" elevation="0">
       <v-card-text>
@@ -616,10 +647,28 @@ watch(
       linkedUsers.value = response.users ?? []
       linkedDepartments.value = response.departments ?? []
       linkedExtraEmails.value = response.extra_emails ?? []
+      const executiveResponse = (await $api.mailNotifications.getExecutiveRecipients(currentId)) as any
+      executiveTypes.value = executiveResponse.types ?? []
     }
   },
   { immediate: true },
 )
+
+const executiveTypes = ref<string[]>([])
+const savingExecutiveTypes = ref(false)
+
+const saveExecutiveTypes = async () => {
+  try {
+    savingExecutiveTypes.value = true
+    const response = (await $api.mailNotifications.setExecutiveRecipients(id, executiveTypes.value)) as any
+    executiveTypes.value = response.types ?? []
+    snackbar.add({ type: 'success', text: 'Executive recipients updated' })
+  } catch (error) {
+    console.error('Error saving executive recipients:', error)
+  } finally {
+    savingExecutiveTypes.value = false
+  }
+}
 
 const availableDepartments = computed(() => {
   return departments.value.filter((department: any) => {

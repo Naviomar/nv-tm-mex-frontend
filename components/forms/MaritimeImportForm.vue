@@ -216,14 +216,15 @@
                   <AGlobalSearch
                     :onSearch="searchCustomers"
                     validate-key="consignee_id"
-                    label="Consignee *"
+                    :label="catalogs.pending_consignee_enabled ? 'Consignee (can be assigned later)' : 'Consignee *'"
                     :set-id="seaImportAddFormRef?.values.consignee_id || undefined"
                     @update:model-value="onConsigneeChange"
                   />
                 </div>
 
                 <div>
-                  <v-text-field v-model="executive" readonly density="compact" label="Executive" />
+                  <ReferenceExecutiveField v-if="withoutConsignee" :executives="catalogs.executives" />
+                  <v-text-field v-else v-model="executive" readonly density="compact" label="Executive" />
                 </div>
                 <div>
                   <AGlobalSearch
@@ -470,6 +471,8 @@ const snackbar = useSnackbar()
 const seaImportAddFormRef = ref<InstanceType<typeof VeeForm> | null>(null)
 
 const catalogs = ref<any>({
+  pending_consignee_enabled: false,
+  executives: [],
   lines: [],
   sea_regions: [],
   sea_import_pod_country_ids: [] as number[],
@@ -559,9 +562,16 @@ const canIntermodalTransit = computed(() => {
   return intermodalMode.value.intermodal === 1 || intermodalMode.value.intermodal === 3
 })
 
+// Sin cliente (y con el módulo habilitado) la referencia se captura con ejecutivo obligatorio
+const withoutConsignee = computed(
+  () => !seaImportAddFormRef.value?.values.consignee_id && !!catalogs.value.pending_consignee_enabled
+)
+
 const onConsigneeChange = async (value: any) => {
-  console.log(value)
-  if (!value) return
+  if (!value) {
+    consigneeInfo.value = null
+    return
+  }
   try {
     loadingStore.start()
     const response = await $api.consignees.getDetailsForReference(value)

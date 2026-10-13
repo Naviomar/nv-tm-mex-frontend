@@ -272,14 +272,15 @@
                 <AGlobalSearch
                   :onSearch="searchCustomers"
                   validate-key="consignee_id"
-                  label="Shipper *"
+                  :label="catalogs.pending_consignee_enabled ? 'Shipper (can be assigned later)' : 'Shipper *'"
                   :set-id="values.consignee_id || undefined"
                   @update:model-value="onConsigneeChange"
                 />
               </div>
 
               <div>
-                <v-text-field v-model="executive" readonly density="compact" variant="solo-filled" label="Executive" />
+                <ReferenceExecutiveField v-if="withoutConsignee" :executives="catalogs.executives" />
+                <v-text-field v-else v-model="executive" readonly density="compact" variant="solo-filled" label="Executive" />
               </div>
               <div>
                 <AGlobalSearch
@@ -440,6 +441,8 @@ const nextYear = computed(() => {
 })
 
 const catalogs = ref({
+  pending_consignee_enabled: false,
+  executives: [] as any,
   lines: [] as any,
   sea_regions: [] as any,
   consignees: [] as any,
@@ -696,8 +699,14 @@ const searchPodPorts = async (search: SearchParams) => {
   }
 }
 
+// Sin cliente (y con el módulo habilitado) la referencia se captura con ejecutivo obligatorio
+const withoutConsignee = computed(() => !values.consignee_id && !!catalogs.value.pending_consignee_enabled)
+
 const onConsigneeChange = async (value: any) => {
-  if (!value) return
+  if (!value) {
+    consigneeInfo.value = null
+    return
+  }
   try {
     loadingStore.start()
     const response = await $api.consignees.getDetailsForExportReference(value)
