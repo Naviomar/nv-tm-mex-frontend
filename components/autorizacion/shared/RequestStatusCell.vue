@@ -8,7 +8,7 @@
     <v-tooltip v-if="sigaLink" location="top">
       <template #activator="{ props: tip }">
         <v-chip v-bind="tip" size="x-small" variant="tonal" :color="sigaLink.sync_status === 'error' ? 'error' : 'info'" class="mt-1">
-          <v-icon start size="12">mdi-sync</v-icon>SIGA
+          <v-icon start size="12">mdi-sync</v-icon>{{ sigaChipText }}
         </v-chip>
       </template>
       <span>{{ sigaLabel }}</span>
@@ -31,7 +31,7 @@ const props = defineProps<{
   reason?: string | null
   /** Retirada por el solicitante (soft-deleted): el status interno sigue en pending */
   withdrawn?: boolean
-  sigaLink?: { sync_status: string | null; last_synced_at: string | null } | null
+  sigaLink?: { sync_status: string | null; last_synced_at: string | null; siga_ticket_number?: string | number | null } | null
 }>()
 
 const state = computed(() => {
@@ -53,6 +53,10 @@ const state = computed(() => {
   if (props.expired) return { label: 'Expired', color: 'grey', icon: 'mdi-timer-off-outline', detail: 'Not used in time' }
   return { label: 'Approved', color: 'success', icon: 'mdi-check-circle-outline', detail: 'Ready to use' }
 })
+
+const sigaChipText = computed(() =>
+  props.sigaLink?.siga_ticket_number ? `Ticket #${props.sigaLink.siga_ticket_number}` : 'SIGA',
+)
 
 const sigaLabel = computed(() => {
   switch (props.sigaLink?.sync_status) {
