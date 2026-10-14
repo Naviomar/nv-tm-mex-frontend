@@ -21,7 +21,7 @@
             class="mr-2 font-weight-bold"
           >
             <v-icon start size="10">mdi-sync</v-icon>
-            SIGA
+            {{ sigaStatus.siga_ticket_number ? `Ticket #${sigaStatus.siga_ticket_number}` : 'SIGA' }}
           </v-chip>
         </template>
       </v-tooltip>
