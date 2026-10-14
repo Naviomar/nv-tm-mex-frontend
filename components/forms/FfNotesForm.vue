@@ -390,7 +390,6 @@
                 >
                   <!-- The approval policy (not the permission) decides direct vs. request: users without
                        ff-notes-cancel must still be able to request the cancellation. -->
-                  <template>
                     <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
                       <template #activator="{ props: tooltipProps }">
                         <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
@@ -421,7 +420,6 @@
                         </v-btn>
                       </template>
                     </ProcessAuthorizationWrapper>
-                  </template>
 
                   <v-tooltip v-if="canReplaceWithDebitNote(creditDebit)" text="Replace with agent Debit Note">
                     <template #activator="{ props: tooltipProps }">
