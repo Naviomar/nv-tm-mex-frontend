@@ -214,7 +214,7 @@
           <template v-if="form.auth_request?.process_data">
             <v-divider class="my-2" />
             <div class="text-sm font-semibold mb-1">Request details:</div>
-            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" />
+            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" :summary="form.auth_request.charge_summary" />
           </template>
         </template>
       </GrantDenyDialog>
@@ -235,7 +235,7 @@
               <span class="font-medium">Comments:</span> {{ detailsRequest.reason || 'No comments' }}
             </div>
             <v-divider class="mb-3" />
-            <ProcessRequestDetails :process-data="detailsRequest.process_data_resolved ?? detailsRequest.process_data" />
+            <ProcessRequestDetails :process-data="detailsRequest.process_data_resolved ?? detailsRequest.process_data" :summary="detailsRequest.charge_summary" />
           </v-card-text>
           <v-card-actions>
             <v-spacer />
