@@ -29,10 +29,15 @@ const props = defineProps<{
   /** Support requests use open / granted / denied wording */
   support?: boolean
   reason?: string | null
+  /** Retirada por el solicitante (soft-deleted): el status interno sigue en pending */
+  withdrawn?: boolean
   sigaLink?: { sync_status: string | null; last_synced_at: string | null; siga_ticket_number?: string | number | null } | null
 }>()
 
 const state = computed(() => {
+  if (props.withdrawn) {
+    return { label: 'Withdrawn', color: 'grey', icon: 'mdi-undo-variant', detail: 'Cancelled by the requester' }
+  }
   if (props.decision === 'pending') {
     return props.support
       ? { label: 'Open', color: 'warning', icon: 'mdi-clock-outline', detail: 'Waiting for the team' }

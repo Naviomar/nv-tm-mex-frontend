@@ -173,7 +173,8 @@
                 :decision="authRequest.decision"
                 :used-at="authRequest.used_at"
                 :expired="isExpired(authRequest)"
-                :reason="authRequest.decision !== 'pending' ? authRequest.response : null"
+                :reason="authRequest.deleted_at ? authRequest.reason_deleted : authRequest.decision !== 'pending' ? authRequest.response : null"
+                :withdrawn="!!authRequest.deleted_at"
                 :siga-link="authRequest.siga_ticket_link"
               />
               <div v-if="authRequest.grantor?.name" class="cell-sub mt-1">by {{ authRequest.grantor.name }}</div>

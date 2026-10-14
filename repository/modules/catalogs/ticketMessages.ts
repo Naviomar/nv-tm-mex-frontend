@@ -39,6 +39,7 @@ export interface TicketMessage {
 export interface SigaStatus {
   linked: boolean
   siga_ticket_id: string | null
+  siga_ticket_number?: string | number | null
   sync_status: string | null
   last_synced_at: string | null
 }
