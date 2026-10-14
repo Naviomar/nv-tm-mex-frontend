@@ -459,6 +459,10 @@ const grantAuthorization = async (payload: any) => {
     console.error(e)
     const msg = e?.response?._data?.message || 'Error responding to authorization request'
     snackbar.add({ type: 'error', text: msg })
+    if (e?.response?._data?.code === 'request_withdrawn') {
+      closeGrantDialog()
+      await getAuthProcessRequests()
+    }
   } finally {
     setTimeout(() => {
       loadingStore.stop()
