@@ -1,6 +1,52 @@
 <template>
   <div>
-    <template v-if="charges.length">
+    <template v-if="summary">
+      <div class="mb-2">
+        <div class="text-subtitle-1 font-weight-bold">{{ summary.title }}</div>
+        <div v-if="summary.reference" class="text-body-2 text-medium-emphasis">
+          {{ summary.reference.label }}: <span class="font-weight-medium text-high-emphasis">{{ summary.reference.value }}</span>
+        </div>
+      </div>
+
+      <v-alert v-if="summary.action === 'delete'" type="warning" variant="tonal" density="compact" class="mb-2">
+        {{ summary.notes[0] }}
+      </v-alert>
+
+      <div v-for="(section, si) in summary.sections" :key="si" class="tm-border rounded mb-2 overflow-hidden">
+        <div v-if="summary.sections.length > 1" class="tm-muted px-3 py-1 text-body-2 font-weight-bold">{{ section.heading }}</div>
+        <table class="w-full text-sm border-collapse">
+          <thead v-if="summary.mode === 'diff'">
+            <tr class="tm-muted text-left text-medium-emphasis text-caption">
+              <th class="px-3 py-1 font-weight-medium">Field</th>
+              <th class="px-3 py-1 font-weight-medium">Current</th>
+              <th class="px-3 py-1 font-weight-medium">Requested</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in section.rows"
+              :key="row.label"
+              class="align-top"
+              :class="{ 'text-medium-emphasis': summary.mode === 'diff' && !row.changed }"
+            >
+              <td class="px-3 py-1 font-weight-medium whitespace-nowrap">{{ row.label }}</td>
+              <template v-if="summary.mode === 'diff'">
+                <td class="px-3 py-1" :class="{ 'text-decoration-line-through text-error': row.changed }">{{ row.before ?? '—' }}</td>
+                <td class="px-3 py-1" :class="{ 'font-weight-bold text-success': row.changed }">{{ row.after ?? '—' }}</td>
+              </template>
+              <td v-else class="px-3 py-1">{{ row.after ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <v-alert v-if="summary.mode === 'diff' && summary.notes.length" type="info" variant="tonal" density="compact">
+        {{ summary.notes[0] }}
+      </v-alert>
+      <div v-else-if="summary.action !== 'delete' && summary.notes.length" class="text-caption text-medium-emphasis">{{ summary.notes[0] }}</div>
+    </template>
+
+    <template v-else-if="charges.length">
       <div class="divide-y divide-gray-100 rounded border border-gray-200 overflow-hidden">
         <div v-for="(c, ci) in charges" :key="ci" class="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-50">
           <div class="flex-1 min-w-0">
@@ -53,6 +99,15 @@
 <script setup lang="ts">
 const props = defineProps<{
   processData: Record<string, any> | null | undefined
+  /** Human description of a charge add/edit/delete request (ProcessRequest.charge_summary) */
+  summary?: {
+    action: 'add' | 'edit' | 'delete'
+    title: string
+    mode: 'diff' | 'details'
+    reference: { label: string; value: string } | null
+    sections: { heading: string; rows: { label: string; before: string | null; after: string | null; changed: boolean }[] }[]
+    notes: string[]
+  } | null
 }>()
 
 const keyLabels: Record<string, string> = {
@@ -75,11 +130,11 @@ const tryParseJson = (val: any) => {
   }
 }
 
-const charges = computed(() => props.processData?.charges ?? [])
-const operations = computed(() => props.processData?.operations ?? [])
+const charges = computed(() => (props.summary ? [] : props.processData?.charges ?? []))
+const operations = computed(() => (props.summary ? [] : props.processData?.operations ?? []))
 
 const fields = computed(() => {
-  if (!props.processData || charges.value.length || operations.value.length) return []
+  if (!props.processData || props.summary || charges.value.length || operations.value.length) return []
   return Object.entries(props.processData)
     .filter(([key]) => !['charges', 'operations'].includes(key))
     .map(([key, rawVal]) => {
@@ -101,3 +156,9 @@ const fields = computed(() => {
     })
 })
 </script>
+
+<style scoped>
+tbody tr + tr {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+</style>
