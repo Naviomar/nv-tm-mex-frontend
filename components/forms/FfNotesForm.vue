@@ -1169,7 +1169,14 @@ const saveFfNotes = async () => {
     emits('refresh')
   } catch (e: any) {
     console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: e?.data?.message || e?.response?.data?.message || 'Error saving the credit / debit note.',
+    })
   } finally {
+    // A failed note must not stay queued: the next save would resend it first
+    // and the backend only validates the first item of the payload.
+    creditDebitNotes.value = []
     setTimeout(() => {
       loadingStore.stop()
     }, 250)
