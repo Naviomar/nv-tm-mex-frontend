@@ -19,6 +19,7 @@
       <v-table density="compact">
         <thead>
           <tr>
+            <th class="text-left">#</th>
             <th class="text-left" id="container-number">Container #</th>
             <th class="text-left" id="container-type">Type</th>
             <th class="text-left" id="container-volume">m<sup>3</sup></th>
@@ -30,6 +31,7 @@
         </thead>
         <tbody>
           <tr v-for="(item, index) in referencia.containers" :key="`container-${index}`">
+            <td>{{ index + 1 }}</td>
             <td>
               <div class="flex items-center gap-2">
                 <div v-if="item.demurrage">
