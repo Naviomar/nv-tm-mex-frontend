@@ -330,7 +330,7 @@
             <PendingConsigneeLock v-else title="Credit days" />
           </div>
           <div class="col-span-2">
-            <v-card density="compact" color="blue-grey-lighten-5">
+            <v-card density="compact" class="tm-tint-bluegrey">
               <v-card-title>
                 <div class="flex justify-start items-center">
                   <v-icon size="x-small">mdi-account-outline</v-icon>
@@ -653,7 +653,7 @@
 
     <SeaImportNotesForm :reference="values" />
 
-    <DraggableDiv>
+    <ReferenceActionsDock :reference-number="values.reference_number">
       <div class="text-center font-bold py-2">Ref #{{ values.reference_number }}</div>
       <div class="flex justify-end items-center">
         <v-btn class="mr-4" color="error" to="/maritime/export"> Return </v-btn>
@@ -661,7 +661,7 @@
           <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
         </Can>
       </div>
-    </DraggableDiv>
+    </ReferenceActionsDock>
   </div>
 </template>
 <script setup lang="ts">

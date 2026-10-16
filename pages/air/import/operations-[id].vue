@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="tm-dark-adapt">
     <h1 class="text-xl font-bold">Air import</h1>
-    <CatalogBackButton fallback-url="/air/import" />
+    <CatalogBackButton fallback-url="/air/import" quick-search="air-import" />
     <AirImportOperationsForm :id="id!" />
   </v-container>
 </template>
