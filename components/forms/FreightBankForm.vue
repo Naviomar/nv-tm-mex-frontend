@@ -31,7 +31,7 @@
           <InputText name="beneficiary_name" density="compact" label="Beneficiary name *" />
         </div>
         <div class="">
-          <InputText name="account_number" density="compact" label="Account number *" />
+          <InputText name="account_number" density="compact" label="Account number (or IBAN) *" />
         </div>
         <div class="">
           <InputText name="clabe" density="compact" label="CLABE" type="number" />
@@ -120,6 +120,8 @@
             <th class="text-left">beneficiary address</th>
             <th class="text-left">country</th>
             <th class="text-left">account number</th>
+            <th class="text-left">IBAN</th>
+            <th class="text-left">SWIFT</th>
             <th class="text-left">currency</th>
             <th class="text-left">beneficiary email</th>
             <th class="text-left">beneficiary phone</th>
@@ -128,7 +130,7 @@
         </thead>
         <tbody>
           <tr v-if="bankAccounts.length === 0">
-            <td colspan="11" class="text-center">No bank accounts found</td>
+            <td colspan="13" class="text-center">No bank accounts found</td>
           </tr>
           <tr v-for="(item, index) in bankAccounts" :key="`bank-${index}`">
             <td>
@@ -148,6 +150,8 @@
             <td>{{ item.beneficiary_address }}</td>
             <td>{{ item.country?.name }}</td>
             <td>{{ item.account_number }}</td>
+            <td>{{ item.iban }}</td>
+            <td>{{ item.swift }}</td>
             <td>{{ item.currency?.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
