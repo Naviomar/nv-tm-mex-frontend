@@ -93,6 +93,7 @@ const permissions = {
   SupplierReqPaymentsCreate: 'supplier-req-payments-create',
   SupplierReqPaymentsEdit: 'supplier-req-payments-edit',
   SupplierReqPaymentsDelete: 'supplier-req-payments-delete',
+  SupplierReqPaymentsAuditTimeline: 'supplier-req-payments-audit-timeline',
 
   // Refunds
   RefundsIndex: 'refunds-index',

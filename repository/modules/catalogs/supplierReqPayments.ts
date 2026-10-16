@@ -9,6 +9,10 @@ class SupplierReqPaymentsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}`, fetchOptions)
   }
 
+  async getInvoiceTimeline(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/invoice-timeline`, fetchOptions)
+  }
+
   async getById(id: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/${id}/details`, fetchOptions)
   }
