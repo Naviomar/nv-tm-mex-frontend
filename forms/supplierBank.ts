@@ -11,18 +11,23 @@ const schema = toTypedSchema(
     beneficiary_zip_code: yup.string().required('Zip code is required'),
     beneficiary_city: yup.string().required('City is required'),
     country_id: yup.string().nullable(),
-    account_number: yup.string().required('Account number is required'),
+    account_number: yup.string().nullable().when('iban', {
+      is: (v: any) => !v || !String(v).trim(),
+      then: (schema) => schema.required('Account number or IBAN is required'),
+    }),
     clabe: yup.string().nullable(),
     currency_id: yup.string().required('Currency is required'),
     aba: yup.string().nullable(),
     swift: yup.string().nullable(),
-    iban: yup.string().nullable(),
+    iban: yup.string().nullable().when('account_number', {
+      is: (v: any) => !v || !String(v).trim(),
+      then: (schema) => schema.required('Account number or IBAN is required'),
+    }),
     beneficiary_email: yup.string().nullable(),
     beneficiary_phone: yup.string().nullable(),
     notes: yup.string().nullable(),
     is_default: yup.boolean().nullable(),
-
-  })
+  }, [['account_number', 'iban']])
 )
 
 export { schema }
