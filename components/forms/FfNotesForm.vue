@@ -303,13 +303,22 @@
                     <EditButton :item="creditDebit" @click="editFfNote(creditDebit)" />
                   </div>
                   <div v-if="creditDebit.checked_at">
-                    <v-btn density="compact" color="green" icon="mdi-lock-outline"></v-btn>
+                    <v-btn
+                      v-if="canToggleNoteLock"
+                      density="compact"
+                      color="green"
+                      icon="mdi-lock-outline"
+                      title="Unlock note"
+                      @click="toggleLock(creditDebit)"
+                    ></v-btn>
+                    <v-btn v-else density="compact" color="green" icon="mdi-lock-outline"></v-btn>
                   </div>
-                  <div v-if="!creditDebit.checked_at">
+                  <div v-if="!creditDebit.checked_at && canToggleNoteLock">
                     <v-btn
                       size="x-small"
                       color="blue-lighten-4"
                       icon="mdi-lock-open-outline"
+                      title="Lock note"
                       @click="toggleLock(creditDebit)"
                     ></v-btn>
                   </div>
@@ -550,6 +559,8 @@ const { isSuperAdminRole, hasPermission } = useCheckUser()
 // Only Super Admin can edit or delete Consignee-party notes
 const canEditConsigneeNote = computed(() => isSuperAdminRole())
 const canCancelFfNotes = computed(() => hasPermission('ff-notes-cancel'))
+// Mismo permiso que da acceso al SOA, donde también se bloquean/desbloquean notas
+const canToggleNoteLock = computed(() => hasPermission('menu-payments-ff-agents-soa'))
 const canReplaceFfNotes = computed(() => hasPermission('ff-notes-replace-with-debit'))
 
 // Espeja FfNoteService::classifyCancellation() del backend para decidir qué
@@ -1088,7 +1099,12 @@ const closePdfDialog = () => {
 const confirmLockNote = async () => {
   try {
     loadingStore.start()
-    const response = await $api.ffNotes.toggleLockFreightNote(lockNote.value.creditDebit.id)
+    const noteId = lockNote.value.creditDebit.id
+    if (lockNote.value.type === 'unlock') {
+      await $api.ffNotes.unlockFfNote(noteId)
+    } else {
+      await $api.ffNotes.toggleLockFreightNote(noteId)
+    }
     snackbar.add({
       type: 'success',
       text: 'Agent freight forwarder note locked / unlocked',

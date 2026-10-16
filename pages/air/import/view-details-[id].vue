@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid>
-    <CatalogBackButton fallback-url="/air/import" />
+  <v-container fluid class="tm-dark-adapt">
+    <CatalogBackButton fallback-url="/air/import" quick-search="air-import" />
     <div>
       <AirImportMovementDetail :airReference="airReference" />
     </div>

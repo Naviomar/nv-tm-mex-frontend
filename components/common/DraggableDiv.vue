@@ -9,6 +9,7 @@
         <v-icon size="18">mdi-drag</v-icon>
       </div>
       <div class="draggable-div__actions">
+        <slot name="header-actions"></slot>
         <v-icon size="18" class="draggable-div__action" @mousedown.stop @click="initPosition">mdi-target</v-icon>
       </div>
     </div>

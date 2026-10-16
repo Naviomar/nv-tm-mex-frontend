@@ -606,7 +606,7 @@
 
     <AirServiceNotesForm :serviceId="props.id" />
 
-    <DraggableDiv>
+    <ReferenceActionsDock :reference-number="values.reference_number">
       <div class="text-center font-bold p-2">Ref #{{ values.reference_number }}</div>
       <div class="flex justify-end items-center">
         <v-btn class="mr-4" color="error" to="/air/import"> Return </v-btn>
@@ -614,7 +614,7 @@
           <v-btn color="primary" @click="onSaveAirImportClick"> Save changes </v-btn>
         </Can>
       </div>
-    </DraggableDiv>
+    </ReferenceActionsDock>
 
     <DuplicateReferenceModal
       v-model:show="duplicateModal.show"

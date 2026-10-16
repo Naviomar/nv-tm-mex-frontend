@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid>
-    <CatalogBackButton fallback-url="/maritime/export" />
+  <v-container fluid class="tm-dark-adapt">
+    <CatalogBackButton fallback-url="/maritime/export" quick-search="sea-export" />
     <v-card>
       <v-card-text>
         <SeaExportViewDetails :id="id" />

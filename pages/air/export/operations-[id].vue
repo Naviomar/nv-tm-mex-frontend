@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="tm-dark-adapt">
     <h1 class="text-xl font-bold">Air export</h1>
-    <CatalogBackButton fallback-url="/air/export" />
+    <CatalogBackButton fallback-url="/air/export" quick-search="air-export" />
     <AirExportOperationsForm :id="id!" />
   </v-container>
 </template>
