@@ -25,7 +25,7 @@
               :onSearch="searchCustomers"
               validate-key="consignee"
               :return-object="true"
-              label="Consignee HBL *"
+              :label="optionalConsignee ? 'Consignee HBL (can be assigned later)' : 'Consignee HBL *'"
             />
           </div>
           <div class="">
@@ -173,7 +173,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { schemaHouseBl } from '~~/forms/maritimeReferenceForm'
+import { buildSchemaHouseBl } from '~~/forms/maritimeReferenceForm'
 const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
@@ -188,12 +188,16 @@ const props = defineProps({
     type: Array,
     required: false,
   },
+  optionalConsignee: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:houseBls'])
 
 const { handleSubmit, values, setValues, resetForm, handleReset } = useForm({
-  validationSchema: schemaHouseBl,
+  validationSchema: computed(() => buildSchemaHouseBl(props.optionalConsignee)),
 })
 
 const blTypes = [{ name: 'FCR' }, { name: 'TLX Release' }, { name: 'Original' }]
@@ -311,12 +315,9 @@ const onSuccess = async (values: any) => {
     if (values.id == null) {
       houseBls.value.push({
         referencia_id: props.referenciaId,
-        consignee_id: values.consignee.id,
+        consignee_id: values.consignee?.id ?? null,
         ...values,
-        consignee: {
-          id: values.consignee.id,
-          name: values.consignee.name,
-        },
+        consignee: values.consignee ? { id: values.consignee.id, name: values.consignee.name } : null,
       })
       console.log(houseBls.value)
       cancel()
@@ -350,11 +351,8 @@ const saveHouseBl = async () => {
     const body = {
       ...values,
       referencia_id: props.referenciaId,
-      consignee_id: values.consignee?.id,
-      consignee: {
-        id: values.consignee?.id,
-        name: values.consignee?.name,
-      },
+      consignee_id: values.consignee?.id ?? null,
+      consignee: values.consignee ? { id: values.consignee.id, name: values.consignee.name } : null,
     }
     const response = await $api.referencias.saveHouseBl(props.referenciaId!.toString(), body)
     snackbar.add({ type: 'success', text: 'House BL added successfully' })
@@ -375,11 +373,8 @@ const updateReferenciaHouseBl = async () => {
     const body = {
       ...values,
       referencia_id: props.referenciaId,
-      consignee_id: values.consignee?.id,
-      consignee: {
-        id: values.consignee?.id,
-        name: values.consignee?.name,
-      },
+      consignee_id: values.consignee?.id ?? null,
+      consignee: values.consignee ? { id: values.consignee.id, name: values.consignee.name } : null,
     }
     const response = await $api.referencias.updateHouseBl(props.referenciaId!.toString(), body)
     snackbar.add({ type: 'success', text: 'House BL updated successfully' })
