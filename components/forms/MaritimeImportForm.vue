@@ -197,7 +197,7 @@
 
             <SeaImportMasterBlsSmart ref="masterBlsRef" :consigneesmbls="catalogs.consignee_mbls" :currentMasterBls="masterBls" @update:masterBls="masterBls = $event" />
 
-            <SeaImportHouseBlsSmart ref="houseBlsRef" :currentHouseBls="houseBls" @update:houseBls="houseBls = $event" />
+            <SeaImportHouseBlsSmart ref="houseBlsRef" :optionalConsignee="withoutConsignee" :currentHouseBls="houseBls" @update:houseBls="houseBls = $event" />
           </div>
         </v-card-text>
       </v-card>

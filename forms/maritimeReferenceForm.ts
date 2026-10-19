@@ -191,7 +191,8 @@ const schemaExportMasterBl = toTypedSchema(
   })
 )
 
-const schemaHouseBl = toTypedSchema(
+// Con la referencia sin cliente el consignee del house puede no existir aún en el catálogo
+const buildSchemaHouseBl = (optionalConsignee = false) => toTypedSchema(
   yup.object().shape({
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
@@ -199,6 +200,9 @@ const schemaHouseBl = toTypedSchema(
     can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
     consignee: yup.lazy(value => {
+      if (optionalConsignee && !value) {
+        return yup.mixed().nullable();
+      }
       if (typeof value === 'number') {
         return yup.number().required('Consignee must be a number');
       } else if (typeof value === 'object') {
@@ -222,6 +226,8 @@ const schemaHouseBl = toTypedSchema(
       }),
   })
 )
+
+const schemaHouseBl = buildSchemaHouseBl()
 
 const schemaBuyRate = toTypedSchema(
   yup.object().shape({
@@ -296,6 +302,7 @@ export {
   schemaCreditDebitNotes,
   schemaMasterBl,
   schemaHouseBl,
+  buildSchemaHouseBl,
   schemaCharge,
   schemaEdit,
   schemaInvoiceCharge,

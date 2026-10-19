@@ -220,6 +220,7 @@
 
             <SeaImportHouseBlsSmart
               :referenciaId="values.id"
+              :optionalConsignee="allowsPendingConsignee"
               :currentHouseBls="values.house_bls"
               @update:houseBls="houseBls = $event"
             />
