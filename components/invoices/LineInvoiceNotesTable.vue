@@ -336,6 +336,7 @@ const addReferencia = () => {
 }
 
 const onClickFilters = async () => {
+  addFolio()
   lineInvoices.value.current_page = 1
   await getLineInvoices()
 }
