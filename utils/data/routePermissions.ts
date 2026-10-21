@@ -20,6 +20,17 @@ export interface RoutePermissionRule {
   permission: PermissionSpec
 }
 
+/**
+ * Pantallas que ofrecen varias vías de acción: el botón y la ruta aceptan cualquiera de los
+ * permisos que el backend acepta, no solo el más fuerte (el resto va por solicitud o candado).
+ */
+// Factura de línea: edición libre de folio/PDF (-fn, Maritime) o edición autorizada (Finance).
+export const lineInvoiceEditPermission: PermissionSpec = { any: ['line-payments-edit-fn', 'line-payments-edit'] }
+// Voyage destination: editar, editar con candado o asistencia (ver VoyageDestEditForm).
+export const voyageDestinationEditPermission: PermissionSpec = {
+  any: ['voyage-destinations-edit', 'voyage-destinations-edit-with-lock', 'support-requests-assist'],
+}
+
 export const routePermissions: RoutePermissionRule[] = [
   // airlines
   { path: '/configuration/airlines/add', permission: 'airlines-create' },
@@ -138,7 +149,7 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/invoices/capture/lines/demurrages', permission: 'maritime-demurrages-create' },
   { path: '/invoices/capture/lines/detentions', permission: 'maritime-detentions-create' },
   { path: '/invoices/lines/notes/add', permission: 'line-payments-create-fn' },
-  { path: '/invoices/lines/notes/edit-:id', permission: 'line-payments-edit' },
+  { path: '/invoices/lines/notes/edit-:id', permission: lineInvoiceEditPermission },
   { path: '/advance-payments/add', permission: 'advance-payments-create' },
   { path: '/adminpack/upload-invoices-tm', permission: 'tm-invoices-create' },
   { path: '/transfers/global/upload', permission: 'bank-movements-upload' },
@@ -147,10 +158,7 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/maritime/import/demurrages/register-:id-init-day', permission: 'demurrages-free-days-init' },
 
   // voyage destinations: editar, o editar con candado / asistencia (ver VoyageDestEditForm)
-  {
-    path: '/configuration/voyages/destination-:id',
-    permission: { any: ['voyage-destinations-edit', 'voyage-destinations-edit-with-lock', 'support-requests-assist'] },
-  },
+  { path: '/configuration/voyages/destination-:id', permission: voyageDestinationEditPermission },
 
   // sistema
   { path: '/system/users/create', permission: 'users-create' },

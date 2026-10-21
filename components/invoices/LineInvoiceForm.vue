@@ -22,7 +22,7 @@
               <v-alert type="info" variant="outlined" density="compact"> Total amount ${{ totalAmount }} </v-alert>
             </div>
             <FileDropzone @drop-files="(file: any) => (form.file = file)">
-              <v-file-input v-model="form.file" density="compact" label="Attachment" />
+              <v-file-input v-model="form.file" density="compact" label="Attachment (PDF) *" />
             </FileDropzone>
 
             <v-card class="mb-4">
@@ -353,6 +353,11 @@ const saveLineInvoice = async (confirmDuplicate = false) => {
     }
     if (!form.value.invoice_date) {
       snackbar.add({ type: 'error', text: 'Invoice date is required' })
+      return
+    }
+    const attached = Array.isArray(form.value.file) ? form.value.file.length > 0 : !!form.value.file
+    if (!attached) {
+      snackbar.add({ type: 'error', text: 'The invoice PDF is required' })
       return
     }
 

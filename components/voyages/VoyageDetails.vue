@@ -63,7 +63,7 @@
             <tbody>
               <tr v-for="(destination, index) in voyage.destinations" :key="`destination-${index}`">
                 <td>
-                  <EditButton :item="destination" permission="voyage-destinations-edit" @click="goToVoyageDestination" />
+                  <EditButton :item="destination" :permission="voyageDestinationEditPermission" @click="goToVoyageDestination" />
                 </td>
                 <td>{{ destination.pod?.name }}</td>
                 <td>{{ destination.eta_date }}</td>
@@ -109,6 +109,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { voyageDestinationEditPermission } from '~/utils/data/routePermissions'
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
