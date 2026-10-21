@@ -104,7 +104,9 @@
             <v-btn v-if="isProforma" color="purple" size="small" @click="onConvertProformaToInvoiceClick"
               ><v-icon>mdi-invoice-arrow-right-outline</v-icon>Convert to invoice</v-btn
             >
-            <v-btn v-if="isProforma" color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
+            <Can v-if="isProforma" permission="party-invoices-edit">
+              <v-btn color="error" size="small" @click="onCancelClick">Cancel invoice</v-btn>
+            </Can>
 
             <FreeFormatCreditNoteForm :partyInvoice="partyInvoice" @refresh="getData" v-if="!isCancelled && !isProforma" />
           </div>

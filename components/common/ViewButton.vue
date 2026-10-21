@@ -15,19 +15,21 @@
   </div>
 </template>
 <script setup lang="ts">
-const { hasPermission } = useCheckUser()
+import type { PermissionSpec } from '~/composables/useCheckUser'
+
+const { can } = useCheckUser()
 
 const props = defineProps({
   item: Object,
   required: true,
   default: () => ({}),
   permission: {
-    type: String as PropType<string | null>,
+    type: [String, Array, Object] as PropType<PermissionSpec | null>,
     default: null,
   },
 })
 
-const canView = computed(() => !props.permission || hasPermission(props.permission))
+const canView = computed(() => can(props.permission))
 
 const emit = defineEmits(['click'])
 
