@@ -62,7 +62,16 @@
               />
             </div>
             <div class="mb-4">
-              <InputText name="eta_date" type="date" density="compact" :label="labelEtaDate" :readonly="values.locked_at" :append-inner-icon="values.locked_at ? 'mdi-lock' : undefined" />
+              <InputText
+                name="eta_date"
+                type="date"
+                density="compact"
+                :label="labelEtaDate"
+                readonly
+                append-inner-icon="mdi-lock"
+                hint="Use Update ETA/ETD to change it (it notifies the client and is logged)"
+                persistent-hint
+              />
             </div>
             <div class="mb-4">
               <InputText name="arrival_date" type="date" density="compact" :label="labelAtaDate" />
