@@ -1080,6 +1080,12 @@ const onConsigneeChange = async (value: any) => {
     consigneeInfo.value = response
     if (response.executive_active == null) {
       snackbar.add({ type: 'warning', text: 'Consignee has no an executive' })
+    } else if (isPendingSaved.value) {
+      // Al asignar el cliente a una referencia pendiente el ejecutivo pasa a ser el del cliente (el backend hace lo mismo al guardar)
+      setValues({
+        executive_id: response.executive_active.executive?.id,
+        executive: response.executive_active.executive,
+      })
     }
   } catch (e) {
     console.error(e)
