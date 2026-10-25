@@ -187,6 +187,7 @@ const rules = [
   { icon: 'mdi-history', color: 'warning', title: 'Si el rol deja de darlo', text: 'La revocación queda guardada como «sin efecto». Si el rol vuelve a darlo, la persona sigue sin él. Se limpia con «Clear».' },
   { icon: 'mdi-menu', color: 'info', title: 'Revocar un permiso de menú', text: 'Solo oculta el enlace del menú. Para impedir el uso real hay que revocar también los permisos de API que usa la página (los ves en el botón «Page permissions» del pie).' },
   { icon: 'mdi-content-save-check-outline', color: 'success', title: 'Se guarda solo y se audita', text: 'Cada cambio se guarda al instante y registra quién lo hizo, qué cambió y el motivo (si lo escribió al revocar).' },
+  { icon: 'mdi-account-eye-outline', color: 'primary', title: 'Ver como otra persona', text: 'Un Super Admin puede ver el sistema como lo ve otro usuario (botón del encabezado). Es solo lectura: no se puede guardar ni solicitar nada a su nombre, y queda registrado.' },
   { icon: 'mdi-account-multiple-minus-outline', color: 'grey', title: 'Quitar un rol no es revocar', text: 'Quitar un rol elimina todo lo que daba. Revocar es la excepción para un solo permiso, sin tocar el resto del rol.' },
 ]
 

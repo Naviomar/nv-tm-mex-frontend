@@ -103,6 +103,7 @@ import ControlOperacionesModule from '~/repository/modules/reports/controlOperac
 import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 import UserMailNotificationsModule from '~/repository/modules/userMailNotifications'
+import ViewAsModule from '~/repository/modules/viewAs'
 
 interface IApiInstance {
   audit: AuditModule
@@ -208,6 +209,7 @@ interface IApiInstance {
   requestCcUsers: RequestCcUsersModule
   userDataRestrictions: UserDataRestrictionsModule
   userMailNotifications: UserMailNotificationsModule
+  viewAs: ViewAsModule
 }
 
 export function useApiFactory() {
@@ -318,6 +320,7 @@ export function useApiFactory() {
     requestCcUsers: new RequestCcUsersModule(client),
     userDataRestrictions: new UserDataRestrictionsModule(client),
     userMailNotifications: new UserMailNotificationsModule(client),
+    viewAs: new ViewAsModule(client),
   }
 
   return modules
