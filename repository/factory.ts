@@ -37,7 +37,9 @@ class FetchFactory<T> {
     const options: FetchOptions = {
       async onResponseError(context) {
         console.error('🚀 on Response Error', context.response?._data)
-        apiErrorStore.addError(context.response)
+        // Silent saves (screen preferences) hit the read-only wall while viewing as another user: nothing to tell.
+        const silentViewAs = context.response?._data?.code === 'view_as_read_only' && String(context.request).includes('ui-preferences')
+        if (!silentViewAs) apiErrorStore.addError(context.response)
         // console.error('onResponseError', context)
         if (context.response.status === 401) {
           console.warn('🚀 401', context.response)

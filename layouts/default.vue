@@ -2,6 +2,7 @@
   <div>
     <v-app class="rounded-md">
       <v-theme-provider>
+        <ViewAsBanner />
         <v-app-bar class="" color="">
           <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
           <v-app-bar-title class="ml-3!">
@@ -21,6 +22,7 @@
             <SystemTabBar />
           </div>
 
+          <ViewAsButton />
           <SwitchDarkLightMode />
 
           <!-- <div class="hidden md:block"> -->
