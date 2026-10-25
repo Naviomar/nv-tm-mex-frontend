@@ -68,10 +68,19 @@
                 density="compact"
                 :label="labelEtaDate"
                 readonly
-                append-inner-icon="mdi-lock"
-                hint="Use Update ETA/ETD to change it (it notifies the client and is logged)"
+                hint="It is changed from Update ETA/ETD, which logs the change."
                 persistent-hint
               />
+              <v-btn
+                size="small"
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-calendar-edit"
+                class="mt-1"
+                @click="router.push(`/configuration/voyages/destination-${id}/update-eta`)"
+              >
+                Change {{ labelEtaDate }}
+              </v-btn>
             </div>
             <div class="mb-4">
               <InputText name="arrival_date" type="date" density="compact" :label="labelAtaDate" />
