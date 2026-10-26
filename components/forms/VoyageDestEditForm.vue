@@ -67,11 +67,16 @@
                 type="date"
                 density="compact"
                 :label="labelEtaDate"
-                readonly
-                hint="It is changed from Update ETA/ETD, which logs the change."
+                :readonly="!canEditEta"
+                :hint="
+                  canEditEta
+                    ? 'No client has received an email about this voyage yet, so it can be corrected here.'
+                    : 'It is changed from Update ETA/ETD, which logs the change and notifies the client.'
+                "
                 persistent-hint
               />
               <v-btn
+                v-if="!canEditEta"
                 size="small"
                 variant="text"
                 color="primary"
@@ -263,6 +268,9 @@ const addDestination = async () => {
     }, 250)
   }
 }
+
+// The backend only lets the edit screen move the ETA while no client has been emailed about the voyage
+const canEditEta = computed(() => !values.locked_at && !!data.value.destination?.can_skip_client_notice)
 
 const labelEtaDate = computed(() => {
   if (data.value.voyage?.impoExpo === 'I') return 'ETA'
