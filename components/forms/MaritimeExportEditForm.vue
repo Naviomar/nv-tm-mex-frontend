@@ -1193,8 +1193,10 @@ const sailInfo = computed(() => {
     : `Not sailed ${isLocked ? '(locked)' : ''}`
 })
 
+// El bloqueo del viaje (cron por ETD) solo restringe el cambio de viaje cuando la
+// referencia ya generó documentos; sin ellos el usuario puede corregirlo directo.
 const isLocked = computed(() => {
-  return values.voyage_discharge?.locked_at != null
+  return values.voyage_discharge?.locked_at != null && referencia.value?.has_emitted_documents !== false
 })
 
 const voyageDestination = computed(() => {
