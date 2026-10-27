@@ -83,63 +83,66 @@
           </div>
 
           <template v-else>
-          <div class="mb-6">
-            <label class="d-block text-caption font-weight-bold mb-2 pl-1 text-dynamic-label">
-              Email Address
-            </label>
-            <v-text-field
-              v-model="email"
-              name="email"
-              density="comfortable"
-              placeholder="e.g. name@company.com"
-              prepend-inner-icon="mdi-email-outline"
-              variant="outlined"
-              class="soft-input"
-              hide-details="auto"
-              rounded="lg"
-            ></v-text-field>
-          </div>
-
-          <div class="mb-8">
-            <div class="d-flex justify-space-between align-center mb-2 pl-1">
-              <label class="text-caption font-weight-bold text-dynamic-label">
-                Password
+          <form @submit.prevent="handleLogin">
+            <div class="mb-6">
+              <label class="d-block text-caption font-weight-bold mb-2 pl-1 text-dynamic-label">
+                Email Address
               </label>
-              <a 
-                class="text-caption font-weight-bold text-decoration-none cursor-pointer hover-underline text-dynamic-link"
-                @click="onClickForgotPassword"
-              >
-                Forgot password?
-              </a>
+              <v-text-field
+                v-model="email"
+                name="email"
+                autocomplete="username"
+                density="comfortable"
+                placeholder="e.g. name@company.com"
+                prepend-inner-icon="mdi-email-outline"
+                variant="outlined"
+                class="soft-input"
+                hide-details="auto"
+                rounded="lg"
+              ></v-text-field>
             </div>
-            
-            <v-text-field
-              v-model="password"
-              name="password"
-              :append-inner-icon="visible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-              :type="visible ? 'text' : 'password'"
-              density="comfortable"
-              placeholder="Enter your password"
-              prepend-inner-icon="mdi-lock-outline"
-              variant="outlined"
-              class="soft-input"
-              hide-details="auto"
-              rounded="lg"
-              @click:append-inner="visible = !visible"
-              @keyup.enter="handleLogin"
-            ></v-text-field>
-          </div>
 
-          <v-btn 
-            block 
-            height="52"
-            class="text-body-2 font-weight-bold rounded-lg elevation-2 custom-btn-hover btn-dynamic"
-            :loading="loadingStore.loading"
-            @click="handleLogin"
-          > 
-            Sign In
-            <v-icon end icon="mdi-arrow-right-circle-outline" class="ml-2"></v-icon>
-          </v-btn>
+            <div class="mb-8">
+              <div class="d-flex justify-space-between align-center mb-2 pl-1">
+                <label class="text-caption font-weight-bold text-dynamic-label">
+                  Password
+                </label>
+                <a 
+                  class="text-caption font-weight-bold text-decoration-none cursor-pointer hover-underline text-dynamic-link"
+                  @click="onClickForgotPassword"
+                >
+                  Forgot password?
+                </a>
+              </div>
+            
+              <v-text-field
+                v-model="password"
+                name="password"
+                autocomplete="current-password"
+                :append-inner-icon="visible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                :type="visible ? 'text' : 'password'"
+                density="comfortable"
+                placeholder="Enter your password"
+                prepend-inner-icon="mdi-lock-outline"
+                variant="outlined"
+                class="soft-input"
+                hide-details="auto"
+                rounded="lg"
+                @click:append-inner="visible = !visible"
+              ></v-text-field>
+            </div>
+
+            <v-btn 
+              block 
+              height="52"
+              type="submit"
+              class="text-body-2 font-weight-bold rounded-lg elevation-2 custom-btn-hover btn-dynamic"
+              :loading="loadingStore.loading"
+            >
+              Sign In
+              <v-icon end icon="mdi-arrow-right-circle-outline" class="ml-2"></v-icon>
+            </v-btn>
+          </form>
           </template>
 
         </v-card>
