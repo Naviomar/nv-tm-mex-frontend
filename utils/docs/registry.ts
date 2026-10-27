@@ -34,6 +34,18 @@ export const pageDocs: PageDoc[] = [
     match: ['/system/departments', '/system/admin-department', '/system/role-permissions', '/system/users'],
     component: () => import('~/components/docs/AccessControlGuide.vue'),
   },
+  {
+    id: 'demurrages',
+    title: '¿Cómo funciona? Demoras',
+    subtitle: 'Del día de inicio por barco al cálculo, el corte al cliente y el pago a la naviera',
+    icon: 'mdi-timer-sand',
+    color: 'orange',
+    match: (path) =>
+      ['/maritime/import/demurrages', '/invoices/lines/demurrage-detentions', '/invoices/capture/lines/demurrages', '/invoices/search/lines/demurrages', '/configuration/container-delay-rates'].some(
+        (prefix) => path === prefix || path.startsWith(prefix + '/'),
+      ),
+    component: () => import('~/components/docs/DemurragesGuide.vue'),
+  },
 ]
 
 export const docsForPath = (path: string): PageDoc[] =>
