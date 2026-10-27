@@ -49,7 +49,9 @@
               <v-btn value="0">Inactive</v-btn>
               <v-btn value="all">All</v-btn>
             </v-btn-toggle>
-            <span class="text-caption text-medium-emphasis">{{ users.total ?? 0 }} user(s)</span>
+            <span class="text-caption text-medium-emphasis">
+              <v-progress-circular v-if="searching" indeterminate size="14" width="2" class="mr-1" />{{ users.total ?? 0 }} user(s)
+            </span>
           </div>
           <h1 class="text-xl font-bold">Users</h1>
           <v-table density="compact">
@@ -264,7 +266,6 @@
 </template>
 <script setup lang="ts">
 const { $api } = useNuxtApp()
-const loadintStore = useLoadingStore()
 const clipboard = useCopyToClipboard()
 const { hasPermission, can } = useCheckUser()
 
@@ -336,10 +337,17 @@ function onClickUserNotifications(user: any) {
   showNotificationsDialog.value = true
 }
 
+// Cada búsqueda cancela la anterior: solo cuenta la última, así una respuesta lenta no pisa a una más nueva.
+let controller: AbortController | null = null
+const searching = ref(false)
+
 async function getUsers() {
+  controller?.abort()
+  const current = (controller = new AbortController())
+  searching.value = true
   try {
-    loadintStore.start()
     const response = await $api.users.getUsers({
+      signal: current.signal,
       query: {
         page: users.value.current_page,
         limit: 50,
@@ -347,14 +355,11 @@ async function getUsers() {
         ...Object.fromEntries(Object.entries(filters.value).filter(([, v]) => v !== null && v !== '' && v !== undefined)),
       },
     })
-
-    users.value = response
+    if (controller === current) users.value = response
   } catch (e: any) {
-    console.error('error', e)
+    if (e?.name !== 'AbortError' && e?.cause?.name !== 'AbortError') console.error('error', e)
   } finally {
-    setTimeout(() => {
-      loadintStore.stop()
-    }, 250)
+    if (controller === current) searching.value = false
   }
 }
 
