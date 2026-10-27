@@ -182,7 +182,7 @@
             </div>
           </v-window-item-->
           <v-window-item value="5">
-            <UserUpdatePassword />
+            <AccountSecuritySelf />
           </v-window-item>
         </v-window>
       </div>
