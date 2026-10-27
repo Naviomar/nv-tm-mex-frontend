@@ -104,6 +104,7 @@ import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 import UserMailNotificationsModule from '~/repository/modules/userMailNotifications'
 import ViewAsModule from '~/repository/modules/viewAs'
+import AccountSecurityModule from '~/repository/modules/accountSecurity'
 
 interface IApiInstance {
   audit: AuditModule
@@ -210,6 +211,7 @@ interface IApiInstance {
   userDataRestrictions: UserDataRestrictionsModule
   userMailNotifications: UserMailNotificationsModule
   viewAs: ViewAsModule
+  accountSecurity: AccountSecurityModule
 }
 
 export function useApiFactory() {
@@ -321,6 +323,7 @@ export function useApiFactory() {
     userDataRestrictions: new UserDataRestrictionsModule(client),
     userMailNotifications: new UserMailNotificationsModule(client),
     viewAs: new ViewAsModule(client),
+    accountSecurity: new AccountSecurityModule(client),
   }
 
   return modules

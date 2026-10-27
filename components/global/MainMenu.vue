@@ -680,6 +680,7 @@
 
         <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" :to="isSuperAdminRole() ? '/system/departments' : '/system/admin-department'" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemUsers)" title="Users" prepend-icon="mdi-account-group" to="/system/users" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess('users-security-manage')" title="Access security" prepend-icon="mdi-shield-lock-outline" to="/system/account-security" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemRolesPermissions)" title="Roles and permissions" prepend-icon="mdi-shield-account-outline" to="/system/role-permissions" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemBankAccounts)" title="Bank accounts" prepend-icon="mdi-bank-outline" to="/system/bank-accounts" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemMailNotifications)" title="Mail notifications" prepend-icon="mdi-email-outline" to="/system/mail-notifications" rounded="xl" class="mb-1"></v-list-item>
@@ -837,6 +838,7 @@ const systemPermissions = [
   menuPermissions.SystemLogs,
   menuPermissions.SystemAudit,
   menuPermissions.SystemDiagnostics,
+  'users-security-manage',
 ]
 
 const canAccess = (permission: string) => {

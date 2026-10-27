@@ -104,27 +104,12 @@
             </div>
           </v-window-item>
           <v-window-item value="4">
-            <div class="flex justify-center">
-              <v-card class="w-full md:w-3/4">
-                <v-card-title>Update password</v-card-title>
-                <v-card-text>
-                  <div>
-                    <InputText name="password" density="compact" type="text" label="Password" />
-                  </div>
-                  <div>
-                    <InputText
-                      name="password_confirmation"
-                      density="compact"
-                      type="text"
-                      label="Password confirmation"
-                    />
-                  </div>
-                  <div>
-                    <v-btn color="primary" class="my-4" @click="updatePasswordClick">Update password</v-btn>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </div>
+            <Can permission="users-security-manage">
+              <UserSecurityPanel :user-id="Number(route.params.id)" />
+              <template #denied>
+                <div class="text-medium-emphasis text-body-2 py-4">You can't manage this user's access security.</div>
+              </template>
+            </Can>
           </v-window-item>
         </v-window>
       </div>
@@ -148,7 +133,4 @@ const user = ref(response)
 const revokedIds = computed(() => new Set<number>(((user.value as any)?.permission_revocations ?? []).map((r: any) => r.permission_id)))
 const isRevoked = (id: number) => revokedIds.value.has(id)
 
-const updatePasswordClick = async () => {
-  console.log('updatePasswordClick')
-}
 </script>

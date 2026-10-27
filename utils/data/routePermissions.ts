@@ -163,6 +163,7 @@ export const routePermissions: RoutePermissionRule[] = [
   // sistema
   { path: '/system/users/create', permission: 'users-create' },
   { path: '/system/users/edit/:id', permission: 'users-edit' },
+  { path: '/system/account-security', permission: 'users-security-manage' },
   { path: '/system/departments/add', permission: 'departments-create' },
   { path: '/system/departments/edit-:id', permission: 'departments-edit' },
   { path: '/system/mail-notifications/edit-:id', permission: 'mail-notifications-edit' },
