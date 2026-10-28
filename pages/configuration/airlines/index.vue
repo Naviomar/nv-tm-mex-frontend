@@ -7,7 +7,9 @@
           <v-btn color="info" prepend-icon="mdi-format-list-numbered" to="/configuration/airlines/guide-numbers">
             Guide Numbers
           </v-btn>
-          <v-btn color="primary" to="/configuration/airlines/add"> Add airline </v-btn>
+          <Can permission="airlines-create">
+            <v-btn color="primary" to="/configuration/airlines/add"> Add airline </v-btn>
+          </Can>
         </div>
       </div>
     </div>

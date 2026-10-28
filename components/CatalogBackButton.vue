@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2 mb-4">
+  <div class="flex items-center gap-2 mb-4 reference-bar" :class="{ 'reference-bar--pinned': isPinned }">
     <v-btn :to="backUrl" color="slate" size="small" variant="outlined">
       <v-icon>mdi-arrow-left</v-icon> Back
     </v-btn>
@@ -13,6 +13,9 @@
     >
       <v-icon size="small">mdi-filter-remove</v-icon> Clear filters
     </v-btn>
+    <ReferenceQuickSearch v-if="quickSearch" :module="quickSearch" />
+    <v-spacer />
+    <div id="reference-bar-actions" class="flex items-center"></div>
   </div>
 </template>
 
@@ -20,13 +23,19 @@
 interface Props {
   fallbackUrl: string
   storageKey?: string
+  quickSearch?: 'sea-import' | 'sea-export' | 'air-import' | 'air-export'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   storageKey: undefined,
+  quickSearch: undefined,
 })
 
 const route = useRoute()
+
+const { pinned, label: pinLabel, load: loadPin } = useReferenceHeaderPin()
+const isPinned = computed(() => pinned.value && !!pinLabel.value)
+onMounted(loadPin)
 
 /**
  * Get the back URL from either:
@@ -122,3 +131,15 @@ const buildUrlFromStoredFilters = (data: { filters: Record<string, any>; page: n
   return queryString ? `${props.fallbackUrl}?${queryString}` : props.fallbackUrl
 }
 </script>
+
+<style scoped>
+/* Pinned: stays below the app bar while the page scrolls */
+.reference-bar--pinned {
+  position: sticky;
+  top: var(--v-layout-top, 64px);
+  z-index: 5;
+  padding: 8px 0;
+  background: rgb(var(--v-theme-background));
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+</style>

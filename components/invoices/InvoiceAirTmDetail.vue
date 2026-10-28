@@ -257,7 +257,7 @@
             <tbody>
               <tr v-for="(charge, idx) in invoiceCharges" :key="`invoice-charge-${idx}`">
                 <td>{{ charge.id }}</td>
-                <td>{{ charge.serviceable?.reference_number }}</td>
+                <td>{{ chargeServiceNumber(charge) }}</td>
                 <td>
                   <InvoiceChargeCfdiName :invoiceCharge="charge" :names="chargeCfdiNames" />
                 </td>
@@ -574,6 +574,20 @@ const isFileString = (file: any) => {
   if (!file) return false
   // check if is a string
   return typeof file === 'string'
+}
+
+// Al cancelar, el concepto pierde su servicio; se recupera del vínculo borrado si es uno solo.
+const chargeServiceNumber = (charge: any) => {
+  if (charge.serviceable?.reference_number) return charge.serviceable.reference_number
+  if (!invoiceTm.value?.cancelled_at) return undefined
+  const numbers = [
+    ...new Set(
+      (invoiceTm.value.services_all || [])
+        .map((service: any) => (service.referencia ?? service.air_reference)?.reference_number)
+        .filter(Boolean)
+    ),
+  ]
+  return numbers.length === 1 ? numbers[0] : undefined
 }
 
 const getReferenceNumber = (referenciaId: number) => {

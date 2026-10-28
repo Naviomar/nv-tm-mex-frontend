@@ -3,7 +3,9 @@
   <v-container fluid>
     <div>
       <div class="flex justify-end gap-3">
-        <v-btn color="success" to="/configuration/countries/add"> <v-icon>mdi-plus</v-icon>Add country </v-btn>
+        <Can permission="countries-create">
+          <v-btn color="success" to="/configuration/countries/add"> <v-icon>mdi-plus</v-icon>Add country </v-btn>
+        </Can>
       </div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Countries</div>

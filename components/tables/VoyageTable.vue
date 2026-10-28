@@ -144,7 +144,7 @@
                     <v-icon start size="14">mdi-cancel</v-icon>
                     CANCELLED
                   </v-chip>
-                  <EditButton v-if="!voyageDest.deleted_at" :item="voyageDest" permission="voyage-destinations-edit" @click="editVoyageDestination(voyageDest)" />
+                  <EditButton v-if="!voyageDest.deleted_at" :item="voyageDest" :permission="voyageDestinationEditPermission" @click="editVoyageDestination(voyageDest)" />
                   <!-- No linked references: nothing downstream depends on this voyage, so it can be cancelled/restored directly without an authorization request -->
                   <TrashButton
                     v-if="voyageDest.total_references === 0"
@@ -190,11 +190,11 @@
                 </div>
               </td>
               <td>
-                <ViewButton v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVessel(voyageDest.voyage?.vessel_id)" />
+                <ViewButton permission="vessel-lines-view" v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVessel(voyageDest.voyage?.vessel_id)" />
                 {{ voyageDest.voyage?.vessel?.name }} ({{ voyageDest.voyage?.vessel?.line?.commercial_name }})
               </td>
               <td>
-                <ViewButton v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVoyage(voyageDest.voyage?.id)" />
+                <ViewButton permission="voyages-view" v-if="!voyageDest.deleted_at" :item="voyageDest" @click="viewVoyage(voyageDest.voyage?.id)" />
                 {{ voyageDest.voyage?.name }}
               </td>
               <td>
@@ -274,6 +274,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { voyageDestinationEditPermission } from '~/utils/data/routePermissions'
 import { deletedStatus } from '@/utils/data/systemData'
 const { $api, $notifications } = useNuxtApp()
 const snackbar = useSnackbar()

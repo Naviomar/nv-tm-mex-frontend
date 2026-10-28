@@ -13,7 +13,7 @@
           {{ dialog.mode === 'create' ? 'Create Freight Group' : dialog.mode === 'edit' ? 'Edit Freight Group' : 'View Freight Group' }}
         </v-toolbar-title>
         <v-spacer />
-        <v-btn icon="mdi-close" variant="text" @click="closeDialog" />
+        <v-btn icon="mdi-close" variant="text" data-testid="group-dialog-close" @click="requestClose" />
       </v-toolbar>
       <v-card-text class="space-y-4 pt-4">
         <div class="grid grid-cols-1 gap-3">
@@ -55,6 +55,7 @@
 
         <!-- Bank accounts for view/edit mode -->
         <FreightBankForm
+          ref="bankForm"
           v-if="dialog.mode !== 'create' && dialog.itemId"
           :id="dialog.itemId.toString()"
           owner-type="freight_group"
@@ -99,13 +100,14 @@
       </v-card-text>
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
-        <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
+        <v-btn variant="text" data-testid="group-dialog-cancel" @click="requestClose">Cancel</v-btn>
         <v-btn
           v-if="dialog.mode !== 'view'"
           color="primary"
           prepend-icon="mdi-content-save"
           :loading="saving"
           :disabled="saving"
+          data-testid="group-dialog-save"
           @click="save"
         >
           Save
@@ -119,6 +121,9 @@
 const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
+const { $notifications } = useNuxtApp()
+const confirm = $notifications.useConfirm()
+const bankForm = ref<any>(null)
 
 const dialog = reactive({
   show: false,
@@ -205,6 +210,23 @@ const openView = async (id: number) => {
   }
 }
 
+// A half-captured bank account lives in a nested form with its own Save.
+// Closing the dialog would silently throw it away, so ask first.
+const requestClose = async () => {
+  if (bankForm.value?.hasUnsaved) {
+    const ok = await confirm({
+      title: 'Unsaved bank account',
+      confirmationText: 'Discard and close',
+      cancellationText: 'Keep editing',
+      content: 'You have a bank account that has not been saved. If you close now it will be lost.',
+      dialogProps: { persistent: true, maxWidth: 500 },
+      confirmationButtonProps: { color: 'error' },
+    })
+    if (!ok) return
+  }
+  closeDialog()
+}
+
 const closeDialog = () => {
   dialog.show = false
   resetForm()
@@ -284,6 +306,17 @@ const validate = () => {
 
 const save = async () => {
   if (saving.value) return
+
+  // The dialog's Save only stores the group. If a bank account is half
+  // captured, do not report success while it is still unsaved.
+  if (bankForm.value?.hasUnsaved) {
+    await bankForm.value.showPending()
+    snackbar.add({
+      type: 'warning',
+      text: 'You have a bank account that is not saved yet. Save it in the Bank accounts section first, or discard it.',
+    })
+    return
+  }
 
   if (!validate()) {
     return

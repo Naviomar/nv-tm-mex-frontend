@@ -9,7 +9,9 @@
         <v-btn color="secondary" to="/configuration/customers/missing-notifications">
           <v-icon>mdi-bell-alert-outline</v-icon> Customers Admin Notifications
         </v-btn>
-        <v-btn color="success" to="/configuration/customers/add"> <v-icon>mdi-plus</v-icon>Add customer </v-btn>
+        <Can permission="customers-create">
+          <v-btn color="success" to="/configuration/customers/add"> <v-icon>mdi-plus</v-icon>Add customer </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

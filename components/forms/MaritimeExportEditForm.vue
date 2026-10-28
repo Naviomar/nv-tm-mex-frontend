@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PendingConsigneeBanner :referencia="referencia" />
     <v-card class="mb-4">
       <v-card-title>
         <div class="flex justify-between">
@@ -260,14 +261,15 @@
                 <AGlobalSearch
                   :onSearch="searchCustomers"
                   validate-key="consignee_id"
-                  label="Shipper *"
+                  :label="consigneeLabel"
                   :set-id="values.consignee_id || undefined"
                   @update:model-value="onConsigneeChange"
                 />
               </div>
 
               <div>
-                <div class="flex flex-col">
+                <ReferenceExecutiveField v-if="allowsPendingConsignee" :executives="catalogs.executives" />
+                <div v-else class="flex flex-col">
                   <div class="">Service executive:</div>
                   <div class="font-bold">
                     <span v-if="!values.executive_id">No executive</span>
@@ -324,10 +326,11 @@
               </div>
             </div>
 
-            <div>Reference credit days: {{ values.credit_days }}</div>
+            <div v-if="!isPendingSaved">Reference credit days: {{ values.credit_days }}</div>
+            <PendingConsigneeLock v-else title="Credit days" />
           </div>
           <div class="col-span-2">
-            <v-card density="compact" color="blue-grey-lighten-5">
+            <v-card density="compact" class="tm-tint-bluegrey">
               <v-card-title>
                 <div class="flex justify-start items-center">
                   <v-icon size="x-small">mdi-account-outline</v-icon>
@@ -511,9 +514,10 @@
       <v-card-text>
         <div class="grid grid-cols-3 gap-2 mb-4">
           <div class="col-span-3">
-            <SeaExportChargesSmart :referenciaId="values.id!" :canEdit="canEditCharges" />
+            <SeaExportChargesSmart v-if="!isPendingSaved" :referenciaId="values.id!" :canEdit="canEditCharges" />
+            <PendingConsigneeLock v-else title="Charges and costs" />
           </div>
-          <div v-if="values.containers?.length" class="col-span-3">
+          <div v-if="values.containers?.length && !isPendingSaved" class="col-span-3">
             <v-card>
               <v-card-title>Detentions</v-card-title>
               <v-card-text>
@@ -552,7 +556,7 @@
             </v-card>
           </div>
 
-          <v-card density="compact">
+          <v-card v-if="!isPendingSaved" density="compact">
             <v-card-title class="font-semibold text-lg">
               <v-icon class="mr-2">mdi-cash-refund</v-icon>
               Rebate
@@ -591,13 +595,17 @@
                   type="number"
                   hide-details
                 />
-                <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                <Can permission="sea-export-update-rebate">
+                  <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
+                </Can>
               </div>
             </v-card-text>
           </v-card>
+          <PendingConsigneeLock v-else title="Rebate and detentions" />
         </div>
 
         <FfNotesForm
+          v-if="!isPendingSaved"
           ref="ffNotesFormRef"
           :referenciaId="values.id!"
           serviceType="sea"
@@ -611,30 +619,30 @@
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Customer invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaServiceCustomerInvoices :referenceId="values.id!" />
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Line invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaImportLinePaymentsDetails :referencia="values" />
       </v-card-text>
     </v-card>
 
-    <v-card color="light-blue-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="light-blue-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Supplier invoices & payments</div></v-card-title>
       <v-card-text>
         <SeaImportSupplierInvoices :referenceId="values.id!" />
       </v-card-text>
     </v-card>
 
-    <SeaServiceLineDemDetPayments :referenceId="values.id!" type="detentions" />
+    <SeaServiceLineDemDetPayments v-if="!isPendingSaved" :referenceId="values.id!" type="detentions" />
 
-    <v-card color="red-lighten-4" class="mb-4">
+    <v-card v-if="!isPendingSaved" color="red-lighten-4" class="mb-4">
       <v-card-title><div class="font-bold">Refunds</div></v-card-title>
       <v-card-text>
         <SeaImportRefunds :referenceId="values.id!" />
@@ -645,13 +653,15 @@
 
     <SeaImportNotesForm :reference="values" />
 
-    <DraggableDiv>
+    <ReferenceActionsDock :reference-number="values.reference_number">
       <div class="text-center font-bold py-2">Ref #{{ values.reference_number }}</div>
       <div class="flex justify-end items-center">
         <v-btn class="mr-4" color="error" to="/maritime/export"> Return </v-btn>
-        <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
+        <Can permission="sea-export-references-edit">
+          <v-btn color="primary" @click="onSaveSeaExportClick"> Save changes </v-btn>
+        </Can>
       </div>
-    </DraggableDiv>
+    </ReferenceActionsDock>
   </div>
 </template>
 <script setup lang="ts">
@@ -680,6 +690,8 @@ const props = defineProps({
 })
 
 const catalogs = ref({
+  pending_consignee_enabled: false,
+  executives: [] as any,
   lines: [] as any,
   sea_regions: [] as any,
   consignees: [] as any,
@@ -840,6 +852,17 @@ const customerCurrentExecutive = computed(() => {
   }
   return ''
 })
+
+// Sin cliente (y con el módulo habilitado) el ejecutivo se captura a mano: es obligatorio y recibe la alerta
+const allowsPendingConsignee = computed(() => !values.consignee_id && !!catalogs.value.pending_consignee_enabled)
+const consigneeLabel = computed(() =>
+  !values.consignee_id && catalogs.value.pending_consignee_enabled
+    ? 'Shipper (can be assigned later)'
+    : 'Shipper *'
+)
+
+// Estado guardado en el servidor: elegir un cliente en el formulario no desbloquea nada hasta guardarlo
+const isPendingSaved = computed(() => !!referencia.value?.id && !referencia.value.consignee_id)
 
 const canUpdateExecutive = computed(() => {
   if (consigneeInfo.value?.executive_active?.executive) {
@@ -1047,13 +1070,22 @@ const searchPodPorts = async (search: SearchParams) => {
 }
 
 const onConsigneeChange = async (value: any) => {
-  if (!value) return
+  if (!value) {
+    consigneeInfo.value = null
+    return
+  }
   try {
     loadingStore.start()
     const response = await $api.consignees.getDetailsForReference(value)
     consigneeInfo.value = response
     if (response.executive_active == null) {
       snackbar.add({ type: 'warning', text: 'Consignee has no an executive' })
+    } else if (isPendingSaved.value) {
+      // Al asignar el cliente a una referencia pendiente el ejecutivo pasa a ser el del cliente (el backend hace lo mismo al guardar)
+      setValues({
+        executive_id: response.executive_active.executive?.id,
+        executive: response.executive_active.executive,
+      })
     }
   } catch (e) {
     console.error(e)
@@ -1161,8 +1193,10 @@ const sailInfo = computed(() => {
     : `Not sailed ${isLocked ? '(locked)' : ''}`
 })
 
+// El bloqueo del viaje (cron por ETD) solo restringe el cambio de viaje cuando la
+// referencia ya generó documentos; sin ellos el usuario puede corregirlo directo.
 const isLocked = computed(() => {
-  return values.voyage_discharge?.locked_at != null
+  return values.voyage_discharge?.locked_at != null && referencia.value?.has_emitted_documents !== false
 })
 
 const voyageDestination = computed(() => {

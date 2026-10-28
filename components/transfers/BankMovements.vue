@@ -167,7 +167,7 @@
                   <span class="text-xl">🔏</span> Lock / Unlock
                 </v-btn>
 
-                <div v-if="bankMovement.payments.length > 0">
+                <div v-if="getPaymentsCount(bankMovement) > 0">
                   <BankMovementPayments :bankMovement="bankMovement" />
                 </div>
                 
@@ -676,13 +676,17 @@ const loadActiveCancellationRequests = async () => {
 
 const cancellationFailed = (bankMovement: any) => failedCancelIds.value.has(Number(bankMovement.id))
 
+// El listado trae payments_count; las respuestas anteriores traían la lista completa en payments.
+const getPaymentsCount = (bankMovement: any): number =>
+  bankMovement.payments_count ?? bankMovement.payments?.length ?? 0
+
 const canRequestCancellation = (bankMovement: any) => {
   // Can only request cancellation if movement has no payments, available amount equals total amount,
   // and there isn't already a pending/approved cancellation request for it. A request whose
   // auto-execution failed is treated as if it never happened, so the user can try again.
   return (
     bankMovement.amount === bankMovement.amount_available &&
-    bankMovement.payments.length === 0 &&
+    getPaymentsCount(bankMovement) === 0 &&
     !pendingCancelIds.value.has(Number(bankMovement.id)) &&
     (!approvedCancelIds.value.has(Number(bankMovement.id)) || cancellationFailed(bankMovement))
   )

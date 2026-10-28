@@ -6,7 +6,7 @@
         <template v-slot:activator="{ props: tooltipProps }">
           <v-chip v-bind="tooltipProps" size="x-small" variant="tonal" :color="sigaChipColor">
             <v-icon start size="12">mdi-sync</v-icon>
-            SIGA
+            {{ sigaChipText }}
           </v-chip>
         </template>
         <span>
@@ -25,6 +25,7 @@ import { computed } from 'vue'
 interface SigaTicketLink {
   sync_status: string | null
   last_synced_at: string | null
+  siga_ticket_number?: string | number | null
 }
 
 const props = defineProps<{
@@ -36,6 +37,9 @@ const props = defineProps<{
 const color = computed(() => ({ pending: 'warning', granted: 'success', denied: 'error' }[props.decision]))
 const label = computed(() => ({ pending: 'Pending', granted: 'Granted', denied: 'Denied' }[props.decision]))
 
+const sigaChipText = computed(() =>
+  props.sigaLink?.siga_ticket_number ? `Ticket #${props.sigaLink.siga_ticket_number}` : 'SIGA',
+)
 const sigaChipColor = computed(() => (props.sigaLink?.sync_status === 'error' ? 'error' : 'info'))
 const sigaStatusLabel = computed(() => {
   switch (props.sigaLink?.sync_status) {

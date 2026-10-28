@@ -736,6 +736,7 @@
 
         <v-list-item v-if="canAccess(menuPermissions.SystemAdminDept)" title="Admin Department" prepend-icon="mdi-account-group" :to="isSuperAdminRole() ? '/system/departments' : '/system/admin-department'" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemUsers)" title="Users" prepend-icon="mdi-account-group" to="/system/users" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess('users-security-manage')" title="Access security" prepend-icon="mdi-shield-lock-outline" to="/system/account-security" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemRolesPermissions)" title="Roles and permissions" prepend-icon="mdi-shield-account-outline" to="/system/role-permissions" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemBankAccounts)" title="Bank accounts" prepend-icon="mdi-bank-outline" to="/system/bank-accounts" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemMailNotifications)" title="Mail notifications" prepend-icon="mdi-email-outline" to="/system/mail-notifications" rounded="xl" class="mb-1"></v-list-item>
@@ -745,6 +746,7 @@
         <v-list-item v-if="canAccess(menuPermissions.SystemAuthRequestTypes)" title="Auth Request Types" prepend-icon="mdi-key-variant" to="/system/auth-request-types" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemLogs)" title="System Logs" prepend-icon="mdi-console" to="/system/system-logs" rounded="xl" class="mb-1"></v-list-item>
         <v-list-item v-if="canAccess(menuPermissions.SystemAudit)" title="Audit" prepend-icon="mdi-history" to="/system/audit-log" rounded="xl" class="mb-1"></v-list-item>
+        <v-list-item v-if="canAccess(menuPermissions.SystemDiagnostics)" title="Diagnostics" prepend-icon="mdi-heart-pulse" to="/system/diagnostics" rounded="xl" class="mb-1"></v-list-item>
       </v-list-group>
     </v-list>
 
@@ -892,6 +894,8 @@ const systemPermissions = [
   menuPermissions.SystemAuthRequestTypes,
   menuPermissions.SystemLogs,
   menuPermissions.SystemAudit,
+  menuPermissions.SystemDiagnostics,
+  'users-security-manage',
 ]
 
 const canAccess = (permission: string) => {

@@ -67,24 +67,17 @@
             <tr v-for="(item, index) in visibleContainers" :key="`mbl-${index}`">
               <td>
                 <div class="flex gap-2">
+                  <!-- Locked voyage: the corrected data travels with the request and is applied on approval -->
                   <ProcessAuthorizationWrapper
                         v-if="!item.deleted_at && isLocked && canEditContainers"
                         processName="container-edit"
                         :requestKey="`${props.referenciaId}:${item.id}`"
                         label="Edit"
                         :displayName="`Container. #${item.container_number}`"
-                  >
-                    <template #auth>
-                      <v-btn
-                        size="small"
-                        variant="text"
-                        icon="mdi-pencil-outline"
-                        color="blue-lighten-2"
-                        density="compact"
-                        @click="editContainer(item)"
-                      ></v-btn>
-                    </template>
-                  </ProcessAuthorizationWrapper>
+                        :initial-form-data="containerFormData(item)"
+                        :field-catalogs="containerFieldCatalogs"
+                        @refresh="emit('refresh')"
+                  />
                   <v-btn
                       v-if="!item.deleted_at && !isLocked && canEditContainers"
                       size="small"
@@ -219,6 +212,19 @@ const isLcl = computed(() => props.cargoType === 'LCL')
 
 const customContainerTypes = computed(() => {
   return props.catalogs.container_types
+})
+
+// Request form of a locked container: current values + container type options
+const containerFieldCatalogs = computed(() => ({
+  container_types: ((customContainerTypes.value as any[]) ?? []).map((t: any) => ({ label: t.name, value: t.id })),
+}))
+const containerFormData = (item: any) => ({
+  container_number: item.container_number,
+  container_type_id: item.container_type_id,
+  volume: item.volume,
+  weight: item.weight,
+  num_packages: item.num_packages,
+  notes: item.notes,
 })
 
 const hasCargoType = computed(() => {

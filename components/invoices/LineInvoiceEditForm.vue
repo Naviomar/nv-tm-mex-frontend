@@ -102,23 +102,18 @@
             </v-expansion-panel>
           </v-expansion-panels>
 
-          <!-- PAW for authorized re-edit of folio -->
+          <!-- Further changes go through a request: data and PDF travel with it and are applied on approval -->
           <div class="d-flex align-center gap-3 flex-wrap">
             <span class="text-caption text-medium-emphasis">Need to change folio / PDF?</span>
             <ProcessAuthorizationWrapper
-              process-name="invoices.lines.update"
+              process-name="invoices.lines.update-folio"
               :request-key="String(lineInvoice.id)"
-              label="Request edit authorization"
+              label="Request folio / PDF change"
               :display-name="lineInvoice.serie_folio || `Line Invoice #${lineInvoice.id}`"
+              :initial-form-data="folioChangeInitialData"
+              :field-catalogs="folioChangeCatalogs"
               @refresh="getData"
-            >
-              <template #auth>
-                <v-btn size="small" color="primary" variant="tonal" @click="openAuthorizedEditDialog">
-                  <v-icon start size="14">mdi-pencil-outline</v-icon>
-                  Edit folio / PDF
-                </v-btn>
-              </template>
-            </ProcessAuthorizationWrapper>
+            />
           </div>
         </template>
       </v-card-text>
@@ -139,7 +134,7 @@
           density="compact"
           class="mb-3 text-caption"
         >
-          To remove or add services, you need an active authorization for this invoice.
+          To remove, add or change the amount of services, you need an active authorization for this invoice.
         </v-alert>
 
         <v-table density="compact">
@@ -163,7 +158,37 @@
               <td class="whitespace-nowrap">{{ lineInvRef.referencia?.reference_number }}</td>
               <td>{{ lineInvRef.master_bl?.name }}</td>
               <td>{{ lineInvRef.tm_wm }}</td>
-              <td>{{ formatToCurrency(lineInvRef.amount) }}</td>
+              <td class="whitespace-nowrap">
+                <div v-if="hasActiveChargeAuth && editingAmountId === lineInvRef.id" class="d-flex align-center gap-1">
+                  <v-text-field
+                    v-model="editingAmount"
+                    type="number"
+                    density="compact"
+                    hide-details
+                    autofocus
+                    style="min-width:110px"
+                    @keyup.enter="saveRefAmount(lineInvRef)"
+                  />
+                  <v-btn icon size="x-small" variant="text" color="primary" :loading="savingAmount" @click="saveRefAmount(lineInvRef)">
+                    <v-icon>mdi-check</v-icon>
+                  </v-btn>
+                  <v-btn icon size="x-small" variant="text" @click="editingAmountId = null">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </div>
+                <template v-else>
+                  {{ formatToCurrency(lineInvRef.amount) }}
+                  <v-btn
+                    v-if="hasActiveChargeAuth"
+                    icon
+                    size="x-small"
+                    variant="text"
+                    @click="startEditAmount(lineInvRef)"
+                  >
+                    <v-icon size="14">mdi-pencil-outline</v-icon>
+                  </v-btn>
+                </template>
+              </td>
               <td>
                 <div v-for="(charge, idx) in lineInvRef.invoice?.charges" :key="`charge-${idx}`">
                   <div v-for="(payment, idx2) in charge.payments" :key="`payment-${idx2}`">
@@ -175,8 +200,8 @@
                 </div>
               </td>
               <td>
-                <v-chip :color="isPaid(lineInvRef) ? 'green' : 'red'" size="x-small">
-                  {{ isPaid(lineInvRef) ? 'Paid' : 'Pending' }}
+                <v-chip :color="isPaid(lineInvRef) ? 'green' : isPartial(lineInvRef) ? 'orange' : 'red'" size="x-small">
+                  {{ isPaid(lineInvRef) ? 'Paid' : isPartial(lineInvRef) ? 'Partially paid' : 'Pending' }}
                 </v-chip>
               </td>
               <td class="whitespace-nowrap">
@@ -329,42 +354,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Authorized folio edit dialog -->
-    <v-dialog v-model="authorizedEditDialog" max-width="550" persistent>
-      <v-card>
-        <v-card-title class="text-body-1 font-weight-semibold">
-          <v-icon class="mr-2">mdi-pencil-outline</v-icon>
-          Edit folio / PDF
-        </v-card-title>
-        <v-card-text>
-          <AGlobalSearch
-            :onSearch="searchLines"
-            v-model="authorizedForm.line_id"
-            label="Freight line *"
-            :set-id="authorizedForm.line_id"
-            hide-details
-            class="mb-3"
-          />
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <v-text-field v-model="authorizedForm.serie" density="compact" label="Serie" hide-details />
-            <v-text-field v-model="authorizedForm.folio" density="compact" label="Folio *" hide-details />
-          </div>
-          <v-text-field v-model="authorizedForm.invoice_date" density="compact" type="date" label="Invoice date *" class="mb-2" hide-details />
-          <div class="mb-2">
-            <div class="text-caption text-medium-emphasis mb-1">Current PDF</div>
-            <ButtonDownloadS3Object :s3Path="lineInvoice.attachment" />
-          </div>
-          <FileDropzone @drop-files="(file) => (authorizedForm.file = file)">
-            <v-file-input v-model="authorizedForm.file" density="compact" label="Replace PDF (optional)" />
-          </FileDropzone>
-        </v-card-text>
-        <v-card-actions class="pa-3 pt-0">
-          <v-spacer />
-          <v-btn size="small" @click="authorizedEditDialog = false">Cancel</v-btn>
-          <v-btn size="small" color="primary" :loading="savingAuthorized" :disabled="savingAuthorized" @click="saveAuthorizedEdit">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -376,6 +365,7 @@ const router = useRouter()
 const loadingStore = useLoadingStore()
 const { $notifications } = useNuxtApp()
 const confirm = $notifications.useConfirm()
+const { hasPermission } = useCheckUser()
 
 const props = defineProps<{ id: string }>()
 
@@ -387,8 +377,6 @@ const lineInvoicePaymentConceptNames = ['PAGO LC', 'PAGO FN', 'PAGO DM', 'PAGO D
 
 const savingFolio = ref(false)
 const savingRefs = ref(false)
-const savingAuthorized = ref(false)
-const authorizedEditDialog = ref(false)
 
 // Active granted requests for invoices.lines.update on this invoice
 const userRequests = ref<any[]>([])
@@ -396,6 +384,7 @@ const userRequests = ref<any[]>([])
 // ── Authorization check ───────────────────────────────────────────────────────
 
 const hasActiveChargeAuth = computed(() =>
+  hasPermission('approval-bypass') ||
   userRequests.value.some(
     (r: any) =>
       r.process_name === 'invoices.lines.update' &&
@@ -423,13 +412,55 @@ const folioEditBlocked = computed(
 
 // ── Forms ─────────────────────────────────────────────────────────────────────
 
+// Pre-fills the request form with what the invoice has today; lines come from the catalog
+const freightLines = ref<{ label: string; value: any }[]>([])
+const folioChangeInitialData = computed(() => ({
+  line_id: lineInvoice.value?.line_id,
+  serie: lineInvoice.value?.serie,
+  folio: lineInvoice.value?.folio,
+  invoice_date: lineInvoice.value?.invoice_date ? String(lineInvoice.value.invoice_date).slice(0, 10) : null,
+}))
+const folioChangeCatalogs = computed(() => ({ lines: freightLines.value }))
+
 const folioForm = ref<any>({ line_id: null, serie: null, folio: null, invoice_date: null, file: null })
-const authorizedForm = ref<any>({ line_id: null, serie: null, folio: null, invoice_date: null, file: null })
 const filters = ref<any>({ masterBl: '', masterbls: [] })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const isPaid = (lineInvRef: any) => lineInvRef.invoice?.is_paid === 1
+const isPartial = (lineInvRef: any) => !isPaid(lineInvRef) && parseFloat(lineInvRef.invoice?.amount_paid ?? 0) > 0
+
+// ── Edit amount (requires active auth; paid invoices become partially paid) ───
+
+const editingAmountId = ref<number | null>(null)
+const editingAmount = ref<any>(null)
+const savingAmount = ref(false)
+
+const startEditAmount = (lineInvRef: any) => {
+  editingAmountId.value = lineInvRef.id
+  editingAmount.value = lineInvRef.amount
+}
+
+const saveRefAmount = async (lineInvRef: any) => {
+  if (!(parseFloat(editingAmount.value) > 0)) {
+    snackbar.add({ type: 'error', text: 'Amount must be greater than zero' }); return
+  }
+  try {
+    savingAmount.value = true
+    await ($api as any).linePayments.updateLineInvoiceRefAmount({
+      id: lineInvRef.id,
+      line_invoice_id: lineInvoice.value.id,
+      amount: editingAmount.value,
+    })
+    snackbar.add({ type: 'success', text: 'Amount updated' })
+    editingAmountId.value = null
+    await getData()
+  } catch (e: any) {
+    snackbar.add({ type: 'error', text: e?.data?.message ?? 'Error updating amount' })
+  } finally {
+    savingAmount.value = false
+  }
+}
 
 const viewPayment = (payment: any) => {
   if (payment.paymentable_type?.includes('BankMovement')) {
@@ -512,42 +543,6 @@ const saveFolioEdit = async () => {
     snackbar.add({ type: 'error', text: e?.data?.message ?? 'Error updating invoice' })
   } finally {
     savingFolio.value = false
-  }
-}
-
-// ── Save authorized folio edit ────────────────────────────────────────────────
-
-const openAuthorizedEditDialog = () => {
-  authorizedForm.value = {
-    line_id: lineInvoice.value.line_id,
-    serie: lineInvoice.value.serie,
-    folio: lineInvoice.value.folio,
-    invoice_date: lineInvoice.value.invoice_date,
-    file: null,
-  }
-  authorizedEditDialog.value = true
-}
-
-const saveAuthorizedEdit = async () => {
-  if (!authorizedForm.value.folio) { snackbar.add({ type: 'error', text: 'Folio is required' }); return }
-  try {
-    savingAuthorized.value = true
-    const body = new FormData()
-    body.append('id', lineInvoice.value.id)
-    body.append('line_id', authorizedForm.value.line_id)
-    body.append('folio', authorizedForm.value.folio)
-    body.append('serie', authorizedForm.value.serie ?? '')
-    body.append('invoice_date', authorizedForm.value.invoice_date)
-    if (authorizedForm.value.file) body.append('file', authorizedForm.value.file instanceof File ? authorizedForm.value.file : authorizedForm.value.file[0])
-    await ($api as any).linePayments.updateLineInvoiceAuthorized(body)
-    snackbar.add({ type: 'success', text: 'Invoice updated' })
-    authorizedEditDialog.value = false
-    await getData()
-    await syncAuth()
-  } catch (e: any) {
-    snackbar.add({ type: 'error', text: e?.data?.message ?? 'Error updating invoice' })
-  } finally {
-    savingAuthorized.value = false
   }
 }
 
@@ -692,6 +687,10 @@ onMounted(async () => {
   try {
     const all: any = await ($api as any).charges.getAll()
     paymentConcepts.value = all.filter((c: any) => lineInvoicePaymentConceptNames.includes(c.name))
+  } catch { /* silent */ }
+  try {
+    const lns: any = await ($api as any).lines.getLines()
+    freightLines.value = ((lns?.data ?? lns ?? []) as any[]).map((l: any) => ({ label: l.name, value: l.id }))
   } catch { /* silent */ }
   startPolling()
 })

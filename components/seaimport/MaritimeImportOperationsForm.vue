@@ -2,7 +2,7 @@
   <div>
     <CancelledReferenceBanner :deleted-at="referenceData?.deleted_at" :reference-number="referenceData?.reference_number" />
     <v-card>
-      <v-tabs v-model="currentTab" bg-color="secondary" class="tabs1" fixed-tabs slider-color="gold" show-arrows>
+      <v-tabs v-model="currentTab" bg-color="secondary" class="tabs1" fixed-tabs slider-color="gold" show-arrows @update:model-value="fetchReference">
         <v-tab text="Details" prepend-icon="mdi-book-open-page-variant" value="1" :disabled="isCancelled"></v-tab>
         <v-tab text="Intermodal" prepend-icon="mdi-truck-cargo-container" value="2" :disabled="isCancelled"> </v-tab>
         <v-tab text="Cancel" prepend-icon="mdi-delete-outline" value="3"> </v-tab>
@@ -13,6 +13,7 @@
             <MaritimeImportEditForm :id="props.id.toString()" />
           </v-window-item>
           <v-window-item value="2">
+            <PendingConsigneeBanner :referencia="referenceData" />
             <SeaImportIntermodalForm :id="props.id" />
           </v-window-item>
           <v-window-item value="3">

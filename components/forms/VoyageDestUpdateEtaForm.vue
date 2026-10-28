@@ -61,7 +61,11 @@
           <div v-if="hasNewEtaDate" class="py-2">
             <div v-if="canSkipNotification" class="flex items-center gap-2">
               <v-checkbox v-model="notifyClient" density="compact" label="Notify client" hide-details />
-              <div class="text-sm text-gray-500">
+              <div v-if="isImport" class="text-sm text-gray-500">
+                No email has been sent to the client about this voyage yet, so the client has not been told any {{ etaLabel }}.
+                Check the box only if you want to notify the client.
+              </div>
+              <div v-else class="text-sm text-gray-500">
                 The {{ etaLabel }} change is less than 5 days ({{ etaDiffDays }} day(s)). Check the box only if you want to notify the client.
               </div>
             </div>
@@ -191,8 +195,13 @@ const etaDiffDays = computed(() => {
 
 const hasNewEtaDate = computed(() => etaDiffDays.value !== null)
 
-// Import always notifies the client; only export may skip it for small changes.
-const canSkipNotification = computed(() => !isImport.value && hasNewEtaDate.value && etaDiffDays.value! < 5)
+// Import always notifies the client, unless no email has been sent about the voyage yet
+// (the backend decides it); export may also skip it for changes under 5 days.
+const canSkipNotification = computed(() => {
+  if (!hasNewEtaDate.value) return false
+  if (isImport.value) return !!voyageDestination.value?.can_skip_client_notice
+  return etaDiffDays.value! < 5
+})
 
 const shouldNotify = computed(() => !canSkipNotification.value || notifyClient.value)
 

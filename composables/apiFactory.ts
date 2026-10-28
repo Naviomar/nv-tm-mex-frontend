@@ -89,6 +89,7 @@ import ContainerDelayRatesModule from '~/repository/modules/catalogs/containerDe
 import AlertsModule from '~/repository/modules/alerts'
 import LegacyModule from '~/repository/modules/legacy'
 import SystemLogsModule from '~/repository/modules/systemLogs'
+import DiagnosticsModule from '~/repository/modules/diagnostics'
 import MailLogsModule from '~/repository/modules/mailLogs'
 import ExportLogsModule from '~/repository/modules/exportLogs'
 import TicketMessagesModule from '~/repository/modules/catalogs/ticketMessages'
@@ -102,6 +103,8 @@ import ControlOperacionesModule from '~/repository/modules/reports/controlOperac
 import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 import UserMailNotificationsModule from '~/repository/modules/userMailNotifications'
+import ViewAsModule from '~/repository/modules/viewAs'
+import AccountSecurityModule from '~/repository/modules/accountSecurity'
 
 interface IApiInstance {
   audit: AuditModule
@@ -200,12 +203,15 @@ interface IApiInstance {
   alerts: AlertsModule
   legacy: LegacyModule
   systemLogs: SystemLogsModule
+  diagnostics: DiagnosticsModule
   mailLogs: MailLogsModule
   exportLogs: ExportLogsModule
   ticketMessages: TicketMessagesModule
   requestCcUsers: RequestCcUsersModule
   userDataRestrictions: UserDataRestrictionsModule
   userMailNotifications: UserMailNotificationsModule
+  viewAs: ViewAsModule
+  accountSecurity: AccountSecurityModule
 }
 
 export function useApiFactory() {
@@ -308,6 +314,7 @@ export function useApiFactory() {
     alerts: new AlertsModule(client),
     legacy: new LegacyModule(client),
     systemLogs: new SystemLogsModule(client),
+    diagnostics: new DiagnosticsModule(client),
     mailLogs: new MailLogsModule(client),
     exportLogs: new ExportLogsModule(client),
     ticketMessages: new TicketMessagesModule(client),
@@ -315,6 +322,8 @@ export function useApiFactory() {
     requestCcUsers: new RequestCcUsersModule(client),
     userDataRestrictions: new UserDataRestrictionsModule(client),
     userMailNotifications: new UserMailNotificationsModule(client),
+    viewAs: new ViewAsModule(client),
+    accountSecurity: new AccountSecurityModule(client),
   }
 
   return modules

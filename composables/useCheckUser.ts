@@ -4,8 +4,18 @@ type User = {
     email: string
     permissions: []
     roles: []
+    // Efectivos (roles + directos - revocados), calculados por el backend.
+    permission_names?: string[]
+    permission_revocations?: { permission_id: number }[]
     departments?: { name: string }[]
 }
+
+/**
+ * What a button, form or page requires. A string is one permission, an array requires ALL of
+ * them, and `{ any: [...] }` requires at least one (e.g. `a|b` alternatives in the backend).
+ * `{ any, all }` can be combined.
+ */
+export type PermissionSpec = string | string[] | { any?: string[]; all?: string[] }
 
 const MARITIME_IMPORT_DEPARTMENT = 'Maritime Import'
 const MARITIME_EXPORT_DEPARTMENT = 'Maritime Export'
@@ -105,16 +115,35 @@ export function useCheckUser() {
     }
 
     function hasPermission(permissionName: string) {
-        // console.log('hasPermission user', user.value)
-        // console.log('user roles', user.value?.roles)
         if (!isAuthenticated.value) return false
         if (isSuperAdminRole()) return true
 
-        const hasDirectPermission = user.value?.permissions.some((p: any) => p.name === permissionName)
+        // El backend ya resta las revocaciones: es la fuente de verdad.
+        const effective = user.value?.permission_names
+        if (effective) return effective.includes(permissionName)
+
+        // Respaldo para una sesión cargada antes de que existiera permission_names:
+        // roles + directos, descontando manualmente los revocados.
+        const revokedIds = new Set((user.value?.permission_revocations ?? []).map((r: any) => r.permission_id))
+        const hasDirectPermission = user.value?.permissions.some((p: any) => p.name === permissionName && !revokedIds.has(p.id))
         const hasRolePermission = user.value?.roles.some((role: any) =>
-            role.permissions.some((p: any) => p.name === permissionName)
+            role.permissions.some((p: any) => p.name === permissionName && !revokedIds.has(p.id))
         )
         return hasDirectPermission || hasRolePermission
+    }
+
+    const hasAnyPermission = (...names: string[]) => names.some((name) => hasPermission(name))
+    const hasAllPermissions = (...names: string[]) => names.every((name) => hasPermission(name))
+
+    // Single entry point for "may this user see/do this?" used by <Can>, the route guard
+    // and v-if checks. An empty spec means no restriction.
+    function can(spec?: PermissionSpec | null): boolean {
+        if (spec === undefined || spec === null) return true
+        if (typeof spec === 'string') return hasPermission(spec)
+        if (Array.isArray(spec)) return hasAllPermissions(...spec)
+        const anyOk = !spec.any?.length || hasAnyPermission(...spec.any)
+        const allOk = !spec.all?.length || hasAllPermissions(...spec.all)
+        return anyOk && allOk
     }
 
     // Voyages catalog: IMPO-only users manage 'I' voyages, EXPO-only users manage 'E'
@@ -134,7 +163,7 @@ export function useCheckUser() {
         isCurrentUser,
         checkUserAndNotify,
         checkUserAndExecute,
-        user, fetchUser, hasPermission, isSuperAdminRole, isAdminRole,
+        user, fetchUser, hasPermission, hasAnyPermission, hasAllPermissions, can, isSuperAdminRole, isAdminRole,
         isRestricted, fetchIsRestricted, resetIsRestricted, canViewReference,
         allowedVoyageImpoExpo
     };

@@ -3,7 +3,9 @@
     <div>
       <div class="flex items-center justify-between w-full">
         <div class="text-xl">Shippers (POL) / Consignees (POD outside Mexico)</div>
-        <v-btn color="primary" to="/configuration/shippers/add"> Add new </v-btn>
+        <Can permission="shippers-create">
+          <v-btn color="primary" to="/configuration/shippers/add"> Add new </v-btn>
+        </Can>
       </div>
     </div>
     <div class="pt-4">

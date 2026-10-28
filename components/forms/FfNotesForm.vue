@@ -303,13 +303,22 @@
                     <EditButton :item="creditDebit" @click="editFfNote(creditDebit)" />
                   </div>
                   <div v-if="creditDebit.checked_at">
-                    <v-btn density="compact" color="green" icon="mdi-lock-outline"></v-btn>
+                    <v-btn
+                      v-if="canToggleNoteLock"
+                      density="compact"
+                      color="green"
+                      icon="mdi-lock-outline"
+                      title="Unlock note"
+                      @click="toggleLock(creditDebit)"
+                    ></v-btn>
+                    <v-btn v-else density="compact" color="green" icon="mdi-lock-outline"></v-btn>
                   </div>
-                  <div v-if="!creditDebit.checked_at">
+                  <div v-if="!creditDebit.checked_at && canToggleNoteLock">
                     <v-btn
                       size="x-small"
                       color="blue-lighten-4"
                       icon="mdi-lock-open-outline"
+                      title="Lock note"
                       @click="toggleLock(creditDebit)"
                     ></v-btn>
                   </div>
@@ -384,12 +393,12 @@
                 <div
                   v-if="
                     !creditDebit.deleted_at &&
-                    (canCancelFfNotes || canReplaceFfNotes) &&
                     (!creditDebit.party_type?.includes('Consignee') || canEditConsigneeNote)
                   "
                   class="flex items-center gap-1"
                 >
-                  <template v-if="canCancelFfNotes">
+                  <!-- The approval policy (not the permission) decides direct vs. request: users without
+                       ff-notes-cancel must still be able to request the cancellation. -->
                     <v-tooltip v-if="isHardBlocked(creditDebit)" :text="hardBlockedMessage(creditDebit)">
                       <template #activator="{ props: tooltipProps }">
                         <v-icon v-bind="tooltipProps" color="grey" size="small">mdi-lock-alert-outline</v-icon>
@@ -397,7 +406,7 @@
                     </v-tooltip>
 
                     <v-btn
-                      v-else-if="canCancelDirect(creditDebit)"
+                      v-else-if="canCancelDirect(creditDebit) && canCancelFfNotes"
                       icon
                       color="red"
                       @click="confirmDelete(creditDebit)"
@@ -420,7 +429,6 @@
                         </v-btn>
                       </template>
                     </ProcessAuthorizationWrapper>
-                  </template>
 
                   <v-tooltip v-if="canReplaceWithDebitNote(creditDebit)" text="Replace with agent Debit Note">
                     <template #activator="{ props: tooltipProps }">
@@ -551,6 +559,8 @@ const { isSuperAdminRole, hasPermission } = useCheckUser()
 // Only Super Admin can edit or delete Consignee-party notes
 const canEditConsigneeNote = computed(() => isSuperAdminRole())
 const canCancelFfNotes = computed(() => hasPermission('ff-notes-cancel'))
+// Mismo permiso que da acceso al SOA, donde también se bloquean/desbloquean notas
+const canToggleNoteLock = computed(() => hasPermission('menu-payments-ff-agents-soa'))
 const canReplaceFfNotes = computed(() => hasPermission('ff-notes-replace-with-debit'))
 
 // Espeja FfNoteService::classifyCancellation() del backend para decidir qué
@@ -1089,7 +1099,12 @@ const closePdfDialog = () => {
 const confirmLockNote = async () => {
   try {
     loadingStore.start()
-    const response = await $api.ffNotes.toggleLockFreightNote(lockNote.value.creditDebit.id)
+    const noteId = lockNote.value.creditDebit.id
+    if (lockNote.value.type === 'unlock') {
+      await $api.ffNotes.unlockFfNote(noteId)
+    } else {
+      await $api.ffNotes.toggleLockFreightNote(noteId)
+    }
     snackbar.add({
       type: 'success',
       text: 'Agent freight forwarder note locked / unlocked',
@@ -1170,7 +1185,14 @@ const saveFfNotes = async () => {
     emits('refresh')
   } catch (e: any) {
     console.error(e)
+    snackbar.add({
+      type: 'error',
+      text: e?.data?.message || e?.response?.data?.message || 'Error saving the credit / debit note.',
+    })
   } finally {
+    // A failed note must not stay queued: the next save would resend it first
+    // and the backend only validates the first item of the payload.
+    creditDebitNotes.value = []
     setTimeout(() => {
       loadingStore.stop()
     }, 250)

@@ -1,79 +1,86 @@
 <template>
   <v-card variant="flat">
-    <v-card-text>
-      <div class="mb-4" @keyup.enter="onClickFilters">
-        <div class="grid grid-cols-6 gap-4">
-          <div v-if="isAdminRole()" class="col-span-2">
-            <AUserSearch v-model="filters.user_id" label="Requested by" />
-          </div>
-          <div class="col-span-2">
-            <v-text-field v-model="filters.id" type="number" density="compact" label="By ID" />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Status"
-              v-model="filters.status"
-              :items="estatuses"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Active / Inactive"
-              v-model="filters.deleted_status"
-              :items="deletedStatus"
-              item-title="name"
-              item-value="value"
-              hide-details
-            />
-          </div>
-          <div class="col-span-2">
-            <v-autocomplete
-              density="compact"
-              label="Process type"
-              v-model="filters.process_name"
-              :items="processTypeItems"
-              item-title="description"
-              item-value="processName"
-              clearable
-              hide-details
-            />
-          </div>
+    <v-card-text class="px-0">
+      <RequestFilterCard @search="onClickFilters" @clear="clearFilters">
+        <v-text-field
+          v-model="filters.search"
+          class="req-filters__wide"
+          density="compact"
+          label="Search"
+          placeholder="Reason, process, target, requester or approver…"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          hide-details
+        />
+        <v-text-field v-model="filters.id" type="number" density="compact" label="Request ID" hide-details />
+        <v-autocomplete
+          density="compact"
+          label="Process type"
+          v-model="filters.process_name"
+          :items="processTypeItems"
+          item-title="description"
+          item-value="processName"
+          clearable
+          hide-details
+        />
+        <div v-if="isAdminRole()">
+          <AUserSearch v-model="filters.user_id" label="Requested by" />
         </div>
-        <div class="grid grid-cols-1 pt-4">
-          <div class="flex gap-2">
-            <v-btn size="small" color="secondary" @click="clearFilters"> Clear </v-btn>
-            <v-btn size="small" color="primary" @click="onClickFilters"> Search </v-btn>
-          </div>
+        <v-autocomplete
+          density="compact"
+          label="Records"
+          v-model="filters.deleted_status"
+          :items="deletedStatus"
+          item-title="name"
+          item-value="value"
+          hide-details
+        />
+        <template #quick>
+          <v-chip
+            v-for="opt in statusOptions"
+            :key="opt.value ?? 'all'"
+            size="small"
+            :color="opt.color"
+            :variant="filters.status === opt.value ? 'flat' : 'tonal'"
+            @click="setStatus(opt.value)"
+          >{{ opt.label }}</v-chip>
+        </template>
+      </RequestFilterCard>
+
+      <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+        <div class="text-caption text-medium-emphasis">
+          Showing {{ authRequests.from ?? 0 }}–{{ authRequests.to ?? 0 }} of {{ authRequests.total ?? 0 }} requests
         </div>
+        <v-pagination
+          v-model="authRequests.current_page"
+          :length="authRequests.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
       </div>
 
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
-      <div class="text-xs">
-        Showing {{ authRequests.from }} to {{ authRequests.to }} from {{ authRequests.total }} total records
-      </div>
-      <v-table density="compact">
+      <v-card variant="flat" border rounded="lg">
+      <v-table density="comfortable" class="req-table" fixed-header>
+        <colgroup>
+          <col style="width: 56px" />
+          <col style="width: 150px" />
+          <col style="width: 280px" />
+          <col style="width: 180px" />
+          <col style="width: 320px" />
+          <col style="width: 190px" />
+          <col style="width: 130px" />
+        </colgroup>
         <thead>
           <tr>
-            <th class="text-left" id="request-id">ID</th>
-            <th class="text-left" id="request-chat">Chat</th>
-            <th class="text-left" id="request-user">Requested by</th>
-            <th class="text-left" id="request-process">Process</th>
-            <th class="text-left" id="request-reason">Reason</th>
-            <th class="text-left" id="request-status">Status</th>
-            <th class="text-left" id="request-expires">Expiration date</th>
-            <th class="text-left" id="request-granted-by">Granted by</th>
-            <th class="text-left" id="request-created-at">Created at</th>
+            <th class="text-left">ID</th>
+            <th class="text-left">Actions</th>
+            <th class="text-left">Process</th>
+            <th class="text-left">Requested by</th>
+            <th class="text-left">Reason &amp; details</th>
+            <th class="text-left">Status</th>
+            <th class="text-left">Valid until</th>
           </tr>
         </thead>
         <tbody>
@@ -86,10 +93,10 @@
               'bg-green-50! dark:bg-green-950!': !authRequest.deleted_at && isPendingToGrant(authRequest),
             }"
           >
-            <td>{{ authRequest.id }}</td>
+            <td class="text-medium-emphasis">{{ authRequest.id }}</td>
             <td>
               <div class="d-flex gap-1">
-                <v-btn icon size="small" variant="text" color="primary" @click="openChat(authRequest)">
+                <v-btn icon size="small" variant="text" color="primary" title="Open chat" @click="openChat(authRequest)">
                   <v-badge v-if="authRequest.unread_count" :content="authRequest.unread_count" color="error" overlap>
                     <v-icon>mdi-message-text-outline</v-icon>
                   </v-badge>
@@ -100,8 +107,8 @@
                   icon
                   size="small"
                   variant="text"
-                  color="primary"
-                  title="Respond"
+                  color="success"
+                  title="Approve or deny"
                   @click="showFormGrant(authRequest)"
                 >
                   <v-icon>mdi-check-circle-outline</v-icon>
@@ -112,7 +119,7 @@
                   size="small"
                   variant="text"
                   color="error"
-                  title="Cancel"
+                  title="Cancel request"
                   @click="showFormCancel(authRequest)"
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
@@ -130,12 +137,17 @@
                 </v-btn>
               </div>
             </td>
-            <td class="whitespace-nowrap">{{ authRequest.user?.name }}</td>
-            <td class="whitespace-nowrap">
-              {{ authRequest.resolved_display }}
+            <td>
+              <div class="cell-title">{{ authRequest.resolved_display }}</div>
             </td>
             <td>
-              <div class="whitespace-nowrap">{{ authRequest.reason || 'No comments' }}</div>
+              <UserInfoBadge :item="authRequest" createdByKey="user_id">
+                <div class="cell-title">{{ authRequest.user?.name }}</div>
+                <div class="cell-sub">{{ formatDateString(authRequest.created_at) }}</div>
+              </UserInfoBadge>
+            </td>
+            <td>
+              <ExpandableText :text="authRequest.reason" :lines="3" empty="No comments" />
               <v-btn
                 v-if="authRequest.process_data"
                 size="x-small"
@@ -156,27 +168,38 @@
                 />
               </div>
             </td>
-
             <td>
-              <DecisionChip :decision="authRequest.decision" :reason="authRequest.response" :siga-link="authRequest.siga_ticket_link" />
+              <RequestStatusCell
+                :decision="authRequest.decision"
+                :used-at="authRequest.used_at"
+                :expired="isExpired(authRequest)"
+                :reason="authRequest.deleted_at ? authRequest.reason_deleted : authRequest.decision !== 'pending' ? authRequest.response : null"
+                :withdrawn="!!authRequest.deleted_at"
+                :siga-link="authRequest.siga_ticket_link"
+              />
+              <div v-if="authRequest.grantor?.name" class="cell-sub mt-1">by {{ authRequest.grantor.name }}</div>
             </td>
-            <td>{{ formatDateString(authRequest.expires_at) }}</td>
-            <td class="whitespace-nowrap">{{ authRequest.grantor?.name }}</td>
-            <td class="whitespace-nowrap">
-              <UserInfoBadge :item="authRequest" createdByKey="user_id">
-                {{ formatDateString(authRequest.created_at) }}
-              </UserInfoBadge>
+            <td>
+              <span v-if="authRequest.expires_at">{{ formatDateString(authRequest.expires_at) }}</span>
+              <span v-else class="text-disabled">—</span>
             </td>
+          </tr>
+          <tr v-if="!authRequests.data?.length">
+            <td colspan="7" class="text-center py-8 text-medium-emphasis">No requests match the current filters.</td>
           </tr>
         </tbody>
       </v-table>
-      <v-pagination
-        v-model="authRequests.current_page"
-        :length="authRequests.last_page"
-        rounded="circle"
-        density="compact"
-        @update:model-value="onClickPagination"
-      ></v-pagination>
+      </v-card>
+      <div class="d-flex justify-end mt-2">
+        <v-pagination
+          v-model="authRequests.current_page"
+          :length="authRequests.last_page"
+          rounded="circle"
+          density="compact"
+          :total-visible="7"
+          @update:model-value="onClickPagination"
+        ></v-pagination>
+      </div>
 
       <GrantDenyDialog
         v-model="showGrantDialog"
@@ -191,7 +214,7 @@
           <template v-if="form.auth_request?.process_data">
             <v-divider class="my-2" />
             <div class="text-sm font-semibold mb-1">Request details:</div>
-            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" />
+            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" :summary="form.auth_request.charge_summary" />
           </template>
         </template>
       </GrantDenyDialog>
@@ -212,7 +235,7 @@
               <span class="font-medium">Comments:</span> {{ detailsRequest.reason || 'No comments' }}
             </div>
             <v-divider class="mb-3" />
-            <ProcessRequestDetails :process-data="detailsRequest.process_data_resolved ?? detailsRequest.process_data" />
+            <ProcessRequestDetails :process-data="detailsRequest.process_data_resolved ?? detailsRequest.process_data" :summary="detailsRequest.charge_summary" />
           </v-card-text>
           <v-card-actions>
             <v-spacer />
@@ -317,6 +340,23 @@ const estatuses = ref<any>([
   { name: 'Denied', value: 'denied' },
 ])
 
+useDebouncedSearch(() => filters.value.search, () => onClickFilters())
+
+const statusOptions = [
+  { value: null, label: 'All', color: 'primary' },
+  { value: 'pending', label: 'Waiting for approval', color: 'warning' },
+  { value: 'granted', label: 'Approved', color: 'success' },
+  { value: 'denied', label: 'Denied', color: 'error' },
+]
+
+const setStatus = (value: string | null) => {
+  filters.value.status = value
+  onClickFilters()
+}
+
+const isExpired = (authRequest: any) =>
+  !authRequest.used_at && !!authRequest.expires_at && new Date(authRequest.expires_at) < new Date()
+
 const formCancel = ref<any>({
   auth_request: null,
   cancel_reason: '',
@@ -420,6 +460,10 @@ const grantAuthorization = async (payload: any) => {
     console.error(e)
     const msg = e?.response?._data?.message || 'Error responding to authorization request'
     snackbar.add({ type: 'error', text: msg })
+    if (e?.response?._data?.code === 'request_withdrawn') {
+      closeGrantDialog()
+      await getAuthProcessRequests()
+    }
   } finally {
     setTimeout(() => {
       loadingStore.stop()

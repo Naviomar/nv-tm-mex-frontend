@@ -368,6 +368,7 @@ const updateCharge = async (charge: any) => {
       charge: charge,
       invoice_id: props.invoice.id,
       invoice_type: props.invoiceType,
+      service_type: props.serviceType,
     }
     await $api.invoices.updateChargeProforma(body, props.isAssisted)
     chargeForm.value = {

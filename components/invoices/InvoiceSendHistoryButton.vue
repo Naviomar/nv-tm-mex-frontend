@@ -117,6 +117,15 @@ const fetchHistory = async () => {
 // primer fetch no vio.
 onMounted(fetchHistory)
 
+// Las tablas de facturas keyean las filas por índice, así que al buscar/filtrar
+// Vue reutiliza esta instancia para otra factura sin volver a montarla; sin
+// este watch se quedaba mostrando el historial (o "NOT SENT") de la fila anterior.
+watch(() => props.invoiceId, () => {
+  logs.value = []
+  hasHistory.value = null
+  fetchHistory()
+})
+
 const open = async () => {
   dialogVisible.value = true
   loading.value = true

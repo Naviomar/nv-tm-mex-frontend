@@ -62,7 +62,30 @@
               />
             </div>
             <div class="mb-4">
-              <InputText name="eta_date" type="date" density="compact" :label="labelEtaDate" :readonly="values.locked_at" :append-inner-icon="values.locked_at ? 'mdi-lock' : undefined" />
+              <InputText
+                name="eta_date"
+                type="date"
+                density="compact"
+                :label="labelEtaDate"
+                :readonly="!canEditEta"
+                :hint="
+                  canEditEta
+                    ? 'No client has received an email about this voyage yet, so it can be corrected here.'
+                    : 'It is changed from Update ETA/ETD, which logs the change and notifies the client.'
+                "
+                persistent-hint
+              />
+              <v-btn
+                v-if="!canEditEta"
+                size="small"
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-calendar-edit"
+                class="mt-1"
+                @click="router.push(`/configuration/voyages/destination-${id}/update-eta`)"
+              >
+                Change {{ labelEtaDate }}
+              </v-btn>
             </div>
             <div class="mb-4">
               <InputText name="arrival_date" type="date" density="compact" :label="labelAtaDate" />
@@ -245,6 +268,9 @@ const addDestination = async () => {
     }, 250)
   }
 }
+
+// The backend only lets the edit screen move the ETA while no client has been emailed about the voyage
+const canEditEta = computed(() => !values.locked_at && !!data.value.destination?.can_skip_client_notice)
 
 const labelEtaDate = computed(() => {
   if (data.value.voyage?.impoExpo === 'I') return 'ETA'

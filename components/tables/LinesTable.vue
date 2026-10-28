@@ -75,7 +75,7 @@
             <tr v-for="(line, index) in lines.data" :key="`line-${index}`" :class="{ 'deleted-row': line.deleted_at }">
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="line" @click="viewLine(line)" />
+                  <ViewButton permission="lines-view" :item="line" @click="viewLine(line)" />
                   <EditButton :item="line" permission="lines-edit" @click="editLine(line)" />
                   <TrashButton :item="line" permission="lines-delete" @click="showConfirmDelete" />
                   <v-tooltip v-if="canViewSystemConfig" text="System Config">

@@ -1,6 +1,7 @@
 <template>
   <div>
     <CancelledReferenceBanner :deleted-at="referencia?.deleted_at" :reference-number="referencia?.reference_number" />
+    <PendingConsigneeBanner :referencia="referencia" />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <v-card class="mb-4">
@@ -65,7 +66,12 @@
               <div>{{ formatDateString(referencia.created_at) }}</div>
 
               <div>Shipper</div>
-              <div>{{ referencia.consignee?.name }}</div>
+              <div>
+                <v-chip v-if="referencia.id && !referencia.consignee_id" color="error" size="small" variant="flat" prepend-icon="mdi-account-alert-outline">
+                  NOT REGISTERED
+                </v-chip>
+                <span v-else>{{ referencia.consignee?.name }}</span>
+              </div>
 
               <div>Notify</div>
               <div>{{ referencia.notify }}</div>
@@ -155,6 +161,7 @@
             <v-table density="compact">
               <thead>
                 <tr>
+                  <th class="text-left">#</th>
                   <th class="text-left">Container #</th>
                   <th class="text-left">Type</th>
                   <th class="text-left">m<sup>3</sup></th>
@@ -166,6 +173,7 @@
               </thead>
               <tbody>
                 <tr v-for="(item, index) in referencia.containers" :key="`container-${index}`">
+                  <td>{{ index + 1 }}</td>
                   <td>
                     <div class="flex items-center gap-2">
                       <div v-if="item.demurrage">

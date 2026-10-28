@@ -17,6 +17,7 @@
               <th class="font-bold!">Charge</th>
               <th class="font-bold!">Empty return date</th>
               <th class="font-bold!">Amount</th>
+              <th class="font-bold!">Line cost</th>
               <th class="font-bold!">Last calculation</th>
               <th class="font-bold!">Invoice status</th>
             </tr>
@@ -34,6 +35,10 @@
                   {{ formatToCurrency(row.container.demurrage.amount) }} USD
                   {{ Number(row.container.demurrage.amount_iva) > 0 ? '+ IVA' : '' }}
                 </template>
+                <template v-else>-</template>
+              </td>
+              <td>
+                <template v-if="lineCost(row.container) > 0">{{ formatToCurrency(lineCost(row.container)) }} USD</template>
                 <template v-else>-</template>
               </td>
               <td>
@@ -73,6 +78,15 @@ const props = defineProps({
     default: () => ({}),
   },
 })
+
+// Costo naviera capturado en el módulo de demoras (con IVA)
+const lineCost = (container: any) => {
+  const d = container.demurrage
+  const cost = parseFloat(d?.line_cost || 0)
+  const iva = parseFloat(d?.line_iva || 0)
+  if (iva > 0) return cost + iva
+  return d?.line_has_iva ? cost * 1.16 : cost
+}
 
 const rows = computed(() => {
   const containers = props.referencia.containers ?? []

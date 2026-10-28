@@ -309,6 +309,23 @@ class UsersModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/update-user-permissions/${userId}/department-coordinator`, fetchOptions)
   }
 
+  /**
+   * Concede, revoca o restablece permisos de un usuario. La revocación gana sobre los roles.
+   * `department_id` limita la acción al scope admin de ese departamento.
+   */
+  async updatePermissionOverrides(
+    userId: number | string,
+    body: { grant?: number[]; revoke?: number[]; clear?: number[]; reason?: string | null; department_id?: number | string | null },
+    fetchOptions?: FetchOptions
+  ) {
+    fetchOptions = {
+      method: 'POST',
+      body: JSON.stringify(body),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${userId}/permission-overrides`, fetchOptions)
+  }
+
   async deleteUserPermission(userId: string, permission: string, fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/delete-user-permission/${userId}/permission/${permission}`, fetchOptions)
   }

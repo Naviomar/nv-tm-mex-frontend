@@ -22,7 +22,9 @@
               label="Select a name"
               return-object
             />
-            <v-btn size="small" density="compact" color="grey" @click="saveCfdiName">Save</v-btn>
+            <Can permission="customer-invoices-edit">
+              <v-btn size="small" density="compact" color="grey" @click="saveCfdiName">Save</v-btn>
+            </Can>
           </div>
         </div>
       </div>
@@ -69,11 +71,16 @@ const hasOtherChargeName = computed(() => {
   return props.invoiceCharge.charge_name != null
 })
 
+const containerNumber = computed(() => {
+  return props.invoiceCharge.chargeable?.reference_container?.container_number ?? null
+})
+
 const chargeName = computed(() => {
-  if (props.invoiceCharge.charge_name != null) {
-    return props.invoiceCharge.charge_name
+  const name = props.invoiceCharge.charge_name ?? props.invoiceCharge.charge?.name
+  if (containerNumber.value && !String(name ?? '').includes(containerNumber.value)) {
+    return `${name} ${containerNumber.value}`
   }
-  return props.invoiceCharge.charge?.name
+  return name
 })
 
 const saveCfdiName = async () => {

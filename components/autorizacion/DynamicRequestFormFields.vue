@@ -16,9 +16,9 @@
           @update:model-value="emit('update:modelValue', { ...localValues })"
         />
 
-        <!-- text / number -->
+        <!-- text / number / date -->
         <v-text-field
-          v-else-if="field.type === 'text' || field.type === 'number'"
+          v-else-if="field.type === 'text' || field.type === 'number' || field.type === 'date'"
           v-model="localValues[field.name]"
           :label="field.label"
           :type="field.type"

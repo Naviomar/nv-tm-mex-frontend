@@ -198,7 +198,7 @@
               </div>
               <div v-if="invoiceTm.is_free_format == 0">
                 <v-chip
-                  v-for="(service, index) in invoiceTm.services"
+                  v-for="(service, index) in (invoiceTm.cancelled_at && invoiceTm.services_all ? invoiceTm.services_all : invoiceTm.services)"
                   :key="`service-${index}`"
                   size="small"
                   color="primary"
@@ -262,7 +262,7 @@
             <td>
               <div class="grid grid-cols-1 gap-1 overflow-hidden">
                 <div
-                  v-for="(charge, index) in invoiceTm.invoice_charges"
+                  v-for="(charge, index) in getInvoiceCharges(invoiceTm)"
                   :key="`charge-${index}`"
                   class="text-xs text-nowrap text-ellipsis"
                 >
@@ -411,13 +411,29 @@ const onClickFilters = async () => {
   await getData()
 }
 
+// Una factura cancelada ya no tiene cargos activos: sus conceptos y total salen de los cargos cancelados.
+const useCancelledCharges = (invoice: any) => !!invoice.cancelled_at && !!invoice.invoice?.charges_cancelled?.length
+
+const getInvoiceCharges = (invoice: any) => {
+  return useCancelledCharges(invoice) ? invoice.invoice.charges_cancelled : invoice.invoice_charges
+}
+
+const getInvoiceTotal = (invoice: any) => {
+  if (!useCancelledCharges(invoice)) return invoice.invoice_total
+  return invoice.invoice.charges_cancelled.reduce((acc: any, charge: any) => {
+    acc[charge.currency_id] = (acc[charge.currency_id] || 0) + parseFloat(charge.amount) + parseFloat(charge.amount_iva || 0)
+    return acc
+  }, {})
+}
+
 const getCurrenciesTotal = (invoice: any) => {
-  if (!invoice.invoice_total) return []
-  const totales = Object.keys(invoice.invoice_total).map((currency_id: any) => {
+  const invoiceTotal = getInvoiceTotal(invoice)
+  if (!invoiceTotal) return []
+  const totales = Object.keys(invoiceTotal).map((currency_id: any) => {
     // console.log('currency_id', currency_id)
-    // console.log('total', invoice.invoice_total[currency_id])
+    // console.log('total', invoiceTotal[currency_id])
     const currency = currencies.find((c) => c.id == currency_id)
-    return `${currency?.name}: ${formatToCurrency(invoice.invoice_total[currency_id])}`
+    return `${currency?.name}: ${formatToCurrency(invoiceTotal[currency_id])}`
   })
   return totales
 }

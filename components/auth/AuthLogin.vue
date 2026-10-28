@@ -31,63 +31,119 @@
             </p>
           </div>
 
-          <div class="mb-6">
-            <label class="d-block text-caption font-weight-bold mb-2 pl-1 text-dynamic-label">
-              Email Address
-            </label>
+          <!-- Paso 2: código de la app autenticadora (o de recuperación) -->
+          <div v-if="twoFactor.active">
+            <div class="text-center mb-6">
+              <v-icon size="36" class="text-dynamic-title">mdi-cellphone-key</v-icon>
+              <p class="text-body-2 mt-2 text-dynamic-subtitle">
+                {{ twoFactor.useRecovery
+                  ? 'Enter one of your recovery codes.'
+                  : 'Enter the 6-digit code from your authenticator app.' }}
+              </p>
+            </div>
+            <v-otp-input
+              v-if="!twoFactor.useRecovery"
+              v-model="twoFactor.code"
+              length="6"
+              type="number"
+              autofocus
+              :disabled="loadingStore.loading"
+              @finish="submitTwoFactor"
+            />
             <v-text-field
-              v-model="email"
-              name="email"
-              density="comfortable"
-              placeholder="e.g. name@company.com"
-              prepend-inner-icon="mdi-email-outline"
+              v-else
+              v-model="twoFactor.recoveryCode"
+              placeholder="xxxxxxxxxx-xxxxxxxxxx"
+              prepend-inner-icon="mdi-key-chain-variant"
               variant="outlined"
               class="soft-input"
-              hide-details="auto"
               rounded="lg"
-            ></v-text-field>
-          </div>
-
-          <div class="mb-8">
-            <div class="d-flex justify-space-between align-center mb-2 pl-1">
-              <label class="text-caption font-weight-bold text-dynamic-label">
-                Password
-              </label>
-              <a 
-                class="text-caption font-weight-bold text-decoration-none cursor-pointer hover-underline text-dynamic-link"
-                @click="onClickForgotPassword"
-              >
-                Forgot password?
+              autofocus
+              hide-details
+              @keyup.enter="submitTwoFactor"
+            />
+            <div v-if="twoFactor.error" class="text-error text-caption mt-2 text-center">{{ twoFactor.error }}</div>
+            <v-btn
+              block
+              height="52"
+              class="text-body-2 font-weight-bold rounded-lg elevation-2 custom-btn-hover btn-dynamic mt-6"
+              :loading="loadingStore.loading"
+              @click="submitTwoFactor"
+            >
+              Verify
+            </v-btn>
+            <div class="d-flex justify-space-between mt-4">
+              <a class="text-caption font-weight-bold cursor-pointer hover-underline text-dynamic-link" @click="toggleRecovery">
+                {{ twoFactor.useRecovery ? 'Use authenticator code' : 'Use a recovery code' }}
+              </a>
+              <a class="text-caption font-weight-bold cursor-pointer hover-underline text-dynamic-link" @click="resetTwoFactor">
+                Back
               </a>
             </div>
-            
-            <v-text-field
-              v-model="password"
-              name="password"
-              :append-inner-icon="visible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-              :type="visible ? 'text' : 'password'"
-              density="comfortable"
-              placeholder="Enter your password"
-              prepend-inner-icon="mdi-lock-outline"
-              variant="outlined"
-              class="soft-input"
-              hide-details="auto"
-              rounded="lg"
-              @click:append-inner="visible = !visible"
-              @keyup.enter="handleLogin"
-            ></v-text-field>
           </div>
 
-          <v-btn 
-            block 
-            height="52"
-            class="text-body-2 font-weight-bold rounded-lg elevation-2 custom-btn-hover btn-dynamic"
-            :loading="loadingStore.loading"
-            @click="handleLogin"
-          > 
-            Sign In
-            <v-icon end icon="mdi-arrow-right-circle-outline" class="ml-2"></v-icon>
-          </v-btn>
+          <template v-else>
+          <form @submit.prevent="handleLogin">
+            <div class="mb-6">
+              <label class="d-block text-caption font-weight-bold mb-2 pl-1 text-dynamic-label">
+                Email Address
+              </label>
+              <v-text-field
+                v-model="email"
+                name="email"
+                autocomplete="username"
+                density="comfortable"
+                placeholder="e.g. name@company.com"
+                prepend-inner-icon="mdi-email-outline"
+                variant="outlined"
+                class="soft-input"
+                hide-details="auto"
+                rounded="lg"
+              ></v-text-field>
+            </div>
+
+            <div class="mb-8">
+              <div class="d-flex justify-space-between align-center mb-2 pl-1">
+                <label class="text-caption font-weight-bold text-dynamic-label">
+                  Password
+                </label>
+                <a 
+                  class="text-caption font-weight-bold text-decoration-none cursor-pointer hover-underline text-dynamic-link"
+                  @click="onClickForgotPassword"
+                >
+                  Forgot password?
+                </a>
+              </div>
+            
+              <v-text-field
+                v-model="password"
+                name="password"
+                autocomplete="current-password"
+                :append-inner-icon="visible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                :type="visible ? 'text' : 'password'"
+                density="comfortable"
+                placeholder="Enter your password"
+                prepend-inner-icon="mdi-lock-outline"
+                variant="outlined"
+                class="soft-input"
+                hide-details="auto"
+                rounded="lg"
+                @click:append-inner="visible = !visible"
+              ></v-text-field>
+            </div>
+
+            <v-btn 
+              block 
+              height="52"
+              type="submit"
+              class="text-body-2 font-weight-bold rounded-lg elevation-2 custom-btn-hover btn-dynamic"
+              :loading="loadingStore.loading"
+            >
+              Sign In
+              <v-icon end icon="mdi-arrow-right-circle-outline" class="ml-2"></v-icon>
+            </v-btn>
+          </form>
+          </template>
 
         </v-card>
       </div>
@@ -100,7 +156,8 @@
 import { loginSchema } from '~/forms/authSchemas'
 import { useField, useForm } from 'vee-validate'
 
-const { login, isAuthenticated } = useSanctumAuth()
+const { isAuthenticated, refreshIdentity } = useSanctumAuth()
+const sanctumClient = useSanctumClient()
 const router = useRouter()
 const route = useRoute()
 const loadingStore = useLoadingStore()
@@ -123,26 +180,75 @@ function onClickForgotPassword() {
   router.push('/system/auth/forgot-password')
 }
 
+const twoFactor = reactive({ active: false, useRecovery: false, code: '', recoveryCode: '', error: '' })
+
+// El login se hace a mano (no con login() de nuxt-auth-sanctum) porque con doble factor el backend
+// responde { two_factor: true } y la sesión no existe hasta validar el código.
 const onSuccess = async (values: any) => {
   try {
     loadingStore.start()
-    await login(values)
-    
-    if (import.meta.client) {
-        localStorage.setItem('has_logged_in_before', 'true')
+    const response: any = await sanctumClient('/login', { method: 'post', body: values })
+    if (response?.two_factor) {
+      twoFactor.active = true
+      return
     }
-
-    const { user } = useSanctumAuth() as any
-    if (user.value?.avatar_config) {
-      avatarStore.setInitialValues(user.value.avatar_config)
-    }
-    snackbar.add({ type: 'success', text: 'Welcome back!' })
+    await finishLogin()
   } catch (e: any) {
     console.error(e)
     apiErrorStore.addError(e.response)
   } finally {
     setTimeout(() => { loadingStore.stop() }, 250)
   }
+}
+
+async function submitTwoFactor() {
+  const body = twoFactor.useRecovery ? { recovery_code: twoFactor.recoveryCode.trim() } : { code: twoFactor.code }
+  if (!(body.code?.length === 6 || body.recovery_code)) return
+  try {
+    loadingStore.start()
+    twoFactor.error = ''
+    await sanctumClient('/two-factor-challenge', { method: 'post', body })
+    await finishLogin()
+  } catch (e: any) {
+    twoFactor.code = ''
+    if (e?.response?.status === 429) {
+      twoFactor.error = e?.data?.errors?.email?.[0] || 'Too many attempts. Wait a minute and try again.'
+    } else if (e?.response?.status === 422) {
+      twoFactor.error = 'Invalid code.'
+    } else {
+      // La sesión del reto expiró: se vuelve a pedir la contraseña.
+      resetTwoFactor()
+      apiErrorStore.addError(e.response)
+    }
+  } finally {
+    setTimeout(() => { loadingStore.stop() }, 250)
+  }
+}
+
+function toggleRecovery() {
+  twoFactor.useRecovery = !twoFactor.useRecovery
+  twoFactor.error = ''
+}
+
+function resetTwoFactor() {
+  Object.assign(twoFactor, { active: false, useRecovery: false, code: '', recoveryCode: '', error: '' })
+}
+
+async function finishLogin() {
+  await refreshIdentity()
+
+  if (import.meta.client) {
+    localStorage.setItem('has_logged_in_before', 'true')
+  }
+
+  const { user } = useSanctumAuth() as any
+  if (user.value?.avatar_config) {
+    avatarStore.setInitialValues(user.value.avatar_config)
+  }
+  snackbar.add({ type: 'success', text: 'Welcome back!' })
+
+  const redirect = route.query.redirect as string
+  await navigateTo(redirect && redirect.startsWith('/') ? redirect : '/')
 }
 
 function onInvalidSubmit() {

@@ -188,14 +188,16 @@
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn color="grey" variant="text" @click="showPreviewModal = false">Cancel</v-btn>
-          <v-btn
-            color="primary"
-            @click="confirmSchedule"
-            :disabled="previewData.some((d) => d.error)"
-            prepend-icon="mdi-check-circle"
-          >
-            Confirm & Process
-          </v-btn>
+          <Can permission="line-payments-create">
+            <v-btn
+              color="primary"
+              @click="confirmSchedule"
+              :disabled="previewData.some((d) => d.error)"
+              prepend-icon="mdi-check-circle"
+            >
+              Confirm & Process
+            </v-btn>
+          </Can>
         </v-card-actions>
       </v-card>
     </v-dialog>

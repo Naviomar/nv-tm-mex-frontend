@@ -7,56 +7,25 @@
         </v-avatar>
         <div>
           <div class="text-h6 font-weight-bold">Department Roles</div>
-          <div class="text-caption text-grey-darken-1">Manage sub-roles and permissions for this department</div>
+          <div class="text-caption text-medium-emphasis">
+            <strong>Admin</strong> roles set the limit of what this department can grant.
+            <strong>Member</strong> roles are the profiles you give to people.
+          </div>
         </div>
       </div>
-      <v-btn color="primary" prepend-icon="mdi-shield-plus" size="small" @click="openCreateDialog">
-        Create Sub-Role
-      </v-btn>
+      <div class="d-flex gap-2">
+        <Can permission="departments-edit">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-link-variant" size="small" @click="linkDialog.show = true">
+            Link existing role
+          </v-btn>
+        </Can>
+        <Can permission="system-admin-department">
+          <v-btn color="primary" prepend-icon="mdi-shield-plus" size="small" @click="openCreateDialog">
+            Create member role
+          </v-btn>
+        </Can>
+      </div>
     </div>
-
-    <!-- Link Existing Role -->
-    <v-card variant="flat" class="mb-4 rounded-lg" bg-color="grey-lighten-5">
-      <v-card-title class="text-subtitle-1 font-weight-bold py-4">
-        <v-icon class="mr-2" color="primary">mdi-link-variant</v-icon>
-        Link Existing Role to Department
-      </v-card-title>
-      <v-card-text>
-        <v-row dense>
-          <v-col cols="12" md="5">
-            <v-autocomplete
-              v-model="linkForm.roleId"
-              :items="allRoles"
-              item-title="name"
-              item-value="id"
-              label="Select role"
-              density="compact"
-              variant="outlined"
-              hide-details
-              clearable
-            />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-autocomplete
-              v-model="linkForm.roleType"
-              :items="roleTypes"
-              item-title="label"
-              item-value="value"
-              label="Role type"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-btn color="primary" :disabled="!linkForm.roleId || !linkForm.roleType" @click="linkExistingRole">
-              <v-icon start>mdi-link</v-icon>
-              Link Role
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
 
     <!-- Roles list -->
     <div v-if="roles.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
@@ -77,8 +46,8 @@
               </v-avatar>
               <div>
                 <div class="font-weight-medium">{{ role.name }}</div>
-                <div class="text-caption text-grey-darken-1">
-                  {{ role.permissions?.length ?? 0 }} permissions
+                <div class="text-caption text-medium-emphasis">
+                  {{ role.permissions?.length ?? 0 }} permissions · {{ membersWithRole(role.id) }} member(s)
                 </div>
               </div>
             </div>
@@ -137,82 +106,52 @@
       No roles linked to this department yet.
     </v-alert>
 
-    <!-- Assign Role to User Section -->
-    <v-card variant="flat" class="rounded-lg" bg-color="blue-grey-lighten-5">
-      <v-card-text class="pa-4">
-        <div class="d-flex align-center gap-2 mb-4">
-          <v-avatar color="success" size="32" rounded="lg">
-            <v-icon size="18" color="white">mdi-account-key</v-icon>
-          </v-avatar>
-          <div>
-            <div class="text-subtitle-1 font-weight-bold">Assign Role to User</div>
-            <div class="text-caption text-grey-darken-1">Grant a department role to a linked member</div>
+    <div class="text-caption text-medium-emphasis">
+      <v-icon size="14">mdi-information-outline</v-icon>
+      To give or remove a role for someone, use the <strong>+</strong> next to their roles in the Members tab.
+    </div>
+
+    <!-- Dialog: Link existing role -->
+    <v-dialog v-model="linkDialog.show" max-width="520" persistent>
+      <v-card class="rounded-lg">
+        <v-toolbar color="primary" density="comfortable" class="rounded-t-lg">
+          <v-toolbar-title>
+            <v-icon class="mr-2">mdi-link-variant</v-icon>
+            Link existing role
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="linkDialog.show = false"><v-icon>mdi-close</v-icon></v-btn>
+        </v-toolbar>
+        <v-card-text class="pt-4">
+          <v-autocomplete
+            v-model="linkForm.roleId"
+            :items="allRoles"
+            item-title="name"
+            item-value="id"
+            label="Role"
+            density="compact"
+            variant="outlined"
+            clearable
+          />
+          <v-btn-toggle v-model="linkForm.roleType" mandatory color="primary" density="comfortable" class="mb-2">
+            <v-btn value="admin" prepend-icon="mdi-shield-crown">Admin</v-btn>
+            <v-btn value="member" prepend-icon="mdi-shield-account">Member</v-btn>
+          </v-btn-toggle>
+          <div class="text-caption text-medium-emphasis">
+            {{ linkForm.roleType === 'admin'
+              ? 'Admin: its permissions become the limit of what this department can grant.'
+              : 'Member: a profile you can assign to people in this department.' }}
           </div>
-        </div>
-        <v-row dense align="center">
-          <v-col cols="12" md="5">
-            <v-autocomplete
-              v-model="assignForm.userId"
-              :items="props.linkedUsers"
-              item-title="email"
-              item-value="id"
-              label="Select user"
-              density="compact"
-              variant="outlined"
-              hide-details
-              clearable
-            >
-              <template #item="{ props: aProps, item }">
-                <v-list-item v-bind="aProps">
-                  <template #prepend>
-                    <v-avatar size="28" color="primary">
-                      <span class="text-white text-caption">{{ getInitials(item.raw.name) }}</span>
-                    </v-avatar>
-                  </template>
-                  <v-list-item-subtitle>{{ item.raw.name }}</v-list-item-subtitle>
-                </v-list-item>
-              </template>
-            </v-autocomplete>
-          </v-col>
-          <v-col cols="12" md="5">
-            <v-autocomplete
-              v-model="assignForm.roleId"
-              :items="assignFormRoleOptions"
-              item-title="name"
-              item-value="id"
-              label="Select role"
-              density="compact"
-              variant="outlined"
-              hide-details
-              clearable
-            >
-              <template #item="{ props: aProps, item }">
-                <v-list-item v-bind="aProps">
-                  <template #prepend>
-                    <v-icon :color="item.raw.role_type === 'admin' ? 'amber-darken-2' : 'primary'" size="small">
-                      {{ item.raw.role_type === 'admin' ? 'mdi-shield-crown' : 'mdi-shield-account' }}
-                    </v-icon>
-                  </template>
-                  <v-list-item-subtitle>{{ item.raw.role_type }}</v-list-item-subtitle>
-                </v-list-item>
-              </template>
-            </v-autocomplete>
-          </v-col>
-          <v-col cols="12" md="2" class="d-flex align-center">
-            <v-btn
-              color="success"
-              variant="flat"
-              block
-              :disabled="!assignForm.userId || !assignForm.roleId"
-              :loading="saving"
-              @click="assignRole"
-            >
-              Assign
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="linkDialog.show = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" :disabled="!linkForm.roleId" @click="linkExistingRole">
+            Link role
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Dialog: Create Member Role -->
     <v-dialog v-model="createDialog.show" max-width="1200" persistent scrollable>
@@ -239,7 +178,7 @@
           <div class="text-caption text-grey-darken-1 mb-2">
             Select permissions from the admin scope for this role:
           </div>
-          <PermissionsGrid
+          <RolePermissionsPanel
             v-if="scopePermissions.length > 0"
             :permissions="scopePermissions"
             v-model="createDialog.selectedPermissionIds"
@@ -280,10 +219,11 @@
           <v-btn icon @click="editDialog.show = false"><v-icon>mdi-close</v-icon></v-btn>
         </v-toolbar>
         <v-card-text style="max-height: 75vh; overflow-y: auto" class="pa-4">
-          <PermissionsGrid
+          <RolePermissionsPanel
             v-if="scopePermissions.length > 0"
             :permissions="scopePermissions"
             v-model="editDialog.selectedPermissionIds"
+            :affected-users="membersWithRole(editDialog.role?.id)"
           />
         </v-card-text>
       </v-card>
@@ -359,6 +299,11 @@ const roleTypes = [
   { label: 'Member', value: 'member' },
 ]
 
+const linkDialog = ref({ show: false })
+
+const membersWithRole = (roleId: number) =>
+  props.linkedUsers.filter((u: any) => (u.roles ?? []).some((r: any) => r.id === roleId)).length
+
 const linkForm = ref({
   roleId: null as number | null,
   roleType: 'admin' as string,
@@ -384,22 +329,13 @@ const assignDialog = ref({
   userId: null as number | null,
 })
 
-const assignForm = ref({
-  userId: null as number | null,
-  roleId: null as number | null,
-})
-
 // Evita el bug de asignar el mismo rol dos veces al mismo usuario: se
-// excluyen del selector los roles/usuarios que ya tienen esa combinación.
+// excluyen del selector los usuarios que ya tienen ese rol.
 function userHasRole(userId: number | null, roleId: number | null): boolean {
   if (!userId || !roleId) return false
   const user = props.linkedUsers.find((u: any) => u.id === userId)
   return user?.roles?.some((r: any) => r.id === roleId) ?? false
 }
-
-const assignFormRoleOptions = computed(() =>
-  roles.value.filter((r: any) => !userHasRole(assignForm.value.userId, r.id))
-)
 
 const assignDialogUserOptions = computed(() =>
   props.linkedUsers.filter((u: any) => !userHasRole(u.id, assignDialog.value.role?.id ?? null))
@@ -476,6 +412,12 @@ watch(
   () => editDialog.value.selectedPermissionIds,
   (ids) => {
     if (!editDialog.value.role || !editDialog.value.show) return
+    // Opening the dialog also replaces selectedPermissionIds: don't save when nothing changed.
+    const saved = (editDialog.value.role.permissions ?? []).map((p: any) => p.id)
+    if (ids.length === saved.length && new Set([...ids, ...saved]).size === ids.length) {
+      if (editRoleDebounceTimer) clearTimeout(editRoleDebounceTimer)
+      return
+    }
     if (editRoleDebounceTimer) clearTimeout(editRoleDebounceTimer)
     editRoleDebounceTimer = setTimeout(async () => {
       try {
@@ -486,6 +428,7 @@ watch(
           permission_ids: ids,
         })
         await loadRoles()
+        editDialog.value.role.permissions = scopePermissions.value.filter((p: any) => ids.includes(p.id))
         emit('roles-changed')
         editDialog.value.saved = true
         setTimeout(() => { editDialog.value.saved = false }, 2000)
@@ -510,6 +453,7 @@ async function linkExistingRole() {
     })
     snackbar.add({ type: 'success', text: 'Role linked' })
     linkForm.value = { roleId: null, roleType: 'admin' }
+    linkDialog.value.show = false
     await loadRoles()
     emit('roles-changed')
   } catch (e) {
@@ -538,25 +482,6 @@ async function unlinkRole(role: any) {
   } catch (e) {
     console.error(e)
     snackbar.add({ type: 'error', text: 'Error unlinking role' })
-  } finally {
-    saving.value = false
-  }
-}
-
-async function assignRole() {
-  if (!assignForm.value.userId || !assignForm.value.roleId) return
-  try {
-    saving.value = true
-    await $api.departments.assignRoleToUser(props.departmentId, {
-      user_id: assignForm.value.userId,
-      role_id: assignForm.value.roleId,
-    })
-    snackbar.add({ type: 'success', text: 'Role assigned to user' })
-    assignForm.value = { userId: null, roleId: null }
-    emit('roles-changed')
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error assigning role' })
   } finally {
     saving.value = false
   }

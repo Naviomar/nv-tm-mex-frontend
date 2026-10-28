@@ -1,6 +1,6 @@
 <template>
   <div v-if="hasPermission(permissions.SeaImportProfit)">
-    <v-card color="light-green-lighten-5" class="mb-4">
+    <v-card class="mb-4 tm-tint-green">
       <v-card-title>
         <div class="flex items-center justify-between">
           <div class="font-bold"><span class="text-xl">💰</span>Sea Import Service - Totals</div>
@@ -12,48 +12,48 @@
       <v-card-text>
         <div>
           <div class="mb-4">
-            <div class="grid grid-cols-4 divide-x divide-y border divide-slate-400 border-slate-400">
+            <div class="grid grid-cols-4 divide-x divide-y border divide-slate-400 dark:divide-slate-600 border-slate-400 dark:border-slate-600">
               <div class="text-center text-base bg-slate-600 text-white font-bold">💰 - Demurrages</div>
-              <div class="bg-slate-300 text-center font-bold">Buy (USD)</div>
-              <div class="bg-slate-300 text-center font-bold">Sell (USD)</div>
-              <div class="bg-slate-300 text-center font-bold">Profit</div>
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Buy (USD)</div>
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Sell (USD)</div>
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Profit</div>
 
-              <div class="bg-slate-300 text-center font-bold">Amount</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Amount</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDemurragesBuy" />
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDemurragesSell" />
               </div>
-              <div class="bg-slate-300 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-right">
                 <TotalsInUsd :amounts="getDemurragesProfitAmount" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">IVA</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">IVA</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDemurragesBuyIva" />
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDemurragesSellIva" />
               </div>
-              <div class="bg-slate-300 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-right">
                 <TotalsInUsd :amounts="getDemurragesProfitIva" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">Total</div>
-              <div class="bg-slate-200 text-right font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Total</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right font-bold">
                 <TotalsInUsd :amounts="getDemurragesBuyTotal" />
               </div>
-              <div class="bg-slate-200 text-right font-bold">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right font-bold">
                 <TotalsInUsd :amounts="getDemurragesSellTotal" />
               </div>
-              <div class="bg-slate-300 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-right">
                 <TotalsInUsd :amounts="getDemurragesProfitTotal" />
               </div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 border-sky-400">
+            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 dark:divide-slate-600 border-sky-400 dark:border-sky-700">
               <div class="text-center text-base bg-sky-600 text-white font-bold">💰 - Sell</div>
               <div class="bg-sky-300 text-center font-bold">Prepaid (USD)</div>
               <div class="bg-sky-300 text-center font-bold">To collect (USD)</div>
@@ -90,37 +90,37 @@
                 <TotalsInUsd :amounts="getSellTotalCollect" />
               </div>
             </div>
-            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 border-slate-400">
+            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 dark:divide-slate-600 border-slate-400 dark:border-slate-600">
               <div class="text-center text-base bg-green-800 text-white font-bold">💸 - Buy</div>
-              <div class="bg-green-200 text-center font-bold">Prepaid (USD)</div>
-              <div class="bg-green-200 text-center font-bold">To collect (USD)</div>
+              <div class="bg-green-200 dark:bg-green-800 text-center font-bold">Prepaid (USD)</div>
+              <div class="bg-green-200 dark:bg-green-800 text-center font-bold">To collect (USD)</div>
 
-              <div class="bg-green-100 text-center font-bold">Within BL</div>
-              <div class="bg-green-50 text-right">
+              <div class="bg-green-100 dark:bg-green-900 text-center font-bold">Within BL</div>
+              <div class="bg-green-50 dark:bg-green-950 text-right">
                 <TotalsInUsd :amounts="getBuyPrepaidConceptsWithinBl" />
               </div>
-              <div class="bg-green-50 text-right">
+              <div class="bg-green-50 dark:bg-green-950 text-right">
                 <TotalsInUsd :amounts="getBuyCollectConceptsWithinBl" />
               </div>
 
-              <div class="bg-green-100 text-center font-bold">IVA</div>
-              <div class="bg-green-50 text-right">
+              <div class="bg-green-100 dark:bg-green-900 text-center font-bold">IVA</div>
+              <div class="bg-green-50 dark:bg-green-950 text-right">
                 <TotalsInUsd :amounts="getBuyIVAPrepaid" />
               </div>
-              <div class="bg-green-50 text-right">
+              <div class="bg-green-50 dark:bg-green-950 text-right">
                 <TotalsInUsd :amounts="getBuyIVACollect" />
               </div>
 
-              <div class="bg-green-100 text-center font-bold">Total</div>
-              <div class="bg-green-50 text-right font-bold">
+              <div class="bg-green-100 dark:bg-green-900 text-center font-bold">Total</div>
+              <div class="bg-green-50 dark:bg-green-950 text-right font-bold">
                 <TotalsInUsd :amounts="getBuyTotalPrepaid" />
               </div>
-              <div class="bg-green-50 text-right font-bold">
+              <div class="bg-green-50 dark:bg-green-950 text-right font-bold">
                 <TotalsInUsd :amounts="getBuyTotalCollect" />
               </div>
             </div>
-            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 border-slate-400">
-              <div class="bg-slate-300 text-center font-bold">
+            <div class="grid grid-cols-3 divide-x divide-y border divide-slate-400 dark:divide-slate-600 border-slate-400 dark:border-slate-600">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -136,7 +136,7 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -153,14 +153,14 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-300 text-center font-bold">Refunds (USD)</div>
-              <div class="flex bg-slate-200 text-right items-center justify-end font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Refunds (USD)</div>
+              <div class="flex bg-slate-200 dark:bg-slate-800 text-right items-center justify-end font-bold">
                 <TotalsInUsd :amounts="getPaymentAmount" />
               </div>
-              <div class="flex bg-slate-200 text-right items-center justify-end font-bold">
+              <div class="flex bg-slate-200 dark:bg-slate-800 text-right items-center justify-end font-bold">
                 <TotalsInUsd :amounts="getPendingPayment" />
               </div>
-              <div class="flex bg-slate-200 text-right items-center justify-end font-bold">
+              <div class="flex bg-slate-200 dark:bg-slate-800 text-right items-center justify-end font-bold">
                 <div class="">
                   <span class="text-xs font-normal">Requested</span>
                   <div><TotalsInUsd :amounts="getTotalRefund" /></div>
@@ -169,8 +169,8 @@
                 </div>
               </div>
             </div>
-            <div class="grid grid-cols-2 divide-x divide-y border divide-slate-400 border-slate-400">
-              <div class="bg-slate-300 text-center font-bold">
+            <div class="grid grid-cols-2 divide-x divide-y border divide-slate-400 dark:divide-slate-600 border-slate-400 dark:border-slate-600">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -199,31 +199,31 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getTotalProfitFlete" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">Total sell</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Total sell</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getProfitSell" :usd="profitUsd?.total_sell" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">Total buy</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Total buy</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getTotalBuy" :is-negative="true" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">Credit notes</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Credit notes</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getCreditFfNotes" :usd="profitUsd?.credit_notes" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">Debit notes</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">Debit notes</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDebitFfNotes" :usd="profitUsd ? -profitUsd.debit_notes : undefined" :is-negative="true" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">(-) Supplier invoice</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">(-) Supplier invoice</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getSupplierInvoices" :usd="profitUsd?.supplier_invoices" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -242,15 +242,15 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getRemainingBuy" :usd="profitUsd?.remaining_buy" />
               </div>
-              <div class="bg-slate-300 text-center font-bold">(-) Rebate</div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">(-) Rebate</div>
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getRebate" :is-negative="true" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -267,11 +267,11 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getPendingPayment" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -299,11 +299,11 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getTotalProfit" :usd="profitUsd?.operating_profit" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -337,11 +337,11 @@
                   </span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getDemurragesProfitTotal" />
               </div>
 
-              <div class="bg-slate-300 text-center font-bold">
+              <div class="bg-slate-300 dark:bg-slate-700 text-center font-bold">
                 <v-tooltip location="top" open-delay="300">
                   <template #activator="{ props }">
                     <span v-bind="props"
@@ -415,7 +415,7 @@
                   <span>See step-by-step breakdown with real amounts</span>
                 </v-tooltip>
               </div>
-              <div class="bg-slate-200 text-right">
+              <div class="bg-slate-200 dark:bg-slate-800 text-right">
                 <TotalsInUsd :amounts="getTotalProfitWithDemurrages" :usd="profitUsd?.profit_total" />
               </div>
             </div>

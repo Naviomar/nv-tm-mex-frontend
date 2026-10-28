@@ -119,7 +119,7 @@
                     
                     <ViewButton :item="item" @click="viewLineInvoice(item)" />
 
-                    <EditButton v-if="!isPaid(item) || canEditAfterPaid(item)" :item="item" @click="editLineInvoice(item)" />
+                    <EditButton :item="item" :permission="lineInvoiceEditPermission" @click="editLineInvoice(item)" />
 
                     <ProcessAuthorizationWrapper
                       v-if="!isPaid(item)"
@@ -231,6 +231,7 @@
 
 <script setup lang="ts">
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
+import { lineInvoiceEditPermission } from '~/utils/data/routePermissions'
 const { $api, $notifications } = useNuxtApp()
 const router = useRouter()
 const snackbar = useSnackbar()
@@ -336,6 +337,7 @@ const addReferencia = () => {
 }
 
 const onClickFilters = async () => {
+  addFolio()
   lineInvoices.value.current_page = 1
   await getLineInvoices()
 }

@@ -74,18 +74,14 @@
                   </div>
 
                   <div class="mx-auto max-w-64 pt-4">
-                    <AuthorizeProcessSmart
-                      ref="authorizeProcess"
+                    <!-- The amount / percentage travels with the request; the discount is registered on approval -->
+                    <ProcessAuthorizationWrapper
+                      process-name="maritime-demurrages.discount"
+                      :request-key="String(referencia.id)"
                       label="Request a discount"
-                      :resource="authorizeResources.DemurrageDiscount.resource"
-                      :resourceId="referencia.id"
-                      :refresh="refreshAuthReqs"
-                      :resourceData="{ reference_number: referencia.reference_number }"
-                    >
-                      <template #auth>
-                        <v-btn color="error" size="small" @click="onDiscountClick">Set discount</v-btn>
-                      </template>
-                    </AuthorizeProcessSmart>
+                      :display-name="`Ref. ${referencia.reference_number}`"
+                      @refresh="getReferencia(props.id)"
+                    />
                   </div>
                 </div>
                 <div>
@@ -99,10 +95,12 @@
                     <v-card-text>
                       <div class="flex flex-col gap-4">
                         <div v-if="cutSummary.total">
-                          <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
-                            <v-icon>mdi-email-outline</v-icon>
-                            Send cut
-                          </v-btn>
+                          <Can permission="demurrages-cut-totalize">
+                            <v-btn color="primary" size="small" block @click="showSendDialog = !showSendDialog">
+                              <v-icon>mdi-email-outline</v-icon>
+                              Send cut
+                            </v-btn>
+                          </Can>
                           <div class="text-caption text-center mt-1" :class="cutSummary.actionable ? 'text-warning' : 'text-success'">
                             <v-icon size="12">{{ cutSummary.actionable ? 'mdi-send-clock-outline' : 'mdi-check' }}</v-icon>
                             {{
@@ -198,8 +196,23 @@
                     </v-card-subtitle>
                   </v-card-item>
                   <v-card-text v-show="showEditFreeDays">
-                    <v-text-field v-model="form.freeDays" label="Días libres" density="compact" />
-                    <v-btn @click="saveFreeDays" size="small" color="primary">Actualizar días libres</v-btn>
+                    <v-text-field v-model="form.freeDays" label="Días libres" type="number" min="0" density="compact" />
+                    <div class="flex flex-wrap gap-2">
+                      <v-btn @click="saveFreeDays(false)" size="small" color="primary">Aplicar a todos</v-btn>
+                      <v-btn
+                        @click="saveFreeDays(true)"
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        :disabled="!hasContainerDaysSelected"
+                      >
+                        Aplicar a seleccionados ({{ selectedContainersCount }})
+                      </v-btn>
+                    </div>
+                    <div class="text-xs text-medium-emphasis mt-2">
+                      "Aplicar a todos" también cambia el valor base de la referencia. A los seleccionados solo se les
+                      cambian sus propios días (no aplica a contenedores con demoras facturadas).
+                    </div>
                   </v-card-text>
                 </v-card>
 
@@ -228,10 +241,12 @@
                         difieren de la configuración del cliente ({{ freeDaysConfig?.configured_free_days }}).
                       </div>
                     </v-alert>
-                    <v-btn @click="syncFreeDays" size="small" color="primary" block>
-                      <v-icon size="small" class="mr-1">mdi-sync</v-icon>
-                      Sincronizar a {{ freeDaysConfig?.configured_free_days }} días
-                    </v-btn>
+                    <Can permission="demurrages-free-days-init">
+                      <v-btn @click="syncFreeDays" size="small" color="primary" block>
+                        <v-icon size="small" class="mr-1">mdi-sync</v-icon>
+                        Sincronizar a {{ freeDaysConfig?.configured_free_days }} días
+                      </v-btn>
+                    </Can>
                   </v-card-text>
                 </v-card>
               </div>
@@ -271,6 +286,7 @@
                     <th class="w-8"></th>
                     <th>Container</th>
                     <th>Type</th>
+                    <th>Free days</th>
                     <th>Cálculo</th>
                     <th>Cut</th>
                     <th>Start date</th>
@@ -314,6 +330,15 @@
                     </td>
                     <td>{{ item.container_number }}</td>
                     <td>{{ item.container_type?.name }}</td>
+                    <td>
+                      <v-chip
+                        variant="outlined"
+                        size="small"
+                        :color="containerFreeDays(item) !== referenceFreeDays ? 'warning' : undefined"
+                      >
+                        {{ containerFreeDays(item) }} day(s)
+                      </v-chip>
+                    </td>
                     <td>
                       <v-chip variant="outlined" size="small">
                         {{ item.demurrage?.is_parcial ? 'Parcial' : 'Total' }}
@@ -746,61 +771,6 @@
         </div>
       </div>
     </div>
-    <v-dialog v-model="showDiscountDialog" max-width="400">
-      <v-card>
-        <v-card-title>Demurrages discount</v-card-title>
-        <v-card-text>
-          <div>Please complete the form.</div>
-
-          <!-- Toggle between Amount or Percentage -->
-          <v-radio-group v-model="formDiscount.type" row>
-            <v-radio label="Amount (USD)" value="amount"></v-radio>
-            <v-radio label="Percentage (%)" value="percentage"></v-radio>
-          </v-radio-group>
-
-          <!-- Amount Field -->
-          <v-text-field
-            v-if="formDiscount.type === 'amount'"
-            v-model="formDiscount.amount"
-            label="Amount (USD)"
-            hint="Please provide the amount of the discount"
-            prepend-inner-icon="mdi-currency-usd"
-            type="number"
-            clearable
-          />
-
-          <!-- Percentage Field -->
-          <v-text-field
-            v-if="formDiscount.type === 'percentage'"
-            v-model="formDiscount.percentage"
-            label="Percentage (%)"
-            hint="Please provide the percentage of the discount"
-            prepend-inner-icon="mdi-percent"
-            type="number"
-            min="1"
-            max="99"
-            clearable
-          />
-
-          <!-- Reason Field -->
-          <v-textarea
-            v-model="formDiscount.reason"
-            label="Reason"
-            hint="Please provide a reason for the discount"
-            counter
-            rows="3"
-            clearable
-          ></v-textarea>
-        </v-card-text>
-        <v-card-actions>
-          <div class="w-full flex justify-around">
-            <v-btn @click="showDiscountDialog = !showDiscountDialog">No, go back</v-btn>
-            <v-btn color="error" @click="requestDiscountConfirm">Yes, request a discount</v-btn>
-          </div>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <v-dialog v-model="showInvoicesDialog" max-width="750px">
       <v-card>
         <v-card-title>
@@ -893,7 +863,6 @@ const props = defineProps({
   },
 })
 
-const authorizeProcess = ref<any>(null)
 const authorizeRevertToPartial = ref<any>(null)
 
 const form = reactive({
@@ -906,20 +875,12 @@ const form = reactive({
   apply_discount: false,
 })
 
-const formDiscount = reactive({
-  type: 'amount',
-  amount: 0,
-  percentage: 0,
-  reason: '',
-})
-
 const showRefDetail = ref(false)
 const showSendDialog = ref(false)
 const showLogs = ref(false)
 const showEditFreeDays = ref(false)
 const referencia = ref<any>({})
 const containerCalcs = ref<any>([])
-const showDiscountDialog = ref(false)
 const showInvoicesDialog = ref(false)
 const refreshAuthReqs = ref(false)
 const freeDaysConfig = ref<any>(null)
@@ -1000,13 +961,14 @@ const getContainerTotalLineCost = (container: any) => {
   return parseFloat(container.demurrage.line_cost)
 }
 
-const onDiscountClick = async () => {
-  showDiscountDialog.value = !showDiscountDialog.value
+// Días libres propios del contenedor; si aún no tiene demoras usa el valor base de la referencia
+const containerFreeDays = (container: any) => {
+  return Number(container.demurrage?.free_days ?? referenceFreeDays.value)
 }
 
 const remainingFreeDays = (container: any) => {
   const date = moment.tz(container.demurrage?.start_date, 'America/Mexico_City')
-  date.add(referenceFreeDays.value, 'days')
+  date.add(containerFreeDays(container), 'days')
   const today = moment.tz(new Date(), 'America/Mexico_City')
   const diff = date.diff(today, 'days')
   const days = Math.ceil(diff / (1000 * 3600 * 24))
@@ -1038,7 +1000,7 @@ const remainingDaysUntilEmptyDate = (container: any) => {
 
 const freeDaysUntilDate = (container: any) => {
   const date = moment.tz(container.demurrage?.start_date, 'America/Mexico_City')
-  date.add(referenceFreeDays.value - 1, 'days')
+  date.add(containerFreeDays(container) - 1, 'days')
   return date
 }
 
@@ -1059,6 +1021,10 @@ const setStartDateToAll = () => {
 
 const hasContainerDaysSelected = computed(() => {
   return referencia.value.containers.some((container: any) => container.selected_days)
+})
+
+const selectedContainersCount = computed(() => {
+  return referencia.value.containers.filter((container: any) => container.selected_days).length
 })
 
 const containersSelected = computed(() => {
@@ -1112,42 +1078,6 @@ const getContainerTotalRate = (container: any) => {
 const referenciaContainersWithDemurrages = computed(() => {
   return referencia.value.containers.filter((container: any) => container.demurrage)
 })
-
-const requestDiscountConfirm = async () => {
-  try {
-    if (formDiscount.type === 'amount' && (!formDiscount.amount || formDiscount.amount <= 0)) {
-      snackbar.add({ type: 'error', text: 'Amount is required.' })
-      return
-    }
-    if (formDiscount.type === 'percentage' && (formDiscount.percentage < 1 || formDiscount.percentage > 99)) {
-      snackbar.add({ type: 'error', text: 'Please enter a percentage between 1 and 99.' })
-      return
-    }
-    if (!formDiscount.reason) {
-      snackbar.add({ type: 'error', text: 'Reason is required.' })
-      return
-    }
-
-    loadingStore.loading = true
-    const body = {
-      referencia_id: referencia.value.id,
-      amount: formDiscount.amount,
-      percentage: formDiscount.percentage,
-      reason: formDiscount.reason,
-    }
-    const response = (await $api.demurrages.requestDiscount(referencia.value.id, body)) as any
-    snackbar.add({ type: 'success', text: 'Discount requested successfully.' })
-    showDiscountDialog.value = false
-    refreshAuthReqs.value = true
-    await getReferencia(props.id)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
 const getContainerRatesByChange = (container: any) => {
   refreshContainerRates([container.id], container.demurrage.start_date)
@@ -1231,7 +1161,7 @@ const getSourceLabel = (source: string) => {
 const syncFreeDays = async () => {
   const confirmed = await confirm({
     title: '¿Sincronizar días libres?',
-    content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente.`,
+    content: `Se actualizarán los días libres de ${freeDaysConfig.value?.current_free_days} a ${freeDaysConfig.value?.configured_free_days} días según la configuración del cliente. Esto sobrescribe los días libres de todos los contenedores, incluidos los ajustados individualmente.`,
     confirmationText: 'Sincronizar',
     dialogProps: { persistent: true, maxWidth: 500 },
     confirmationButtonProps: { color: 'primary' },
@@ -1256,11 +1186,20 @@ const syncFreeDays = async () => {
   }
 }
 
-const saveFreeDays = async () => {
+const saveFreeDays = async (onlySelected = false) => {
+  if (form.freeDays === '' || Number(form.freeDays) < 0) {
+    snackbar.add({ type: 'error', text: 'Enter a valid number of free days.' })
+    return
+  }
   try {
     loadingStore.loading = true
-    const body = {
+    const body: any = {
       freeDays: form.freeDays,
+    }
+    if (onlySelected) {
+      body.container_ids = referencia.value.containers
+        .filter((container: any) => container.selected_days)
+        .map((container: any) => container.id)
     }
     const response = (await $api.demurrages.saveReferenciaFreeDays(props.id, body)) as any
     snackbar.add({ type: 'success', text: 'Free days updated successfully.' })

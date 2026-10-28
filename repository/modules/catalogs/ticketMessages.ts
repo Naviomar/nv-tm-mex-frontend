@@ -39,6 +39,7 @@ export interface TicketMessage {
 export interface SigaStatus {
   linked: boolean
   siga_ticket_id: string | null
+  siga_ticket_number?: string | number | null
   sync_status: string | null
   last_synced_at: string | null
 }
@@ -54,18 +55,46 @@ export interface LiveChat {
   ticket_type: TicketType
   ticket_id: number
   label: string
+  /** Human name of the request type (e.g. "Cancel Invoice TM") */
+  type_name: string
+  /** What the request is about: invoice number, reference, screen… */
+  subject: string | null
+  /** Short excerpt of the original reason/message */
+  summary: string | null
+  status_label: string
   requester: string | null
   unread_count: number
   last_message: string
+  /** Who wrote the last message ("You" when it is the current user) — not necessarily the requester */
+  last_sender: string | null
+  last_message_has_files: boolean
   last_message_at: string
+  action_url: string
+}
+
+export interface PendingRequest {
+  ticket_type: TicketType
+  ticket_id: number
+  label: string
+  type_name: string
+  subject: string | null
+  summary: string | null
+  status_label: string
+  requester: string | null
+  priority: string | null
+  created_at: string
   action_url: string
 }
 
 class TicketMessagesModule extends FetchFactory<any> {
   private RESOURCE = '/ticket-messages'
 
-  async getLiveChats(fetchOptions?: FetchOptions): Promise<LiveChat[]> {
-    return this.call('GET', `${this.RESOURCE}/live-chats`, fetchOptions)
+  async getLiveChats(params?: { unread_only?: boolean }, fetchOptions?: FetchOptions): Promise<LiveChat[]> {
+    return this.call('GET', `${this.RESOURCE}/live-chats`, { query: params, ...fetchOptions })
+  }
+
+  async getPendingRequests(fetchOptions?: FetchOptions): Promise<PendingRequest[]> {
+    return this.call('GET', `${this.RESOURCE}/pending-requests`, fetchOptions)
   }
 
   async getMessages(type: TicketType, id: number, fetchOptions?: FetchOptions) {

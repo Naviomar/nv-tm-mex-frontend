@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mb-4">
+  <v-card ref="rootEl" class="mb-4">
     <v-card-title>
       <div class="flex justify-between">
         <div>Bank accounts</div>
@@ -14,6 +14,17 @@
     <v-card-text>
       <div v-if="showForm" class="mb-4 grid grid-cols-2 gap-2">
         <div class="font-bold col-span-2">New bank account</div>
+        <v-alert v-if="missingLabels.length" type="error" variant="tonal" density="compact" class="col-span-2" data-testid="bank-missing-alert">
+          <div class="font-bold">The bank account was NOT saved.</div>
+          <div>Missing or invalid: {{ missingLabels.join(', ') }}.</div>
+        </v-alert>
+        <v-alert v-else-if="serverError" type="error" variant="tonal" density="compact" class="col-span-2" data-testid="bank-server-error">
+          <div class="font-bold">The bank account was NOT saved.</div>
+          <div>{{ serverError }}</div>
+        </v-alert>
+        <v-alert v-else-if="hasUnsaved" type="warning" variant="tonal" density="compact" class="col-span-2" data-testid="bank-unsaved-alert">
+          This bank account is not saved yet. Press <b>Save</b> in this section to store it.
+        </v-alert>
         <div class="col-span-2">
           <InputText name="name" density="compact" label="Alias *" />
         </div>
@@ -31,7 +42,7 @@
           <InputText name="beneficiary_name" density="compact" label="Beneficiary name *" />
         </div>
         <div class="">
-          <InputText name="account_number" density="compact" label="Account number *" />
+          <InputText name="account_number" density="compact" label="Account number (or IBAN) *" />
         </div>
         <div class="">
           <InputText name="clabe" density="compact" label="CLABE" type="number" />
@@ -120,6 +131,8 @@
             <th class="text-left">beneficiary address</th>
             <th class="text-left">country</th>
             <th class="text-left">account number</th>
+            <th class="text-left">IBAN</th>
+            <th class="text-left">SWIFT</th>
             <th class="text-left">currency</th>
             <th class="text-left">beneficiary email</th>
             <th class="text-left">beneficiary phone</th>
@@ -128,7 +141,7 @@
         </thead>
         <tbody>
           <tr v-if="bankAccounts.length === 0">
-            <td colspan="11" class="text-center">No bank accounts found</td>
+            <td colspan="13" class="text-center">No bank accounts found</td>
           </tr>
           <tr v-for="(item, index) in bankAccounts" :key="`bank-${index}`">
             <td>
@@ -148,6 +161,8 @@
             <td>{{ item.beneficiary_address }}</td>
             <td>{{ item.country?.name }}</td>
             <td>{{ item.account_number }}</td>
+            <td>{{ item.iban }}</td>
+            <td>{{ item.swift }}</td>
             <td>{{ item.currency?.name }}</td>
             <td>{{ item.beneficiary_email }}</td>
             <td>{{ item.beneficiary_phone }}</td>
@@ -190,7 +205,7 @@ const requestReady = ref(false)
 
 const bankAccounts = ref<any>([])
 
-const { values, errors, setValues, resetForm, validate } = useForm({
+const { values, errors, setValues, setErrors, resetForm, validate } = useForm({
   validationSchema: schema,
   initialValues: {
     id: null,
@@ -201,6 +216,51 @@ const requestProcessData = computed(() => ({ ...values, [ownerIdField.value]: Nu
 
 const showForm = ref(false)
 const saving = ref(false)
+const rootEl = ref<any>(null)
+const serverError = ref('')
+const missingLabels = ref<string[]>([])
+
+const FIELD_LABELS: Record<string, string> = {
+  name: 'Alias',
+  bank_id: 'Bank',
+  beneficiary_name: 'Beneficiary name',
+  beneficiary_address: 'Beneficiary address',
+  beneficiary_zip_code: 'Zip code',
+  beneficiary_city: 'City',
+  account_number: 'Account number or IBAN',
+  iban: 'Account number or IBAN',
+  currency_id: 'Currency',
+}
+
+// Snapshot of the values when the form was opened: "unsaved" means the user
+// typed something that is not stored yet, not merely that the form is open.
+const normalize = (v: Record<string, any>) => {
+  const out: Record<string, any> = {}
+  Object.keys(v || {})
+    .sort()
+    .forEach((k) => {
+      const val = v[k]
+      if (val === '' || val === null || val === undefined || val === false) return
+      out[k] = val
+    })
+  return JSON.stringify(out)
+}
+const snapshot = ref('{}')
+const takeSnapshot = () => {
+  nextTick(() => {
+    snapshot.value = normalize(values)
+  })
+}
+watch(
+  values,
+  async () => {
+    if (!missingLabels.value.length) return
+    const r = await validate({ mode: 'silent' })
+    if (r.valid) missingLabels.value = []
+  },
+  { deep: true }
+)
+const hasUnsaved = computed(() => showForm.value && normalize(values) !== snapshot.value)
 const catalogs = ref<any>({
   banks: [],
   countries: [],
@@ -209,7 +269,11 @@ const catalogs = ref<any>({
 
 const toggle = () => {
   showForm.value = !showForm.value
-  if (!showForm.value) {
+  serverError.value = ''
+  missingLabels.value = []
+  if (showForm.value) {
+    takeSnapshot()
+  } else {
     resetForm({
       values: {
         id: null,
@@ -236,6 +300,8 @@ const toggle = () => {
 
 const editItem = (item: any) => {
   showForm.value = true
+  serverError.value = ''
+  missingLabels.value = []
   setValues({
     id: item.id,
     name: item.name,
@@ -256,6 +322,7 @@ const editItem = (item: any) => {
     notes: item.notes,
     is_default: item.is_default,
   })
+  takeSnapshot()
 }
 
 // Bank accounts are sensitive — capture no longer writes directly by
@@ -265,12 +332,22 @@ const editItem = (item: any) => {
 // UNLESS the user already holds the catalog's own edit permission, in
 // which case the backend route itself allows the direct write and there
 // is no point routing it through an approval nobody needs to grant.
-const onValidate = async () => {
+const surfaceErrors = async () => {
   const result = await validate()
+  serverError.value = ''
   if (!result.valid) {
-    snackbar.add({ type: 'warning', text: 'Validate form before submit' })
-    return
+    const labels = Object.keys(result.errors || {}).map((k) => FIELD_LABELS[k] || k)
+    missingLabels.value = [...new Set(labels)]
+    snackbar.add({ type: 'warning', text: `Bank account not saved. Missing: ${missingLabels.value.join(', ')}` })
+    nextTick(() => rootEl.value?.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
+    return false
   }
+  missingLabels.value = []
+  return true
+}
+
+const onValidate = async () => {
+  if (!(await surfaceErrors())) return
 
   if (canDirectWrite.value) {
     await saveDirect()
@@ -288,12 +365,20 @@ const saveDirect = async () => {
 
     await api.value.upsert(requestProcessData.value)
 
-    snackbar.add({ type: 'success', text: 'Bank account updated' })
-    toggle()
+    const savedName = values.name
     await getData()
-  } catch (e) {
+    snackbar.add({ type: 'success', text: `Bank account "${savedName}" saved` })
+    toggle()
+  } catch (e: any) {
     console.error(e)
-    snackbar.add({ type: 'error', text: 'Error saving bank account' })
+    const data = e?.data || e?.response?._data
+    if (data?.errors) {
+      setErrors(Object.fromEntries(Object.entries(data.errors).map(([k, v]: any) => [k, Array.isArray(v) ? v[0] : v])))
+      missingLabels.value = [...new Set(Object.keys(data.errors).map((k) => FIELD_LABELS[k] || k))]
+    } else {
+      serverError.value = data?.message || 'The server rejected the request. Try again or contact support.'
+    }
+    snackbar.add({ type: 'error', text: 'Bank account NOT saved' })
   } finally {
     saving.value = false
     setTimeout(() => {
@@ -301,6 +386,19 @@ const saveDirect = async () => {
     }, 250)
   }
 }
+
+// Used by the parent dialog before it saves/closes: if a bank account is half
+// captured, surface what is missing instead of silently discarding it.
+const showPending = async () => {
+  if (!showForm.value) return
+  await surfaceErrors()
+}
+
+const discard = () => {
+  if (showForm.value) toggle()
+}
+
+defineExpose({ hasUnsaved, showPending, discard })
 
 const onRequestGranted = async () => {
   snackbar.add({ type: 'success', text: 'Bank account request approved and saved' })

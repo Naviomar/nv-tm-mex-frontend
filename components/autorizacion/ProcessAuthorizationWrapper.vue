@@ -1,8 +1,13 @@
 <template>
   <div class="paw-root" :class="{ 'paw-root--block': block }">
+    <!-- The approval policy says this user can act without a request -->
+    <div v-if="canActDirectly && hasAuthSlot" class="paw-direct">
+      <slot name="auth"></slot>
+    </div>
+
     <!-- No request yet -->
     <v-btn
-      v-if="!hasPendingRequest && !hasGrantedRequest"
+      v-else-if="!hasPendingRequest && !hasGrantedRequest"
       variant="tonal"
       color="amber-darken-2"
       size="small"
@@ -30,15 +35,21 @@
           </v-chip>
         </template>
       </v-tooltip>
+      <span v-if="pendingRequest" class="paw-requester text-caption text-medium-emphasis ml-2">
+        Requested by <strong>{{ requesterName }}</strong> · {{ formatDateString(pendingRequest.created_at) }}
+        <template v-if="assignmentSummary"> · also for: {{ assignmentSummary }}</template>
+      </span>
       <v-btn
+        v-if="canWithdraw"
         variant="text"
         color="error"
         size="x-small"
         class="ml-1"
+        title="Withdraw your approval request (does not change the record itself)"
         @click="confirmDeleteRequestAuthorization"
       >
-        <v-icon size="14">mdi-close</v-icon>
-        Cancel
+        <v-icon size="14">mdi-undo-variant</v-icon>
+        Withdraw request
       </v-btn>
     </div>
 
@@ -49,6 +60,18 @@
         <v-icon start size="14">mdi-shield-check</v-icon>
         Authorized until {{ formatDateString(activeAuthorization?.expires_at) }}
       </v-chip>
+      <span v-if="grantedNote" class="text-caption text-medium-emphasis">{{ grantedNote }}</span>
+    </div>
+
+    <!-- The last approved request could not be applied automatically -->
+    <div
+      v-if="failedRequest && !canActDirectly && !hasPendingRequest && !hasGrantedRequest"
+      class="paw-failed text-caption text-error mt-1"
+    >
+      <v-icon size="14" color="error">mdi-alert-circle-outline</v-icon>
+      Approved on {{ formatDateString(failedRequest.granted_at) }} but not applied:
+      {{ failedRequest.automation_error || 'the action could not be completed automatically.' }}
+      Please submit the request again.
     </div>
 
     <!-- Request dialog -->
@@ -157,6 +180,43 @@
             clearable
             class="mt-2"
           />
+
+          <!-- Who will carry the action out once it is approved (only when a person does it) -->
+          <template v-if="showAssignment">
+            <v-divider class="my-3" />
+            <div class="text-caption text-uppercase font-weight-bold text-disabled mb-1">Who will carry it out once approved?</div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              You can always do it yourself. Add a department (any of its members can do it) and/or specific people.
+            </div>
+            <v-autocomplete
+              v-model="assignment.departmentId"
+              :items="departmentOptions"
+              item-title="name"
+              item-value="id"
+              label="Department (optional)"
+              :loading="loadingAssignment"
+              prepend-inner-icon="mdi-domain"
+              density="compact"
+              clearable
+              hide-details
+              class="mb-3"
+            />
+            <v-autocomplete
+              v-model="assignment.userIds"
+              :items="userOptions"
+              item-title="name"
+              item-value="id"
+              label="People (optional)"
+              :loading="loadingAssignment"
+              prepend-inner-icon="mdi-account-multiple-plus-outline"
+              density="compact"
+              multiple
+              chips
+              closable-chips
+              clearable
+              hide-details
+            />
+          </template>
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
@@ -167,20 +227,23 @@
       </v-card>
     </v-dialog>
 
-    <!-- Cancel dialog -->
-    <v-dialog v-model="showConfirmDelReqDialog" max-width="400">
+    <!-- Withdraw dialog -->
+    <v-dialog v-model="showConfirmDelReqDialog" max-width="440">
       <v-card class="chip-velvet">
         <v-card-title class="text-h6">
-          <v-icon>mdi-shield-lock-outline</v-icon> Cancel Process Auth
+          <v-icon>mdi-undo-variant</v-icon> Withdraw approval request
         </v-card-title>
         <v-card-text class="bg-surface-light pt-2">
-          <div class="leading-none">Are you sure you want to cancel this authorization request?</div>
-          <v-textarea label="Reason" v-model="form.reason_deleted" counter rows="3" clearable />
+          <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+            This only withdraws <strong>your request for approval</strong>. It does not cancel, delete or change
+            "{{ props.displayName || props.label }}".
+          </v-alert>
+          <v-textarea label="Why are you withdrawing it?" v-model="form.reason_deleted" counter rows="3" clearable />
         </v-card-text>
         <v-card-actions>
           <div class="w-full flex justify-around">
-            <v-btn color="error" @click="showConfirmDelReqDialog = false">Close</v-btn>
-            <v-btn color="success" @click="onRequestCancelAuthorizationClick">Cancel</v-btn>
+            <v-btn variant="text" @click="showConfirmDelReqDialog = false">Keep request</v-btn>
+            <v-btn color="warning" variant="flat" @click="onRequestCancelAuthorizationClick">Withdraw request</v-btn>
           </div>
         </v-card-actions>
       </v-card>
@@ -193,9 +256,12 @@ import { getProcessDisplayName } from '~/utils/data/system'
 import type { IFormField } from '~/repository/modules/catalogs/authRequestTypes'
 
 const { $api } = useNuxtApp()
+const slots = useSlots()
+// Types the server runs by itself have no direct screen: they keep the request form (approved on the spot for bypass users)
+const hasAuthSlot = computed(() => !!slots.auth)
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
-const { getTemplate, loadCatalog } = useRequestTypeCatalog()
+const { getTemplate, getType, loadCatalog } = useRequestTypeCatalog()
 
 const props = defineProps({
   processName: { type: String, required: true },
@@ -242,20 +308,115 @@ const processNameKey = computed(() =>
 const hasPendingRequest = computed(() =>
   requestForProcess.value.some((r: any) => r.status === 'pending')
 )
+const { user: currentUser, isAdminRole, hasPermission } = useCheckUser()
+const canBypassApprovals = computed(() => hasPermission('approval-bypass'))
+
+// ── Approval policy (auth_request_types.approval_mode) ─────────────────────────
+// permission: holders of the permission act directly (known client-side).
+// state: the server decides from the record's state (eligibility endpoint).
+// always / no policy: always the request flow, as before.
+const policy = computed(() => getType(props.processName))
+const eligibility = ref<{ can_act_directly: boolean } | null>(null)
+const canActDirectly = computed(() => {
+  // Whoever skips approvals system-wide (Super Admin, or anyone granted `approval-bypass`) acts directly
+  if (canBypassApprovals.value) return true
+  const mode = policy.value?.approval_mode
+  if (mode === 'permission') return !!policy.value?.approval_permission && hasPermission(policy.value.approval_permission)
+  if (mode === 'state') return eligibility.value?.can_act_directly === true
+  return false
+})
+async function loadEligibility() {
+  await loadCatalog()
+  if (policy.value?.approval_mode !== 'state') return
+  try {
+    eligibility.value = (await ($api as any).authProcessRequests.getEligibility({
+      process_name: props.processName,
+      request_key: String(props.requestKey ?? ''),
+    })) as any
+  } catch {
+    eligibility.value = null // on doubt, keep the request flow
+  }
+}
+// ── Assignment (departments / people who can carry the action out) ───────────────
+// Auto-executed types are carried out by the approver, so there is nobody to assign.
+const showAssignment = computed(() => policy.value?.kind === 'process' && policy.value?.automatable !== true)
+const assignment = ref<{ departmentId: number | null; userIds: number[] }>({ departmentId: null, userIds: [] })
+const departmentOptions = ref<any[]>([])
+const userOptions = ref<any[]>([])
+const loadingAssignment = ref(false)
+async function loadAssignmentOptions() {
+  if (!showAssignment.value || (departmentOptions.value.length && userOptions.value.length)) return
+  loadingAssignment.value = true
+  try {
+    const [departments, users] = await Promise.all([
+      ($api as any).departments.getAllDepartments(),
+      ($api as any).users.getAllUsers(),
+    ])
+    departmentOptions.value = (departments as any[]) ?? []
+    userOptions.value = ((users as any[]) ?? []).filter((u: any) => u.id !== currentUser.value?.id)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loadingAssignment.value = false
+  }
+}
+const assignmentSummary = computed(() => {
+  const req = pendingRequest.value ?? activeAuthorization.value
+  if (!req) return ''
+  const parts: string[] = []
+  if (req.department?.name) parts.push(req.department.name)
+  for (const e of req.executors ?? []) parts.push(e.name)
+  return parts.join(', ')
+})
+
+// Who asked for it / who else can carry it out, shown next to an approved request
+const grantedNote = computed(() => {
+  const req = activeAuthorization.value
+  if (!req) return ''
+  const parts: string[] = []
+  if (req.user_id !== currentUser.value?.id && req.user?.name) parts.push(`Requested by ${req.user.name}`)
+  const others: string[] = []
+  if (req.department?.name) others.push(req.department.name)
+  for (const e of req.executors ?? []) others.push(e.name)
+  if (others.length) parts.push(`for ${others.join(', ')}`)
+  return parts.join(' · ')
+})
+
+const pendingRequest = computed(() => requestForProcess.value.find((r: any) => r.status === 'pending') ?? null)
+const requesterName = computed(() => pendingRequest.value?.user?.name ?? pendingRequest.value?.requested?.name ?? 'someone')
+// Only whoever asked (or an administrator) can withdraw a request
+const canWithdraw = computed(() => {
+  if (!pendingRequest.value) return false
+  return pendingRequest.value.user_id === currentUser.value?.id || !!isAdminRole()
+})
+// An approved request whose automatic action failed did not change anything: it is not an
+// active authorization (the user has to ask again) and the reason is shown instead.
+const automationFailed = (req: any) => req.automation_status === 'failed'
 const hasGrantedRequest = computed(() =>
   userRequests.value.some(
     (req: any) =>
       req.process_name_key === processNameKey.value &&
       req.status === 'granted' &&
       req.is_granted &&
-      !req.used_at
+      !req.used_at &&
+      !automationFailed(req)
   )
 )
 const activeAuthorization = computed(() =>
   userRequests.value.find(
-    (req: any) => req.process_name_key === processNameKey.value && req.status === 'granted' && req.is_granted
+    (req: any) =>
+      req.process_name_key === processNameKey.value &&
+      req.status === 'granted' &&
+      req.is_granted &&
+      !automationFailed(req)
   )
 )
+const failedRequest = computed(() => {
+  const failed = requestForProcess.value
+    .filter((req: any) => req.status === 'granted' && automationFailed(req) && !req.used_at)
+    .sort((a: any, b: any) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')))
+  return failed[0] ?? null
+})
 
 // ── Polling ──────────────────────────────────────────────────────────────────
 
@@ -267,7 +428,15 @@ const { hasPending, isPolling, fetchOnce, startPolling, stopPolling } = useReque
     const freshHasGranted = fresh.some((r: any) => r.status === 'granted')
 
     if (prevPending && freshHasGranted) {
-      snackbar.add({ type: 'success', text: 'Your request was approved. The action has been executed.' })
+      const failed = fresh.find((r: any) => r.status === 'granted' && r.automation_status === 'failed')
+      if (failed) {
+        snackbar.add({
+          type: 'warning',
+          text: `Your request was approved but the action could not be applied: ${failed.automation_error || 'please submit it again'}`,
+        })
+      } else {
+        snackbar.add({ type: 'success', text: 'Your request was approved. The action has been executed.' })
+      }
       emit('refresh')
     }
 
@@ -307,12 +476,23 @@ async function fetchUserRequests() {
 const confirmRequestAuthorization = () => {
   // Refresh the template catalog so recent template edits are reflected
   loadCatalog(true)
+  loadAssignmentOptions()
   formData.value = props.initialFormData ? { ...props.initialFormData } : {}
   showConfirmDialog.value = true
 }
 
 const confirmDeleteRequestAuthorization = () => {
   showConfirmDelReqDialog.value = true
+}
+
+// 0 is a legitimate answer (days, amounts); only an untouched field counts as missing
+const isEmptyValue = (v: any) => v === undefined || v === null || v === ''
+// Mirrors DynamicRequestFormFields: a hidden field (show_when) is never required
+const isFieldRequired = (field: any) => {
+  if (!field) return false
+  if (field.show_when && formData.value[field.show_when.field] !== field.show_when.equals) return false
+  if (field.required) return true
+  return !!field.required_when && formData.value[field.required_when.field] === field.required_when.equals
 }
 
 const onRequestAuthorizationClick = async () => {
@@ -336,7 +516,7 @@ const onRequestAuthorizationClick = async () => {
     }
 
     const missingField = tpl.value.elements?.find(
-      (el: any) => el.type === 'form_field' && el.field?.required && !formData.value[el.field.name]
+      (el: any) => el.type === 'form_field' && isFieldRequired(el.field) && isEmptyValue(formData.value[el.field.name])
     )
     if (missingField) {
       snackbar.add({ type: 'error', text: `Please fill in "${missingField.field.label}" before submitting` })
@@ -370,17 +550,36 @@ const onRequestAuthorizationClick = async () => {
       body.files = filesData.value
     }
 
-    await ($api as any).authProcessRequests.requestAuthorization(body)
+    // Who else can carry the action out once approved
+    if (showAssignment.value) {
+      if (assignment.value.departmentId) body.department_id = assignment.value.departmentId
+      if (assignment.value.userIds.length > 0) body.executor_user_ids = assignment.value.userIds
+    }
 
-    snackbar.add({ type: 'success', text: 'Authorization request sent' })
+    const created: any = await ($api as any).authProcessRequests.requestAuthorization(body)
+
+    // Whoever skips approvals gets the automatic action done on the spot (approved by the server)
+    const executedNow = created?.status === 'granted'
+    if (executedNow && created.automation_status === 'failed') {
+      snackbar.add({ type: 'warning', text: `The action could not be applied: ${created.automation_error || 'please try again'}` })
+    } else if (executedNow) {
+      snackbar.add({ type: 'success', text: 'Done. The action was executed.' })
+    } else {
+      snackbar.add({ type: 'success', text: 'Authorization request sent' })
+    }
     showConfirmDialog.value = false
     form.value.reason = ''
     formData.value = {}
     chargesData.value = {}
     filesData.value = []
+    assignment.value = { departmentId: null, userIds: [] }
 
     await fetchUserRequests()
-    startPolling()
+    if (executedNow) {
+      emit('refresh')
+    } else {
+      startPolling()
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -391,17 +590,21 @@ const onRequestAuthorizationClick = async () => {
 const onRequestCancelAuthorizationClick = async () => {
   try {
     if (!form.value.reason_deleted.trim()) {
-      snackbar.add({ type: 'error', text: 'Please provide a reason for the cancellation' })
+      snackbar.add({ type: 'error', text: 'Please tell us why you are withdrawing the request' })
       return
     }
     loadingStore.loading = true
 
     const reason_deleted = { reason_deleted: form.value.reason_deleted.trim() }
-    for (const req of requestForProcess.value) {
+    // Only the pending requests this user is allowed to withdraw (never someone else's)
+    const mine = requestForProcess.value.filter(
+      (r: any) => r.status === 'pending' && (r.user_id === currentUser.value?.id || isAdminRole())
+    )
+    for (const req of mine) {
       await ($api as any).authProcessRequests.cancelAuth(req.id, reason_deleted)
     }
 
-    snackbar.add({ type: 'success', text: 'Authorization request was canceled' })
+    snackbar.add({ type: 'success', text: 'Your approval request was withdrawn' })
     showConfirmDelReqDialog.value = false
     form.value.reason_deleted = ''
     stopPolling()
@@ -415,7 +618,7 @@ const onRequestCancelAuthorizationClick = async () => {
 }
 
 onMounted(() => {
-  loadCatalog()
+  loadEligibility() // also loads the catalog
   fetchUserRequests()
 })
 
@@ -432,6 +635,14 @@ watch(
 .paw-root {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Reason shown under the request button when the last approved request could not be applied */
+.paw-failed {
+  flex: 1 0 100%;
+  max-width: 28rem;
+  white-space: normal;
 }
 
 .paw-root--block {
@@ -443,9 +654,16 @@ watch(
   letter-spacing: 0.01em;
 }
 
+.paw-direct {
+  display: inline-flex;
+  align-items: center;
+}
+
 .paw-pending {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 
 .paw-chip-pending {

@@ -49,7 +49,7 @@
             >
               <td>
                 <div class="flex gap-2">
-                  <ViewButton :item="item" @click="viewBeneficiary(item)" />
+                  <ViewButton permission="refunds-view" :item="item" @click="viewBeneficiary(item)" />
                   <EditButton :item="item" permission="refunds-edit" @click="editBeneficiary(item)" />
                   <TrashButton :item="item" permission="refunds-delete" @click="showConfirmDelete" />
                 </div>

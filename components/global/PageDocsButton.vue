@@ -41,6 +41,16 @@ const active = computed(() => docs.value.find((d) => d.id === activeId.value) ??
 
 watch(docs, () => (activeId.value = docs.value[0]?.id ?? null), { immediate: true })
 
+// Other components can ask for a doc to be opened (usePageDocs().open(id, tab)).
+const { request } = usePageDocs()
+watch(request, (req) => {
+  if (!req) return
+  const doc = docs.value.find((d) => d.id === req.id)
+  if (!doc) return
+  activeId.value = doc.id
+  show.value = true
+})
+
 const cache = new Map<string, any>()
 const contentFor = (doc: any) => {
   if (!cache.has(doc.id)) cache.set(doc.id, defineAsyncComponent(doc.component))

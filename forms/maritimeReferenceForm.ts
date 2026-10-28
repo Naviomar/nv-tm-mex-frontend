@@ -1,10 +1,22 @@
 import * as yup from 'yup'
 import { toTypedSchema } from '@vee-validate/yup'
 
+// Una referencia puede capturarse sin cliente siempre que tenga ejecutivo: es quien consigue
+// el dato y recibe la alerta. El backend decide si el módulo lo permite (pending_consignee_enabled).
+const consigneeOptional = yup.string().nullable()
+const executiveRequiredWithoutConsignee = yup
+  .string()
+  .nullable()
+  .when('consignee_id', {
+    is: (value: any) => !value,
+    then: (schema) => schema.required('Executive is required when the reference has no customer'),
+  })
+
 const schema = toTypedSchema(
   yup.object().shape({
     next_year: yup.string().nullable(),
-    consignee_id: yup.string().required('Consignee is required'),
+    consignee_id: consigneeOptional,
+    executive_id: executiveRequiredWithoutConsignee,
     freight_forwarder_id: yup.string().nullable(),
     shipper_id: yup.string().nullable(),
     incident: yup.string().nullable(),
@@ -29,8 +41,8 @@ const schemaEdit = toTypedSchema(
     reference_number: yup.string(),
     // voyage_departure: yup.string().nullable(),
     incident: yup.string().nullable(),
-    consignee_id: yup.string().required('Consignee is required'),
-    executive_id: yup.string().nullable(),
+    consignee_id: consigneeOptional,
+    executive_id: executiveRequiredWithoutConsignee,
     executive: yup.object().shape({}).nullable(),
     freight_forwarder_id: yup.string().nullable(),
     shipper_id: yup.string().nullable(),
@@ -86,7 +98,8 @@ const schemaExport = toTypedSchema(
     doc_closing_date: yup.string().required('Doc closing date is required'),
     transit_days: yup.string().required('Transit days is required'),
     booking_number: yup.string().required('Booking line is required'),
-    consignee_id: yup.string().required('Consignee is required'),
+    consignee_id: consigneeOptional,
+    executive_id: executiveRequiredWithoutConsignee,
     freight_forwarder_id: yup.string().nullable(),
     notify_id: yup.string().nullable(),
     shipper_id: yup.string().nullable(),
@@ -112,10 +125,10 @@ const schemaExportEdit = toTypedSchema(
     doc_closing_date: yup.string().required('Doc closing date is required'),
     nomination_type: yup.string().required('Nomination type is required'),
     transit_days: yup.string().required('Transit days is required'),
-    consignee_id: yup.string().required('Consignee is required'),
+    consignee_id: consigneeOptional,
     freight_forwarder_id: yup.string().nullable(),
     shipper_id: yup.string().nullable(),
-    executive_id: yup.string().nullable(),
+    executive_id: executiveRequiredWithoutConsignee,
     executive: yup.object().shape({}).nullable(),
     notify_id: yup.string().nullable(),
     line_id: yup.string().required('Line is required'),
@@ -178,7 +191,8 @@ const schemaExportMasterBl = toTypedSchema(
   })
 )
 
-const schemaHouseBl = toTypedSchema(
+// Con la referencia sin cliente el consignee del house puede no existir aún en el catálogo
+const buildSchemaHouseBl = (optionalConsignee = false) => toTypedSchema(
   yup.object().shape({
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
@@ -186,6 +200,9 @@ const schemaHouseBl = toTypedSchema(
     can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
     consignee: yup.lazy(value => {
+      if (optionalConsignee && !value) {
+        return yup.mixed().nullable();
+      }
       if (typeof value === 'number') {
         return yup.number().required('Consignee must be a number');
       } else if (typeof value === 'object') {
@@ -209,6 +226,8 @@ const schemaHouseBl = toTypedSchema(
       }),
   })
 )
+
+const schemaHouseBl = buildSchemaHouseBl()
 
 const schemaBuyRate = toTypedSchema(
   yup.object().shape({
@@ -283,6 +302,7 @@ export {
   schemaCreditDebitNotes,
   schemaMasterBl,
   schemaHouseBl,
+  buildSchemaHouseBl,
   schemaCharge,
   schemaEdit,
   schemaInvoiceCharge,

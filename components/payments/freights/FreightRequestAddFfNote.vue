@@ -6,7 +6,9 @@
         <v-card-title>Search & add a F.F. available note</v-card-title>
         <v-card-text>
           <div>
-            <v-text-field v-model="form.ffNoteId" label="F.F. note Id # (folio, full or partial)" clearable @keyup.enter="serachFfNote" />
+            <v-text-field v-model="form.ffNoteId" label="F.F. note folio(s), full or partial"
+              hint="Several folios separated by spaces or commas"
+              persistent-hint clearable @keyup.enter="serachFfNote" />
             <v-btn color="primary" @click="serachFfNote">Search</v-btn>
             <v-btn v-if="form.ffNotes" size="x-small" color="purple" class="ml-2" @click="form.ffNotes = null">Clear</v-btn>
           </div>
@@ -108,6 +110,13 @@ const serachFfNote = async () => {
     const response = (await $api.ffNotes.searchFfNoteForReqPayment(body)) as any
     form.ffNotes = Array.isArray(response) ? response : [response]
     snackbar.add({ type: 'success', text: `${form.ffNotes.length} F.F. note(s) found` })
+    const missing = String(form.ffNoteId)
+      .split(/[\s,;]+/)
+      .filter(Boolean)
+      .filter((term) => !form.ffNotes.some((n: any) => n.folio?.toLowerCase().includes(term.toLowerCase())))
+    if (missing.length) {
+      snackbar.add({ type: 'warning', text: `No available note found for: ${missing.join(', ')}` })
+    }
   } catch (e) {
     console.error(e)
   } finally {

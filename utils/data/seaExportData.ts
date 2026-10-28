@@ -9,6 +9,10 @@ const bookingConfirmationBody = {
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{po}</td>
                 </tr>
                 <tr>
+                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Naviera</td>
+                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{naviera}</td>
+                </tr>
+                <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Booking Linea</td>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{bkgline}</td>
                 </tr>
@@ -25,16 +29,8 @@ const bookingConfirmationBody = {
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{equipo}</td>
                 </tr>
                 <tr>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Peso</td>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{peso}</td>
-                </tr>
-                <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Mercancía</td>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{mercancia}</td>
-                </tr>
-                <tr>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Bultos</td>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{bultos}</td>
                 </tr>
                 <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">B/M</td>
@@ -85,6 +81,10 @@ const bookingConfirmationBody = {
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{po}</td>
                 </tr>
                 <tr>
+                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Shipping line</td>
+                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{naviera}</td>
+                </tr>
+                <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Booking Line</td>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{bkgline}</td>
                 </tr>
@@ -101,16 +101,8 @@ const bookingConfirmationBody = {
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{equipo}</td>
                 </tr>
                 <tr>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Weight</td>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{peso}</td>
-                </tr>
-                <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Cargo</td>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{mercancia}</td>
-                </tr>
-                <tr>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">Packages</td>
-                    <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">{bultos}</td>
                 </tr>
                 <tr>
                     <td colSpan="1" rowSpan="1" width="auto" style="border: 1px solid #ddd;">B/M</td>
