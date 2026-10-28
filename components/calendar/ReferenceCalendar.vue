@@ -393,7 +393,7 @@ const parseIso = (value: unknown): Date | null => {
 }
 
 // --- View state (persisted in the URL so back-navigation keeps it) ---------
-const view = ref<CalendarView>(route.query.view === 'week' ? 'week' : 'month')
+const view = ref<CalendarView>(route.query.view === 'month' ? 'month' : 'week')
 const anchor = ref<Date>(parseIso(route.query.date) ?? new Date())
 
 const days = computed(() => {
