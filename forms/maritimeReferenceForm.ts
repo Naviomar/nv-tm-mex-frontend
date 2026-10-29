@@ -156,7 +156,6 @@ const schemaMasterBl = toTypedSchema(
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
     name: yup.string().required('Master BL number is required'),
-    mbl_origin: yup.string().nullable(),
     consignee_mbl_id: yup.number().nullable().required('Consignee MBL is required. Please select a consignee from the list.').typeError('Consignee MBL is required'),
     can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
@@ -198,7 +197,6 @@ const buildSchemaHouseBl = (optionalConsignee = false) => toTypedSchema(
     id: yup.string().nullable(),
     referencia_id: yup.string().nullable(),
     name: yup.string().required('House BL number is required'),
-    hbl_origin: yup.string().nullable(),
     can_be_delivered: yup.number().nullable(),
     comments: yup.string().nullable(),
     consignee: yup.lazy(value => {
