@@ -191,11 +191,13 @@
                 <div v-bind="tipProps" class="ref-chip shrink-0" :class="groupChipClass(group)" @click.stop="openGroup(day.iso, group)">
                   <v-icon size="12" class="shrink-0">{{ group.none ? 'mdi-help-circle-outline' : config.groupIcon }}</v-icon>
                   <span class="truncate font-semibold">{{ group.none ? config.groupNone : group.name }}</span>
+                  <span v-if="group.carrier && !group.none" class="truncate opacity-80">· {{ group.carrier }}</span>
                   <span class="ml-auto shrink-0 ref-chip__count">{{ group.items.length }}</span>
                 </div>
               </template>
               <div class="text-xs flex flex-col gap-0.5">
                 <div class="font-bold">{{ group.none ? config.groupNone : group.name }}<span v-if="group.legacy"> · TM1</span></div>
+                <div v-if="group.carrier">{{ config.carrierLabel }}: {{ group.carrier }}</div>
                 <div v-if="group.detail">{{ group.detail }}</div>
                 <div>{{ group.items.length }} reference{{ group.items.length === 1 ? '' : 's' }}</div>
                 <div v-if="group.noDate && !group.legacy" class="text-orange-300">{{ group.noDate }} without {{ config.dateLabel }}</div>
@@ -555,6 +557,7 @@ interface CalendarGroup {
   key: string
   name: string
   detail: string | null
+  carrier: string | null
   none: boolean
   legacy: boolean
   noDate: number
@@ -574,10 +577,13 @@ const groupsByDay = computed(() => {
       const key = raw ? `${item.legacy ? 'tm1' : 'tm2'}-${raw.key}` : 'none'
       let g = map.get(key)
       if (!g) {
-        g = { key, name: raw?.name ?? '', detail: raw?.detail ?? null, none: !raw, legacy: true, noDate: 0, allNoDate: true, allCancelled: true, items: [] }
+        g = { key, name: raw?.name ?? '', detail: raw?.detail ?? null, carrier: null, none: !raw, legacy: true, noDate: 0, allNoDate: true, allCancelled: true, items: [] }
         map.set(key, g)
       }
       g.items.push(item)
+      if (item.carrier && !(g.carrier ?? '').split(' / ').includes(item.carrier)) {
+        g.carrier = g.carrier ? `${g.carrier} / ${item.carrier}` : item.carrier
+      }
       g.legacy &&= !!item.legacy
       if (!item.has_date) g.noDate++
       g.allNoDate &&= !item.has_date
