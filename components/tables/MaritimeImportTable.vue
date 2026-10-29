@@ -300,7 +300,7 @@
           <thead>
             <tr>
               <template v-for="col in visibleColumns" :key="col.key">
-                <th v-if="col.key === 'actions'" class="text-left" width="50">Actions</th>
+                <th v-if="col.key === 'actions'" class="text-left">Actions</th>
                 <th v-else-if="col.key === 'reference'" class="text-left"># Reference</th>
                 <th v-else-if="col.key === 'masterBls'" class="text-left">Master BL(s)</th>
                 <th v-else-if="col.key === 'houseBls'" class="text-left">House BL(s)</th>
@@ -665,28 +665,62 @@
                 </td>
                 <td v-else-if="col.key === 'masterBls'">
                   <div class="flex flex-col gap-1">
-                    <v-chip
+                    <div
                       v-for="(bl, index) in item.master_bls"
                       :key="`master-bl-${index}`"
-                      size="small"
-                      color="primary"
+                      class="flex flex-col items-start gap-0.5"
                     >
-                      <v-icon v-if="bl.can_be_delivered != null">{{ getDeliveredIcon(bl) }}</v-icon
-                      >{{ bl.name }}
-                    </v-chip>
+                      <v-chip
+                        size="small"
+                        color="primary"
+                      >
+                        <v-icon v-if="bl.can_be_delivered != null">{{ getDeliveredIcon(bl) }}</v-icon
+                        >{{ bl.name }}
+                      </v-chip>
+                      <span
+                        v-if="getMasterBlOrigin(bl)"
+                        class="origin-badge whitespace-nowrap shrink-0"
+                        :class="isDark ? 'origin-badge--dark' : 'origin-badge--light'"
+                        :title="`Origin: ${getMasterBlOrigin(bl)}`"
+                      >
+                        <svg class="w-3 h-3 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                          <path d="M2 12h20"></path>
+                        </svg>
+                        <span>Origin: {{ getMasterBlOrigin(bl) }}</span>
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td v-else-if="col.key === 'houseBls'">
                   <div class="flex flex-col gap-1">
-                    <v-chip
+                    <div
                       v-for="(bl, index) in item.house_bls"
                       :key="`house-bl-${index}`"
-                      size="small"
-                      color="blue-lighten-2"
+                      class="flex flex-col items-start gap-0.5"
                     >
-                      <v-icon v-if="bl.can_be_delivered != null">{{ getDeliveredIcon(bl) }}</v-icon
-                      >{{ bl.name }}
-                    </v-chip>
+                      <v-chip
+                        size="small"
+                        color="blue-lighten-2"
+                      >
+                        <v-icon v-if="bl.can_be_delivered != null">{{ getDeliveredIcon(bl) }}</v-icon
+                        >{{ bl.name }}
+                      </v-chip>
+                      <span
+                        v-if="getHouseBlOrigin(bl)"
+                        class="origin-badge whitespace-nowrap shrink-0"
+                        :class="isDark ? 'origin-badge--dark' : 'origin-badge--light'"
+                        :title="`Origin: ${getHouseBlOrigin(bl)}`"
+                      >
+                        <svg class="w-3 h-3 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                          <path d="M2 12h20"></path>
+                        </svg>
+                        <span>Origin: {{ getHouseBlOrigin(bl) }}</span>
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td v-else-if="col.key === 'containers'">
@@ -788,10 +822,15 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useTheme } from 'vuetify'
 import { flattenArraysToCommaSeparatedString } from '~/utils/formatters'
 import { sourceSystems, deletedStatus } from '~/utils/data/systemData'
 import { useTableFilters } from '~/composables/useTableFilters'
 import PremiumLiveTrackingModal from '@/components/tracking/PremiumLiveTrackingModal.vue'
+
+const theme = useTheme()
+const darkMode = useDarkMode()
+const isDark = computed(() => Boolean(theme.global.current.value?.dark || darkMode.isDark))
 
 const { $api } = useNuxtApp()
 const router = useRouter()
@@ -977,6 +1016,7 @@ const references = ref({
   total: 1,
 })
 
+// TODO: Parameters implicits (text, num_words)
 function splitText(text){
   const spliText = text.split(' ')
   const num_words = 5
@@ -1035,6 +1075,14 @@ interface SearchParams {
 
 const getDeliveredIcon = (item: any) => {
   return item.can_be_delivered === 1 ? 'mdi-check' : 'mdi-close'
+}
+
+const getMasterBlOrigin = (bl: any) => {
+  return bl?.mbl_origin || bl?.origin_bl || bl?.origin || null
+}
+
+const getHouseBlOrigin = (bl: any) => {
+  return bl?.hbl_origin || bl?.origin_bl || bl?.origin || null
 }
 
 const showDetails = () => {
@@ -1337,5 +1385,31 @@ onMounted(() => {
 }
 .dark .custom-letter-scroll::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.4);
+}
+
+.origin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.origin-badge--light {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.origin-badge--dark {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
 }
 </style>
