@@ -8,6 +8,9 @@
     <v-icon size="small" class="shrink-0 opacity-70">{{ group.none ? 'mdi-help-circle-outline' : icon }}</v-icon>
     <div class="min-w-0 flex-1">
       <div class="text-sm font-bold truncate">{{ group.none ? noneLabel : group.name }}</div>
+      <div v-if="group.carrier && !group.none && group.carrier !== group.detail" class="text-xs font-semibold truncate">
+        {{ group.carrier }}
+      </div>
       <div v-if="group.detail" class="text-xs opacity-70 truncate">{{ group.detail }}</div>
     </div>
     <div class="flex shrink-0 flex-wrap items-center justify-end gap-1">

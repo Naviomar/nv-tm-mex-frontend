@@ -9,6 +9,7 @@
             <v-chip v-if="group.legacy" size="x-small" color="grey" variant="flat">TM1</v-chip>
           </div>
           <div class="text-xs font-normal opacity-70">
+            <template v-if="group.carrier && !group.none && group.carrier !== group.detail">{{ group.carrier }} · </template>
             <template v-if="group.detail">{{ group.detail }} · </template>{{ dayLabel }} · {{ group.items.length }}
             reference{{ group.items.length === 1 ? '' : 's' }}
             <template v-if="group.noDate && !group.legacy"> · {{ group.noDate }} without {{ dateLabel }}</template>
