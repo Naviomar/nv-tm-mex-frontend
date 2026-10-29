@@ -46,6 +46,15 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
    * @param fetchOptions options for `useFetch`
    * @returns
    */
+  async getSeaImportCalendar(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-import/calendar`, fetchOptions)
+  }
+
+  /** Read-only TM1 reference info for the calendar modal */
+  async getCalendarLegacyDetail(kind: string, id: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `/reference-calendar/legacy/${kind}/${id}`, fetchOptions)
+  }
+
   async getSeaImportReferencias(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-import`, fetchOptions)
   }
