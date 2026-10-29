@@ -20,9 +20,6 @@
           <div>
             <InputText name="name" density="compact" variant="solo-filled" label="Master BL # *" />
           </div>
-          <div>
-            <InputText name="mbl_origin" density="compact" variant="solo-filled" label="Origin BL (Optional)" />
-          </div>
           <div class="">
             <InputAutocomplete
               name="consignee_mbl_id"
@@ -113,22 +110,7 @@
                   </v-btn>
                 </div>
               </td>
-              <td>
-                <div>{{ item.name }}</div>
-                <span
-                  v-if="getMasterBlOrigin(item)"
-                  class="origin-badge whitespace-nowrap shrink-0 mt-1"
-                  :class="isDark ? 'origin-badge--dark' : 'origin-badge--light'"
-                  :title="`Origin: ${getMasterBlOrigin(item)}`"
-                >
-                  <svg class="w-3 h-3 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                    <path d="M2 12h20"></path>
-                  </svg>
-                  <span>Origin: {{ getMasterBlOrigin(item) }}</span>
-                </span>
-              </td>
+              <td>{{ item.name }}</td>
               <td>{{ getConsigneeName(item.consignee_mbl_id) }}</td>
               <td>{{ item.type }}</td>
               <td>
@@ -169,22 +151,7 @@
             </thead>
             <tbody>
               <tr v-for="(mblLog, index) in masterBlDetails.masterBl.logs" :key="`mbl-log-${index}`">
-                <td>
-                  <div>{{ mblLog.name }}</div>
-                  <span
-                    v-if="getMasterBlOrigin(mblLog)"
-                    class="origin-badge whitespace-nowrap shrink-0 mt-1"
-                    :class="isDark ? 'origin-badge--dark' : 'origin-badge--light'"
-                    :title="`Origin: ${getMasterBlOrigin(mblLog)}`"
-                  >
-                    <svg class="w-3 h-3 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                      <path d="M2 12h20"></path>
-                    </svg>
-                    <span>Origin: {{ getMasterBlOrigin(mblLog) }}</span>
-                  </span>
-                </td>
+                <td>{{ mblLog.name }}</td>
                 <td>{{ mblLog.type }}</td>
                 <td>{{ mblLog.consignee_mbl?.name }}</td>
                 <td>{{ mblLog.comments }}</td>
@@ -205,20 +172,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useTheme } from 'vuetify'
 import { schemaMasterBl } from '~~/forms/maritimeReferenceForm'
 const { $api, $notifications } = useNuxtApp()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 const confirm = $notifications.useConfirm()
-
-const theme = useTheme()
-const darkMode = useDarkMode()
-const isDark = computed(() => Boolean(theme.global.current.value?.dark || darkMode.isDark))
-
-const getMasterBlOrigin = (bl: any) => {
-  return bl?.mbl_origin || bl?.origin_bl || bl?.origin || null
-}
 
 const props = defineProps({
   referenciaId: {
@@ -305,7 +263,6 @@ const clearValues = () => {
       id: null,
       referencia_id: null,
       name: '',
-      mbl_origin: null,
       can_be_delivered: null,
       comments: null,
       consignee_mbl_id: null,
@@ -410,7 +367,6 @@ const removeMasterBl = async (masterBl: any, index: number) => {
 const editMasterBl = (masterBl: any, index: number) => {
   setValues({
     ...masterBl,
-    mbl_origin: masterBl.mbl_origin ?? masterBl.origin_bl ?? masterBl.origin ?? null,
     consignee_mbl_id: Number(masterBl.consignee_mbl_id),
     can_be_delivered: masterBl.can_be_delivered != null ? Number(masterBl.can_be_delivered) : null,
     attachment: null,
@@ -427,31 +383,3 @@ const setItems = (items: any[]) => {
 
 defineExpose({ setItems })
 </script>
-
-<style scoped>
-.origin-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap !important;
-  flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.origin-badge--light {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-}
-
-.origin-badge--dark {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border: 1px solid #475569 !important;
-}
-</style>
