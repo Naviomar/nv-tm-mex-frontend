@@ -49,6 +49,10 @@ class ReferenciasExportModule extends FetchFactory<IReferenciaPagination> {
    * @param fetchOptions options for `useFetch`
    * @returns
    */
+  async getSeaExportCalendar(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/sea-export/calendar`, fetchOptions)
+  }
+
   async getSeaExportReferencias(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/sea-export`, fetchOptions)
   }

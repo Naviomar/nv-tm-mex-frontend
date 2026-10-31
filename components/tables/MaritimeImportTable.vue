@@ -300,7 +300,7 @@
           <thead>
             <tr>
               <template v-for="col in visibleColumns" :key="col.key">
-                <th v-if="col.key === 'actions'" class="text-left" width="50">Actions</th>
+                <th v-if="col.key === 'actions'" class="text-left">Actions</th>
                 <th v-else-if="col.key === 'reference'" class="text-left"># Reference</th>
                 <th v-else-if="col.key === 'masterBls'" class="text-left">Master BL(s)</th>
                 <th v-else-if="col.key === 'houseBls'" class="text-left">House BL(s)</th>
@@ -977,6 +977,7 @@ const references = ref({
   total: 1,
 })
 
+// TODO: Parameters implicits has any (text, num_words)
 function splitText(text){
   const spliText = text.split(' ')
   const num_words = 5

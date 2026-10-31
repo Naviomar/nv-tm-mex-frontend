@@ -475,7 +475,21 @@
           to="/maritime/import"
           rounded="xl"
           class="mb-1"
-        ></v-list-item>
+        >
+          <template #append>
+            <v-btn
+              icon="mdi-calendar-month-outline"
+              size="small"
+              variant="flat"
+              color="primary"
+              rounded="circle"
+              class="cursor-pointer ml-1"
+              density="comfortable"
+              title="Calendar view"
+              @click.stop.prevent="router.push('/maritime/import/calendar')"
+            ></v-btn>
+          </template>
+        </v-list-item>
         <v-list-item
           v-if="canAccess(menuPermissions.MaritimeExport)"
           prepend-icon="mdi-tray-arrow-up"
@@ -483,7 +497,21 @@
           to="/maritime/export"
           rounded="xl"
           class="mb-1"
-        ></v-list-item>
+        >
+          <template #append>
+            <v-btn
+              icon="mdi-calendar-month-outline"
+              size="small"
+              variant="flat"
+              color="primary"
+              rounded="circle"
+              class="cursor-pointer ml-1"
+              density="comfortable"
+              title="Calendar view"
+              @click.stop.prevent="router.push('/maritime/export/calendar')"
+            ></v-btn>
+          </template>
+        </v-list-item>
       </v-list-group>
 
       <v-list-group v-if="hasAnyPermission(airPermissions)" value="air">
@@ -506,7 +534,21 @@
           to="/air/import"
           rounded="xl"
           class="mb-1"
-        ></v-list-item>
+        >
+          <template #append>
+            <v-btn
+              icon="mdi-calendar-month-outline"
+              size="small"
+              variant="flat"
+              color="primary"
+              rounded="circle"
+              class="cursor-pointer ml-1"
+              density="comfortable"
+              title="Calendar view"
+              @click.stop.prevent="router.push('/air/import/calendar')"
+            ></v-btn>
+          </template>
+        </v-list-item>
         <v-list-item
           v-if="canAccess(menuPermissions.AirExport)"
           prepend-icon="mdi-tray-arrow-up"
@@ -514,7 +556,21 @@
           to="/air/export"
           rounded="xl"
           class="mb-1"
-        ></v-list-item>
+        >
+          <template #append>
+            <v-btn
+              icon="mdi-calendar-month-outline"
+              size="small"
+              variant="flat"
+              color="primary"
+              rounded="circle"
+              class="cursor-pointer ml-1"
+              density="comfortable"
+              title="Calendar view"
+              @click.stop.prevent="router.push('/air/export/calendar')"
+            ></v-btn>
+          </template>
+        </v-list-item>
       </v-list-group>
 
       <v-list-group
@@ -715,6 +771,7 @@ import { menuPermissions } from '~/utils/data/system'
 const { logout } = useSanctumAuth()
 const { hasPermission, isRestricted, fetchIsRestricted, resetIsRestricted, isSuperAdminRole } = useCheckUser()
 const route = useRoute()
+const router = useRouter()
 const opened = ref<string[]>([])
 
 fetchIsRestricted()
