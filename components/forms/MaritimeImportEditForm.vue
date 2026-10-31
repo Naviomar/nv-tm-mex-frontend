@@ -312,13 +312,7 @@
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-2">
-                <InputText
-                  name="credit_days"
-                  type="number"
-                  density="compact"
-                  variant="solo-filled"
-                  label="Credit days *"
-                />
+                <ReferenceCreditDaysField :customer-days="consigneeInfo?.import_credit_days" :disabled="isPendingSaved" />
               </div>
               <div v-if="!isPendingSaved" class="flex gap-2">
                 <v-chip size="small" class="chip-gradient"
@@ -499,14 +493,16 @@
               </div>
             </div>
             <div>
-              <div class="text-center">
-                <v-btn
-                  class="chip-gradient"
-                  size="small"
-                  :to="`/maritime/import/demurrages/reference-${values.id}-demurrages`"
-                  >Go to demurrage calculations</v-btn
-                >
-              </div>
+              <Can permission="menu-maritime-import-demurrages-search">
+                <div class="text-center">
+                  <v-btn
+                    class="chip-gradient"
+                    size="small"
+                    :to="`/maritime/import/demurrages/reference-${values.id}-demurrages`"
+                    >Go to demurrage calculations</v-btn
+                  >
+                </div>
+              </Can>
               <SeaImportContainersSmart
                 :referencia-id="values.id"
                 impoExpo="I"

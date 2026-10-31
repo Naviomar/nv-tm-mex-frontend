@@ -443,6 +443,13 @@
         </v-card>
         <CustomerBankForm :id="id.toString()" />
         <ConsigneeRegionFreeDaysForm :id="id.toString()" />
+        <ConsigneeReferenceSyncDialog
+          v-if="showReferenceSync"
+          v-model="showReferenceSync"
+          :consignee-id="id.toString()"
+          :fields="referenceSyncFields"
+          @done="goToCustomers"
+        />
         <ConsigneeEditFormAddresses :consignee="consignee" @update:consignee="getData" />
         <ConsigneeEditFormAddEntrustLetter
           :letters="consignee?.entrust_letters"
@@ -582,15 +589,42 @@ const validateBeforeCreate = async () => {
   showSimilarDialog.value = true
 }
 
+const { can } = useCheckUser()
+const showReferenceSync = ref(false)
+const referenceSyncFields = ref<string[]>([])
+
+const changed = (key: string, values: any) => Number(values?.[key] ?? 0) !== Number(consignee.value?.[key] ?? 0)
+
+// Which saved catalog values could be propagated to existing references, limited to what the user may edit on a reference
+const getReferenceSyncFields = (values: any) => {
+  const fields: string[] = []
+  const creditChanged = changed('import_credit_days', values) || changed('export_credit_days', values)
+  if (creditChanged && can({ any: ['sea-import-references-edit', 'sea-export-references-edit'] })) {
+    fields.push('credit_days')
+  }
+  if (changed('import_free_days', values) && can('demurrages-free-days-init')) {
+    fields.push('free_days')
+  }
+  return fields
+}
+
+const goToCustomers = () => router.push('/configuration/customers')
+
 const saveConsignee = async () => {
   try {
     const values = customerFormRef.value?.values
+    const fields = getReferenceSyncFields(values)
     await $api.consignees.update(id!.toString(), values)
     snackbar.add({
       type: 'success',
       text: 'Consignee updated successfully',
     })
-    router.push('/configuration/customers')
+    if (fields.length) {
+      referenceSyncFields.value = fields
+      showReferenceSync.value = true
+      return
+    }
+    goToCustomers()
   } catch (e) {
     console.error(e)
   } finally {
