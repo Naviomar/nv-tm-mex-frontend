@@ -45,14 +45,16 @@
               </div>
             </div>
 
-            <div class="py-1">
-              <v-btn
-                class="chip-gradient"
-                size="small"
-                :to="`/maritime/import/demurrages/reference-${referencia.id}-demurrages`"
-                >Go to demurrage calculations</v-btn
-              >
-            </div>
+            <Can permission="menu-maritime-import-demurrages-search">
+              <div class="py-1">
+                <v-btn
+                  class="chip-gradient"
+                  size="small"
+                  :to="`/maritime/import/demurrages/reference-${referencia.id}-demurrages`"
+                  >Go to demurrage calculations</v-btn
+                >
+              </div>
+            </Can>
           </v-card-text>
         </v-card>
       </div>

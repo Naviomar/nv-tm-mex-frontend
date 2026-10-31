@@ -316,13 +316,7 @@
               </div>
 
               <div>
-                <InputText
-                  name="credit_days"
-                  type="number"
-                  density="compact"
-                  variant="solo-filled"
-                  label="Credit days *"
-                />
+                <ReferenceCreditDaysField :customer-days="consigneeInfo?.export_credit_days" :disabled="isPendingSaved" />
               </div>
             </div>
 

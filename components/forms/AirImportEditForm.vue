@@ -117,7 +117,7 @@
             />
           </div>
 
-          <InputText name="credit_days" type="number" density="compact" variant="solo-filled" label="Credit days *" />
+          <ReferenceCreditDaysField :customer-days="consigneeInfo?.import_air_credit_days" />
         </div>
 
         <v-card density="compact" color="blue-grey-lighten-5" class="mb-2">
