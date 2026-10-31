@@ -337,6 +337,18 @@ class ConsigneesModule extends FetchFactory<any> {
     return this.call('POST', `${this.RESOURCE}/${id}/region-free-days`, fetchOptions)
   }
 
+  async getReferenceSyncPreview(id: string, field: string, mode: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}/reference-sync/preview?field=${field}&mode=${mode}`, fetchOptions)
+  }
+
+  async applyReferenceSync(id: string, form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/${id}/reference-sync/apply`, fetchOptions)
+  }
+
   async deleteRegionFreeDays(regionFreeDaysId: string, fetchOptions?: FetchOptions) {
     return this.call('DELETE', `${this.RESOURCE}/region-free-days/${regionFreeDaysId}`, fetchOptions)
   }

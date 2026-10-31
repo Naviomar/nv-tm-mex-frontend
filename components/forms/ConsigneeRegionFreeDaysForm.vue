@@ -94,6 +94,12 @@
         No region free days configured. Click the + button to add one.
       </div>
     </v-card-text>
+    <ConsigneeReferenceSyncDialog
+      v-if="showReferenceSync"
+      v-model="showReferenceSync"
+      :consignee-id="props.id"
+      :fields="['free_days']"
+    />
   </v-card>
 </template>
 
@@ -107,7 +113,9 @@ const confirm = $notifications.useConfirm()
 const loadingStore = useLoadingStore()
 const snackbar = useSnackbar()
 
+const { can } = useCheckUser()
 const showForm = ref(false)
+const showReferenceSync = ref(false)
 const seaRegions = ref<any[]>([])
 const regionFreeDays = ref<any[]>([])
 
@@ -157,6 +165,9 @@ const saveRegionFreeDays = async () => {
     snackbar.add({ type: 'success', text: 'Region free days saved successfully' })
     await getData()
     cancelForm()
+    if (can('demurrages-free-days-init')) {
+      showReferenceSync.value = true
+    }
   } catch (e: any) {
     console.error(e)
     snackbar.add({ type: 'error', text: e.message || 'Error saving region free days' })
