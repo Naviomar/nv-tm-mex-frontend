@@ -69,7 +69,7 @@
                   <ProcessAuthorizationWrapper
                     process-name="sea-import.add-charge-locked"
                     :request-key="String(props.referencia.id)"
-                    label="Request charge"
+                    label="Request charge addition"
                     :display-name="`Ref. ${props.referencia.reference_number}`"
                     :process-data="{ referencia_id: props.referencia.id }"
                     :field-catalogs="lockedChargeFieldCatalogs"
@@ -178,6 +178,15 @@
                         <TrashButton item="charge" @click="removeCharge(index)" />
                         <EditButton item="charge" @click="editSellCharge(charge, index)" />
                       </div>
+                      <v-tooltip
+                        v-else-if="charge.absorbed_invoice_id"
+                        text="Included in an Ocean Freight invoice without breakdown. Cancel that invoice to change this charge."
+                        location="right"
+                      >
+                        <template #activator="{ props: tooltipProps }">
+                          <v-icon v-bind="tooltipProps" size="small">mdi-lock-outline</v-icon>
+                        </template>
+                      </v-tooltip>
                       <div v-else-if="canRequestLockedCharge && charge.id" class="flex flex-col gap-1">
                         <ProcessAuthorizationWrapper
                           process-name="sea-import.edit-charge-locked"

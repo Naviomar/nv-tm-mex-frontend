@@ -300,7 +300,7 @@
               v-else
               process-name="air.add-charge-locked"
               :request-key="`${props.referenciaId}-charge-new`"
-              label="Request charge"
+              label="Request charge addition"
               :display-name="`Ref. ${props.airReference?.reference_number}`"
               :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
               :field-catalogs="lockedFieldCatalogs"
@@ -435,7 +435,7 @@
             <ProcessAuthorizationWrapper
               process-name="air.add-charge-locked"
               :request-key="`${props.referenciaId}-charge-new-buy`"
-              label="Request charge"
+              label="Request charge addition"
               :display-name="`Ref. ${props.airReference?.reference_number}`"
               :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
               :field-catalogs="lockedFieldCatalogs"
@@ -622,7 +622,7 @@
             <ProcessAuthorizationWrapper
               process-name="air.add-charge-locked"
               :request-key="`${props.referenciaId}-charge-new-sell`"
-              label="Request charge"
+              label="Request charge addition"
               :display-name="`Ref. ${props.airReference?.reference_number}`"
               :process-data="{ air_reference_id: props.referenciaId, action: 'add' }"
               :field-catalogs="lockedFieldCatalogs"
