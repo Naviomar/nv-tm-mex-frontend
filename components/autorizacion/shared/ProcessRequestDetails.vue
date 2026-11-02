@@ -8,6 +8,10 @@
         </div>
       </div>
 
+      <v-alert v-for="warning in summary.warnings" :key="warning" type="warning" variant="tonal" density="compact" class="mb-2">
+        {{ warning }}
+      </v-alert>
+
       <v-alert v-if="summary.action === 'delete'" type="warning" variant="tonal" density="compact" class="mb-2">
         {{ summary.notes[0] }}
       </v-alert>
@@ -107,6 +111,7 @@ const props = defineProps<{
     reference: { label: string; value: string } | null
     sections: { heading: string; rows: { label: string; before: string | null; after: string | null; changed: boolean }[] }[]
     notes: string[]
+    warnings?: string[]
   } | null
 }>()
 

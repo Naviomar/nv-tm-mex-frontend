@@ -73,7 +73,7 @@
                   <ProcessAuthorizationWrapper
                     process-name="sea-import.add-buy-charge-locked"
                     :request-key="`${props.referencia.id}-buy-charge-new`"
-                    label="Request charge"
+                    label="Request charge addition"
                     :display-name="`Ref. ${props.referencia.reference_number}`"
                     :process-data="{ referencia_id: props.referencia.id, action: 'add' }"
                     :field-catalogs="buyChargeFieldCatalogs"

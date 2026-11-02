@@ -155,7 +155,7 @@
               v-else
               process-name="sea-export.add-charge-locked"
               :request-key="`${props.referenciaId}-charge-new`"
-              label="Request charge"
+              label="Request charge addition"
               :process-data="{ referencia_id: props.referenciaId, action: 'add' }"
               :field-catalogs="lockedFieldCatalogs"
               @refresh="getExportCharges"

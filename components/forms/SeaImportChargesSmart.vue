@@ -17,7 +17,7 @@
             <ProcessAuthorizationWrapper
               process-name="sea-import.add-charge-locked"
               :request-key="String(props.referencia.id)"
-              label="Request charge"
+              label="Request charge addition"
               :display-name="`Ref. ${props.referencia.reference_number}`"
               :process-data="{ referencia_id: props.referencia.id }"
               :field-catalogs="lockedChargeFieldCatalogs"
@@ -197,7 +197,7 @@
                     :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(item.charge_id)}`"
                     :process-data="{
                       referencia_id: props.referencia.id,
-                      charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
+                      charge_table: 'reference',
                       charge_id: item.id,
                       action: 'edit',
                       charge_name: getChargeName(item.charge_id),
@@ -217,7 +217,7 @@
                     :display-name="`Ref. ${props.referencia.reference_number} — ${getChargeName(item.charge_id)}`"
                     :process-data="{
                       referencia_id: props.referencia.id,
-                      charge_table: item.fuera_dentro_bl === 'Dentro BL' ? 'sellrate' : 'reference',
+                      charge_table: 'reference',
                       charge_id: item.id,
                       action: 'delete',
                       charge_name: getChargeName(item.charge_id),
