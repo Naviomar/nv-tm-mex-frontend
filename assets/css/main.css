@@ -325,6 +325,30 @@
   z-index: 10;
 }
 /*
+  Button groups (card headers, action rows): Vuetify's .v-card-title is display:block and beats Tailwind's
+  flex/gap utilities, so buttons end up glued together. This class guarantees the spacing.
+*/
+.tm-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.v-card-title.tm-btn-group {
+  display: flex;
+  padding-block: 0.75rem;
+}
+.tm-btn-group > .v-btn {
+  margin: 0;
+}
+/* Dialog footers: breathing room between buttons and from the dialog edge. */
+.v-card-actions.tm-dialog-actions {
+  gap: 0.75rem;
+}
+.v-card-actions.tm-dialog-actions:not([class*='pa-']) {
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+/*
   Theme-aware surfaces (Vuetify CSS vars) for panels/tables that must look right in light and dark.
   Do not use Tailwind `bg-white` (Vuetify redefines it with !important + color:#000) nor the
   slate palette for these: they don't follow the Vuetify theme.

@@ -193,14 +193,14 @@
               />
 
               <v-card density="compact" class="mb-2" color="blue-lighten-5">
-                <v-card-title>Rebate config</v-card-title>
+                <v-card-title>Rebate config <span class="text-caption font-normal">(read only)</span></v-card-title>
                 <v-card-text>
                   <div class="font-bold text-lg">Maritime Import</div>
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <InputText
                         name="rebate"
-                        :readonly="!hasPermission('customers-update-import-rebate')"
+                        :readonly="true"
                         type="number"
                         density="compact"
                         variant="solo-filled"
@@ -211,7 +211,7 @@
                     <div>
                       <InputAutocomplete
                         name="line_id"
-                        :readonly="!hasPermission('customers-update-import-rebate')"
+                        :readonly="true"
                         density="compact"
                         label="Lines"
                         :items="catalogs.lines"
@@ -225,24 +225,13 @@
                       />
                     </div>
                   </div>
-                  <div class="mb-4">
-                    <Can permission="customers-update-import-rebate">
-                      <button
-                        type="button"
-                        @click="updateRebateImport"
-                        class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-                      >
-                        Update Rebate
-                      </button>
-                    </Can>
-                  </div>
 
                   <div class="font-bold text-lg">Maritime Export</div>
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <InputText
                         name="rebate_export"
-                        :readonly="!hasPermission('customers-update-export-rebate')"
+                        :readonly="true"
                         type="number"
                         density="compact"
                         variant="solo-filled"
@@ -253,7 +242,7 @@
                     <div>
                       <InputAutocomplete
                         name="line_export_id"
-                        :readonly="!hasPermission('customers-update-export-rebate')"
+                        :readonly="true"
                         density="compact"
                         label="Lines"
                         :items="catalogs.lines"
@@ -266,17 +255,6 @@
                         closable-chips
                       />
                     </div>
-                  </div>
-                  <div class="mb-4">
-                    <Can permission="customers-update-export-rebate">
-                      <button
-                        type="button"
-                        @click="updateRebateExport"
-                        class="inline-flex items-center rounded-md bg-amber-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-                      >
-                        Update Rebate
-                      </button>
-                    </Can>
                   </div>
                 </v-card-text>
               </v-card>
@@ -634,49 +612,7 @@ const saveConsignee = async () => {
   }
 }
 
-const updateRebateImport = async () => {
-  try {
-    loadingStore.start()
-    const values = customerFormRef.value?.values
-    const body = {
-      rebate: values!.rebate,
-      lines: values!.line_id,
-    }
-    await $api.consignees.updateImportRebate(id!.toString(), body)
-    snackbar.add({
-      type: 'success',
-      text: 'Rebate updated successfully',
-    })
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
-const updateRebateExport = async () => {
-  try {
-    loadingStore.start()
-    const values = customerFormRef.value?.values
-    const body = {
-      rebate_export: values!.rebate_export,
-      lines: values!.line_export_id,
-    }
-    await $api.consignees.updateExportRebate(id!.toString(), body)
-    snackbar.add({
-      type: 'success',
-      text: 'Rebate updated successfully',
-    })
-  } catch (e) {
-    console.error(e)
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
 const saveExecutive = async (values: any) => {
   try {

@@ -75,6 +75,8 @@ export const pagePermissions: PagePermissionEntry[] = [
   { path: '/tracking/sea', permissions: [menuPermissions.Tracking] },
   { path: '/tracking/air', permissions: [menuPermissions.Tracking] },
   { path: '/reports', permissions: [menuPermissions.Reports] },
+  { path: '/rebate/containers', permissions: [menuPermissions.RebateContainers] },
+  { path: '/rebate/payments', permissions: [menuPermissions.RebatePayments] },
 
   { path: '/configuration/airlines', permissions: [menuPermissions.ConfigurationAirlines] },
   { path: '/configuration/airports', permissions: [menuPermissions.ConfigurationAirports] },
