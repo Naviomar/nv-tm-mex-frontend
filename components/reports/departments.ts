@@ -188,10 +188,40 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     ],
   },
   {
+    key: 'demurrage',
+    title: 'Demurrage & Detentions',
+    icon: 'mdi-timer-sand',
+    color: 'orange',
+    reports: [
+      {
+        key: 'demurrage-detention',
+        title: 'Demurrage',
+        icon: 'mdi-clock-alert-outline',
+        component: 'DemurrageDetentionReport',
+        permission: 'reports-demurrage-detention-view',
+      },
+    ],
+  },
+  {
     key: 'accounting',
     title: 'Accounting',
     icon: 'mdi-calculator',
     color: 'teal',
     reports: [],
+  },
+  {
+    key: 'management',
+    title: 'Management',
+    icon: 'mdi-briefcase-outline',
+    color: 'deep-purple',
+    reports: [
+      {
+        key: 'special-cases',
+        title: 'Special Cases',
+        icon: 'mdi-folder-star-outline',
+        component: 'SpecialCasesReport',
+        permission: 'reports-special-cases-view',
+      },
+    ],
   },
 ]
