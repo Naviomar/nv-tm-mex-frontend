@@ -363,11 +363,11 @@
             <template v-else>Up to <strong>{{ formatToCurrency(advances.reduce((s, a) => s + a.pending, 0)) }}</strong> is withheld for {{ advances.map((a) => a.case).join(', ') }} if the selection includes rebate of those customers.</template>
           </v-alert>
           <v-alert v-if="limitExceeded" type="error" variant="tonal" density="compact" class="mb-3">
-            {{ limits[0].executive }} can still request <strong>{{ formatToCurrency(limits[0].available) }}</strong>
-            (overdue debt of their customers {{ formatToCurrency(limits[0].debt) }}, requested not paid {{ formatToCurrency(limits[0].requested) }}). Reduce the selection.
+            {{ limits[0].executive }} can request <strong>{{ formatToCurrency(limits[0].available) }}</strong>
+            (available rebate {{ formatToCurrency(limits[0].rebate) }} minus the overdue debt of their customers {{ formatToCurrency(limits[0].debt) }}). Reduce the selection.
           </v-alert>
           <div v-else-if="limits.length === 1" class="text-sm text-medium-emphasis mb-3">
-            Request limit of {{ limits[0].executive }}: <strong>{{ formatToCurrency(limits[0].available) }}</strong> left.
+            {{ limits[0].executive }} can request up to <strong>{{ formatToCurrency(limits[0].available) }}</strong>.
           </div>
           <ul class="grid gap-2 text-sm">
             <li class="flex gap-2"><v-icon size="18">mdi-file-tree-outline</v-icon>Rebate is paid per whole reference: all the containers of each selected reference are included, and a reference with any held container is left out.</li>
