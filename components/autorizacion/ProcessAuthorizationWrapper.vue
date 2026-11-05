@@ -338,8 +338,10 @@ async function loadEligibility() {
   }
 }
 // ── Assignment (departments / people who can carry the action out) ───────────────
-// Auto-executed types are carried out by the approver, so there is nobody to assign.
-const showAssignment = computed(() => policy.value?.kind === 'process' && policy.value?.automatable !== true)
+// Types the server applies on approval have nobody to carry them out, so there is nobody to assign.
+const showAssignment = computed(
+  () => policy.value?.kind === 'process' && (policy.value?.on_approval_resolved ?? policy.value?.on_approval) !== 'execute',
+)
 const assignment = ref<{ departmentId: number | null; userIds: number[] }>({ departmentId: null, userIds: [] })
 const departmentOptions = ref<any[]>([])
 const userOptions = ref<any[]>([])

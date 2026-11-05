@@ -248,18 +248,23 @@
         ></v-pagination>
       </div>
 
-      <GrantDenyDialog
+      <RequestDecisionDialog
         v-model="showGrantDialog"
-        mode="authorization"
-        @submit="preGrantAuth"
+        kind="authorization-request"
+        :request-id="form.auth_request?.id ?? null"
+        title="Respond authorization request"
+        @decided="onDecided"
+        @redirect="onDecisionRedirect"
       >
-        <template #context>
-          <div class="text-base">Resource: {{ getResourceName(form.auth_request?.resource) }}</div>
-          <div class="text-base">Reference: #{{ form.auth_request?.invoice_number || form.auth_request?.resource_id }}</div>
-          <div class="text-base">Requested by: {{ form.auth_request?.requested?.name }}</div>
-          <div class="text-base">Comments: {{ form.auth_request?.request_reason }}</div>
+        <template #context="{ hasSummary }">
+          <template v-if="!hasSummary">
+            <div class="text-body-2"><span class="text-medium-emphasis">Request:</span> {{ getResourceName(form.auth_request?.resource) }}</div>
+            <div class="text-body-2"><span class="text-medium-emphasis">Reference:</span> {{ form.auth_request?.invoice_number || '—' }}</div>
+          </template>
+          <div class="text-body-2"><span class="text-medium-emphasis">Requested by:</span> {{ form.auth_request?.requested?.name }}</div>
+          <div class="text-body-2"><span class="text-medium-emphasis">Reason:</span> {{ form.auth_request?.request_reason || 'No comments' }}</div>
         </template>
-      </GrantDenyDialog>
+      </RequestDecisionDialog>
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
@@ -315,7 +320,8 @@
 import { authorizeResources, getAuthResourceByName } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.vue'
-import GrantDenyDialog from './shared/GrantDenyDialog.vue'
+import RequestDecisionDialog from './shared/RequestDecisionDialog.vue'
+import type { IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
 import DecisionChip from './shared/DecisionChip.vue'
 const { $api } = useNuxtApp()
 const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
@@ -430,54 +436,26 @@ const getResourceName = (resource: string) => {
   return getAuthResourceByName(resource)?.description
 }
 
-const preGrantAuth = async (payload: any) => {
-  const isAuthorized = payload.decision === 'granted'
-  const resource = getAuthResourceByName(form.value.auth_request.resource)
-  if (isAuthorized && resource?.redirect) {
-    authRequestStore.setAuthRequest({
-      auth_request: form.value.auth_request,
-      is_authorized: 1,
-      until_date: payload.untilDate,
-      authorized_reason: payload.reason,
-      temp_permission_enabled: payload.tempPermissionEnabled ?? false,
-      temp_valid_from: payload.tempValidFrom ?? null,
-      temp_valid_until: payload.tempValidUntil ?? null,
-    })
-    router.push(resource.redirect)
-    return
-  }
-  await grantAuthorization(payload)
+const onDecided = async (decision: IRequestDecision) => {
+  snackbar.add({ type: 'success', text: decision.state === 'granted' ? 'Request approved' : 'Request denied' })
+  closeGrantDialog()
+  await getAuthRequests()
 }
 
-const grantAuthorization = async (payload: any) => {
-  try {
-    loadingStore.loading = true
-    const body = {
-      id: form.value.auth_request.id,
-      is_authorized: payload.decision === 'granted' ? 1 : 0,
-      until_date: payload.untilDate,
-      authorized_reason: payload.reason,
-      temp_permission_enabled: payload.tempPermissionEnabled ?? false,
-      temp_valid_from: payload.tempValidFrom ?? null,
-      temp_valid_until: payload.tempValidUntil ?? null,
-    }
-    await $api.authRequests.respondRequest(form.value.auth_request.id, body)
-
-    snackbar.add({ type: 'success', text: 'Authorization request response sent' })
-    closeGrantDialog()
-    await getAuthRequests()
-  } catch (e: any) {
-    console.error(e)
-    if (e?.response?._data?.code === 'request_withdrawn') {
-      snackbar.add({ type: 'error', text: e.response._data.message })
-      closeGrantDialog()
-      await getAuthRequests()
-    }
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
+// Options that finish on another screen (e.g. cancel an invoice editing its charges): that screen applies the approval.
+const onDecisionRedirect = (payload: IDecisionRedirect) => {
+  authRequestStore.setAuthRequest({
+    auth_request: form.value.auth_request,
+    is_authorized: 1,
+    until_date: null,
+    expires_at: payload.expiresAt,
+    authorized_reason: payload.reason,
+    temp_permission_enabled: payload.tempPermissionEnabled,
+    temp_valid_from: payload.tempValidFrom,
+    temp_valid_until: payload.tempValidUntil,
+  })
+  showGrantDialog.value = false
+  if (payload.option.tm2_redirect) router.push(payload.option.tm2_redirect)
 }
 
 const canDelete = (authRequest: any) => {

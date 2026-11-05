@@ -201,23 +201,23 @@
         ></v-pagination>
       </div>
 
-      <GrantDenyDialog
+      <RequestDecisionDialog
         v-model="showGrantDialog"
-        mode="process"
-        :min-expires-at="minExpiresAt"
-        @submit="preGrantAuth"
+        kind="process-request"
+        :request-id="form.auth_request?.id ?? null"
+        title="Respond process request"
+        @decided="onDecided"
+        @redirect="onDecisionRedirect"
       >
-        <template #context>
-          <div class="text-base">Process: {{ form.auth_request?.resolved_display }}</div>
-          <div class="text-base">Requested by: {{ form.auth_request?.user?.name }}</div>
-          <div class="text-base">Comments: {{ form.auth_request?.reason || 'No comments' }}</div>
-          <template v-if="form.auth_request?.process_data">
+        <template #context="{ hasSummary }">
+          <div class="text-body-2"><span class="text-medium-emphasis">Requested by:</span> {{ form.auth_request?.user?.name }}</div>
+          <div class="text-body-2"><span class="text-medium-emphasis">Reason:</span> {{ form.auth_request?.reason || 'No comments' }}</div>
+          <template v-if="!hasSummary && form.auth_request?.process_data">
             <v-divider class="my-2" />
-            <div class="text-sm font-semibold mb-1">Request details:</div>
-            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" :summary="form.auth_request.charge_summary" />
+            <ProcessRequestDetails :process-data="form.auth_request.process_data_resolved ?? form.auth_request.process_data" />
           </template>
         </template>
-      </GrantDenyDialog>
+      </RequestDecisionDialog>
 
       <!-- Request Data Details Dialog -->
       <v-dialog v-model="showDetailsDialog" max-width="640">
@@ -307,7 +307,8 @@
 <script setup lang="ts">
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
-import GrantDenyDialog from './shared/GrantDenyDialog.vue'
+import RequestDecisionDialog from './shared/RequestDecisionDialog.vue'
+import type { IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
 import DecisionChip from './shared/DecisionChip.vue'
 import ProcessRequestDetails from './shared/ProcessRequestDetails.vue'
 const { $api } = useNuxtApp()
@@ -366,12 +367,6 @@ const form = ref<any>({
   auth_request: null,
 })
 
-const minExpiresAt = computed(() => {
-  const now = new Date()
-  const tzoffset = now.getTimezoneOffset() * 60000
-  return new Date(now.getTime() - tzoffset).toISOString().slice(0, 16)
-})
-
 const authRequests = ref<any>({
   data: [] as any,
   current_page: 1,
@@ -427,48 +422,15 @@ const ticketStatusColor = (status: string) => {
   return { open: 'primary', pending_info: 'warning', in_review: 'info', resolved: 'success', closed: 'default' }[status] ?? 'primary'
 }
 
-const preGrantAuth = async (payload: any) => {
-  if (payload.decision === 'granted') {
-    if (!payload.expiresAt) {
-      snackbar.add({ type: 'error', text: 'Please provide an expiration date' })
-      return
-    }
-    const expiresAt = new Date(payload.expiresAt)
-    if (expiresAt <= new Date()) {
-      snackbar.add({ type: 'error', text: 'Expiration date must be in the future' })
-      return
-    }
-  }
-  await grantAuthorization(payload)
+const onDecided = async (decision: IRequestDecision) => {
+  snackbar.add({ type: 'success', text: decision.state === 'granted' ? 'Request approved' : 'Request denied' })
+  closeGrantDialog()
+  await getAuthProcessRequests()
 }
 
-const grantAuthorization = async (payload: any) => {
-  try {
-    loadingStore.loading = true
-    const body = {
-      id: form.value.auth_request.id,
-      status: payload.decision,
-      expires_at: payload.expiresAt,
-      response: payload.reason,
-    }
-    await $api.authProcessRequests.respondRequest(form.value.auth_request.id, body)
-
-    snackbar.add({ type: 'success', text: 'Authorization process request response sent' })
-    closeGrantDialog()
-    await getAuthProcessRequests()
-  } catch (e: any) {
-    console.error(e)
-    const msg = e?.response?._data?.message || 'Error responding to authorization request'
-    snackbar.add({ type: 'error', text: msg })
-    if (e?.response?._data?.code === 'request_withdrawn') {
-      closeGrantDialog()
-      await getAuthProcessRequests()
-    }
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
+const onDecisionRedirect = (payload: IDecisionRedirect) => {
+  closeGrantDialog()
+  if (payload.option.tm2_redirect) router.push(payload.option.tm2_redirect)
 }
 
 const canDelete = (authRequest: any) => {
