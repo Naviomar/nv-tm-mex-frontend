@@ -161,6 +161,16 @@ export interface IAuthRequestType {
   approval_mode?: 'always' | 'permission' | 'state' | null
   approval_permission?: string | null
   default_expiration_hours?: number | null
+  /** What happens on approval: execute = the server applies it; window = the requester does it within the validity; manual = the approver finishes it in TM2. */
+  on_approval?: 'execute' | 'window' | 'manual' | null
+  /** Validity of an approval; null = the system default. */
+  window_mode?: 'business_hours' | 'calendar_hours' | 'business_days' | null
+  window_value?: number | null
+  /** Computed by the API. */
+  on_approval_resolved?: 'execute' | 'window' | 'manual' | null
+  has_handler?: boolean
+  window_label?: string
+  window_is_default?: boolean
   sort_order: number
   form_fields?: IFormField[] | null
   template?: IRequestTemplate | null

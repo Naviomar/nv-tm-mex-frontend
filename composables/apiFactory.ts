@@ -44,6 +44,8 @@ import EmbalajeModule from '~/repository/modules/catalogs/embalajes'
 import DestinationModule from '~/repository/modules/catalogs/destinations'
 import AuthRequestsModule from '~/repository/modules/catalogs/authrequests'
 import AuthProcessRequestsModule from '~/repository/modules/catalogs/authProcessRequests'
+import RequestDecisionsModule from '~/repository/modules/catalogs/requestDecisions'
+import BusinessCalendarsModule from '~/repository/modules/catalogs/businessCalendars'
 import RequestAssistancesModule from '~/repository/modules/catalogs/requestAssistances'
 import SystemAccountsModule from '~/repository/modules/catalogs/systemAccounts'
 import BankMovementsModule from '~/repository/modules/catalogs/bankMovements'
@@ -161,6 +163,8 @@ interface IApiInstance {
   destinations: DestinationModule
   authRequests: AuthRequestsModule
   authProcessRequests: AuthProcessRequestsModule
+  requestDecisions: RequestDecisionsModule
+  businessCalendars: BusinessCalendarsModule
   requestAssistances: RequestAssistancesModule
   systemAccounts: SystemAccountsModule
   bankMovements: BankMovementsModule
@@ -270,6 +274,8 @@ export function useApiFactory() {
     destinations: new DestinationModule(client),
     authRequests: new AuthRequestsModule(client),
     authProcessRequests: new AuthProcessRequestsModule(client),
+    requestDecisions: new RequestDecisionsModule(client),
+    businessCalendars: new BusinessCalendarsModule(client),
     requestAssistances: new RequestAssistancesModule(client),
     systemAccounts: new SystemAccountsModule(client),
     bankMovements: new BankMovementsModule(client),

@@ -11,6 +11,9 @@
         </div>
       </div>
       <div class="d-flex align-center gap-2">
+        <v-btn v-if="canManageCalendars" color="secondary" variant="tonal" prepend-icon="mdi-calendar-clock" @click="showCalendars = true">
+          Business calendar
+        </v-btn>
         <v-btn color="secondary" variant="tonal" prepend-icon="mdi-sitemap-outline" @click="showCreationGuide = true">
           How to create a new type
         </v-btn>
@@ -21,6 +24,7 @@
     </div>
 
     <RequestTypeCreationGuide v-model="showCreationGuide" />
+    <BusinessCalendarsDialog v-model="showCalendars" @update:model-value="(open: boolean) => !open && loadTypes()" />
 
     <!-- Filters -->
     <v-card variant="flat" class="mb-4" rounded="lg" border>
@@ -107,15 +111,15 @@
                 </td>
                 <!-- After approval -->
                 <td>
-                  <v-chip
-                    v-if="type.automatable !== null"
-                    size="small"
-                    :color="type.automatable ? 'info' : 'warning'"
-                    variant="tonal"
-                  >
-                    <v-icon start size="14">{{ type.automatable ? 'mdi-flash-outline' : 'mdi-hand-back-right-outline' }}</v-icon>
-                    {{ type.automatable ? 'Runs automatically' : 'Done manually' }}
-                  </v-chip>
+                  <template v-if="type.on_approval_resolved">
+                    <v-chip size="small" :color="onApprovalMeta(type.on_approval_resolved).color" variant="tonal">
+                      <v-icon start size="14">{{ onApprovalMeta(type.on_approval_resolved).icon }}</v-icon>
+                      {{ onApprovalMeta(type.on_approval_resolved).short }}
+                    </v-chip>
+                    <div class="cell-sub" :title="type.window_is_default ? 'System default' : 'Set for this type'">
+                      Valid: {{ type.window_label }}{{ type.window_is_default ? ' (default)' : '' }}
+                    </div>
+                  </template>
                   <span v-else class="text-disabled">—</span>
                 </td>
                 <!-- Approvers -->
@@ -160,7 +164,7 @@
                         <v-icon start size="12">mdi-shield-check</v-icon>{{ perm }}
                       </v-chip>
                     </div>
-                    <RequestFlowDiagram :auto-execute="type.automatable === true" />
+                    <RequestFlowDiagram :auto-execute="type.on_approval_resolved === 'execute'" />
                   </div>
                 </td>
               </tr>
@@ -233,16 +237,15 @@
               <v-col cols="12" md="6">
                 <v-switch v-model="form.is_active" label="Active" color="primary" hide-details />
               </v-col>
-              <v-col cols="12" md="6">
+              <v-col v-if="form.kind !== 'support'" cols="12" md="6">
                 <v-select
-                  v-model="form.automatable"
-                  :items="[
-                    { title: 'Automatable', value: true },
-                    { title: 'Manual only (never approve from ticket)', value: false },
-                    { title: 'Unclassified', value: null },
-                  ]"
-                  label="Post-approval action"
-                  hint="Can this request type's business action run automatically once granted?"
+                  v-model="form.on_approval"
+                  :items="onApprovalItems"
+                  item-title="title"
+                  item-value="value"
+                  item-props="props"
+                  label="When approved"
+                  :hint="onApprovalMeta(form.on_approval ?? 'window').hint"
                   persistent-hint
                 />
               </v-col>
@@ -269,31 +272,31 @@
                   clearable
                 />
               </v-col>
-              <v-col v-if="form.kind !== 'support'" cols="12" md="6">
-                <div class="d-flex align-center mb-1">
-                  <v-switch
-                    :model-value="usesHourBasedExpiration"
-                    hide-details
-                    density="compact"
-                    color="primary"
-                    class="mr-2"
-                    @update:model-value="onToggleHourBasedExpiration"
-                  />
-                  <div>
-                    <div class="text-body-2 font-weight-medium">Auto-expires by hours</div>
-                    <div class="text-caption text-medium-emphasis">Grant a fixed validity window from approval instead of a manually picked date</div>
-                  </div>
+              <v-col v-if="form.kind !== 'support'" cols="12">
+                <div class="text-body-2 font-weight-medium mb-1">Validity of an approval</div>
+                <div class="text-caption text-medium-emphasis mb-2">
+                  Counted from the moment it is approved, with the requester's office working hours. It is the default the approver sees (in TM2 and SIGA) and can change.
                 </div>
-                <v-text-field
-                  v-if="usesHourBasedExpiration"
-                  v-model.number="form.default_expiration_hours"
-                  type="number"
-                  min="1"
-                  label="Default hours of validity"
-                  density="compact"
-                  hint="Used automatically when this type is approved from SIGA"
-                  persistent-hint
-                />
+                <div class="d-flex gap-3">
+                  <v-select
+                    v-model="form.window_mode"
+                    :items="windowModes"
+                    label="Rule"
+                    density="compact"
+                    style="max-width: 300px"
+                    @update:model-value="onWindowModeChange"
+                  />
+                  <v-text-field
+                    v-if="form.window_mode"
+                    v-model.number="form.window_value"
+                    type="number"
+                    :min="form.window_mode === 'business_days' ? 1 : 0.25"
+                    :step="form.window_mode === 'business_days' ? 1 : 0.5"
+                    :label="form.window_mode === 'business_days' ? 'Working days' : 'Hours'"
+                    density="compact"
+                    style="max-width: 160px"
+                  />
+                </div>
               </v-col>
             </v-row>
           </v-form>
@@ -512,6 +515,10 @@ const types = ref<IAuthRequestType[]>([])
 const loading = ref(false)
 const showDialog = ref(false)
 const showCreationGuide = ref(false)
+const showCalendars = ref(false)
+// Same roles as the calendar API (and the request type editor).
+const { user: currentUser } = useCheckUser()
+const canManageCalendars = computed(() => currentUser.value?.roles?.some((r: any) => ['Super Admin', 'IT Admin'].includes(r.name)))
 const editingType = ref<IAuthRequestType | null>(null)
 
 // Template editor
@@ -577,10 +584,11 @@ const form = ref({
   icon: '',
   color: '',
   is_active: true,
-  automatable: null as boolean | null,
+  on_approval: 'window' as 'execute' | 'window' | 'manual' | null,
+  window_mode: null as 'business_hours' | 'calendar_hours' | 'business_days' | null,
+  window_value: null as number | null,
   approval_mode: null as 'always' | 'permission' | 'state' | null,
   approval_permission: null as string | null,
-  default_expiration_hours: null as number | null,
   form_fields: [] as IFormField[],
 })
 
@@ -608,10 +616,35 @@ const approvalChip = (type: IAuthRequestType) => {
   }
 }
 
-const usesHourBasedExpiration = computed(() => form.value.default_expiration_hours != null)
+const ON_APPROVAL_META = {
+  execute: { short: 'Applied automatically', title: 'The server applies the change', color: 'info', icon: 'mdi-flash-outline', hint: 'Approving (in TM2 or SIGA) applies the change right away. If it fails, the request stays pending and the approver sees why.' },
+  window: { short: 'Requester acts', title: 'The requester does it within the validity', color: 'teal', icon: 'mdi-timer-sand', hint: 'Approving opens a validity window for the requester. Can be approved from SIGA.' },
+  manual: { short: 'Finished in TM2', title: 'The approver finishes it in TM2', color: 'warning', icon: 'mdi-hand-back-right-outline', hint: 'Approving opens a TM2 screen; it cannot be approved from SIGA.' },
+} as const
 
-function onToggleHourBasedExpiration(enabled: boolean | null) {
-  form.value.default_expiration_hours = enabled ? 12 : null
+const onApprovalMeta = (value: string) => ON_APPROVAL_META[value as keyof typeof ON_APPROVAL_META] ?? ON_APPROVAL_META.window
+
+const onApprovalItems = computed(() =>
+  (['execute', 'window', 'manual'] as const).map((value) => ({
+    value,
+    title: ON_APPROVAL_META[value].title,
+    props: {
+      disabled: value === 'execute' && !editingType.value?.has_handler,
+      subtitle: value === 'execute' && !editingType.value?.has_handler ? 'Not available: this type has no automatic action in the server' : undefined,
+    },
+  })),
+)
+
+const windowModes = [
+  { title: 'System default', value: null },
+  { title: 'Working hours', value: 'business_hours' },
+  { title: 'Calendar hours', value: 'calendar_hours' },
+  { title: 'Until end of working days', value: 'business_days' },
+]
+
+function onWindowModeChange(mode: string | null) {
+  if (!mode) form.value.window_value = null
+  else if (!form.value.window_value) form.value.window_value = mode === 'business_days' ? 1 : 5.5
 }
 
 const codeRules = [(v: string) => !!v || 'Code is required']
@@ -699,13 +732,13 @@ const openCreateDialog = () => {
   editingType.value = null
   ccUsers.value = []
   approvers.value = []
-  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, automatable: null, approval_mode: null, approval_permission: null, default_expiration_hours: null, form_fields: [] }
+  form.value = { kind: 'authorization', code: '', description: '', redirect: '', key_label: '', icon: '', color: '', is_active: true, on_approval: 'window', window_mode: null, window_value: null, approval_mode: null, approval_permission: null, form_fields: [] }
   showDialog.value = true
 }
 
 const openEditDialog = async (type: IAuthRequestType) => {
   editingType.value = type
-  form.value = { ...type, form_fields: [...(type.form_fields ?? [])] } as any
+  form.value = { ...type, on_approval: type.on_approval_resolved ?? type.on_approval ?? null, form_fields: [...(type.form_fields ?? [])] } as any
   ccUsers.value = type.default_cc_users ?? []
   approvers.value = type.approvers ?? []
   showDialog.value = true
