@@ -108,6 +108,22 @@ class ReportsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/executives-report`, fetchOptions)
   }
 
+  async getExecutiveArrapReport(fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      responseType: 'blob',
+      ...fetchOptions,
+    }
+    return this.call('GET', `${this.RESOURCE}/executive-arrap`, fetchOptions)
+  }
+
+  async getExecutiveArrapData(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/executive-arrap/data`, fetchOptions)
+  }
+
+  async getExecutiveArrapExecutives(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/executive-arrap/executives`, fetchOptions)
+  }
+
   async exportComparativeTeusImportExcel(
     data: { filters: any; useLegacy: boolean; useNew: boolean },
     fetchOptions?: FetchOptions,

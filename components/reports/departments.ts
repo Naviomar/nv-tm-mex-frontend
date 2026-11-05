@@ -185,6 +185,13 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         component: 'ExecutiveReport',
         permission: 'reports-billing-executives-view',
       },
+      {
+        key: 'executive-arrap',
+        title: 'Reporte Ejecutivo ARRAP',
+        icon: 'mdi-account-tie',
+        component: 'ExecutiveArrapReport',
+        permission: 'reports-billing-executive-arrap-view',
+      },
     ],
   },
   {

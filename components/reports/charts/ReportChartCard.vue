@@ -23,6 +23,25 @@
           <v-icon size="18" start>mdi-file-excel-outline</v-icon>
           Excel
         </v-btn>
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="primary"
+          :loading="exportingImage"
+          @click="exportChartAsImage(false)"
+        >
+          <v-icon size="18" start>mdi-camera-outline</v-icon>
+          Imagen
+        </v-btn>
+        <v-btn
+          size="small"
+          variant="tonal"
+          color="primary"
+          @click="modalOpen = true"
+        >
+          <v-icon size="18" start>mdi-arrow-expand-all</v-icon>
+          Ampliar
+        </v-btn>
         <v-btn-toggle
           v-model="view"
           mandatory
@@ -50,7 +69,7 @@
 
       <template v-else>
         <!-- Chart view -->
-        <div v-show="view === 'chart'" class="rcc-view">
+        <div v-show="view === 'chart'" :id="cardChartId" class="rcc-view">
           <slot name="chart">
             <client-only>
               <apexchart
@@ -94,6 +113,75 @@
         </Transition>
       </template>
     </v-card-text>
+
+    <!-- Modal para gráfica en tamaño completo -->
+    <v-dialog
+      v-model="modalOpen"
+      max-width="1280px"
+      scrollable
+      transition="dialog-bottom-transition"
+    >
+      <v-card class="rounded-xl overflow-hidden" elevation="10">
+        <!-- Dialog Header -->
+        <div class="d-flex justify-space-between align-center px-6 py-4 border-b bg-surface flex-wrap gap-2">
+          <div class="d-flex align-center gap-3">
+            <div v-if="icon" class="rcc-icon-badge" :style="iconBadgeStyle">
+              <v-icon :color="iconColor" size="24">{{ icon }}</v-icon>
+            </div>
+            <div>
+              <div class="text-h6 font-weight-bold">{{ title }}</div>
+              <div v-if="subtitle" class="text-caption text-grey">{{ subtitle }}</div>
+            </div>
+          </div>
+          <div class="d-flex align-center gap-2">
+            <v-btn
+              color="primary"
+              variant="flat"
+              size="small"
+              prepend-icon="mdi-download"
+              class="text-capitalize font-weight-medium"
+              :loading="exportingImage"
+              @click="exportChartAsImage(true)"
+            >
+              Exportar Imagen (PNG)
+            </v-btn>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              size="small"
+              @click="modalOpen = false"
+            />
+          </div>
+        </div>
+
+        <!-- Dialog Body -->
+        <v-card-text class="pa-6 bg-grey-lighten-5">
+          <div :id="modalChartId" class="bg-surface pa-4 rounded-lg border">
+            <client-only>
+              <apexchart
+                :type="type"
+                height="560"
+                :options="modalChartOptions"
+                :series="series"
+              />
+            </client-only>
+          </div>
+        </v-card-text>
+
+        <!-- Dialog Footer -->
+        <v-divider />
+        <v-card-actions class="px-6 py-3 bg-surface d-flex justify-end">
+          <v-btn
+            variant="outlined"
+            size="small"
+            class="text-capitalize"
+            @click="modalOpen = false"
+          >
+            Cerrar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -136,13 +224,106 @@ const props = withDefaults(defineProps<{
 })
 
 const { exportTableToExcel } = useExcelExport()
+const snackbar = useSnackbar()
+
+const uid = Math.random().toString(36).substring(2, 9)
+const cardChartId = `rcc-chart-${uid}`
+const modalChartId = `rcc-modal-chart-${uid}`
 
 const view = ref<'chart' | 'table'>(props.defaultView)
 const exporting = ref(false)
+const modalOpen = ref(false)
+const exportingImage = ref(false)
 
 const heightPx = computed(() =>
   typeof props.height === 'number' ? `${props.height}px` : props.height
 )
+
+const modalChartOptions = computed(() => ({
+  ...(props.options || {}),
+  chart: {
+    ...((props.options && props.options.chart) || {}),
+    toolbar: { show: true, tools: { download: true, zoom: true, pan: true, reset: true } },
+  },
+}))
+
+const exportChartAsImage = async (fromModal = false) => {
+  exportingImage.value = true
+  try {
+    const targetId = fromModal ? modalChartId : cardChartId
+    const container = document.getElementById(targetId)
+    if (!container) {
+      snackbar?.add?.({ type: 'error', text: 'No se encontró la gráfica para exportar.' })
+      return
+    }
+
+    const svgElement = container.querySelector('svg.apexcharts-svg') as SVGSVGElement | null
+    if (!svgElement) {
+      snackbar?.add?.({ type: 'warning', text: 'La gráfica aún se está cargando. Intente en un momento.' })
+      return
+    }
+
+    const clone = svgElement.cloneNode(true) as SVGSVGElement
+    clone.style.backgroundColor = '#ffffff'
+    clone.setAttribute('background-color', '#ffffff')
+
+    const svgWidth = parseFloat(svgElement.getAttribute('width') || String(svgElement.clientWidth || 900))
+    const svgHeight = parseFloat(svgElement.getAttribute('height') || String(svgElement.clientHeight || 500))
+
+    const serializer = new XMLSerializer()
+    let svgString = serializer.serializeToString(clone)
+
+    if (!svgString.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"')
+    }
+
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const blobUrl = URL.createObjectURL(svgBlob)
+
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const scale = 2
+      const canvas = document.createElement('canvas')
+      canvas.width = svgWidth * scale
+      canvas.height = svgHeight * scale
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        URL.revokeObjectURL(blobUrl)
+        return
+      }
+
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.scale(scale, scale)
+      ctx.drawImage(img, 0, 0, svgWidth, svgHeight)
+
+      URL.revokeObjectURL(blobUrl)
+
+      const pngUrl = canvas.toDataURL('image/png')
+      const a = document.createElement('a')
+      a.href = pngUrl
+      const baseName = (props.exportFileName || props.title || 'grafica').toLowerCase().replace(/[^a-z0-9_-]/g, '_')
+      a.download = `${baseName}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+
+      snackbar?.add?.({ type: 'success', text: 'Gráfica exportada como imagen PNG.' })
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl)
+      snackbar?.add?.({ type: 'error', text: 'Error al procesar la imagen de la gráfica.' })
+    }
+    img.src = blobUrl
+  } catch (err: any) {
+    console.error('Error exportChartAsImage:', err)
+    snackbar?.add?.({ type: 'error', text: 'Error al exportar la imagen.' })
+  } finally {
+    exportingImage.value = false
+  }
+}
 
 const handleExport = async () => {
   exporting.value = true
