@@ -6,7 +6,7 @@
       <span class="d-inline-flex">
         <v-icon size="16" class="text-medium-emphasis">mdi-information-outline</v-icon>
         <v-tooltip activator="parent" location="top" max-width="380">
-          An executive cannot have more rebate requested (not yet paid) than the overdue debt of all their customers together.
+          An executive can request their available rebate minus the overdue debt of all their customers together. That part of the rebate stays until the customers pay.
         </v-tooltip>
       </span>
       <v-spacer />
@@ -22,8 +22,12 @@
       <div class="font-medium text-sm mb-1">{{ limit.executive }}</div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div>
+          <div class="text-xs text-medium-emphasis">Available rebate (not requested)</div>
+          <div class="text-lg font-bold">{{ formatToCurrency(limit.rebate) }}</div>
+        </div>
+        <div>
           <div class="text-xs text-medium-emphasis">
-            Overdue debt of their customers
+            − Overdue debt of their customers
             <v-icon v-if="limit.customers.length" size="14">mdi-chevron-down</v-icon>
             <v-menu v-if="limit.customers.length" activator="parent" location="bottom start">
               <v-card max-width="420">
@@ -38,17 +42,14 @@
               </v-card>
             </v-menu>
           </div>
-          <div class="text-lg font-bold">{{ formatToCurrency(limit.debt) }}</div>
+          <div class="text-lg font-bold text-error">{{ formatToCurrency(limit.debt) }}</div>
         </div>
         <div>
-          <div class="text-xs text-medium-emphasis">Requested, not paid yet</div>
-          <div class="text-lg font-bold text-warning">{{ formatToCurrency(limit.requested) }}</div>
-        </div>
-        <div>
-          <div class="text-xs text-medium-emphasis">Can still request</div>
+          <div class="text-xs text-medium-emphasis">= Can request</div>
           <div class="text-lg font-bold" :class="limit.available > 0 ? 'text-success' : 'text-error'">{{ formatToCurrency(limit.available) }}</div>
         </div>
       </div>
+      <div v-if="limit.requested > 0" class="text-xs text-medium-emphasis mt-1">Already requested, not paid yet: {{ formatToCurrency(limit.requested) }}</div>
     </div>
   </div>
 </template>
