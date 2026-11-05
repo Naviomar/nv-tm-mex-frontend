@@ -58,6 +58,8 @@
           </div>
         </Can>
 
+        <RebateDebtLimit ref="debtLimit" :executive-id="applied.executive_id" @loaded="limits = $event" />
+
         <!-- Filters -->
         <div class="mb-4" @keyup.enter="onClickFilters">
           <div class="flex items-center justify-between mb-2">
@@ -360,6 +362,13 @@
             </template>
             <template v-else>Up to <strong>{{ formatToCurrency(advances.reduce((s, a) => s + a.pending, 0)) }}</strong> is withheld for {{ advances.map((a) => a.case).join(', ') }} if the selection includes rebate of those customers.</template>
           </v-alert>
+          <v-alert v-if="limitExceeded" type="error" variant="tonal" density="compact" class="mb-3">
+            {{ limits[0].executive }} can still request <strong>{{ formatToCurrency(limits[0].available) }}</strong>
+            (overdue debt of their customers {{ formatToCurrency(limits[0].debt) }}, requested not paid {{ formatToCurrency(limits[0].requested) }}). Reduce the selection.
+          </v-alert>
+          <div v-else-if="limits.length === 1" class="text-sm text-medium-emphasis mb-3">
+            Request limit of {{ limits[0].executive }}: <strong>{{ formatToCurrency(limits[0].available) }}</strong> left.
+          </div>
           <ul class="grid gap-2 text-sm">
             <li class="flex gap-2"><v-icon size="18">mdi-file-tree-outline</v-icon>Rebate is paid per whole reference: all the containers of each selected reference are included, and a reference with any held container is left out.</li>
             <li class="flex gap-2"><v-icon size="18">mdi-cash-minus</v-icon>Any customer debt handled by a special case is deducted from the payment.</li>
@@ -369,7 +378,7 @@
         <v-card-actions class="tm-dialog-actions">
           <v-btn color="red" @click="confirmOpen = false">Close</v-btn>
           <v-spacer />
-          <v-btn color="primary" :loading="busy === 'batch'" @click="requestPayment">Request payment</v-btn>
+          <v-btn color="primary" :loading="busy === 'batch'" :disabled="limitExceeded" @click="requestPayment">Request payment</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -424,6 +433,8 @@ const rows = ref<any[]>([])
 const total = ref(0)
 const summary = ref<any>(null)
 const confirmOpen = ref(false)
+const debtLimit = ref<{ load: () => Promise<void> } | null>(null)
+const limits = ref<any[]>([])
 const showFilters = ref(true)
 const page = ref(1)
 const sort = ref<{ key: string; order: 'asc' | 'desc' }>({ key: 'etd', order: 'desc' })
@@ -547,6 +558,8 @@ const selectedAmountTotal = computed(() =>
     ? Math.max((summary.value?.new_for_export.amount ?? 0) - [...excluded.value.values()].reduce((sum, amount) => sum + amount, 0), 0)
     : selectedAmount.value,
 )
+// With a single executive in view the limit is known before sending: the backend applies the same rule.
+const limitExceeded = computed(() => limits.value.length === 1 && selectedAmountTotal.value - limits.value[0].available > 0.005)
 
 // Rebate is paid per whole reference: ticking a container ticks every container of its reference on the page
 // (the request adds the ones on other pages; a reference with any held container can't be requested).
@@ -681,8 +694,15 @@ async function requestPayment() {
     confirmOpen.value = false
     snackbar.add({ type: 'success', text: 'Payment request created' })
     await load()
+    debtLimit.value?.load()
   } catch (error: any) {
-    snackbar.add({ type: 'error', text: error?.status === 422 ? 'There is no available rebate to request' : 'Could not request the payment' })
+    // The response is a blob (Excel): the validation message comes as JSON text inside it.
+    let message = ''
+    try {
+      const body = error?.data instanceof Blob ? JSON.parse(await error.data.text()) : error?.data
+      message = body?.message ?? ''
+    } catch {}
+    snackbar.add({ type: 'error', text: message || (error?.status === 422 ? 'There is no available rebate to request' : 'Could not request the payment') })
   } finally {
     busy.value = ''
   }
