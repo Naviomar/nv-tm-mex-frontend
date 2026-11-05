@@ -72,6 +72,7 @@ import {
   CustomerInvoicesReport,
   ChargesPendingInvoiceReport,
   ExecutiveReport,
+  ExecutiveArrapReport,
   ReleaseReportsReport,
 } from '#components'
 import { REPORT_DEPARTMENTS, type ReportDept } from './departments'
@@ -110,6 +111,7 @@ const componentMap: Record<string, any> = {
   CustomerInvoicesReport,
   ChargesPendingInvoiceReport,
   ExecutiveReport,
+  ExecutiveArrapReport,
   ReleaseReportsReport,
 }
 
