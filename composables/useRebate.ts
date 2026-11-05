@@ -1,8 +1,6 @@
 // Shared labels, colors and file helpers of the Rebate module (containers, payment requests and detail).
 export const REBATE_PAYMENT_STATUS: Record<string, { label: string; color: string; icon: string }> = {
-  requested: { label: 'Requested', color: 'warning', icon: 'mdi-email-fast-outline' },
-  authorized: { label: 'Authorized', color: 'info', icon: 'mdi-check-decagram' },
-  in_process: { label: 'In process', color: 'primary', icon: 'mdi-progress-clock' },
+  requested: { label: 'Requested', color: 'warning', icon: 'mdi-file-send-outline' },
   paid: { label: 'Paid', color: 'success', icon: 'mdi-cash-check' },
   cancelled: { label: 'Cancelled', color: 'grey', icon: 'mdi-close-octagon-outline' },
 }
@@ -13,6 +11,7 @@ export const REBATE_HOLD_REASONS: Record<string, { label: string; text: string; 
   no_empty_date: { label: 'No empty date', text: 'A container has no empty-return date', icon: 'mdi-calendar-remove-outline' },
   pending_invoice: { label: 'To invoice', text: 'There are charges pending to invoice', icon: 'mdi-receipt-text-clock-outline' },
   demurrage: { label: 'Demurrage', text: 'Demurrage is not invoiced or not paid', icon: 'mdi-timer-sand' },
+  free_days_exceeded: { label: 'Free days exceeded', text: 'A container went past its free days (counted from the date its demurrage starts, the discharge date or the ETA, to the empty return or to today) and has no demurrage charged', icon: 'mdi-calendar-alert' },
   special_case: { label: 'Special case', text: 'Its demurrage is still being covered by a special case with the freight of new references (click to see the progress)', icon: 'mdi-folder-star-outline' },
   check_failed: { label: 'Check failed', text: 'The checks could not run; they will be retried', icon: 'mdi-alert-circle-outline' },
 }

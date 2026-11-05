@@ -22,7 +22,7 @@
           <v-btn
             color="cyan"
             variant="flat"
-            prepend-icon="mdi-email-fast-outline"
+            prepend-icon="mdi-file-send-outline"
             :disabled="!selectedCount"
             @click="confirmOpen = true"
           >
@@ -99,6 +99,28 @@
                 <template #dateTo>
                   <v-text-field v-model="filters.date_to" type="date" density="compact" label="Date to" />
                 </template>
+                <template #includeFuture>
+                  <v-switch
+                    v-model="filters.include_future"
+                    :true-value="1"
+                    :false-value="null"
+                    color="primary"
+                    density="compact"
+                    hide-details
+                    label="Include not arrived (future ETA)"
+                  />
+                </template>
+                <template #availableFirst>
+                  <v-switch
+                    v-model="filters.available_first"
+                    :true-value="1"
+                    :false-value="null"
+                    color="primary"
+                    density="compact"
+                    hide-details
+                    label="Available to request first"
+                  />
+                </template>
               </FilterLayoutGrid>
               <div class="tm-btn-group">
                 <v-btn size="small" color="secondary" @click="clearFilters">Clear</v-btn>
@@ -150,7 +172,7 @@
               <v-btn size="x-small" variant="text" @click="clearSelection">Clear selection</v-btn>
             </template>
             <template v-else>
-              <span>Tick the available containers to download or request, or</span>
+              <span>Tick the available references to download or request (payment is per whole reference), or</span>
               <v-btn size="x-small" variant="tonal" color="primary" @click="selectAllMatching">select all {{ (summary?.new_for_export.containers ?? 0).toLocaleString() }} available matching the filters</v-btn>
             </template>
           </div>
@@ -185,7 +207,7 @@
                   <span v-else>{{ col.label }}</span>
                   <v-icon v-if="col.key === 'etd'" size="14" class="ml-1 text-medium-emphasis">
                     mdi-information-outline
-                    <v-tooltip activator="parent" location="top">Reference date: the ETD; if the ETD is empty or invalid, the ETA; if neither, the date the reference was created.</v-tooltip>
+                    <v-tooltip activator="parent" location="top">Reference date: the ETA; if the ETA is empty or invalid, the ETD; if neither, the date the reference was created.</v-tooltip>
                   </v-icon>
                 </th>
               </template>
@@ -214,7 +236,7 @@
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap font-medium">{{ item.reference }}</td>
                 <td v-else-if="col.key === 'etd'" class="whitespace-nowrap">
                   {{ item.etd }}
-                  <v-chip v-if="item.date_source" size="x-small" variant="tonal" class="ml-1" :color="item.date_source === 'etd' ? undefined : 'warning'">
+                  <v-chip v-if="item.date_source" size="x-small" variant="tonal" class="ml-1" :color="item.date_source === 'eta' ? undefined : 'warning'">
                     {{ DATE_SOURCES[item.date_source]?.label ?? item.date_source }}
                     <v-tooltip activator="parent" location="top">{{ DATE_SOURCES[item.date_source]?.text }}</v-tooltip>
                   </v-chip>
@@ -337,9 +359,9 @@
             <template v-else>Up to <strong>{{ formatToCurrency(advances.reduce((s, a) => s + a.pending, 0)) }}</strong> is withheld for {{ advances.map((a) => a.case).join(', ') }} if the selection includes rebate of those customers.</template>
           </v-alert>
           <ul class="grid gap-2 text-sm">
-            <li class="flex gap-2"><v-icon size="18">mdi-email-outline</v-icon>An email is sent to Accounting and you are in copy.</li>
-            <li class="flex gap-2"><v-icon size="18">mdi-cash-minus</v-icon>Any advance already given to the customer is deducted from the payment.</li>
-            <li class="flex gap-2"><v-icon size="18">mdi-check-decagram</v-icon>It then needs authorization and payment.</li>
+            <li class="flex gap-2"><v-icon size="18">mdi-file-tree-outline</v-icon>Rebate is paid per whole reference: all the containers of each selected reference are included, and a reference with any held container is left out.</li>
+            <li class="flex gap-2"><v-icon size="18">mdi-cash-minus</v-icon>Any customer debt handled by a special case is deducted from the payment.</li>
+            <li class="flex gap-2"><v-icon size="18">mdi-cash-check</v-icon>Accounting marks it as paid once the payment is made.</li>
           </ul>
         </v-card-text>
         <v-card-actions class="tm-dialog-actions">
@@ -366,9 +388,9 @@ const oldDebtsOpen = ref(false)
 
 // Which date of the reference the Date column shows.
 const DATE_SOURCES: Record<string, { label: string; text: string }> = {
-  etd: { label: 'ETD', text: 'Estimated time of departure of the reference' },
-  eta: { label: 'ETA', text: 'The ETD is empty or invalid, so the ETA is used' },
-  created: { label: 'Created', text: 'The reference has no valid ETD or ETA, so the date it was created is used' },
+  eta: { label: 'ETA', text: 'Estimated time of arrival of the reference' },
+  etd: { label: 'ETD', text: 'The ETA is empty or invalid, so the ETD is used' },
+  created: { label: 'Created', text: 'The reference has no valid ETA or ETD, so the date it was created is used' },
 }
 const debtContainerId = ref<number | null>(null)
 function openDebt(id: number) {
@@ -416,6 +438,8 @@ const blankFilters = () => ({
   date_from: null as string | null,
   date_to: null as string | null,
   special_case: null as string | null,
+  available_first: null as number | null,
+  include_future: null as number | null,
 })
 // `filters` is what the form edits; `applied` is what the table uses (changes with Search, like the other modules).
 const filters = ref<Record<string, any>>(blankFilters())
@@ -444,10 +468,12 @@ const filterLayoutDefs = [
   { key: 'specialCase', label: 'Special case', span: 2 },
   { key: 'dateFrom', label: 'Date from', span: 2 },
   { key: 'dateTo', label: 'Date to', span: 2 },
+  { key: 'availableFirst', label: 'Available first', span: 3 },
+  { key: 'includeFuture', label: 'Future ETA', span: 3 },
 ]
 const filterModelKeys: Record<string, string[]> = {
   search: ['search'], executive: ['executive_id'], customer: ['consignee_id'], system: ['system'], status: ['status'],
-  payment: ['payment'], historical: ['historical'], repeated: ['repeated'], specialCase: ['special_case'], dateFrom: ['date_from'], dateTo: ['date_to'],
+  payment: ['payment'], historical: ['historical'], repeated: ['repeated'], specialCase: ['special_case'], dateFrom: ['date_from'], dateTo: ['date_to'], availableFirst: ['available_first'], includeFuture: ['include_future'],
 }
 const onLayoutFilterHidden = (key: string) => {
   ;(filterModelKeys[key] ?? []).forEach((modelKey) => (filters.value[modelKey] = null))
@@ -519,11 +545,16 @@ const selectedAmountTotal = computed(() =>
     : selectedAmount.value,
 )
 
+// Rebate is paid per whole reference: ticking a container ticks every container of its reference on the page
+// (the request adds the ones on other pages; a reference with any held container can't be requested).
 function toggle(item: any) {
   // ids mode tracks the ones picked; all mode tracks the ones left out
   const target = allMode.value ? excluded.value : selected.value
-  target.has(item.id) ? target.delete(item.id) : target.set(item.id, Number(item.amount))
-  selectedCustomer.set(item.id, item.consignee_id ?? null)
+  const on = !target.has(item.id)
+  for (const row of rows.value.filter((r) => r.ref_key === item.ref_key && selectable(r))) {
+    on ? target.set(row.id, Number(row.amount)) : target.delete(row.id)
+    selectedCustomer.set(row.id, row.consignee_id ?? null)
+  }
 }
 function togglePage(on: boolean | null) {
   for (const item of rows.value.filter(selectable)) {
@@ -559,7 +590,7 @@ const cards = computed(() => {
 })
 
 function applyCard(card: { active: boolean; apply: Record<string, string> }) {
-  const next = { ...blankFilters(), search: applied.value.search, executive_id: applied.value.executive_id, consignee_id: applied.value.consignee_id }
+  const next = { ...blankFilters(), search: applied.value.search, executive_id: applied.value.executive_id, consignee_id: applied.value.consignee_id, available_first: applied.value.available_first }
   if (!card.active) Object.assign(next, card.apply)
   clearSelection()
   filters.value = { ...next }
@@ -645,7 +676,7 @@ async function requestPayment() {
     )
     clearSelection()
     confirmOpen.value = false
-    snackbar.add({ type: 'success', text: 'Payment requested: the email was queued' })
+    snackbar.add({ type: 'success', text: 'Payment request created' })
     await load()
   } catch (error: any) {
     snackbar.add({ type: 'error', text: error?.status === 422 ? 'There is no available rebate to request' : 'Could not request the payment' })

@@ -28,7 +28,7 @@
                 <div>Rebate in this request:</div>
                 <div class="font-bold">{{ formatToCurrency(data.total_visible) }} USD</div>
                 <template v-if="data.withheld > 0">
-                  <div>Withheld (advance):</div>
+                  <div>Withheld (special case):</div>
                   <div class="text-warning font-bold">− {{ formatToCurrency(data.withheld) }} USD</div>
                   <div>Net to pay:</div>
                   <div class="text-success font-bold">{{ formatToCurrency(data.net_visible) }} USD</div>
@@ -46,22 +46,13 @@
                 You only see the containers of your executives. The request has {{ data.batch.rows }} containers in total.
               </v-alert>
 
-              <!-- Executives: request / resend. Super Admin: authorize / cancel. Accounting: in process / paid. -->
+              <!-- Accounting (rebate-payments-process): mark as paid or cancel. -->
               <div class="tm-btn-group pt-4">
                 <template v-if="actionsVisible">
-                  <v-btn v-if="canRequest && status === 'requested'" color="purple" size="small" prepend-icon="mdi-email-sync-outline" :loading="busy === 'resend'" @click="confirm('resend')">
-                    Send the request again
-                  </v-btn>
-                  <v-btn v-if="canAuthorize && status === 'requested'" color="success" size="small" prepend-icon="mdi-check-decagram" :loading="busy === 'authorize'" @click="confirm('authorize')">
-                    Authorize payment
-                  </v-btn>
-                  <v-btn v-if="canProcess && status === 'authorized'" color="primary" size="small" prepend-icon="mdi-progress-clock" :loading="busy === 'process'" @click="confirm('process')">
-                    Mark in process
-                  </v-btn>
-                  <v-btn v-if="canProcess && status === 'in_process'" color="success" size="small" prepend-icon="mdi-cash-check" :loading="busy === 'paid'" @click="dialog = { action: 'paid', open: true }">
+                  <v-btn color="success" size="small" prepend-icon="mdi-cash-check" :loading="busy === 'paid'" @click="dialog = { action: 'paid', open: true }">
                     Mark as paid
                   </v-btn>
-                  <v-btn v-if="canAuthorize && !['paid', 'cancelled'].includes(status)" color="red" size="small" prepend-icon="mdi-close-octagon-outline" @click="dialog = { action: 'cancel', open: true }">
+                  <v-btn color="red" size="small" prepend-icon="mdi-close-octagon-outline" @click="dialog = { action: 'cancel', open: true }">
                     Cancel request
                   </v-btn>
                 </template>
@@ -103,7 +94,11 @@
                   <th class="text-left">Customer</th>
                   <th class="text-left">Executive</th>
                   <th class="text-left">Reference</th>
-                  <th class="text-left">Date</th>
+                  <th class="text-left">
+                    ETA
+                    <v-icon size="x-small" class="ml-1 text-medium-emphasis">mdi-information-outline</v-icon>
+                    <v-tooltip activator="parent" location="top">Reference ETA. If it has none, the ETD is shown (marked ETD); if neither, the date the reference was created (marked Created).</v-tooltip>
+                  </th>
                   <th class="text-left">Container</th>
                   <th class="text-right">Rebate</th>
                 </tr>
@@ -121,7 +116,7 @@
                   </td>
                   <td class="whitespace-nowrap">
                     {{ row.etd }}
-                    <span v-if="row.date_source && row.date_source !== 'etd'" class="text-caption text-warning ml-1">({{ row.date_source === 'eta' ? 'ETA' : 'Created' }})</span>
+                    <v-chip v-if="row.date_source && row.date_source !== 'eta'" size="x-small" variant="tonal" color="warning" class="ml-1">{{ row.date_source === 'etd' ? 'ETD' : 'Created' }}</v-chip>
                   </td>
                   <td class="whitespace-nowrap">{{ row.container }}</td>
                   <td class="text-right whitespace-nowrap">{{ formatToCurrency(row.amount) }}</td>
@@ -133,13 +128,14 @@
 
         <!-- Withheld -->
         <v-card v-if="data.adjustments?.length" class="mb-4">
-          <v-card-title>Withheld to recover an advance</v-card-title>
+          <v-card-title>Withheld to cover a customer debt</v-card-title>
           <v-card-text>
             <v-table density="compact">
-              <thead><tr><th class="text-left">Case</th><th class="text-left">Customer</th><th class="text-left">Reference</th><th class="text-right">Withheld</th></tr></thead>
+              <thead><tr><th class="text-left">Case</th><th class="text-left">Customer</th><th class="text-left">Debt reference</th><th class="text-left">Debt</th><th class="text-left">From the rebate of</th><th class="text-right">Withheld</th></tr></thead>
               <tbody>
                 <tr v-for="(adjustment, i) in data.adjustments" :key="i">
-                  <td>{{ adjustment.case }}</td><td>{{ adjustment.customer }}</td><td>{{ adjustment.reference }}</td>
+                  <td>{{ adjustment.case }}</td><td>{{ adjustment.customer }}</td><td class="whitespace-nowrap">{{ adjustment.reference }}</td>
+                  <td>{{ adjustment.debt || '—' }}</td><td class="whitespace-nowrap">{{ adjustment.rebate_reference }}</td>
                   <td class="text-right">− {{ formatToCurrency(adjustment.amount) }}</td>
                 </tr>
               </tbody>
@@ -203,21 +199,17 @@ const reference = ref('')
 const reason = ref('')
 
 const steps = [
-  { key: 'requested', title: 'Requested', at: 'requested_at', who: 'Sent by email' },
-  { key: 'authorized', title: 'Authorized', at: 'authorized_at', who: 'Super Admin' },
-  { key: 'in_process', title: 'In process', at: 'in_process_at', who: 'Accounting' },
+  { key: 'requested', title: 'Requested', at: 'requested_at', who: 'Executive' },
   { key: 'paid', title: 'Paid', at: 'paid_at', who: 'Accounting, with the payment reference' },
 ]
-const ORDER = ['requested', 'authorized', 'in_process', 'paid']
+const ORDER = ['requested', 'paid']
 const status = computed(() => data.value?.batch.status as string)
 const stepDone = (key: string) => status.value !== 'cancelled' && ORDER.indexOf(status.value) >= ORDER.indexOf(key)
-const canAuthorize = computed(() => !!data.value?.can.authorize)
 const canProcess = computed(() => !!data.value?.can.process)
-const canRequest = computed(() => !!data.value?.can.request)
-const actionsVisible = computed(() => canAuthorize.value || canProcess.value || (canRequest.value && status.value === 'requested'))
+const actionsVisible = computed(() => canProcess.value && status.value === 'requested')
 
 const eventLabel = (e: string) =>
-  ({ requested: 'Payment requested', resent: 'Request sent again', authorized: 'Authorized', in_process: 'Marked in process', paid: 'Marked as paid', cancelled: 'Cancelled' })[e] ?? e
+  ({ requested: 'Payment requested', paid: 'Marked as paid', cancelled: 'Cancelled', case_covered: 'Debt covered in TM1' })[e] ?? e
 
 async function load() {
   loading.value = true
@@ -231,7 +223,7 @@ async function load() {
   }
 }
 
-async function run(action: 'authorize' | 'process' | 'paid' | 'cancel' | 'resend', body?: Record<string, any>) {
+async function run(action: 'paid' | 'cancel', body?: Record<string, any>) {
   busy.value = action
   try {
     await $api.rebate.paymentAction(props.batchId, action, body)
@@ -242,11 +234,6 @@ async function run(action: 'authorize' | 'process' | 'paid' | 'cancel' | 'resend
     busy.value = ''
     await load()
   }
-}
-
-function confirm(action: 'authorize' | 'process' | 'resend') {
-  const text = { authorize: 'Authorize the payment of this rebate request?', process: 'Mark the payment as in process?', resend: 'Send the payment request email again?' }[action]
-  if (window.confirm(text)) run(action)
 }
 
 async function submitDialog() {

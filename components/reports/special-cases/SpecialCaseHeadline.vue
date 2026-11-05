@@ -96,6 +96,13 @@ const stats = computed(() => {
     { label: 'Debt generated', value: s.debt_total, hint: 'Total owed when the case was registered.' },
     { label: 'Covered', value: s.covered, class: 'text-success', hint: 'Marked as collected with money from other references.' },
   ]
+  if (s.mode === 'on_rebate_payment') {
+    return [
+      ...base,
+      { label: 'Withheld in requests', value: s.withheld, hint: 'Withheld from rebate payment requests not paid yet; covered when they are marked as paid.' },
+      { label: 'Pending', value: s.pending, class: s.pending > 0 ? 'text-warning' : '', hint: 'Still owed in TM1.' },
+    ]
+  }
   if (s.mode === 'upfront') {
     return [
       ...base,
@@ -115,6 +122,7 @@ const nextLine = computed(() => {
   if (s.status === 'settled') return 'Nothing left: the debt is fully covered.'
   if (props.ready.items.length) return `${props.ready.items.length} movements are ready to apply (${formatCurrency(props.ready.amount)}).`
   if (s.mode === 'upfront') return s.to_recover > 0 ? 'Waiting for a future reference with rebate to withhold the amount.' : ''
+  if (s.mode === 'on_rebate_payment') return s.withheld > 0 ? `${formatCurrency(s.withheld)} withheld in a rebate payment request; covered when it is marked as paid.` : 'Covered when a rebate payment request of the customer is marked as paid.'
   if (s.upcoming_total > 0) return `${formatCurrency(s.upcoming_total)} will be covered when the freight of the pending references is paid.`
   return 'Waiting for new references to be paid.'
 })

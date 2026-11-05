@@ -49,7 +49,7 @@ class RebateModule extends FetchFactory<any> {
     return this.call('GET', `${this.PAYMENTS}/${id}/download`, { ...fetchOptions, responseType: 'blob' })
   }
 
-  async paymentAction(id: number, action: 'authorize' | 'process' | 'paid' | 'cancel' | 'resend', body?: Record<string, any>, fetchOptions?: FetchOptions) {
+  async paymentAction(id: number, action: 'paid' | 'cancel', body?: Record<string, any>, fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.PAYMENTS}/${id}/${action}`, { ...fetchOptions, body })
   }
 }

@@ -47,7 +47,7 @@
         <v-card class="sc-card" elevation="0">
           <v-tabs v-model="tab" color="primary" density="comfortable" @update:model-value="onTab">
             <v-tab value="debt">Debt</v-tab>
-            <v-tab value="funding">{{ detail.case.mode === 'upfront' ? 'Recovery' : 'Money' }}</v-tab>
+            <v-tab value="funding">{{ detail.case.mode === 'upfront' ? 'Recovery' : detail.case.mode === 'on_rebate_payment' ? 'Rebate' : 'Money' }}</v-tab>
             <v-tab value="activity">Activity</v-tab>
             <v-tab value="impact">Profit effect</v-tab>
             <v-tab value="about">How it works</v-tab>

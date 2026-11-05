@@ -60,13 +60,14 @@
     </section>
 
     <section v-if="candidates.length || mode === 'upfront'">
-      <div class="sc-section-title">Rebate that can be withheld</div>
-      <div class="sc-muted mb-2">Confirming a retention only records it. Whoever pays the rebate must deliver the reduced amount.</div>
+      <div class="sc-section-title">{{ mode === 'on_rebate_payment' ? 'Customer rebate not paid yet' : 'Rebate that can be withheld' }}</div>
+      <div v-if="mode === 'on_rebate_payment'" class="sc-muted mb-2">The debt is withheld automatically when a rebate payment request is created and covered when it is marked as paid.</div>
+      <div v-else class="sc-muted mb-2">Confirming a retention only records it. Whoever pays the rebate must deliver the reduced amount.</div>
       <v-data-table :headers="candidateHeaders" :items="candidates" density="comfortable" :items-per-page="10" no-data-text="No future reference with rebate yet">
         <template #item.amount="{ item }">{{ formatCurrency(item.amount) }}</template>
         <template #item.remaining="{ item }">{{ formatCurrency(item.remaining) }}</template>
         <template #item.action="{ item }">
-          <v-btn v-if="canManage" size="small" variant="tonal" color="primary" :disabled="item.remaining <= 0 || toRecover <= 0" @click="$emit('recover', item)">
+          <v-btn v-if="canManage && mode === 'upfront'" size="small" variant="tonal" color="primary" :disabled="item.remaining <= 0 || toRecover <= 0" @click="$emit('recover', item)">
             Withhold
           </v-btn>
         </template>

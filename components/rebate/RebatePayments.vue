@@ -101,7 +101,7 @@ const blank = () => ({ folio: '', status: null as string | null, requested_by: '
 const filters = ref(blank())
 const applied = ref(blank())
 
-const statusItems = ['requested', 'authorized', 'in_process', 'paid', 'cancelled'].map((value) => ({ value, title: paymentStatus(value).label }))
+const statusItems = ['requested', 'paid', 'cancelled'].map((value) => ({ value, title: paymentStatus(value).label }))
 
 const filtered = computed(() => {
   const a = applied.value
@@ -121,7 +121,7 @@ const lastPage = computed(() => Math.max(Math.ceil(filtered.value.length / PER_P
 const pageRows = computed(() => filtered.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE))
 
 const cards = computed(() =>
-  ['requested', 'authorized', 'in_process', 'paid'].map((key) => {
+  ['requested', 'paid'].map((key) => {
     const subset = batches.value.filter((batch) => batch.status === key)
     const status = paymentStatus(key)
     return { key, label: status.label, color: status.color, icon: status.icon, count: subset.length, total: subset.reduce((sum, batch) => sum + Number(batch.total || 0), 0) }

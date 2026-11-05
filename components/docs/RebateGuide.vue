@@ -35,11 +35,7 @@
               <span class="text-caption text-medium-emphasis">Lo disponible se paga en una solicitud</span>
             </div>
             <div class="diagram-row">
-              <FlowCard icon="mdi-email-fast-outline" color="warning" title="Solicitado" small />
-              <FlowArrow />
-              <FlowCard icon="mdi-check-decagram" color="info" title="Autorizado" small />
-              <FlowArrow />
-              <FlowCard icon="mdi-progress-clock" color="primary" title="En proceso" small />
+              <FlowCard icon="mdi-file-send-outline" color="warning" title="Solicitado" small />
               <FlowArrow />
               <FlowCard icon="mdi-cash-check" color="success" title="Pagado" highlight small />
             </div>
@@ -126,24 +122,21 @@ const reasons = [
   { icon: 'mdi-calendar-remove-outline', color: 'warning', label: 'No empty date', text: 'A un contenedor de la referencia le falta la fecha de devolución del vacío.' },
   { icon: 'mdi-receipt-text-clock-outline', color: 'warning', label: 'To invoice', text: 'La referencia tiene cargos pendientes de facturar.' },
   { icon: 'mdi-timer-sand', color: 'orange', label: 'Demurrage', text: 'Hay demoras sin facturar o sin pagar.' },
+  { icon: 'mdi-calendar-alert', color: 'orange', label: 'Free days exceeded', text: 'Un contenedor pasó sus días libres y no tiene demora cobrada. Se cuentan desde la fecha con la que se calcula su demora (la descarga en TM1, el inicio de la demora en TM2; la ETA si falta) hasta la fecha de vacío, o hasta hoy si no la tiene.' },
   { icon: 'mdi-folder-star-outline', color: 'primary', label: 'Special case', text: 'La referencia tiene demoras que un caso especial todavía está cubriendo con el flete de referencias nuevas. Su rebate se libera cuando el caso termina de cubrirla. Al pulsarlo se ve cuánto lleva cubierto y cuánto falta; arriba del listado un aviso resume lo retenido y lo ya liberado por el caso.' },
   { icon: 'mdi-alert-circle-outline', color: 'grey', label: 'Check failed', text: 'No se pudo revisar en este momento; se vuelve a intentar solo.' },
 ]
 
 const steps = [
-  { icon: 'mdi-email-fast-outline', color: 'warning', title: '1. Solicitar', text: 'El ejecutivo elige en Containers, con la casilla, los contenedores disponibles (o todos los que cumplen sus filtros) y pulsa «Request payment». Se envía un correo a Contabilidad y el ejecutivo queda en copia.' },
-  { icon: 'mdi-check-decagram', color: 'info', title: '2. Autorizar', text: 'Al solicitar se abre un ticket en SIGA para que los directivos autoricen desde ahí (también se puede autorizar en el sistema). Si algún contenedor dejó de cumplir, la autorización se rechaza.' },
-  { icon: 'mdi-progress-clock', color: 'primary', title: '3. En proceso', text: 'Contabilidad indica que el pago se está realizando.' },
-  { icon: 'mdi-cash-check', color: 'success', title: '4. Pagado', text: 'Contabilidad registra el pago con su referencia. Los ejecutivos ven el estado.' },
-  { icon: 'mdi-close-octagon-outline', color: 'error', title: 'Cancelar', text: 'Se puede cancelar antes de pagar; los contenedores vuelven a estar disponibles.' },
-  { icon: 'mdi-email-sync-outline', color: 'secondary', title: 'Reenviar', text: 'Mientras esté solicitada, se puede reenviar el correo si no llegó.' },
+  { icon: 'mdi-file-send-outline', color: 'warning', title: '1. Solicitar', text: 'El ejecutivo elige en Containers las referencias disponibles (o todas las que cumplen sus filtros) y pulsa «Request payment». Se paga por referencia completa: entran todos sus contenedores y una referencia con algún contenedor retenido no entra.' },
+  { icon: 'mdi-cash-check', color: 'success', title: '2. Pagado', text: 'Contabilidad registra el pago con su referencia. Antes se revisa de nuevo cada referencia; si alguna dejó de cumplir, no se puede marcar pagada. Los ejecutivos ven el estado.' },
+  { icon: 'mdi-close-octagon-outline', color: 'error', title: 'Cancelar', text: 'Contabilidad puede cancelarla antes de pagar; los contenedores vuelven a estar disponibles.' },
 ]
 
 const people = [
   { who: 'Ejecutivos', text: 'Ven sus contenedores, descargan el Excel y solicitan el pago de lo disponible.' },
-  { who: 'Contabilidad', text: 'Ve las solicitudes, las pone en proceso y las marca como pagadas.' },
-  { who: 'Directivos', text: 'Autorizan la solicitud desde el ticket de SIGA.' },
-  { who: 'Super Admin', text: 'Autoriza o cancela solicitudes, y puede hacer también el resto de los pasos.' },
+  { who: 'Contabilidad', text: 'Ve las solicitudes y las marca como pagadas o las cancela.' },
+  { who: 'Super Admin', text: 'Puede hacer todos los pasos.' },
 ]
 </script>
 
