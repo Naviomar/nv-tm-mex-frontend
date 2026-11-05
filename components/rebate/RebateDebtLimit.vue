@@ -20,9 +20,18 @@
 
     <div v-for="limit in limits" :key="limit.executive_id" class="limit-row">
       <div class="font-medium text-sm mb-1">{{ limit.executive }}</div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <!-- The whole calculation in one line: what is still unpaid, minus what is already requested, minus the overdue debt. -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
         <div>
-          <div class="text-xs text-medium-emphasis">Available rebate (not requested)</div>
+          <div class="text-xs text-medium-emphasis">Released rebate, not paid yet</div>
+          <div class="text-lg font-bold">{{ formatToCurrency(limit.rebate + limit.requested) }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-medium-emphasis">− Already requested (not paid)</div>
+          <div class="text-lg font-bold text-warning">{{ formatToCurrency(limit.requested) }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-medium-emphasis">= Available (not requested)</div>
           <div class="text-lg font-bold">{{ formatToCurrency(limit.rebate) }}</div>
         </div>
         <div>
@@ -49,7 +58,6 @@
           <div class="text-lg font-bold" :class="limit.available > 0 ? 'text-success' : 'text-error'">{{ formatToCurrency(limit.available) }}</div>
         </div>
       </div>
-      <div v-if="limit.requested > 0" class="text-xs text-medium-emphasis mt-1">Already requested, not paid yet: {{ formatToCurrency(limit.requested) }}</div>
     </div>
   </div>
 </template>
