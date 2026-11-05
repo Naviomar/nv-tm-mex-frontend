@@ -108,7 +108,7 @@ const steps = [
       { path: 'components/autorizacion/ProcessAuthorizationWrapper.vue', note: 'generic process request UI, template-driven' },
       { path: 'components/autorizacion/AuthorizeProcessSmart.vue', note: 'generic authorization request UI' },
       { path: 'utils/data/system.ts', note: 'processResources / authorizeResources — fallback display-name map' },
-      { path: 'pages/system/auth-request-types/index.vue', note: 'add code to AUTO_EXECUTE_PROCESS_CODES if it auto-executes' },
+      { path: 'pages/system/auth-request-types/index.vue', note: '"When approved" and "Validity of an approval" for the type' },
     ],
   },
   {
@@ -116,11 +116,12 @@ const steps = [
     icon: 'mdi-server-outline',
     title: '4. Handle approval on the backend',
     description:
-      'Add a case in ProcessRequest::getResolvedDisplayAttribute() for a friendly label, and — for auto-executed processes — a handler entry so the action actually runs when granted. Authorization-kind requests are handled per-module where the authorization is checked (no central switch).',
+      'Approvals from TM2 and SIGA go through one engine (RequestDecisionService). If the server should apply the change, add a handler in AutoExecuteDispatcher and set "When approved" to "applied automatically"; if the requester acts later, use "requester acts" and set its validity (working hours of the requester\'s office). Add a RequestSummary presenter so approvers read what they authorize (names, not IDs), and a DecisionProfile only if it needs several ways to approve (e.g. with/without rebilling).',
     files: [
+      { path: 'app/Services/V1/Mexico/AutoExecuteDispatcher.php', note: '$handlers map — runs the action on approval; a failure keeps the request pending and tells the approver why' },
+      { path: 'app/Services/V1/Mexico/RequestSummary/RequestSummaryService.php', note: 'presenters: what the approver sees in TM2 and SIGA' },
+      { path: 'app/Services/V1/Mexico/Approval/RequestDecisionService.php', note: 'decision profiles (options per type) and the decide() flow' },
       { path: 'app/Models/Mexico/ProcessRequest.php', note: 'getResolvedDisplayAttribute() switch — display label per process_name' },
-      { path: 'app/Repositories/V1/Mexico/Impl/AuthProcessRequestRepository.php', note: '$handlers map + applyGranted*() methods — executes the action on approval' },
-      { path: 'app/Models/Mexico/AuthorizationRequest.php', note: 'equivalent display resolution for authorization-kind requests' },
     ],
   },
 ]
