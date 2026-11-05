@@ -18,6 +18,11 @@ class RebateModule extends FetchFactory<any> {
     return this.call('GET', `${this.CONTAINERS}/old-debts`, { ...fetchOptions, query: { ...query, format: 'xlsx' }, responseType: 'blob' })
   }
 
+  // Request limit per executive: overdue debt of their customers, requested not paid and what is left.
+  async getDebtLimit(query: Record<string, any>, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.CONTAINERS}/debt-limit`, { ...fetchOptions, query })
+  }
+
   // What the customer of a container owes (the "Owes" reason).
   async getDebt(id: number, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.CONTAINERS}/${id}/debt`, fetchOptions)
@@ -43,6 +48,11 @@ class RebateModule extends FetchFactory<any> {
 
   async getPayment(id: number, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.PAYMENTS}/${id}`, fetchOptions)
+  }
+
+  // Printable PDF of the request (same layout as the supplier payment requests).
+  async downloadPaymentPdf(id: number, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.PAYMENTS}/${id}/pdf`, { ...fetchOptions, responseType: 'blob' })
   }
 
   async downloadPayment(id: number, fetchOptions?: FetchOptions) {

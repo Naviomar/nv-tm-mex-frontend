@@ -9,6 +9,7 @@
         <v-chip :color="paymentStatus(status).color" :prepend-icon="paymentStatus(status).icon">{{ paymentStatus(status).label }}</v-chip>
         <v-spacer />
         <v-btn variant="tonal" color="primary" prepend-icon="mdi-book-open-page-variant-outline" @click="docs.open('rebate', 'payments')">How it works</v-btn>
+        <v-btn variant="tonal" color="red" prepend-icon="mdi-file-pdf-box" :loading="busy === 'pdf'" @click="openPdf">PDF</v-btn>
         <v-btn variant="tonal" color="success" prepend-icon="mdi-file-excel-outline" :loading="busy === 'download'" @click="download">Excel</v-btn>
       </v-card-title>
 
@@ -248,6 +249,21 @@ async function download() {
     saveBlob(await $api.rebate.downloadPayment(props.batchId), `rebate-payment-${data.value?.batch.folio ?? props.batchId}`)
   } catch {
     snackbar.add({ type: 'error', text: 'Could not download the Excel' })
+  } finally {
+    busy.value = ''
+  }
+}
+
+// Opens the printable PDF in a new tab (to print and sign).
+async function openPdf() {
+  busy.value = 'pdf'
+  try {
+    const blob = await $api.rebate.downloadPaymentPdf(props.batchId)
+    const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch {
+    snackbar.add({ type: 'error', text: 'Could not generate the PDF' })
   } finally {
     busy.value = ''
   }
