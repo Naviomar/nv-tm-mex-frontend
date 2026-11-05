@@ -9,13 +9,13 @@ class RebateModule extends FetchFactory<any> {
     return this.call('GET', `${this.CONTAINERS}/filters`, fetchOptions)
   }
 
-  // Balances of references older than the debt age limit (they no longer hold the rebate).
-  async getOldDebts(fetchOptions?: FetchOptions) {
-    return this.call('GET', `${this.CONTAINERS}/old-debts`, fetchOptions)
+  // Balances of references older than the debt age limit (they no longer hold the rebate), narrowed by the dialog filters.
+  async getOldDebts(query: Record<string, any>, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.CONTAINERS}/old-debts`, { ...fetchOptions, query })
   }
 
-  async downloadOldDebts(fetchOptions?: FetchOptions) {
-    return this.call('GET', `${this.CONTAINERS}/old-debts`, { ...fetchOptions, query: { format: 'xlsx' }, responseType: 'blob' })
+  async downloadOldDebts(query: Record<string, any>, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.CONTAINERS}/old-debts`, { ...fetchOptions, query: { ...query, format: 'xlsx' }, responseType: 'blob' })
   }
 
   // What the customer of a container owes (the "Owes" reason).
