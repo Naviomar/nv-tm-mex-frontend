@@ -234,12 +234,6 @@ const authorizeResources = {
     description: 'Cancel Free Format Invoice',
     redirect: null,
   },
-  /** Apply a discount on sea import demurrage charges */
-  DemurrageDiscount: {
-    resource: 'sea-import-demurrage-discount',
-    description: 'Sea Import Demurrage Discount',
-    redirect: null,
-  },
   /** Revert a totaled sea import demurrage back to partial */
   DemurrageRevertToPartial: {
     resource: 'sea-import-demurrage-revert-to-partial',
