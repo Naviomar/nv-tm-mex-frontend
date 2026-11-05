@@ -94,71 +94,17 @@
           <div class="text-body-2 mt-1">No se encontraron alertas con los filtros aplicados</div>
         </div>
 
-        <v-list v-if="alerts.length > 0" class="py-0">
-          <template v-for="(alert, index) in alerts" :key="alert.id">
-            <v-list-item
-              :class="{ 'alert-row--unread': !alert.read_at }"
-              class="alert-row"
-              @click="handleAlertClick(alert)"
-            >
-              <template v-slot:prepend>
-                <v-avatar :color="getSeverityColor(alert.severity)" size="40" class="mr-3">
-                  <v-icon :icon="alert.icon || 'mdi-information'" color="white" size="20" />
-                </v-avatar>
-              </template>
-
-              <v-list-item-title class="font-weight-medium text-body-2">
-                {{ alert.title }}
-              </v-list-item-title>
-
-              <v-list-item-subtitle v-if="alert.message" class="text-wrap mt-1 text-caption">
-                {{ alert.message }}
-              </v-list-item-subtitle>
-
-              <v-list-item-subtitle class="mt-2">
-                <div class="d-flex align-center gap-1 flex-wrap">
-                  <v-chip v-if="alert.category" size="x-small" variant="outlined" :color="alert.color || 'default'">
-                    {{ alert.category }}
-                  </v-chip>
-                  <v-chip size="x-small" :color="getSeverityColor(alert.severity)" variant="tonal">
-                    {{ alert.severity }}
-                  </v-chip>
-                  <v-chip v-if="alert.read_at" size="x-small" color="success" variant="tonal">
-                    <v-icon start size="12">mdi-check</v-icon> Leída
-                  </v-chip>
-                  <v-chip v-else size="x-small" color="warning" variant="tonal">
-                    <v-icon start size="12">mdi-circle-small</v-icon> Sin leer
-                  </v-chip>
-                  <span class="text-caption text-medium-emphasis ml-1">{{ formatRelativeTime(alert.created_at) }}</span>
-                </div>
-              </v-list-item-subtitle>
-
-              <template v-slot:append>
-                <div class="d-flex flex-column gap-1">
-                  <v-btn
-                    v-if="!alert.read_at"
-                    icon="mdi-check"
-                    variant="text"
-                    size="x-small"
-                    color="success"
-                    title="Marcar como leída"
-                    @click.stop="markRead(alert)"
-                  />
-                  <v-btn
-                    icon="mdi-close"
-                    variant="text"
-                    size="x-small"
-                    color="error"
-                    title="Descartar"
-                    @click.stop="dismissAlert(alert)"
-                  />
-                </div>
-              </template>
-            </v-list-item>
-
-            <v-divider v-if="index < alerts.length - 1" />
-          </template>
-        </v-list>
+        <div v-if="alerts.length > 0">
+          <AlertCard
+            v-for="alert in alerts"
+            :key="alert.id"
+            :alert="alert"
+            :show-category="!activeTab"
+            @open="handleAlertClick"
+            @read="markRead"
+            @dismiss="dismissAlert"
+          />
+        </div>
       </v-card-text>
 
       <v-divider />
@@ -324,37 +270,6 @@ const dismissAlert = async (alert: IAlert) => {
   }
 }
 
-const getSeverityColor = (severity: string) => {
-  const colors: Record<string, string> = {
-    info: 'blue',
-    warning: 'orange',
-    error: 'red',
-    critical: 'purple',
-  }
-  return colors[severity] || 'grey'
-}
-
-const formatRelativeTime = (dateString: string) => {
-  try {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Ahora'
-    if (diffMins < 60) return `Hace ${diffMins} min`
-    if (diffHours < 24) return `Hace ${diffHours} h`
-    if (diffDays < 7) return `Hace ${diffDays} días`
-    if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`
-    if (diffDays < 365) return `Hace ${Math.floor(diffDays / 30)} meses`
-    return `Hace ${Math.floor(diffDays / 365)} años`
-  } catch {
-    return dateString
-  }
-}
-
 const close = () => {
   show.value = false
 }
@@ -371,23 +286,5 @@ watch(show, (newValue) => {
 .all-alerts-card {
   border-radius: 12px;
   overflow: hidden;
-}
-
-.alert-row {
-  transition: background 0.2s ease;
-  cursor: pointer;
-}
-
-.alert-row:hover {
-  background: rgba(var(--v-theme-primary), 0.04);
-}
-
-.alert-row--unread {
-  background: rgba(var(--v-theme-primary), 0.06);
-  border-left: 3px solid rgb(var(--v-theme-primary));
-}
-
-.alert-row--unread:hover {
-  background: rgba(var(--v-theme-primary), 0.1);
 }
 </style>

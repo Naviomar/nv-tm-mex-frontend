@@ -10,11 +10,11 @@
                 <v-icon size="20">mdi-bell-outline</v-icon>
               </v-avatar>
               <div class="d-flex flex-column">
-                <span class="alerts-card__title">Notifications</span>
+                <span class="alerts-card__title">Notificaciones</span>
                 <span class="alerts-card__subtitle">
                   {{ alertsStore.unreadCount > 0
-                    ? `${alertsStore.unreadCount} unread`
-                    : 'All caught up' }}
+                    ? `${alertsStore.unreadCount} sin leer`
+                    : 'Todo al día' }}
                 </span>
               </div>
             </div>
@@ -24,7 +24,7 @@
                 variant="text"
                 size="small"
                 class="alerts-card__action"
-                title="View all alerts"
+                title="Ver historial"
                 @click="showAllAlertsModal = true"
               />
               <v-btn
@@ -33,7 +33,7 @@
                 variant="text"
                 size="small"
                 class="alerts-card__action"
-                title="Mark all as read"
+                title="Marcar todas como leídas"
                 @click="markAllRead"
               />
               <v-btn
@@ -56,7 +56,7 @@
               @click="selectedSection = null"
             >
               <v-icon size="16">mdi-bell-outline</v-icon>
-              <span>All</span>
+              <span>Todas</span>
               <v-badge
                 v-if="alertsStore.unreadCount > 0"
                 :content="alertsStore.unreadCount"
@@ -88,85 +88,50 @@
 
           <v-divider class="alerts-card__divider" />
 
+          <AlertSeveritySummary v-if="filteredAlerts.length" :alerts="filteredAlerts" />
+
+          <v-divider v-if="filteredAlerts.length" class="alerts-card__divider" />
+
           <!-- Alert list body -->
           <v-card-text class="alerts-card__body pa-0">
             <div v-if="alertsStore.isLoading" class="alerts-loading">
               <v-progress-circular indeterminate color="primary" size="48" />
-              <p class="text-caption mt-3 text-medium-emphasis">Loading alerts...</p>
+              <p class="text-caption mt-3 text-medium-emphasis">Cargando alertas...</p>
             </div>
 
             <div v-else-if="alertsStore.alerts.length === 0" class="alerts-empty">
               <v-avatar size="80" class="alerts-empty__icon">
                 <v-icon size="48" color="success">mdi-bell-check-outline</v-icon>
               </v-avatar>
-              <p class="alerts-empty__title">All clear!</p>
-              <p class="alerts-empty__subtitle">No pending alerts</p>
+              <p class="alerts-empty__title">¡Todo en orden!</p>
+              <p class="alerts-empty__subtitle">No tienes alertas pendientes</p>
             </div>
 
             <div v-else-if="filteredAlerts.length === 0" class="alerts-empty">
               <v-avatar size="64" class="alerts-empty__icon">
                 <v-icon size="36" color="primary">mdi-filter-check-outline</v-icon>
               </v-avatar>
-              <p class="alerts-empty__title text-body-2">No alerts in this section</p>
+              <p class="alerts-empty__title text-body-2">Sin alertas en esta sección</p>
             </div>
 
             <div v-else class="alerts-list">
-              <transition-group name="alert-item">
-                <div
-                  v-for="alert in filteredAlerts"
-                  :key="alert.id"
-                  class="alert-item"
-                  :class="{ 'alert-item--unread': !alert.read_at }"
-                  @click="handleAlertClick(alert)"
-                >
-                  <div class="alert-item__indicator" :style="{ backgroundColor: getSeverityColor(alert.severity) }" />
-
-                  <div class="alert-item__icon">
-                    <v-avatar :color="getSeverityColor(alert.severity)" size="40" class="alert-item__avatar">
-                      <v-icon :icon="alert.icon || getSeverityIcon(alert.severity)" color="white" size="20" />
-                    </v-avatar>
-                  </div>
-
-                  <div class="alert-item__content">
-                    <div class="alert-item__header">
-                      <h4 class="alert-item__title">{{ alert.title }}</h4>
-                      <span class="alert-item__time">{{ formatDate(alert.created_at) }}</span>
-                    </div>
-
-                    <p v-if="alert.message" class="alert-item__message">
-                      {{ alert.message }}
-                    </p>
-
-                    <div v-if="alert.category && !selectedSection" class="alert-item__footer">
-                      <v-chip size="x-small" variant="tonal" :color="getSeverityColor(alert.severity)">
-                        {{ alert.category }}
-                      </v-chip>
-                    </div>
-                  </div>
-
-                  <div class="alert-item__actions">
-                    <v-btn
-                      v-if="!alert.read_at"
-                      icon="mdi-check"
-                      size="x-small"
-                      variant="text"
-                      color="success"
-                      class="alert-item__action-btn"
-                      title="Mark as read"
-                      @click.stop="markAsRead(alert)"
-                    />
-                    <v-btn
-                      icon="mdi-close"
-                      size="x-small"
-                      variant="text"
-                      color="error"
-                      class="alert-item__action-btn"
-                      title="Dismiss"
-                      @click.stop="dismissAlert(alert)"
-                    />
-                  </div>
+              <section v-for="group in groupedAlerts" :key="group.label">
+                <div class="alerts-group__label">
+                  {{ group.label }}
+                  <span class="alerts-group__count">{{ group.alerts.length }}</span>
                 </div>
-              </transition-group>
+                <transition-group name="alert-item">
+                  <AlertCard
+                    v-for="alert in group.alerts"
+                    :key="alert.id"
+                    :alert="alert"
+                    :show-category="!selectedSection"
+                    @open="handleAlertClick"
+                    @read="markAsRead"
+                    @dismiss="dismissAlert"
+                  />
+                </transition-group>
+              </section>
             </div>
           </v-card-text>
 
@@ -181,7 +146,7 @@
               prepend-icon="mdi-delete-sweep"
               @click="dismissAll"
             >
-              Dismiss all
+              {{ selectedSection ? 'Descartar las de esta sección' : 'Descartar todas' }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -197,6 +162,7 @@
 
 <script lang="ts" setup>
 import type { IAlert, IAlertCategorySummary } from '~/repository/modules/alerts'
+import { alertDayGroup } from '~/utils/alerts/presenters'
 
 interface AlertSection extends IAlertCategorySummary {
   unreadCount: number
@@ -227,6 +193,17 @@ const filteredAlerts = computed(() => {
   return alertsStore.alerts.filter((a) => a.category_code === selectedSection.value)
 })
 
+const groupedAlerts = computed(() => {
+  const groups: { label: string; alerts: IAlert[] }[] = []
+  for (const alert of filteredAlerts.value) {
+    const label = alertDayGroup(alert.created_at)
+    const last = groups[groups.length - 1]
+    if (last?.label === label) last.alerts.push(alert)
+    else groups.push({ label, alerts: [alert] })
+  }
+  return groups
+})
+
 const handleAlertDismissedInModal = () => {
   alertsStore.fetchAlerts()
 }
@@ -237,46 +214,6 @@ const loadCategories = async () => {
   } catch (e) {
     categories.value = []
   }
-}
-
-const getSeverityColor = (severity: string) => {
-  const colors: Record<string, string> = {
-    info: 'info',
-    warning: 'warning',
-    error: 'error',
-    critical: 'error',
-  }
-  return colors[severity] || 'grey'
-}
-
-const getSeverityIcon = (severity: string) => {
-  const icons: Record<string, string> = {
-    info: 'mdi-information',
-    warning: 'mdi-alert',
-    error: 'mdi-alert-circle',
-    critical: 'mdi-alert-octagon',
-  }
-  return icons[severity] || 'mdi-bell'
-}
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'Now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-
-  return date.toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'short',
-    year: diffDays > 365 ? 'numeric' : undefined,
-  })
 }
 
 const handleAlertClick = async (alert: IAlert) => {
@@ -303,7 +240,11 @@ const dismissAlert = async (alert: IAlert) => {
 }
 
 const dismissAll = async () => {
-  await alertsStore.dismissAll()
+  if (!selectedSection.value) {
+    await alertsStore.dismissAll()
+    return
+  }
+  await Promise.all(filteredAlerts.value.map((a) => alertsStore.dismissAlert(a.alert_user_id)))
 }
 
 watch(
@@ -323,7 +264,7 @@ watch(
   right: 24px;
   bottom: 88px;
   top: 80px;
-  max-width: 440px;
+  max-width: 480px;
   width: 100%;
   z-index: 3000;
 }
@@ -504,120 +445,29 @@ watch(
 }
 
 .alerts-list {
-  padding: 4px 0;
+  padding: 0;
 }
 
-.alert-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  background: rgb(var(--v-theme-surface));
-}
-
-.alert-item:hover {
-  background: rgba(var(--v-theme-primary), 0.04);
-  transform: translateX(-2px);
-}
-
-.alert-item--unread {
-  background: rgba(var(--v-theme-primary), 0.06);
-  border-left: 3px solid rgb(var(--v-theme-primary));
-}
-
-.alert-item--unread:hover {
-  background: rgba(var(--v-theme-primary), 0.1);
-}
-
-.alert-item__indicator {
-  position: absolute;
-  left: 0;
+.alerts-group__label {
+  position: sticky;
   top: 0;
-  bottom: 0;
-  width: 3px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.alert-item:hover .alert-item__indicator {
-  opacity: 1;
-}
-
-.alert-item__icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.alert-item__avatar {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-
-.alert-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.alert-item__header {
+  z-index: 1;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  background: rgb(var(--v-theme-background));
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
-.alert-item__title {
-  font-size: 0.85rem;
+.alerts-group__count {
   font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  line-height: 1.3;
-  margin: 0;
-}
-
-.alert-item__time {
-  font-size: 0.68rem;
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.alert-item__message {
-  font-size: 0.78rem;
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  line-height: 1.4;
-  margin: 0 0 6px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.alert-item__footer {
-  margin-top: 6px;
-}
-
-.alert-item__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  margin-top: 2px;
-}
-
-.alert-item:hover .alert-item__actions {
-  opacity: 1;
-}
-
-.alert-item__action-btn {
-  transition: all 0.2s ease;
-}
-
-.alert-item__action-btn:hover {
-  transform: scale(1.15);
+  opacity: 0.7;
 }
 
 .alert-item-enter-active,
