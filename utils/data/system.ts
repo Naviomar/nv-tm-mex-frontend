@@ -154,6 +154,8 @@ const menuPermissions = {
   AirExport: 'menu-air-export',
   Tracking: 'menu-tracking',
   Reports: 'menu-reports',
+  RebateContainers: 'menu-rebate-containers',
+  RebatePayments: 'menu-rebate-payments',
   ConfigurationAirlines: 'menu-configuration-airlines',
   ConfigurationAirports: 'menu-configuration-airports',
   ConfigurationBanks: 'menu-configuration-banks',

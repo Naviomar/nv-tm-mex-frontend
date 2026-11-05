@@ -661,6 +661,38 @@
           class="mb-1"
         ></v-list-item>
       </v-list-group>
+      <v-list-group v-if="hasAnyPermission(rebatePermissions)" value="rebate">
+        <template v-slot:activator="{ props }">
+          <v-list-item
+            v-bind="props"
+            prepend-icon="mdi-cash-refund"
+            :append-icon="getChevronIcon('rebate')"
+            title="Rebate"
+            rounded="xl"
+            class="mb-1"
+            :active="route.path.startsWith('/rebate')"
+          ></v-list-item>
+        </template>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.RebateContainers)"
+          prepend-icon="mdi-package-variant-closed"
+          title="Containers"
+          to="/rebate/containers"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+
+        <v-list-item
+          v-if="canAccess(menuPermissions.RebatePayments)"
+          prepend-icon="mdi-cash-check"
+          title="Payment requests"
+          to="/rebate/payments"
+          rounded="xl"
+          class="mb-1"
+        ></v-list-item>
+      </v-list-group>
+
       <v-list-item
         v-if="canAccess(menuPermissions.Reports)"
         prepend-icon="mdi-finance"
@@ -848,6 +880,7 @@ const maritimeImportDemurragesPermissions = [
   menuPermissions.MaritimeImportDemurragesSupplierCfdi,
   menuPermissions.MaritimeImportDemurragesReports,
 ]
+const rebatePermissions = [menuPermissions.RebateContainers, menuPermissions.RebatePayments]
 const airPermissions = [menuPermissions.AirImport, menuPermissions.AirExport]
 
 const configurationPermissions = [
@@ -955,6 +988,10 @@ const getDefaultOpenedGroups = (path: string) => {
 
   if (path.startsWith('/maritime')) {
     groups.push('maritime')
+  }
+
+  if (path.startsWith('/rebate')) {
+    groups.push('rebate')
   }
 
   if (path.startsWith('/air')) {

@@ -72,7 +72,10 @@ import {
   CustomerInvoicesReport,
   ChargesPendingInvoiceReport,
   ExecutiveReport,
+  ExecutiveArrapReport,
   ReleaseReportsReport,
+  SpecialCasesReport,
+  DemurrageDetentionReport,
 } from '#components'
 import { REPORT_DEPARTMENTS, type ReportDept } from './departments'
 import { useCheckUser } from '~/composables/useCheckUser'
@@ -110,7 +113,10 @@ const componentMap: Record<string, any> = {
   CustomerInvoicesReport,
   ChargesPendingInvoiceReport,
   ExecutiveReport,
+  ExecutiveArrapReport,
   ReleaseReportsReport,
+  SpecialCasesReport,
+  DemurrageDetentionReport,
 }
 
 const activeDeptKey = ref<string>(departments.value[0]?.key ?? '')

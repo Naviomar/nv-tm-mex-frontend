@@ -35,6 +35,15 @@ export const pageDocs: PageDoc[] = [
     component: () => import('~/components/docs/AccessControlGuide.vue'),
   },
   {
+    id: 'rebate',
+    title: '¿Cómo funciona? Rebate',
+    subtitle: 'Qué se puede pagar, qué se retiene y cómo se solicita y se paga',
+    icon: 'mdi-cash-refund',
+    color: 'teal',
+    match: ['/rebate'],
+    component: () => import('~/components/docs/RebateGuide.vue'),
+  },
+  {
     id: 'demurrages',
     title: '¿Cómo funciona? Demoras',
     subtitle: 'Del día de inicio por barco al cálculo, el corte al cliente y el pago a la naviera',

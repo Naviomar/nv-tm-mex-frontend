@@ -103,6 +103,9 @@ import ExportRepoModule from '~/repository/modules/reports/exportRepo'
 import ExportAccountStatementModule from '~/repository/modules/reports/exportAccountStatement'
 import ControlOperacionesModule from '~/repository/modules/reports/controlOperaciones'
 import ReleaseReportsModule from '~/repository/modules/reports/releaseReports'
+import SpecialCasesModule from '~/repository/modules/reports/specialCases'
+import RebateModule from '~/repository/modules/rebate'
+import DemurrageDetentionModule from '~/repository/modules/reports/demurrageDetention'
 import UserDataRestrictionsModule from '~/repository/modules/userDataRestrictions'
 import UserMailNotificationsModule from '~/repository/modules/userMailNotifications'
 import ViewAsModule from '~/repository/modules/viewAs'
@@ -118,6 +121,9 @@ interface IApiInstance {
   exportAccountStatement: ExportAccountStatementModule
   controlOperaciones: ControlOperacionesModule
   releaseReports: ReleaseReportsModule
+  specialCases: SpecialCasesModule
+  rebate: RebateModule
+  demurrageDetention: DemurrageDetentionModule
   authRequestTypes: AuthRequestTypesModule
   auth: AuthModule
   users: UsersModule
@@ -232,6 +238,9 @@ export function useApiFactory() {
     exportAccountStatement: new ExportAccountStatementModule(client),
     controlOperaciones: new ControlOperacionesModule(client),
     releaseReports: new ReleaseReportsModule(client),
+    specialCases: new SpecialCasesModule(client),
+    rebate: new RebateModule(client),
+    demurrageDetention: new DemurrageDetentionModule(client),
     auth: new AuthModule(client),
     users: new UsersModule(client),
     uiPreferences: new UiPreferencesModule(client),

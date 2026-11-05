@@ -88,6 +88,15 @@
               </div>
             </div>
           </v-tab>
+          <v-tab v-if="canViewSpecialCases" value="special-cases-tab" class="tab-item">
+            <div class="tab-content">
+              <v-icon size="28">mdi-folder-star-outline</v-icon>
+              <div class="tab-text">
+                <div class="tab-label">Special Cases</div>
+                <div class="tab-desc">Agreements Follow-up</div>
+              </div>
+            </div>
+          </v-tab>
         </v-tabs>
       </v-card>
     </div>
@@ -102,6 +111,11 @@
         </v-tabs-window-item>
         <v-tabs-window-item v-if="canViewBilling" value="billing-tab">
           <BillingDashboard />
+        </v-tabs-window-item>
+        <v-tabs-window-item v-if="canViewSpecialCases" value="special-cases-tab">
+          <v-card elevation="0" class="special-cases-tab-card ma-6">
+            <SpecialCasesReport />
+          </v-card>
         </v-tabs-window-item>
       </v-tabs-window>
     </div>
@@ -148,9 +162,11 @@ const canViewBilling = computed(() => {
   return isSuperAdminRole() || hasPermission('dashboard-billing-view')
 })
 
+const canViewSpecialCases = computed(() => hasPermission('reports-special-cases-view'))
+
 // Check if user has ANY dashboard access at all
 const hasAnyDashboardAccess = computed(() => {
-  return canViewSeaDashboard.value || canViewAirDashboard.value || canViewBilling.value
+  return canViewSeaDashboard.value || canViewAirDashboard.value || canViewBilling.value || canViewSpecialCases.value
 })
 
 // Set default tab based on permissions
@@ -161,6 +177,8 @@ onMounted(() => {
     tab.value = 'air-tab'
   } else if (canViewBilling.value) {
     tab.value = 'billing-tab'
+  } else if (canViewSpecialCases.value) {
+    tab.value = 'special-cases-tab'
   }
 })
 
@@ -374,6 +392,12 @@ onMounted(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
   background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.special-cases-tab-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 14px;
 }
 
 .theme--dark .tab-card {

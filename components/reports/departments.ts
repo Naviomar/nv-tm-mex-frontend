@@ -185,6 +185,28 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
         component: 'ExecutiveReport',
         permission: 'reports-billing-executives-view',
       },
+      {
+        key: 'executive-arrap',
+        title: 'Reporte Ejecutivo ARRAP',
+        icon: 'mdi-account-tie',
+        component: 'ExecutiveArrapReport',
+        permission: 'reports-billing-executive-arrap-view',
+      },
+    ],
+  },
+  {
+    key: 'demurrage',
+    title: 'Demurrage & Detentions',
+    icon: 'mdi-timer-sand',
+    color: 'orange',
+    reports: [
+      {
+        key: 'demurrage-detention',
+        title: 'Demurrage',
+        icon: 'mdi-clock-alert-outline',
+        component: 'DemurrageDetentionReport',
+        permission: 'reports-demurrage-detention-view',
+      },
     ],
   },
   {
@@ -193,5 +215,20 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     icon: 'mdi-calculator',
     color: 'teal',
     reports: [],
+  },
+  {
+    key: 'management',
+    title: 'Management',
+    icon: 'mdi-briefcase-outline',
+    color: 'deep-purple',
+    reports: [
+      {
+        key: 'special-cases',
+        title: 'Special Cases',
+        icon: 'mdi-folder-star-outline',
+        component: 'SpecialCasesReport',
+        permission: 'reports-special-cases-view',
+      },
+    ],
   },
 ]

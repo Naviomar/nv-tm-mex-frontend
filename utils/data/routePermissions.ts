@@ -32,6 +32,10 @@ export const voyageDestinationEditPermission: PermissionSpec = {
 }
 
 export const routePermissions: RoutePermissionRule[] = [
+  // rebate
+  { path: '/rebate/containers', permission: 'rebate-containers-view' },
+  { path: '/rebate/payments', permission: 'rebate-payments-view' },
+  { path: '/rebate/payments/:id', permission: 'rebate-payments-view' },
   // airlines
   { path: '/configuration/airlines/add', permission: 'airlines-create' },
   { path: '/configuration/airlines/edit-:id', permission: ['airlines-edit', 'airlines-view'] },

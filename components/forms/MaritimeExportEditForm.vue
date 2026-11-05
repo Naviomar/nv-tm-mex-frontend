@@ -581,18 +581,6 @@
                   {{ formatToCurrency(values.rebate_total_amount) }}
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <v-text-field
-                  v-model="formRebate.amount"
-                  density="compact"
-                  label="New rebate amount"
-                  type="number"
-                  hide-details
-                />
-                <Can permission="sea-export-update-rebate">
-                  <v-btn color="brown" size="small" @click="updateRefRebate"> Update rebate </v-btn>
-                </Can>
-              </div>
             </v-card-text>
           </v-card>
           <PendingConsigneeLock v-else title="Rebate and detentions" />
@@ -779,9 +767,6 @@ const charges = ref([] as any)
 // TODO: Unused variable
 const notes = ref([] as any)
 
-const formRebate = ref({
-  amount: null,
-})
 
 const initCreditDebitNotes = ref<any>([])
 
@@ -1109,31 +1094,6 @@ const getSeaExportCatalogs = async () => {
   catalogs.value = response as any
 }
 
-const updateRefRebate = async () => {
-  try {
-    if (formRebate.value.amount == null || formRebate.value.amount == '' || formRebate.value.amount < 0) {
-      snackbar.add({ type: 'warning', text: 'Please enter a valid rebate amount' })
-      return
-    }
-    loadingStore.start()
-    const body = {
-      id: values.id,
-      rebate: formRebate.value.amount,
-    }
-    await $api.referenciasExport.updateRebate(values.id, body)
-    snackbar.add({ type: 'success', text: 'Rebate updated successfully' })
-    await getData()
-
-    formRebate.value.amount = null // Reset the rebate input field
-  } catch (e) {
-    console.error(e)
-    snackbar.add({ type: 'error', text: 'Error updating rebate' })
-  } finally {
-    setTimeout(() => {
-      loadingStore.stop()
-    }, 250)
-  }
-}
 
 const getData = async () => {
   try {

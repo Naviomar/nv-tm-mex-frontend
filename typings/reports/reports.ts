@@ -128,3 +128,10 @@ export interface ContainersByClientShipperFilters {
   shipper_name: string
   etaMode: string
 }
+
+export interface ExecutiveArrapFilters {
+  fromDate: DateOrString
+  toDate: DateOrString
+  executive_id: number | null
+  service_type: string | null
+}
