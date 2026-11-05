@@ -8,7 +8,9 @@
         </v-chip>
         <v-spacer />
         <v-btn variant="tonal" color="primary" prepend-icon="mdi-book-open-page-variant-outline" @click="docs.open('rebate')">How it works</v-btn>
-        <v-btn variant="tonal" color="secondary" prepend-icon="mdi-history" @click="oldDebtsOpen = true">Old balances</v-btn>
+        <Can permission="rebate-old-balances-view">
+          <v-btn variant="tonal" color="secondary" prepend-icon="mdi-history" @click="oldDebtsOpen = true">Old balances</v-btn>
+        </Can>
         <v-tooltip :disabled="!!selectedCount" text="Select the containers to download" location="bottom">
           <template #activator="{ props: tip }">
             <span v-bind="tip">
@@ -341,7 +343,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <RebateOldDebtsDialog v-model="oldDebtsOpen" />
+    <RebateOldDebtsDialog v-if="can('rebate-old-balances-view')" v-model="oldDebtsOpen" :executives="options.executives" :customers="options.customers" />
 
     <v-dialog v-model="confirmOpen" max-width="520">
       <v-card>
@@ -381,6 +383,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 const { paymentStatus, holdReasons, saveBlob } = useRebate()
 const docs = usePageDocs()
+const { can } = useCheckUser()
 
 // The "Owes" chip opens the summary of what the customer has pending.
 const debtOpen = ref(false)
