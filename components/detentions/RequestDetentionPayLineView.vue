@@ -677,7 +677,8 @@ const reqDetentionAmountTotal = computed(() => {
 })
 
 const totalRequestedMatch = computed(() => {
-  return reqDetentionAmount.value === reqDetentionAmountDebit.value
+  // Compare in cents: summing decimals in floating point leaves residue (17400.000000000004 vs 17400)
+  return Math.round(reqDetentionAmount.value * 100) === Math.round(reqDetentionAmountDebit.value * 100)
 })
 
 const showConfirmCancelReq = async (id: any) => {

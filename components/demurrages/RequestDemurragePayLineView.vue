@@ -723,7 +723,8 @@ const reqDemurrageAmountTotal = computed(() => {
 })
 
 const totalRequestedMatch = computed(() => {
-  return reqDemurrageAmount.value === reqDemurrageAmountDebit.value
+  // Compare in cents: summing decimals in floating point leaves residue (17400.000000000004 vs 17400)
+  return Math.round(reqDemurrageAmount.value * 100) === Math.round(reqDemurrageAmountDebit.value * 100)
 })
 
 const showConfirmCancelReq = async (id: any) => {
