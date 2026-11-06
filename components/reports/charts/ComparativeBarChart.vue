@@ -33,8 +33,8 @@
               <div v-if="includeProfit" class="ysc-tile ysc-tile-profit">
                 <v-icon size="18" class="ysc-tile-icon">mdi-cash-multiple</v-icon>
                 <div>
-                  <div class="ysc-tile-label">Total Profit</div>
-                  <div class="ysc-tile-value text-success">{{ formatCurrency(yd.total_profit || 0) }}</div>
+                  <div class="ysc-tile-label">Total {{ profitLabel }}</div>
+                  <div class="ysc-tile-value" :class="profitClass(yd.total_profit)">{{ formatCurrency(yd.total_profit || 0) }}</div>
                 </div>
               </div>
             </div>
@@ -51,8 +51,8 @@
                   <span class="ysc-value-sm">{{ formatInt(yd.comparable_range.teus) }}</span>
                 </div>
                 <div v-if="includeProfit" class="ysc-comparable-item">
-                  <span class="ysc-label">Profit</span>
-                  <span class="ysc-value-sm text-success">{{ formatCurrency(yd.comparable_range.profit || 0) }}</span>
+                  <span class="ysc-label">{{ profitLabel }}</span>
+                  <span class="ysc-value-sm" :class="profitClass(yd.comparable_range.profit)">{{ formatCurrency(yd.comparable_range.profit || 0) }}</span>
                 </div>
               </div>
             </div>
@@ -73,7 +73,7 @@
     <!-- Main mixed chart + data table -->
     <ReportChartCard
       title="TEUs per Month — IMPO Maritime"
-      :subtitle="includeProfit ? 'TEUs (bars) and Profit (lines)' : 'TEUs (bars)'"
+      :subtitle="includeProfit ? `TEUs (bars) and ${profitLabel} (lines)` : 'TEUs (bars)'"
       icon="mdi-chart-bar"
       type="line"
       :series="series"
@@ -95,12 +95,15 @@ const props = withDefaults(defineProps<{
   includeProfit?: boolean
   includeEnTransito?: boolean
   loading?: boolean
+  // Name of the profit series ("Profit" / "Real Profit"); it must contain "Profit".
+  profitLabel?: string
 }>(), {
   chartData: () => [],
   selectedYears: () => [],
   includeProfit: true,
   includeEnTransito: false,
   loading: false,
+  profitLabel: 'Profit',
 })
 
 const { formatInt, formatCurrency, yearPalette, apexBaseOptions } = useReportFormatters()
@@ -109,6 +112,8 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 const maxYear = computed(() => props.selectedYears.length ? Math.max(...props.selectedYears) : null)
 const isMaxYear = (year: number) => maxYear.value !== null && year === maxYear.value
+
+const profitClass = (value?: number) => ((value ?? 0) < 0 ? 'text-error' : 'text-success')
 
 const formatCutoff = (cutoff?: string) => {
   if (!cutoff) return ''
@@ -148,7 +153,7 @@ const built = computed(() => {
   if (props.includeProfit) {
     props.chartData.forEach((yd: any, idx: number) => {
       const color = yearPalette[idx % yearPalette.length]
-      const name = `${yd.year} Profit`
+      const name = `${yd.year} ${props.profitLabel}`
       series.push({ name, type: 'line', data: monthsProfit(yd) })
       colors.push(color)
       profitNames.push(name)
@@ -257,7 +262,7 @@ const tableHeaders = computed(() => {
   props.chartData.forEach((yd: any) => {
     headers.push({ title: `${yd.year} TEUs`, key: `teus_${yd.year}`, align: 'end' })
     if (props.includeProfit) {
-      headers.push({ title: `${yd.year} Profit`, key: `profit_${yd.year}`, align: 'end' })
+      headers.push({ title: `${yd.year} ${props.profitLabel}`, key: `profit_${yd.year}`, align: 'end' })
     }
   })
   return headers
