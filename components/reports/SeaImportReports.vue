@@ -101,6 +101,22 @@
               <v-icon start size="small">mdi-server</v-icon>
               New
             </v-chip>
+            <template v-if="canSeeProfit && includeProfit">
+              <v-divider vertical class="mx-2" />
+              <span class="text-subtitle-2 text-medium-emphasis">Profit:</span>
+              <v-btn-toggle v-model="profitMode" mandatory density="compact" color="primary" variant="outlined" divided>
+                <v-btn value="operating" size="small">Profit</v-btn>
+                <v-btn value="real" size="small">Real Profit</v-btn>
+              </v-btn-toggle>
+              <v-tooltip location="bottom" max-width="360">
+                <template #activator="{ props: tooltipProps }">
+                  <v-icon v-bind="tooltipProps" size="small" class="text-medium-emphasis">mdi-information-outline</v-icon>
+                </template>
+                Real Profit only counts what the customer has already paid: the amount still pending collection
+                (unpaid or not yet invoiced, demurrage excluded) is subtracted from the profit, same as the
+                REAL PROFIT column of the Account Statement.
+              </v-tooltip>
+            </template>
           </v-col>
         </v-row>
       </v-card-text>
@@ -122,9 +138,10 @@
     <!-- Content -->
     <template v-if="hasData">
       <ComparativeBarChart
-        :chart-data="chartData"
+        :chart-data="displayedChartData"
         :selected-years="selectedYears"
         :include-profit="includeProfit"
+        :profit-label="profitMode === 'real' ? 'Real Profit' : 'Profit'"
         :include-en-transito="includeEnTransito"
         :loading="loading"
         class="mb-6"
@@ -250,6 +267,7 @@ const selectedYears = ref<number[]>([])
 const selectedEjecutivo = ref<number | null>(null)
 const includeProfit = ref(true)
 const includeEnTransito = ref(false)
+const profitMode = ref<'operating' | 'real'>('operating')
 const useLegacyData = ref(true)
 const useNewData = ref(true)
 
@@ -270,6 +288,19 @@ const loading = ref(false)
 const loadingBreakdowns = ref(false)
 
 const hasData = computed(() => chartData.value.length > 0)
+
+// The backend sends both figures; Real Profit swaps them in place so the chart stays untouched.
+const displayedChartData = computed(() => {
+  if (profitMode.value !== 'real') return chartData.value
+  return chartData.value.map((yd: any) => ({
+    ...yd,
+    total_profit: yd.total_real_profit ?? 0,
+    months: (yd.months ?? []).map((m: any) => ({ ...m, profit: m.real_profit ?? 0 })),
+    comparable_range: yd.comparable_range
+      ? { ...yd.comparable_range, profit: yd.comparable_range.real_profit ?? 0 }
+      : yd.comparable_range,
+  }))
+})
 
 const maxYear = computed(() => selectedYears.value.length ? Math.max(...selectedYears.value) : null)
 

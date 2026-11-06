@@ -12,6 +12,7 @@
               <h2 class="report-title">Global Financial Report</h2>
               <p class="report-subtitle">
                 Full financial snapshot across all 4 services: Sea Import/Export & Air Import/Export
+                (Sea includes TM1 references, marked "(TM1)" in the service column)
               </p>
             </div>
           </div>
@@ -189,7 +190,7 @@ const legendGroups = [
     title: 'Desglose de Conceptos',
     icon: 'mdi-format-list-bulleted-type',
     color: 'deep-purple',
-    description: 'Detailed concept-by-concept breakdown of all buy and sell charges, suppliers, FF notes and demurrages.',
+    description: 'Detailed concept-by-concept breakdown of all buy and sell charges, suppliers, FF notes and demurrages. TM1 does not link each payment to a concept, so TM1 sell concepts show the collection status of the whole reference.',
   },
   {
     title: 'Profit Esperado',
