@@ -11,7 +11,8 @@
       >
         <template #item.reference="{ item }">
           <strong>{{ item.reference }}</strong>
-          <v-chip size="x-small" variant="tonal" class="ml-2" label>{{ item.system }}</v-chip>
+          <v-chip size="x-small" variant="tonal" class="ml-2" label>{{ item.system === 'EXT' ? 'Paid outside' : item.system }}</v-chip>
+          <div v-if="item.note" class="sc-muted text-caption">{{ item.note }}</div>
         </template>
         <template #item.amount="{ item }">{{ formatCurrency(item.amount) }}</template>
         <template #item.used="{ item }"><span class="text-success">{{ formatCurrency(item.used) }}</span></template>
