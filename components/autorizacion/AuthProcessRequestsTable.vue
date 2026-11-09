@@ -125,7 +125,6 @@
                   <v-icon>mdi-close-circle-outline</v-icon>
                 </v-btn>
                 <v-btn
-                  v-if="authRequest.process_data"
                   icon
                   size="small"
                   variant="text"
@@ -149,7 +148,6 @@
             <td>
               <ExpandableText :text="authRequest.reason" :lines="3" empty="No comments" />
               <v-btn
-                v-if="authRequest.process_data"
                 size="x-small"
                 variant="tonal"
                 color="secondary"
@@ -220,29 +218,20 @@
       </RequestDecisionDialog>
 
       <!-- Request Data Details Dialog -->
-      <v-dialog v-model="showDetailsDialog" max-width="640">
-        <v-card v-if="detailsRequest">
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-information-outline</v-icon>
-            Request data — #{{ detailsRequest.id }}
-          </v-card-title>
-          <v-card-subtitle>{{ detailsRequest.resolved_display }}</v-card-subtitle>
-          <v-card-text>
-            <div class="text-sm mb-2">
-              <span class="font-medium">Requested by:</span> {{ detailsRequest.user?.name }}
-            </div>
-            <div class="text-sm mb-3">
-              <span class="font-medium">Comments:</span> {{ detailsRequest.reason || 'No comments' }}
-            </div>
-            <v-divider class="mb-3" />
-            <ProcessRequestDetails :process-data="detailsRequest.process_data_resolved ?? detailsRequest.process_data" :summary="detailsRequest.charge_summary" />
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="showDetailsDialog = false">Close</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <RequestDataDialog
+        v-model="showDetailsDialog"
+        kind="process-request"
+        :request-id="detailsRequest?.id ?? null"
+        :subtitle="detailsRequest?.resolved_display"
+      >
+        <template #context>
+          <div class="text-body-2"><span class="text-medium-emphasis">Requested by:</span> {{ detailsRequest?.user?.name }}</div>
+          <div class="text-body-2"><span class="text-medium-emphasis">Comments:</span> {{ detailsRequest?.reason || 'No comments' }}</div>
+        </template>
+        <template #fallback>
+          <ProcessRequestDetails :process-data="detailsRequest?.process_data_resolved ?? detailsRequest?.process_data" :summary="detailsRequest?.charge_summary" />
+        </template>
+      </RequestDataDialog>
 
       <!-- Ticket Chat Dialog -->
       <v-dialog v-model="showChatDrawer" max-width="640">
@@ -311,6 +300,7 @@ import RequestDecisionDialog from './shared/RequestDecisionDialog.vue'
 import type { IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
 import DecisionChip from './shared/DecisionChip.vue'
 import ProcessRequestDetails from './shared/ProcessRequestDetails.vue'
+import RequestDataDialog from './shared/RequestDataDialog.vue'
 const { $api } = useNuxtApp()
 const { isAdminRole, hasPermission, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
