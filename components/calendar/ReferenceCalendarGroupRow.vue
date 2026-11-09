@@ -14,7 +14,7 @@
       <div v-if="group.detail" class="text-xs opacity-70 truncate">{{ group.detail }}</div>
     </div>
     <div class="flex shrink-0 flex-wrap items-center justify-end gap-1">
-      <v-chip v-if="group.legacy" size="x-small" color="grey" variant="flat">TM1</v-chip>
+      <v-chip v-if="group.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
       <v-chip v-if="group.noDate && !group.legacy" size="x-small" color="orange" variant="flat" :title="`Without ${dateLabel}`">
         {{ group.noDate }} no date
       </v-chip>
@@ -30,7 +30,8 @@ const props = defineProps<{ group: any; icon: string; noneLabel: string; dateLab
 defineEmits<{ (e: 'open', group: any): void }>()
 
 const barClass = computed(() => ({
-  'group-row__bar--legacy': props.group.legacy,
+  'group-row__bar--legacy': props.group.legacy && !(props.group.allNoDate && !props.group.allCancelled),
+  'group-row__bar--legacy-no-eta': props.group.legacy && props.group.allNoDate && !props.group.allCancelled,
   'group-row__bar--no-date': !props.group.legacy && props.group.allNoDate,
   'group-row__bar--cancelled': !props.group.legacy && props.group.allCancelled,
   'group-row__bar--ok': !props.group.legacy && !props.group.allNoDate && !props.group.allCancelled,
@@ -64,6 +65,9 @@ const barClass = computed(() => ({
   background: #dc2626;
 }
 .group-row__bar--legacy {
-  background: #9ca3af;
+  background: var(--tm1-ref-bg);
+}
+.group-row__bar--legacy-no-eta {
+  background: var(--tm1-ref-no-eta-bg);
 }
 </style>

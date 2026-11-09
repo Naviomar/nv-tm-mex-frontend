@@ -4,8 +4,8 @@
     <div class="min-w-0 flex-1 cursor-pointer" @click="$emit(item.legacy ? 'legacy' : 'view', item)">
       <div class="flex flex-wrap items-center gap-1">
         <span class="font-bold text-sm">{{ item.reference_number }}</span>
-        <v-chip v-if="item.legacy" size="x-small" color="grey" variant="flat">TM1</v-chip>
-        <v-chip v-if="!item.has_date" size="x-small" color="orange" variant="flat">No {{ dateLabel }}</v-chip>
+        <v-chip v-if="item.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
+        <v-chip v-if="!item.has_date" size="x-small" :class="item.legacy ? 'tm1-chip tm1-chip--no-eta' : ''" :color="item.legacy ? undefined : 'orange'" variant="flat" :title="item.placed_by === 'etd' ? 'Placed by its ETD' : 'Placed by its capture date'">No {{ dateLabel }}</v-chip>
         <v-chip v-if="item.cancelled" size="x-small" color="red" variant="flat">Cancelled</v-chip>
       </div>
       <div class="text-sm truncate">{{ item.consignee || '—' }}</div>
@@ -69,7 +69,8 @@ const barClass = computed(() => ({
   'cal-row__bar--ok': !props.item.legacy && props.item.has_date && !props.item.cancelled,
   'cal-row__bar--no-date': !props.item.legacy && !props.item.has_date && !props.item.cancelled,
   'cal-row__bar--cancelled': !props.item.legacy && props.item.cancelled,
-  'cal-row__bar--legacy': props.item.legacy,
+  'cal-row__bar--legacy': props.item.legacy && (props.item.has_date || props.item.cancelled),
+  'cal-row__bar--legacy-no-eta': props.item.legacy && !props.item.has_date && !props.item.cancelled,
 }))
 </script>
 
@@ -100,6 +101,9 @@ const barClass = computed(() => ({
   background: #dc2626;
 }
 .cal-row__bar--legacy {
-  background: #9ca3af;
+  background: var(--tm1-ref-bg);
+}
+.cal-row__bar--legacy-no-eta {
+  background: var(--tm1-ref-no-eta-bg);
 }
 </style>

@@ -6,7 +6,7 @@
           <div class="flex items-center gap-2">
             <v-icon size="small">{{ group.none ? 'mdi-help-circle-outline' : icon }}</v-icon>
             <span class="text-base font-bold truncate">{{ group.none ? noneLabel : group.name }}</span>
-            <v-chip v-if="group.legacy" size="x-small" color="grey" variant="flat">TM1</v-chip>
+            <v-chip v-if="group.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
           </div>
           <div class="text-xs font-normal opacity-70">
             <template v-if="group.carrier && !group.none && group.carrier !== group.detail">{{ group.carrier }} · </template>

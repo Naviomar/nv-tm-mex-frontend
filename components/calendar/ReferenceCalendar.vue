@@ -61,9 +61,9 @@
       <v-chip
         size="small"
         :variant="showLegacy ? 'flat' : 'tonal'"
-        color="grey"
+        :color="showLegacy ? undefined : 'grey'"
         prepend-icon="mdi-history"
-        class="cursor-pointer"
+        :class="['cursor-pointer', { 'tm1-chip': showLegacy }]"
         title="Show references from the legacy system (TM1)"
         @click="toggleLegacy"
       >
@@ -148,10 +148,11 @@
     <div class="flex flex-wrap items-center gap-4 text-xs">
       <span class="flex items-center gap-1"><span class="legend-dot bg-blue-600"></span> With {{ config.dateLabel }}</span>
       <span class="flex items-center gap-1">
-        <span class="legend-dot bg-orange-500"></span> No {{ config.dateLabel }} — placed by capture date
+        <span class="legend-dot bg-orange-500"></span> No {{ config.dateLabel }} — placed by ETD, or capture date
       </span>
       <span class="flex items-center gap-1"><span class="legend-dot bg-red-600"></span> Cancelled</span>
-      <span class="flex items-center gap-1"><span class="legend-dot bg-gray-400"></span> TM1 (legacy, read-only)</span>
+      <span class="flex items-center gap-1"><span class="legend-dot legend-dot--tm1"></span> TM1 (legacy, read-only)</span>
+      <span class="flex items-center gap-1"><span class="legend-dot legend-dot--tm1-no-eta"></span> TM1 without ETA — placed by ETD, or capture date</span>
     </div>
 
     <!-- Calendar -->
@@ -296,6 +297,7 @@ interface CalendarItem {
   reference_number: string
   date: string
   has_date: boolean
+  placed_by?: 'eta' | 'etd' | 'capture'
   cancelled: boolean
   consignee_id: number | null
   consignee?: string | null
@@ -618,7 +620,7 @@ const visibleGroups = (iso: string) => {
 
 const groupChipClass = (g: CalendarGroup) => ({
   'ref-chip--legacy': g.legacy,
-  'ref-chip--legacy-no-date': g.legacy && g.allNoDate,
+  'ref-chip--legacy-no-date': g.legacy && g.allNoDate && !g.allCancelled,
   'ref-chip--none': g.none && !g.legacy,
   'ref-chip--cancelled': !g.legacy && !g.none && g.allCancelled,
   'ref-chip--no-date': !g.legacy && !g.none && g.allNoDate && !g.allCancelled,
@@ -627,7 +629,7 @@ const groupChipClass = (g: CalendarGroup) => ({
 
 const chipClass = (item: CalendarItem) => ({
   'ref-chip--legacy': item.legacy,
-  'ref-chip--legacy-no-date': item.legacy && !item.has_date,
+  'ref-chip--legacy-no-date': item.legacy && !item.has_date && !item.cancelled,
   'ref-chip--cancelled': item.cancelled,
   'ref-chip--ok': !item.legacy && item.has_date && !item.cancelled,
   'ref-chip--no-date': !item.legacy && !item.has_date && !item.cancelled,
@@ -797,13 +799,15 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   background: #dc2626;
   text-decoration: line-through;
 }
-/* Declared after --cancelled so a cancelled TM1 stays grey (only struck through) */
+/* Declared after --cancelled so a cancelled TM1 stays light blue (only struck through) */
 .ref-chip--legacy {
-  background: #9ca3af;
+  background: var(--tm1-ref-bg);
+  color: var(--tm1-ref-fg);
 }
-/* TM1 without ETA keeps the grey identity, with an orange edge as the missing-date hint */
+/* TM1 without ETA: lighter yellow, so the missing date is visible at a glance */
 .ref-chip--legacy-no-date {
-  box-shadow: inset 3px 0 0 #f97316;
+  background: var(--tm1-ref-no-eta-bg);
+  color: var(--tm1-ref-no-eta-fg);
 }
 .ref-chip--none {
   background: rgba(var(--v-theme-on-surface), 0.08);
@@ -815,6 +819,12 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   padding: 0 5px;
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.22);
+}
+.legend-dot--tm1 {
+  background: var(--tm1-ref-bg);
+}
+.legend-dot--tm1-no-eta {
+  background: var(--tm1-ref-no-eta-bg);
 }
 .legend-dot {
   width: 10px;

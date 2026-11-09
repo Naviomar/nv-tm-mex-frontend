@@ -5,7 +5,7 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="text-base font-bold">{{ detail?.reference || reference?.reference_number }}</span>
-            <v-chip size="x-small" color="grey" variant="flat">TM1</v-chip>
+            <v-chip size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
             <v-chip v-if="detail?.cancelled" size="x-small" color="red" variant="flat">Cancelled</v-chip>
           </div>
           <div class="text-xs font-normal opacity-70">Read-only information from the legacy system</div>
