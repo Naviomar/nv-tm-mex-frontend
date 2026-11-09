@@ -15,7 +15,14 @@
     </div>
     <div class="flex shrink-0 flex-wrap items-center justify-end gap-1">
       <v-chip v-if="group.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
-      <v-chip v-if="group.noDate && !group.legacy" size="x-small" color="orange" variant="flat" :title="`Without ${dateLabel}`">
+      <v-chip
+        v-if="group.noDate"
+        size="x-small"
+        :class="group.legacy ? 'tm1-chip tm1-chip--no-eta' : ''"
+        :color="group.legacy ? undefined : 'orange'"
+        variant="flat"
+        :title="`Without ${dateLabel}`"
+      >
         {{ group.noDate }} no date
       </v-chip>
       <v-chip size="x-small" variant="tonal">

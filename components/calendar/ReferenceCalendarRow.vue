@@ -18,14 +18,14 @@
     <div class="flex shrink-0 gap-1">
       <v-btn
         v-if="item.legacy"
-        icon="mdi-information-outline"
+        icon="mdi-eye-outline"
         size="small"
         variant="text"
-        color="grey-darken-1"
+        color="green-lighten-2"
         density="comfortable"
-        title="TM1 information"
+        title="View details"
         class="cursor-pointer"
-        @click="$emit('legacy', item)"
+        @click="$emit(legacyFullView ? 'legacy-view' : 'legacy', item)"
       />
       <template v-else>
         <v-btn
@@ -62,8 +62,15 @@ const props = defineProps<{
   canView: boolean
   canEdit: boolean
   compact?: boolean
+  /** TM1 references of this service have a full view page (the eye opens it; the row text opens the quick modal) */
+  legacyFullView?: boolean
 }>()
-defineEmits<{ (e: 'view', item: any): void; (e: 'edit', item: any): void; (e: 'legacy', item: any): void }>()
+defineEmits<{
+  (e: 'view', item: any): void
+  (e: 'edit', item: any): void
+  (e: 'legacy', item: any): void
+  (e: 'legacy-view', item: any): void
+}>()
 
 const barClass = computed(() => ({
   'cal-row__bar--ok': !props.item.legacy && props.item.has_date && !props.item.cancelled,

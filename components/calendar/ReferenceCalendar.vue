@@ -201,7 +201,7 @@
                 <div v-if="group.carrier">{{ config.carrierLabel }}: {{ group.carrier }}</div>
                 <div v-if="group.detail">{{ group.detail }}</div>
                 <div>{{ group.items.length }} reference{{ group.items.length === 1 ? '' : 's' }}</div>
-                <div v-if="group.noDate && !group.legacy" class="text-orange-300">{{ group.noDate }} without {{ config.dateLabel }}</div>
+                <div v-if="group.noDate" class="text-orange-300">{{ group.noDate }} without {{ config.dateLabel }}</div>
               </div>
             </v-tooltip>
           </template>
@@ -243,7 +243,7 @@
     <!-- Day detail: every vessel/flight of the day -->
     <v-dialog v-model="dayDialog" max-width="680" scrollable>
       <v-card>
-        <v-card-title class="flex items-start justify-between gap-2 pt-4">
+        <v-card-title class="tm-card-header pt-4">
           <div>
             <div class="text-base font-bold">{{ dayDialogLabel }}</div>
             <div class="text-xs font-normal opacity-70">
@@ -280,7 +280,9 @@
       :can-edit="canEdit"
       @view="viewItem"
       @edit="editItem"
+      :legacy-full-view="hasLegacyFullView"
       @legacy="openLegacy"
+      @legacy-view="openLegacyFullView"
     />
 
     <LegacyReferenceModal v-model="legacyDialog" :kind="props.kind" :reference="legacyItem" />
@@ -544,8 +546,9 @@ const shownItems = computed(() => {
       (!q || matchesQuick(i, q)),
   )
 })
-const noDateCount = computed(() => items.value.filter((i) => !i.has_date && !i.legacy).length)
-const cancelledCount = computed(() => items.value.filter((i) => i.cancelled && !i.legacy).length)
+// TM1 references count like the TM2 ones; they are only in the list while the TM1 toggle is on
+const noDateCount = computed(() => items.value.filter((i) => !i.has_date && (showLegacy.value || !i.legacy)).length)
+const cancelledCount = computed(() => items.value.filter((i) => i.cancelled && (showLegacy.value || !i.legacy)).length)
 const legacyCount = computed(() => items.value.filter((i) => i.legacy).length)
 
 const byDay = computed(() => {
@@ -618,10 +621,11 @@ const visibleGroups = (iso: string) => {
   return list.length === visibleCount.value + 1 ? list : list.slice(0, visibleCount.value)
 }
 
+// The "no vessel/flight" group looks the same (neutral, dashed) for TM1 and TM2
 const groupChipClass = (g: CalendarGroup) => ({
-  'ref-chip--legacy': g.legacy,
-  'ref-chip--legacy-no-date': g.legacy && g.allNoDate && !g.allCancelled,
-  'ref-chip--none': g.none && !g.legacy,
+  'ref-chip--legacy': g.legacy && !g.none,
+  'ref-chip--legacy-no-date': g.legacy && !g.none && g.allNoDate && !g.allCancelled,
+  'ref-chip--none': g.none,
   'ref-chip--cancelled': !g.legacy && !g.none && g.allCancelled,
   'ref-chip--no-date': !g.legacy && !g.none && g.allNoDate && !g.allCancelled,
   'ref-chip--ok': !g.legacy && !g.none && !g.allNoDate && !g.allCancelled,
@@ -652,6 +656,11 @@ const editItem = (item: CalendarItem) => router.push(config.value.editPath(item.
 
 const legacyDialog = ref(false)
 const legacyItem = ref<CalendarItem | null>(null)
+// Only some services have the full TM1 view page; the rest keep the quick modal
+const hasLegacyFullView = computed(() => props.kind === 'sea-import')
+const openLegacyFullView = (item: CalendarItem) => {
+  navigateTo(`/maritime/import/legacy/${item.id}`)
+}
 const openLegacy = (item: CalendarItem) => {
   legacyItem.value = item
   legacyDialog.value = true
