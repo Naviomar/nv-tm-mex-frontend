@@ -1,16 +1,28 @@
 <template>
-  <v-dialog :model-value="modelValue" max-width="640" scrollable @update:model-value="$emit('update:modelValue', $event)">
+  <v-dialog :model-value="modelValue" max-width="960" scrollable @update:model-value="$emit('update:modelValue', $event)">
     <v-card>
-      <v-card-title class="flex items-start justify-between gap-2 pt-4">
+      <v-card-title class="tm-card-header pt-4">
         <div>
           <div class="flex items-center gap-2">
             <span class="text-base font-bold">{{ detail?.reference || reference?.reference_number }}</span>
-            <v-chip size="x-small" color="grey" variant="flat">TM1</v-chip>
+            <v-chip size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
             <v-chip v-if="detail?.cancelled" size="x-small" color="red" variant="flat">Cancelled</v-chip>
           </div>
           <div class="text-xs font-normal opacity-70">Read-only information from the legacy system</div>
         </div>
-        <v-btn icon="mdi-close" variant="text" size="small" class="cursor-pointer" @click="$emit('update:modelValue', false)" />
+        <div class="flex items-center gap-1">
+          <v-btn
+            v-if="kind === 'sea-import' && reference?.id"
+            :to="`/maritime/import/legacy/${reference.id}`"
+            size="small"
+            variant="tonal"
+            prepend-icon="mdi-eye-outline"
+            @click="$emit('update:modelValue', false)"
+          >
+            View details
+          </v-btn>
+          <v-btn icon="mdi-close" variant="text" size="small" class="cursor-pointer" @click="$emit('update:modelValue', false)" />
+        </div>
       </v-card-title>
       <v-divider />
       <v-card-text class="pt-4" style="max-height: 70vh">
@@ -24,12 +36,7 @@
             </div>
           </div>
 
-          <div v-if="detail.containers?.length" class="mt-4">
-            <div class="text-xs opacity-60 mb-1">Containers</div>
-            <div class="flex flex-wrap gap-1">
-              <v-chip v-for="c in detail.containers" :key="c" size="small" color="green-lighten-2">{{ c }}</v-chip>
-            </div>
-          </div>
+          <LegacyReferenceSections :sections="detail.sections" class="mt-6" />
 
           <div v-if="detail.flights?.length" class="mt-4">
             <div class="text-xs opacity-60 mb-1">Flights</div>

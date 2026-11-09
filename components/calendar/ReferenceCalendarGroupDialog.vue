@@ -1,18 +1,18 @@
 <template>
   <v-dialog :model-value="modelValue" max-width="680" scrollable @update:model-value="$emit('update:modelValue', $event)">
     <v-card v-if="group">
-      <v-card-title class="flex items-start justify-between gap-2 pt-4">
+      <v-card-title class="tm-card-header pt-4">
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <v-icon size="small">{{ group.none ? 'mdi-help-circle-outline' : icon }}</v-icon>
             <span class="text-base font-bold truncate">{{ group.none ? noneLabel : group.name }}</span>
-            <v-chip v-if="group.legacy" size="x-small" color="grey" variant="flat">TM1</v-chip>
+            <v-chip v-if="group.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
           </div>
           <div class="text-xs font-normal opacity-70">
             <template v-if="group.carrier && !group.none && group.carrier !== group.detail">{{ group.carrier }} · </template>
             <template v-if="group.detail">{{ group.detail }} · </template>{{ dayLabel }} · {{ group.items.length }}
             reference{{ group.items.length === 1 ? '' : 's' }}
-            <template v-if="group.noDate && !group.legacy"> · {{ group.noDate }} without {{ dateLabel }}</template>
+            <template v-if="group.noDate"> · {{ group.noDate }} without {{ dateLabel }}</template>
           </div>
         </div>
         <v-btn icon="mdi-close" variant="text" size="small" class="cursor-pointer" @click="$emit('update:modelValue', false)" />
@@ -39,7 +39,9 @@
           :can-edit="canEdit(item)"
           @view="$emit('view', $event)"
           @edit="$emit('edit', $event)"
+          :legacy-full-view="legacyFullView"
           @legacy="$emit('legacy', $event)"
+          @legacy-view="$emit('legacy-view', $event)"
         />
       </v-card-text>
     </v-card>
@@ -56,12 +58,14 @@ const props = defineProps<{
   dayLabel: string
   canView: (item: any) => boolean
   canEdit: (item: any) => boolean
+  legacyFullView?: boolean
 }>()
 defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'view', item: any): void
   (e: 'edit', item: any): void
   (e: 'legacy', item: any): void
+  (e: 'legacy-view', item: any): void
 }>()
 
 const query = ref<string | null>('')

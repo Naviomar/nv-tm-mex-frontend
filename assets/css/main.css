@@ -341,6 +341,18 @@
 .tm-btn-group > .v-btn {
   margin: 0;
 }
+/*
+  Card header with the title block on the left and the actions (close...) on the right. Same reason as
+  .tm-btn-group: .v-card-title is display:block, nowrap and clipped, so Tailwind's flex/justify-between
+  leave the close button dropped under the title and the subtitle cut off.
+*/
+.v-card-title.tm-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  white-space: normal;
+}
 /* Dialog footers: breathing room between buttons and from the dialog edge. */
 .v-card-actions.tm-dialog-actions {
   gap: 0.75rem;
@@ -500,4 +512,20 @@
   white-space: nowrap;
   text-align: left;
   text-transform: none;
+}
+
+/* Reference calendar: TM1 (legacy) references. Light blue = has ETA, light yellow = TM1 reference without ETA. */
+:root {
+  --tm1-ref-bg: #a9bbdb;
+  --tm1-ref-fg: #1e293b;
+  --tm1-ref-no-eta-bg: #f3dc8a;
+  --tm1-ref-no-eta-fg: #4a3b00;
+}
+.tm1-chip {
+  background: var(--tm1-ref-bg) !important;
+  color: var(--tm1-ref-fg) !important;
+}
+.tm1-chip--no-eta {
+  background: var(--tm1-ref-no-eta-bg) !important;
+  color: var(--tm1-ref-no-eta-fg) !important;
 }

@@ -3,6 +3,7 @@ import FetchFactory from '../factory'
 
 class LegacyModule extends FetchFactory<any> {
   private RESOURCE = '/legacy'
+  private REFERENCES = '/legacy-references'
 
   async searchVoyages(search: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/search-voyages`, {
@@ -46,6 +47,24 @@ class LegacyModule extends FetchFactory<any> {
 
   async getExpoMarDetail(id: number, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/expo-mar/${id}`, fetchOptions)
+  }
+
+  /** "Go to reference" search among the TM1 references of a service */
+  async searchReferences(service: string, search: string, limit = 10, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.REFERENCES}/${service}`, {
+      ...fetchOptions,
+      query: { search, limit },
+    })
+  }
+
+  /** Header of the read-only TM1 view of a reference (service: sea-import, sea-export, air-import, air-export) */
+  async getReference(service: string, id: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.REFERENCES}/${service}/${id}`, fetchOptions)
+  }
+
+  /** One lazily loaded block of the TM1 view of a reference */
+  async getReferenceBlock(service: string, id: number | string, block: string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.REFERENCES}/${service}/${id}/blocks/${block}`, fetchOptions)
   }
 
   async checkLegacyReference(referencia: string, type: string, fetchOptions?: FetchOptions) {
