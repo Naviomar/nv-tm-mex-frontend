@@ -53,6 +53,16 @@ export interface IRequestDecision {
   summary: IRequestSummary | null
 }
 
+/** Read-only view of a request ("View data"): what it asks for, in business terms. */
+export interface IRequestSummaryView {
+  kind: RequestKind
+  id: number
+  type_label: string | null
+  state: IRequestDecision['state']
+  decided_by: string | null
+  summary: IRequestSummary | null
+}
+
 export interface IDecideBody {
   option: string
   reason?: string | null
@@ -78,6 +88,10 @@ class RequestDecisionsModule extends FetchFactory<any> {
 
   async get(kind: RequestKind, id: number, fetchOptions?: FetchOptions): Promise<IRequestDecision> {
     return this.call('GET', `${this.RESOURCE}/${kind}/${id}`, fetchOptions)
+  }
+
+  async summary(kind: RequestKind, id: number, fetchOptions?: FetchOptions): Promise<IRequestSummaryView> {
+    return this.call('GET', `${this.RESOURCE}/${kind}/${id}/summary`, fetchOptions)
   }
 
   async decide(kind: RequestKind, id: number, body: IDecideBody, fetchOptions?: FetchOptions): Promise<IRequestDecision> {
