@@ -1109,6 +1109,21 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+// Series (reference years) listed by default. Searching for something specific (a reference, a BL, a
+// container...) looks in every year instead, so the series never hides what the user is asking for.
+const props = defineProps<{ seriesYears?: number[] }>()
+const emit = defineEmits<{ (e: 'update:series-bypassed', value: boolean): void }>()
+
+const identifierFilters = ['referencias', 'masterBl', 'houseBl', 'containerNumber', 'bookingNum', 'poNum', 'trackerRef', 'invoiceNumber', 'ffNoteFolio']
+const searchingByIdentifier = computed(() =>
+  identifierFilters.some((key) => {
+    const value = (filters.value as any)[key]
+    return Array.isArray(value) ? value.length > 0 : !!value
+  }),
+)
+const seriesBypassed = computed(() => !!props.seriesYears?.length && searchingByIdentifier.value)
+watch(seriesBypassed, (value) => emit('update:series-bypassed', value), { immediate: true })
+
 // When an exact customer is selected, drop the free-text name search so the
 // two filters never combine into an impossible AND.
 const buildQueryParams = () => {
@@ -1116,8 +1131,22 @@ const buildQueryParams = () => {
   if (params.consignee_id) {
     delete params.consignee_name
   }
+  if (props.seriesYears?.length && !searchingByIdentifier.value) {
+    params.year = props.seriesYears.join(',')
+  }
   return params
 }
+
+// Another series selection starts again from the first page
+watch(
+  () => props.seriesYears?.join(','),
+  async (now, before) => {
+    if (before === undefined || now === before) return
+    currentPage.value = 1
+    references.value.current_page = 1
+    await getSeaImportReferences()
+  },
+)
 
 const onClickPagination = async (page: number) => {
   await onPageChange(page)
