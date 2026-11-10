@@ -117,7 +117,7 @@
         </v-card>
 
         <div v-for="b in blocks" :key="b.key" :class="b.half ? 'col-span-1' : 'col-span-1 md:col-span-2'">
-          <LegacyBlockCard service="air-export" :id="id" :block-key="b.key" :title="b.title" :icon="b.icon" :tint="b.tint" />
+          <LegacyBlockCard service="air-export" :id="id" :block-key="b.key" :title="b.title" :icon="b.icon" :layout="b.layout" :tint="b.tint" />
         </div>
       </div>
     </template>
@@ -147,10 +147,13 @@ const createdLabel = computed(() => [fmtDate(customer.value.created_at), custome
 
 // Screen order of the lazily loaded cards (the backend serves them one by one)
 const blocks = computed(() => [
+  { key: 'credit_debit_notes', title: 'Credit / Debit note(s)', icon: 'mdi-file-document-edit-outline', layout: 'split' },
   { key: 'invoices', title: 'Customer invoices', icon: 'mdi-receipt-text-outline', tint: 'blue' },
+  { key: 'customer_payments', title: 'Customer payments', icon: 'mdi-cash-check', tint: 'blue' },
+  { key: 'supplier_invoices', title: 'Supplier invoices & payments', icon: 'mdi-truck-delivery-outline', tint: 'blue' },
   ...(hasPermission(permissions.AirProfitTotals) ? [{ key: 'profit', title: 'Profit', icon: 'mdi-finance', tint: 'green' }] : []),
   { key: 'notes', title: 'Notes', icon: 'mdi-note-multiple-outline' },
-] as { key: string; title: string; icon: string; tint?: 'blue' | 'red' | 'green'; half?: boolean }[])
+] as { key: string; title: string; icon: string; layout?: 'split'; tint?: 'blue' | 'red' | 'green'; half?: boolean }[])
 
 onMounted(async () => {
   try {

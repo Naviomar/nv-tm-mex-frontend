@@ -180,7 +180,7 @@
         </v-card>
 
         <div v-for="b in blocks" :key="b.key" :class="b.half ? 'col-span-1' : 'col-span-1 md:col-span-2'">
-          <LegacyBlockCard service="sea-export" :id="id" :block-key="b.key" :title="b.title" :icon="b.icon" :tint="b.tint" />
+          <LegacyBlockCard service="sea-export" :id="id" :block-key="b.key" :title="b.title" :icon="b.icon" :layout="b.layout" :tint="b.tint" />
         </div>
       </div>
     </template>
@@ -225,12 +225,15 @@ const milestones = computed(() => {
 // Screen order of the lazily loaded cards (the backend serves them one by one)
 const blocks = computed(() => [
   { key: 'charges', title: 'Charges', icon: 'mdi-currency-usd' },
-  { key: 'payments', title: 'Customer payments', icon: 'mdi-cash-check', tint: 'blue' },
+  { key: 'credit_debit_notes', title: 'Credit / Debit note(s)', icon: 'mdi-file-document-edit-outline', layout: 'split' },
+  { key: 'customer_payments', title: 'Customer payments', icon: 'mdi-cash-check', tint: 'blue' },
+  { key: 'line_payments', title: 'Line invoices & payments', icon: 'mdi-ferry', tint: 'blue' },
+  { key: 'supplier_invoices', title: 'Supplier invoices & payments', icon: 'mdi-truck-delivery-outline', tint: 'blue' },
   ...(hasPermission(permissions.SeaExportProfit) ? [{ key: 'profit', title: 'Profit', icon: 'mdi-finance', tint: 'green' }] : []),
   { key: 'transshipments', title: 'Transshipments', icon: 'mdi-source-branch', half: true },
   { key: 'release_notes', title: 'Release notes', icon: 'mdi-note-text-outline', half: true },
   { key: 'notes', title: 'Notes', icon: 'mdi-note-multiple-outline' },
-] as { key: string; title: string; icon: string; tint?: 'blue' | 'red' | 'green'; half?: boolean }[])
+] as { key: string; title: string; icon: string; layout?: 'split'; tint?: 'blue' | 'red' | 'green'; half?: boolean }[])
 
 onMounted(async () => {
   try {
