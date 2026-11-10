@@ -229,6 +229,7 @@ const blocks = computed(() => [
   { key: 'customer_payments', title: 'Customer payments', icon: 'mdi-cash-check', tint: 'blue' },
   { key: 'line_payments', title: 'Line invoices & payments', icon: 'mdi-ferry', tint: 'blue' },
   { key: 'supplier_invoices', title: 'Supplier invoices & payments', icon: 'mdi-truck-delivery-outline', tint: 'blue' },
+  { key: 'refunds', title: 'Refunds', icon: 'mdi-cash-refund', tint: 'red' },
   ...(hasPermission(permissions.SeaExportProfit) ? [{ key: 'profit', title: 'Profit', icon: 'mdi-finance', tint: 'green' }] : []),
   { key: 'transshipments', title: 'Transshipments', icon: 'mdi-source-branch', half: true },
   { key: 'release_notes', title: 'Release notes', icon: 'mdi-note-text-outline', half: true },

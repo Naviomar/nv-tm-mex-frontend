@@ -151,6 +151,7 @@ const blocks = computed(() => [
   { key: 'invoices', title: 'Customer invoices', icon: 'mdi-receipt-text-outline', tint: 'blue' },
   { key: 'customer_payments', title: 'Customer payments', icon: 'mdi-cash-check', tint: 'blue' },
   { key: 'supplier_invoices', title: 'Supplier invoices & payments', icon: 'mdi-truck-delivery-outline', tint: 'blue' },
+  { key: 'refunds', title: 'Refunds', icon: 'mdi-cash-refund', tint: 'red' },
   ...(hasPermission(permissions.AirProfitTotals) ? [{ key: 'profit', title: 'Profit', icon: 'mdi-finance', tint: 'green' }] : []),
   { key: 'notes', title: 'Notes', icon: 'mdi-note-multiple-outline' },
 ] as { key: string; title: string; icon: string; layout?: 'split'; tint?: 'blue' | 'red' | 'green'; half?: boolean }[])
