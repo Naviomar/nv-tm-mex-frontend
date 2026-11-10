@@ -232,7 +232,7 @@
             v-model="filters.source_system_id"
             density="compact"
             label="Source system"
-            :items="sourceSystems"
+            :items="sourceSystemOptions"
             item-title="name"
             item-value="id"
             hide-details
@@ -335,11 +335,24 @@
                 'bg-pink-100! dark:bg-pink-900!': isSystemTracker(item),
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
                 'tm-row-error': !item.consignee_id && !item.deleted_at,
+                'tm1-row': item.is_legacy,
+                'tm1-row--no-eta': item.is_legacy && !item.eta_date,
               }"
             >
               <template v-for="col in visibleColumns" :key="col.key">
                 <td v-if="col.key === 'actions'">
-                  <div class="flex gap-2">
+                  <div v-if="item.is_legacy" class="flex gap-2">
+                    <v-btn
+                      v-if="hasPermission('sea-import-references-view') && item.can_view !== false"
+                      variant="text"
+                      icon="mdi-eye-outline"
+                      color="green-lighten-2"
+                      density="compact"
+                      title="View details"
+                      @click="viewDetails(item)"
+                    ></v-btn>
+                  </div>
+                  <div v-else class="flex gap-2">
                     <v-btn
                       v-if="!item.deleted_at && hasPermission('sea-import-references-edit')"
                       variant="text"
@@ -646,7 +659,11 @@
                   </div>
                 </td>
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
-                  <UserInfoBadge :item="item">
+                  <div v-if="item.is_legacy" class="flex items-center gap-2 mb-1">
+                    <span class="font-bold">{{ item.reference_number }}</span>
+                    <v-chip size="x-small" class="tm1-chip" variant="flat" title="Reference from the legacy system (read-only)">TM1</v-chip>
+                  </div>
+                  <UserInfoBadge v-else :item="item">
                     <ServiceNumberLabel :service="item" />
                   </UserInfoBadge>
                   <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip><br>
@@ -716,6 +733,7 @@
                   <v-chip v-if="!item.consignee_id" size="x-small" color="error" variant="flat" prepend-icon="mdi-account-alert-outline" class="font-bold">CUSTOMER NOT REGISTERED</v-chip>
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
+                <td v-else-if="col.key === 'arrivalNotification' && item.is_legacy" class="opacity-40">—</td>
                 <td v-else-if="col.key === 'arrivalNotification'">
                   <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
                   <div v-else-if="item.arrival_notys?.length <= 0">
@@ -733,6 +751,7 @@
                     </v-chip>
                   </div>
                 </td>
+                <td v-else-if="col.key === 'revalidation' && item.is_legacy" class="opacity-40">—</td>
                 <td v-else-if="col.key === 'revalidation'">
                   <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
                   <div v-else-if="!item.revalidation">
@@ -749,6 +768,7 @@
                 <td v-else-if="col.key === 'eta'">
                   {{ item.voyage_discharge?.eta_date || item.eta_date || '-' }}
                 </td>
+                <td v-else-if="col.key === 'ata' && item.is_legacy" class="opacity-40">—</td>
                 <td v-else-if="col.key === 'ata'">
                   <div v-if="item.voyage_discharge == null">No data</div>
                   <v-chip v-if="item.voyage_discharge != null" size="small">{{
@@ -757,7 +777,7 @@
                 </td>
                 <td v-else-if="col.key === 'shipper'">{{ item.shipper?.name }}</td>
                 <td v-else-if="col.key === 'trash'">
-                  <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
+                  <TrashButton v-if="!item.is_legacy" :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
                 </td>
               </template>
             </tr>
@@ -1125,6 +1145,8 @@ const getSeaImportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
+        // The main catalog also lists the TM1 references, after the TM2 ones
+        include_legacy: 1,
         ...buildQueryParams(),
       },
     })
@@ -1233,8 +1255,11 @@ const viewMaritimeReference = (item: any) => {
 }
 
 const viewDetails = (item: any) => {
-  router.push(`/maritime/import/view-details-${item.id}`)
+  router.push(item.is_legacy ? `/maritime/import/legacy/${item.id}` : `/maritime/import/view-details-${item.id}`)
 }
+
+// TM1 references can be filtered as one more source system (the backend knows it as 100)
+const sourceSystemOptions = [...sourceSystems, { id: 100, name: 'TM1 (legacy)' }]
 
 const fixMojibake = (str: any): string => {
   if (!str || typeof str !== 'string') return str || ''
