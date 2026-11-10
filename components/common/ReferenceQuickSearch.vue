@@ -57,9 +57,9 @@ const items = ref<QuickSearchItem[]>([])
 const loading = ref(false)
 
 // Services that have a read-only TM1 view: their TM1 references are searchable too
-const LEGACY_VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/legacy/' }
+const LEGACY_VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/legacy/', 'sea-export': '/maritime/export/legacy/' }
 // Where a TM2 reference of the service is shown, to leave a TM1 page for a TM2 one
-const VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/view-details-' }
+const VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/view-details-', 'sea-export': '/maritime/export/view-details-' }
 
 const fetchReferences = async (term: string) => {
   const options = { query: { referencias: term, limit: 10 } }
