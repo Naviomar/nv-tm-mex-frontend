@@ -73,6 +73,11 @@
               <div>Region</div>
               <div>{{ info.region }}</div>
 
+              <template v-if="info.service_contract">
+                <div>Service contract</div>
+                <div>{{ info.service_contract }}</div>
+              </template>
+
               <template v-if="info.customs_status">
                 <div>Customs status</div>
                 <div><v-chip size="x-small" color="warning" variant="flat">{{ info.customs_status }}</v-chip></div>
@@ -102,8 +107,22 @@
                 Executive
               </div>
               <div>{{ customer.executive || 'No executive' }}</div>
+              <template v-if="customer.credit_days">
+                <div>Credit days</div>
+                <div>{{ customer.credit_days }} days</div>
+              </template>
               <div>Credit expiration date</div>
-              <div>{{ fmtDate(customer.credit_due_date) }}</div>
+              <div class="flex items-center gap-2">
+                {{ fmtDate(customer.credit_due_date) }}
+                <v-chip
+                  v-if="customer.credit_status"
+                  size="x-small"
+                  variant="tonal"
+                  :color="{ expired: 'error', current: 'success', pending: undefined }[customer.credit_status as string]"
+                >
+                  {{ { expired: 'Expired', current: 'Current', pending: 'Pending' }[customer.credit_status as string] }}
+                </v-chip>
+              </div>
               <div>Created at</div>
               <div>{{ createdLabel }}</div>
               <div class="col-span-2"><v-divider /></div>

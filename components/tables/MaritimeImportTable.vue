@@ -681,7 +681,7 @@
                     class="mb-1 font-bold"
                     title="The paper file was archived in TM1; the reference is still valid"
                   >
-                    FILE ARCHIVED<template v-if="item.archived_at"> · {{ formatDateString(item.archived_at) }}</template>
+                    FILE ARCHIVED<template v-if="item.archived_at"> · {{ formatDateOnlyString(item.archived_at) }}</template>
                   </v-chip>
                   <ReferenceOriginBands
                     v-if="item.is_legacy"
@@ -772,13 +772,13 @@
                       color="blue-darken-2"
                     >
                       #{{ Number(index) + 1 }} -
-                      {{ formatDateString(noty.created_at) }}
+                      {{ item.is_legacy ? formatDateOnlyString(noty.created_at) : formatDateString(noty.created_at) }}
                     </v-chip>
                   </div>
                 </td>
                 <td v-else-if="col.key === 'revalidation' && item.is_legacy">
-                  <v-chip v-if="item.revalidation?.sent_at" size="small" color="lime">Sent @ {{ formatDateString(item.revalidation.sent_at) }}</v-chip>
-                  <v-chip v-else-if="item.revalidation?.release_date" size="small" color="warning" title="Released in TM1, no electronic release mailed">Released @ {{ formatDateString(item.revalidation.release_date) }}</v-chip>
+                  <v-chip v-if="item.revalidation?.sent_at" size="small" color="lime">Sent @ {{ formatDateOnlyString(item.revalidation.sent_at) }}</v-chip>
+                  <v-chip v-else-if="item.revalidation?.release_date" size="small" color="warning" title="Released in TM1, no electronic release mailed">Released @ {{ formatDateOnlyString(item.revalidation.release_date) }}</v-chip>
                   <v-chip v-else size="small" color="error">Pending</v-chip>
                 </td>
                 <td v-else-if="col.key === 'revalidation'">
