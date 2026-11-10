@@ -62,7 +62,7 @@ const props = defineProps<{ modelValue: boolean; kind: string; reference: any | 
 // Services that have the full TM1 view page
 const viewPath = computed(() => {
   const id = props.reference?.id
-  const base: Record<string, string> = { 'sea-import': '/maritime/import/legacy/', 'sea-export': '/maritime/export/legacy/', 'air-import': '/air/import/legacy/' }
+  const base: Record<string, string> = { 'sea-import': '/maritime/import/legacy/', 'sea-export': '/maritime/export/legacy/', 'air-import': '/air/import/legacy/', 'air-export': '/air/export/legacy/' }
   return id && base[props.kind] ? `${base[props.kind]}${id}` : null
 })
 defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()

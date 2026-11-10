@@ -146,6 +146,7 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/maritime/import/legacy/:id', permission: 'sea-import-references-index' },
   { path: '/maritime/export/legacy/:id', permission: 'sea-export-references-index' },
   { path: '/air/import/legacy/:id', permission: 'air-import-references-index' },
+  { path: '/air/export/legacy/:id', permission: 'air-export-references-index' },
   { path: '/maritime/export/add', permission: 'sea-export-references-create' },
 
   // captura de facturas, solicitudes de pago y pagos (la acción principal de la página)
