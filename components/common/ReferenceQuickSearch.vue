@@ -1,46 +1,54 @@
 <template>
-  <v-autocomplete
-    v-model="selected"
-    v-model:search="search"
-    :items="items"
-    :loading="loading"
-    item-title="title"
-    item-value="key"
-    label="Go to reference"
-    placeholder="e.g. IM26-2551"
-    prepend-inner-icon="mdi-magnify"
-    density="compact"
-    variant="outlined"
-    hide-details
-    hide-no-data
-    no-filter
-    return-object
-    class="reference-quick-search"
-    @update:model-value="goTo"
-  >
-    <template #prepend-item>
-      <v-checkbox
-        v-model="currentYearOnly"
-        label="Current year only"
-        density="compact"
-        hide-details
-        class="px-4"
-        @mousedown.stop
-      />
-      <v-divider />
-    </template>
-    <template #item="{ props: itemProps, item }">
-      <v-list-item v-bind="itemProps" :title="undefined">
-        <div class="flex items-center gap-2">
-          <span class="font-semibold">{{ item.raw.reference }}</span>
-          <span v-if="item.raw.consignee" class="text-sm opacity-70 truncate">{{ item.raw.consignee }}</span>
-          <v-spacer />
-          <v-chip v-if="item.raw.cancelled" size="x-small" color="error" variant="tonal">Cancelled</v-chip>
-          <v-chip v-if="item.raw.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
-        </div>
-      </v-list-item>
-    </template>
-  </v-autocomplete>
+  <div class="reference-quick-search-group">
+    <v-select
+      v-model="years"
+      :items="yearOptions"
+      label="Year"
+      multiple
+      density="compact"
+      variant="outlined"
+      hide-details
+      clearable
+      class="reference-quick-search-years"
+      title="Years searched (a series typed in the search, like IM25, uses its own year)"
+    >
+      <template #selection="{ item, index }">
+        <span v-if="index === 0">{{ item.title }}</span>
+        <span v-else-if="index === 1" class="text-caption opacity-70 ml-1">+{{ (years?.length ?? 1) - 1 }}</span>
+      </template>
+    </v-select>
+    <v-autocomplete
+      v-model="selected"
+      v-model:search="search"
+      :items="items"
+      :loading="loading"
+      item-title="title"
+      item-value="key"
+      label="Go to reference"
+      placeholder="e.g. IM26-2551"
+      prepend-inner-icon="mdi-magnify"
+      density="compact"
+      variant="outlined"
+      hide-details
+      hide-no-data
+      no-filter
+      return-object
+      class="reference-quick-search"
+      @update:model-value="goTo"
+    >
+      <template #item="{ props: itemProps, item }">
+        <v-list-item v-bind="itemProps" :title="undefined">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold">{{ item.raw.reference }}</span>
+            <span v-if="item.raw.consignee" class="text-sm opacity-70 truncate">{{ item.raw.consignee }}</span>
+            <v-spacer />
+            <v-chip v-if="item.raw.cancelled" size="x-small" color="error" variant="tonal">Cancelled</v-chip>
+            <v-chip v-if="item.raw.legacy" size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
+          </div>
+        </v-list-item>
+      </template>
+    </v-autocomplete>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -67,30 +75,36 @@ const selected = ref<any>(null)
 const items = ref<QuickSearchItem[]>([])
 const loading = ref(false)
 
-// By default only the current year is searched; a series typed in the term (IM25, IM25-21) always wins
-const STORAGE_KEY = 'reference-quick-search:current-year-only'
-const readCurrentYearOnly = () => {
+// Years searched, chosen in the selector left of the input (empty = every year).
+// A series typed in the term (IM25, IM25-21) always wins over the selector.
+const STORAGE_KEY = 'reference-quick-search:years'
+const currentYear = new Date().getFullYear()
+const yearOptions = Array.from({ length: currentYear - 2005 + 1 }, (_, i) => String(currentYear - i))
+
+const readYears = (): string[] => {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== '0'
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored !== null) return (JSON.parse(stored) as string[]).filter((year) => yearOptions.includes(year))
   } catch {
-    return true
+    // preference only: fall back to the default
   }
+  return [String(currentYear)]
 }
-const currentYearOnly = ref(readCurrentYearOnly())
-watch(currentYearOnly, (value) => {
+const years = ref<string[]>(readYears())
+watch(years, (value) => {
   try {
-    localStorage.setItem(STORAGE_KEY, value ? '1' : '0')
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value ?? []))
   } catch {
     // preference only: ignore storage failures
   }
-  if (search.value.trim().length >= 3 && !selected.value) runSearch(search.value.trim())
+  if (!selected.value && search.value.trim().length >= 3) runSearch(search.value.trim())
 })
 
 // Series typed by the user: [country]SERVICE+YY with an optional consecutive (IM25, IM25-21, LIV26-11)
 const parseTerm = (term: string) => {
   const series = term.match(/^(?:[A-Z]{2})?[A-Z]{2}(\d{2})(?:-(\d*))?$/i)
   if (series) return { year: String(2000 + Number(series[1])), consecutive: series[2] ?? '' }
-  return { year: currentYearOnly.value ? String(new Date().getFullYear()) : '', consecutive: term }
+  return { year: [...(years.value ?? [])].sort().reverse().join(','), consecutive: term }
 }
 
 // Services that have a read-only TM1 view: their TM1 references are searchable too
@@ -178,6 +192,19 @@ const goTo = (item: QuickSearchItem | null) => {
 </script>
 
 <style scoped>
+.reference-quick-search-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reference-quick-search-years {
+  min-width: 140px;
+  max-width: 160px;
+}
+.reference-quick-search-years :deep(.v-field__input) {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 .reference-quick-search {
   min-width: 220px;
   max-width: 280px;
