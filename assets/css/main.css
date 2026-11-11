@@ -529,3 +529,10 @@
   background: var(--tm1-ref-no-eta-bg) !important;
   color: var(--tm1-ref-no-eta-fg) !important;
 }
+/* TM1 references inside the main catalog: same accent as the calendar (light blue; light yellow without ETA) */
+.tm1-row > td:first-child {
+  box-shadow: inset 4px 0 0 var(--tm1-ref-bg);
+}
+.tm1-row--no-eta > td:first-child {
+  box-shadow: inset 4px 0 0 var(--tm1-ref-no-eta-bg);
+}
