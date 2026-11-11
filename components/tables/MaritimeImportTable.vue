@@ -1152,18 +1152,22 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
-// Series (reference years) listed by default. Searching for something specific (a reference, a BL, a
+// Series (reference years) listed by default. Searching for something specific (a full reference, a BL, a
 // container...) looks in every year instead, so the series never hides what the user is asking for.
+// A bare consecutive (2600) names no series, so the selected series still apply to it.
 const props = defineProps<{ seriesYears?: number[] }>()
 const emit = defineEmits<{ (e: 'update:series-bypassed', value: boolean): void }>()
 
-const identifierFilters = ['referencias', 'masterBl', 'houseBl', 'containerNumber', 'bookingNum', 'poNum', 'trackerRef', 'invoiceNumber', 'ffNoteFolio']
-const searchingByIdentifier = computed(() =>
-  identifierFilters.some((key) => {
+const identifierFilters = ['masterBl', 'houseBl', 'containerNumber', 'bookingNum', 'poNum', 'trackerRef', 'invoiceNumber', 'ffNoteFolio']
+const searchingByIdentifier = computed(() => {
+  const referencias: string[] = Array.isArray(filters.value.referencias) ? filters.value.referencias : []
+  const fullReference = referencias.some((reference) => !/^\d+$/.test(String(reference).trim()))
+  const other = identifierFilters.some((key) => {
     const value = (filters.value as any)[key]
     return Array.isArray(value) ? value.length > 0 : !!value
-  }),
-)
+  })
+  return fullReference || other
+})
 const seriesBypassed = computed(() => !!props.seriesYears?.length && searchingByIdentifier.value)
 watch(seriesBypassed, (value) => emit('update:series-bypassed', value), { immediate: true })
 
