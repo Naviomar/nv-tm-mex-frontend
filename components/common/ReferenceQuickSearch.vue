@@ -18,6 +18,17 @@
     class="reference-quick-search"
     @update:model-value="goTo"
   >
+    <template #prepend-item>
+      <v-checkbox
+        v-model="currentYearOnly"
+        label="Current year only"
+        density="compact"
+        hide-details
+        class="px-4"
+        @mousedown.stop
+      />
+      <v-divider />
+    </template>
     <template #item="{ props: itemProps, item }">
       <v-list-item v-bind="itemProps" :title="undefined">
         <div class="flex items-center gap-2">
@@ -56,13 +67,40 @@ const selected = ref<any>(null)
 const items = ref<QuickSearchItem[]>([])
 const loading = ref(false)
 
+// By default only the current year is searched; a series typed in the term (IM25, IM25-21) always wins
+const STORAGE_KEY = 'reference-quick-search:current-year-only'
+const readCurrentYearOnly = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+const currentYearOnly = ref(readCurrentYearOnly())
+watch(currentYearOnly, (value) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, value ? '1' : '0')
+  } catch {
+    // preference only: ignore storage failures
+  }
+  if (search.value.trim().length >= 3 && !selected.value) runSearch(search.value.trim())
+})
+
+// Series typed by the user: [country]SERVICE+YY with an optional consecutive (IM25, IM25-21, LIV26-11)
+const parseTerm = (term: string) => {
+  const series = term.match(/^(?:[A-Z]{2})?[A-Z]{2}(\d{2})(?:-(\d*))?$/i)
+  if (series) return { year: String(2000 + Number(series[1])), consecutive: series[2] ?? '' }
+  return { year: currentYearOnly.value ? String(new Date().getFullYear()) : '', consecutive: term }
+}
+
 // Services that have a read-only TM1 view: their TM1 references are searchable too
 const LEGACY_VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/legacy/', 'sea-export': '/maritime/export/legacy/', 'air-import': '/air/import/legacy/', 'air-export': '/air/export/legacy/' }
 // Where a TM2 reference of the service is shown, to leave a TM1 page for a TM2 one
 const VIEW_PATHS: Partial<Record<QuickSearchModule, string>> = { 'sea-import': '/maritime/import/view-details-', 'sea-export': '/maritime/export/view-details-', 'air-import': '/air/import/view-details-', 'air-export': '/air/export/view-details-' }
 
 const fetchReferences = async (term: string) => {
-  const options = { query: { referencias: term, limit: 10 } }
+  const { year, consecutive } = parseTerm(term)
+  const options = { query: { ...(consecutive ? { referencias: consecutive } : {}), ...(year ? { year } : {}), limit: 10 } }
   switch (props.module) {
     case 'sea-import':
       return $api.referencias.getSeaImportReferencias(options)
@@ -76,7 +114,7 @@ const fetchReferences = async (term: string) => {
 }
 
 const fetchLegacyReferences = async (term: string) =>
-  LEGACY_VIEW_PATHS[props.module] ? $api.legacy.searchReferences(props.module, term, 10) : { data: [] }
+  LEGACY_VIEW_PATHS[props.module] ? $api.legacy.searchReferences(props.module, term, 10, parseTerm(term).year || undefined) : { data: [] }
 
 const runSearch = _Debounce(async (term: string) => {
   loading.value = true
