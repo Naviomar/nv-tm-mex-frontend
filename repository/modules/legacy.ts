@@ -50,10 +50,10 @@ class LegacyModule extends FetchFactory<any> {
   }
 
   /** "Go to reference" search among the TM1 references of a service */
-  async searchReferences(service: string, search: string, limit = 10, fetchOptions?: FetchOptions) {
+  async searchReferences(service: string, search: string, limit = 10, year?: string, fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.REFERENCES}/${service}`, {
       ...fetchOptions,
-      query: { search, limit },
+      query: { search, limit, ...(year ? { year } : {}) },
     })
   }
 
