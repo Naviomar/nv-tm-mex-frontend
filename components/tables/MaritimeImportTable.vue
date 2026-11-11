@@ -292,6 +292,16 @@
           @page-change="onPageChange"
           @per-page-change="onPerPageChange"
         />
+        <v-alert
+          v-if="legacyExcludedLabels.length"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-2"
+          icon="mdi-history"
+        >
+          TM1 references are not shown: TM1 has no data for the filter(s) {{ legacyExcludedLabels.join(', ') }}.
+        </v-alert>
         <div class="flex justify-end mb-1">
           <TableColumnsMenu :state="columnsLayout" />
         </div>
@@ -663,6 +673,22 @@
                     <span class="font-bold">{{ item.reference_number }}</span>
                     <v-chip size="x-small" class="tm1-chip" variant="flat" title="Reference from the legacy system (read-only)">TM1</v-chip>
                   </div>
+                  <v-chip
+                    v-if="item.is_legacy && item.is_archived"
+                    size="x-small"
+                    variant="tonal"
+                    color="blue-grey"
+                    class="mb-1 font-bold"
+                    title="The paper file was archived in TM1; the reference is still valid"
+                  >
+                    FILE ARCHIVED<template v-if="item.archived_at"> · {{ formatDateString(item.archived_at) }}</template>
+                  </v-chip>
+                  <ReferenceOriginBands
+                    v-if="item.is_legacy"
+                    class="mb-1"
+                    :tracker-number="item.tracker_ref?.tracker_number"
+                    :chile-reference="item.referencia_cl?.reference_number"
+                  />
                   <UserInfoBadge v-else :item="item">
                     <ServiceNumberLabel :service="item" />
                   </UserInfoBadge>
@@ -733,9 +759,8 @@
                   <v-chip v-if="!item.consignee_id" size="x-small" color="error" variant="flat" prepend-icon="mdi-account-alert-outline" class="font-bold">CUSTOMER NOT REGISTERED</v-chip>
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
-                <td v-else-if="col.key === 'arrivalNotification' && item.is_legacy" class="opacity-40">—</td>
                 <td v-else-if="col.key === 'arrivalNotification'">
-                  <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
+                  <v-chip v-if="!item.consignee_id && !item.is_legacy" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
                   <div v-else-if="item.arrival_notys?.length <= 0">
                     <v-chip size="small" color="error">Not sent</v-chip>
                   </div>
@@ -751,7 +776,11 @@
                     </v-chip>
                   </div>
                 </td>
-                <td v-else-if="col.key === 'revalidation' && item.is_legacy" class="opacity-40">—</td>
+                <td v-else-if="col.key === 'revalidation' && item.is_legacy">
+                  <v-chip v-if="item.revalidation?.sent_at" size="small" color="lime">Sent @ {{ formatDateString(item.revalidation.sent_at) }}</v-chip>
+                  <v-chip v-else-if="item.revalidation?.release_date" size="small" color="warning" title="Released in TM1, no electronic release mailed">Released @ {{ formatDateString(item.revalidation.release_date) }}</v-chip>
+                  <v-chip v-else size="small" color="error">Pending</v-chip>
+                </td>
                 <td v-else-if="col.key === 'revalidation'">
                   <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
                   <div v-else-if="!item.revalidation">
@@ -1015,15 +1044,29 @@ function splitText(text){
 const backUrl = computed(() => getFilteredUrl('/maritime/import'))
 provide('catalogBackUrl', backUrl)
 
+// TM2 Tracker rows carry source_system_id 2; TM1 rows carry the Liverpool/Suburbia number instead
+// Names of the active filters that left the TM1 references out (the backend says which)
+const legacyExcludedLabels = computed(() => {
+  const keys: string[] = (references.value as any)?.legacy_excluded_filters ?? []
+  const camel = (k: string) => k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const labels = new Set<string>()
+  for (const key of keys) {
+    const layout = filterLayoutDefs.find((d) => (filterModelKeys[d.key] || []).some((m) => camel(m) === camel(key)))
+    labels.add(layout?.label ?? key)
+  }
+  return [...labels]
+})
+
 const isSystemTracker = (item: any) => {
-  return item.source_system_id === 2
+  return item.source_system_id === 2 || (!!item.is_legacy && !!item.tracker_ref)
 }
 
 const showLiveTrackingModal = ref(false)
 const selectedReferenciaForTracking = ref<any>(null)
 
 const isLiveTrackable = (item: any) => {
-  if (!item || !item.line) return false
+  // Live tracking reads and writes TM2 data: it does not apply to the read-only TM1 references
+  if (!item || !item.line || item.is_legacy) return false
   const name = (item.line.name || '').toLowerCase()
   const comm = (item.line.commercial_name || '').toLowerCase()
   const code = (item.line.code || '').toUpperCase()

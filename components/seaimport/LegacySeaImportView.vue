@@ -7,9 +7,11 @@
       <v-alert v-if="reference.cancelled" type="error" variant="tonal" density="compact" class="mb-4" icon="mdi-cancel">
         This TM1 reference is cancelled<template v-if="reference.cancellation_note">: {{ reference.cancellation_note }}</template>
       </v-alert>
+      <v-alert v-if="reference.archived" type="info" variant="tonal" density="compact" class="mb-4" icon="mdi-archive-outline">
+        The paper file of this reference was archived in TM1 (baja de expediente)<template v-if="reference.archived.at"> on {{ fmtDate(reference.archived.at) }}</template><template v-if="reference.archived.by"> by {{ reference.archived.by }}</template>. The reference itself is still valid.
+      </v-alert>
       <v-alert type="info" variant="tonal" density="compact" class="mb-4" icon="mdi-history">
         Read-only reference from the legacy system (TM1). It cannot be edited, invoiced or notified from here.
-        <template v-if="reference.migrated_to"> Migrated to {{ reference.migrated_to }}.</template>
       </v-alert>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -23,6 +25,15 @@
                 <v-chip size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
                 <v-btn icon="mdi-content-copy" size="x-small" variant="text" density="compact" title="Copy" @click="copyToClipboard(info.reference)" />
               </div>
+
+              <template v-if="reference.origin?.tracker_reference || reference.origin?.chile_reference">
+                <div>Origin system</div>
+                <ReferenceOriginBands
+                  class="items-start"
+                  :tracker-number="reference.origin.tracker_reference"
+                  :chile-reference="reference.origin.chile_reference"
+                />
+              </template>
 
               <div>Booking Number #</div>
               <div>{{ info.booking }}</div>
@@ -61,6 +72,16 @@
               <div>{{ info.destination }}</div>
               <div>Region</div>
               <div>{{ info.region }}</div>
+
+              <template v-if="info.customs_status">
+                <div>Customs status</div>
+                <div><v-chip size="x-small" color="warning" variant="flat">{{ info.customs_status }}</v-chip></div>
+              </template>
+
+              <template v-if="info.locked_at">
+                <div>Reference locked</div>
+                <div>{{ info.locked_at === 'Yes' ? 'Yes' : fmtDate(info.locked_at) }}</div>
+              </template>
 
               <template v-if="info.transshipment">
                 <div>Transshipment</div>
@@ -127,6 +148,9 @@
                   </td>
                   <td>{{ item.consignee_mbl }}</td>
                   <td>{{ item.type }}</td>
+                  <td>
+                    <v-icon size="small" :color="item.released === 'Yes' ? 'success' : undefined">{{ item.released === 'Yes' ? 'mdi-check' : 'mdi-minus' }}</v-icon>
+                  </td>
                   <td class="whitespace-normal break-words">{{ item.comment }}</td>
                 </tr>
               </tbody>
@@ -148,6 +172,7 @@
                   <th class="text-left">House BL #</th>
                   <th class="text-left">Consignee</th>
                   <th class="text-left">Type</th>
+                  <th class="text-left">Released</th>
                   <th class="text-left">Comment</th>
                 </tr>
               </thead>

@@ -8,6 +8,11 @@
             <v-chip size="x-small" class="tm1-chip" variant="flat">TM1</v-chip>
             <v-chip v-if="detail?.cancelled" size="x-small" color="red" variant="flat">Cancelled</v-chip>
           </div>
+          <ReferenceOriginBands
+            class="my-1 items-start"
+            :tracker-number="detail?.origin?.tracker_reference"
+            :chile-reference="detail?.origin?.chile_reference"
+          />
           <div class="text-xs font-normal opacity-70">Read-only information from the legacy system</div>
         </div>
         <div class="flex items-center gap-1">
