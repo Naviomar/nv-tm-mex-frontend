@@ -2,15 +2,16 @@
   <div class="reference-quick-search-group">
     <v-select
       v-model="years"
-      :items="yearOptions"
-      label="Year"
+      :items="seriesOptions"
+      item-title="title"
+      item-value="value"
+      label="Series"
       multiple
       density="compact"
       variant="outlined"
       hide-details
-      clearable
       class="reference-quick-search-years"
-      title="Years searched (a series typed in the search, like IM25, uses its own year)"
+      title="Series searched (a series typed in the search, like IM25, uses its own series)"
     >
       <template #selection="{ item, index }">
         <span v-if="index === 0">{{ item.title }}</span>
@@ -75,11 +76,14 @@ const selected = ref<any>(null)
 const items = ref<QuickSearchItem[]>([])
 const loading = ref(false)
 
-// Years searched, chosen in the selector left of the input (empty = every year).
+// Series searched (IM26, IM25...), chosen in the selector left of the input (empty = every series).
+// The service prefix is fixed per module, so each series maps to its year, which is what the APIs filter by.
 // A series typed in the term (IM25, IM25-21) always wins over the selector.
+const SERIES_PREFIX: Record<QuickSearchModule, string> = { 'sea-import': 'IM', 'sea-export': 'EM', 'air-import': 'IA', 'air-export': 'EA' }
 const STORAGE_KEY = 'reference-quick-search:years'
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: currentYear - 2005 + 1 }, (_, i) => String(currentYear - i))
+const seriesOptions = yearOptions.map((year) => ({ title: `${SERIES_PREFIX[props.module]}${year.slice(-2)}`, value: year }))
 
 const readYears = (): string[] => {
   try {
@@ -198,8 +202,8 @@ const goTo = (item: QuickSearchItem | null) => {
   gap: 8px;
 }
 .reference-quick-search-years {
-  min-width: 140px;
-  max-width: 160px;
+  min-width: 110px;
+  max-width: 120px;
 }
 .reference-quick-search-years :deep(.v-field__input) {
   flex-wrap: nowrap;
