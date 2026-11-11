@@ -657,9 +657,11 @@ const editItem = (item: CalendarItem) => router.push(config.value.editPath(item.
 const legacyDialog = ref(false)
 const legacyItem = ref<CalendarItem | null>(null)
 // Only some services have the full TM1 view page; the rest keep the quick modal
-const hasLegacyFullView = computed(() => props.kind === 'sea-import' || props.kind === 'sea-export')
+const hasLegacyFullView = computed(() => ['sea-import', 'sea-export', 'air-import', 'air-export'].includes(props.kind))
+const legacyViewPath = (id: string | number) =>
+  ({ 'sea-import': `/maritime/import/legacy/${id}`, 'sea-export': `/maritime/export/legacy/${id}`, 'air-import': `/air/import/legacy/${id}`, 'air-export': `/air/export/legacy/${id}` })[props.kind as string]
 const openLegacyFullView = (item: CalendarItem) => {
-  navigateTo(`/maritime/${props.kind === 'sea-export' ? 'export' : 'import'}/legacy/${item.id}`)
+  navigateTo(legacyViewPath(item.id))
 }
 const openLegacy = (item: CalendarItem) => {
   legacyItem.value = item
