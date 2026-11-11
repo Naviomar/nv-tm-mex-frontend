@@ -7,11 +7,12 @@
         {{ formatDateString(e.starts_at) }}
       </li>
     </ul>
-    <NuxtLink to="/configuration/port-logbook" class="text-body-2 underline">Open port logbook</NuxtLink>
+    <a class="text-body-2 underline cursor-pointer" @click="emit('open')">Open port logbook</a>
   </v-alert>
 </template>
 <script setup lang="ts">
 // Mounted inside <Can permission="port-logbook-view"> by its parents: the endpoint is permission-protected.
+const emit = defineEmits(['open'])
 const { $api } = useNuxtApp()
 const active = ref<any[]>([])
 

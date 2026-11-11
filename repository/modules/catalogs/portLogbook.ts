@@ -13,6 +13,7 @@ export interface IPortLogbookEntry {
   starts_at: string
   ends_at: string | null
   description: string | null
+  status: 'scheduled' | 'active' | 'resolved'
   is_active: boolean
   created_at: string
   deleted_at: string | null
@@ -28,6 +29,18 @@ class PortLogbookModule extends FetchFactory<any> {
 
   async getActive(fetchOptions?: FetchOptions) {
     return this.call('GET', `${this.RESOURCE}/active`, fetchOptions)
+  }
+
+  async getById(id: number | string, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/${id}`, fetchOptions)
+  }
+
+  async getCalendar(from: string, to: string, filters: Record<string, any> = {}, fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/calendar`, { query: { ...filters, from, to }, ...fetchOptions })
+  }
+
+  async getSummary(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/summary`, fetchOptions)
   }
 
   async getCatalogs(fetchOptions?: FetchOptions) {
