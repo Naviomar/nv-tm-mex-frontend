@@ -17,8 +17,8 @@
         </div>
         <div class="flex items-center gap-1">
           <v-btn
-            v-if="kind === 'sea-import' && reference?.id"
-            :to="`/maritime/import/legacy/${reference.id}`"
+            v-if="(kind === 'sea-import' || kind === 'sea-export') && reference?.id"
+            :to="`/maritime/${kind === 'sea-import' ? 'import' : 'export'}/legacy/${reference.id}`"
             size="small"
             variant="tonal"
             prepend-icon="mdi-eye-outline"
