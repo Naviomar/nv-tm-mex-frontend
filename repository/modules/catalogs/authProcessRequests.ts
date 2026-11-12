@@ -4,6 +4,12 @@ import objectToFormData from '~/utils/toFormData'
 // locals
 import FetchFactory from '../../factory'
 
+export interface IRequestBatchResult {
+  batch_id: string
+  created: { id: number; request_key: string; label: string | null }[]
+  skipped: { request_key: string; label: string | null; reason: string; message: string }[]
+}
+
 class AuthProcessRequestsModule extends FetchFactory<any> {
   private RESOURCE = '/auth-process-requests'
 
@@ -58,6 +64,29 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
       ...fetchOptions,
     }
     return this.call('POST', `${this.RESOURCE}/request`, fetchOptions)
+  }
+
+  /**
+   * Same authorization for several records at once: the server creates one request per record
+   * (request_key) grouped under a batch_id, so approvers can answer them together.
+   */
+  async requestBatch(data: {
+    process_name: string
+    request_keys: (string | number)[]
+    reason: string
+    department_id?: number | null
+    executor_user_ids?: number[]
+    files?: File[]
+  }, fetchOptions?: FetchOptions): Promise<IRequestBatchResult> {
+    const { files, ...rest } = data
+    let body: any
+    if (files && files.length > 0) {
+      body = objectToFormData(rest)
+      for (const file of files) body.append('files[]', file)
+    } else {
+      body = JSON.stringify(rest)
+    }
+    return this.call('POST', `${this.RESOURCE}/request-batch`, { body, ...fetchOptions })
   }
 
   async cancelRequest(id: string, data: any, fetchOptions?: FetchOptions) {
