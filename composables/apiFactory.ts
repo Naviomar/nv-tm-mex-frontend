@@ -16,6 +16,7 @@ import EmailTemplatesModule from '~/repository/modules/catalogs/emailTemplates'
 import ExecutivesModule from '~/repository/modules/catalogs/executives'
 import FreightForwardersModule from '~/repository/modules/catalogs/freightforwarders'
 import PortsModule from '~/repository/modules/catalogs/ports'
+import PortLogbookModule from '~/repository/modules/catalogs/portLogbook'
 import CountriesModule from '~/repository/modules/catalogs/countries'
 import ContainersModule from '~/repository/modules/catalogs/containers'
 import LinesModule from '~/repository/modules/catalogs/lines'
@@ -143,6 +144,7 @@ interface IApiInstance {
   freightBanks: FreightBanksModule
   freightGroupBanks: FreightGroupBanksModule
   ports: PortsModule
+  portLogbook: PortLogbookModule
   countries: CountriesModule
   containers: ContainersModule
   lines: LinesModule
@@ -256,6 +258,7 @@ export function useApiFactory() {
     executives: new ExecutivesModule(client),
     freightForwarders: new FreightForwardersModule(client),
     ports: new PortsModule(client),
+    portLogbook: new PortLogbookModule(client),
     countries: new CountriesModule(client),
     containers: new ContainersModule(client),
     lines: new LinesModule(client),
