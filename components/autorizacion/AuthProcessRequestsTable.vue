@@ -138,6 +138,17 @@
             </td>
             <td>
               <div class="cell-title">{{ authRequest.resolved_display }}</div>
+              <v-chip
+                v-if="authRequest.batch_size > 1"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+                class="mt-1"
+                prepend-icon="mdi-layers-triple-outline"
+                :title="`Asked together with ${authRequest.batch_size - 1} other request(s)`"
+              >
+                Batch of {{ authRequest.batch_size }}<template v-if="authRequest.batch_pending_count"> · {{ authRequest.batch_pending_count }} pending</template>
+              </v-chip>
             </td>
             <td>
               <UserInfoBadge :item="authRequest" createdByKey="user_id">
@@ -203,8 +214,10 @@
         v-model="showGrantDialog"
         kind="process-request"
         :request-id="form.auth_request?.id ?? null"
+        :batch-id="form.auth_request?.batch_id ?? null"
         title="Respond process request"
         @decided="onDecided"
+        @decided-batch="onDecidedBatch"
         @redirect="onDecisionRedirect"
       >
         <template #context="{ hasSummary }">
@@ -297,7 +310,7 @@
 import { processResources } from '~/utils/data/system'
 import { deletedStatus } from '~/utils/data/systemData'
 import RequestDecisionDialog from './shared/RequestDecisionDialog.vue'
-import type { IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
+import type { IBatchDecisionResult, IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
 import DecisionChip from './shared/DecisionChip.vue'
 import ProcessRequestDetails from './shared/ProcessRequestDetails.vue'
 import RequestDataDialog from './shared/RequestDataDialog.vue'
@@ -414,6 +427,23 @@ const ticketStatusColor = (status: string) => {
 
 const onDecided = async (decision: IRequestDecision) => {
   snackbar.add({ type: 'success', text: decision.state === 'granted' ? 'Request approved' : 'Request denied' })
+  closeGrantDialog()
+  await getAuthProcessRequests()
+}
+
+const onDecidedBatch = async (result: IBatchDecisionResult) => {
+  const done = result.decided.length
+  const state = result.decided[0]?.state
+  snackbar.add({
+    type: 'success',
+    text: `${done} request${done === 1 ? '' : 's'} ${state === 'granted' ? 'approved' : 'denied'}`,
+  })
+  if (result.failed.length) {
+    snackbar.add({
+      type: 'warning',
+      text: `${result.failed.length} could not be answered — ${result.failed.map((f) => `${f.label ?? `#${f.id}`}: ${f.message}`).join(' · ')}`,
+    })
+  }
   closeGrantDialog()
   await getAuthProcessRequests()
 }

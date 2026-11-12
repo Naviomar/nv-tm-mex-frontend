@@ -242,6 +242,37 @@
             <v-chip color="green"><span class="inline-block w-5 h-5 bg-green-500 mr-2"></span>Invoice paid</v-chip>
             <v-chip color="red"><span class="inline-block w-5 h-5 bg-red-500 mr-2"></span>Cancelled</v-chip>
           </div>
+          <!-- Batch request: same authorization for several blocked invoices at once -->
+          <div
+            v-if="canBatchRequest && (selectableOnPage.length > 0 || selectedCount > 0)"
+            class="tm-panel tm-border rounded flex items-center flex-wrap gap-2 mb-3 px-3 py-2"
+          >
+            <v-icon size="small">mdi-shield-lock-outline</v-icon>
+            <span class="text-body-2">
+              <template v-if="selectedCount > 0"><strong>{{ selectedCount }}</strong> selected</template>
+              <template v-else>Blocked invoices can be requested together</template>
+            </span>
+            <v-btn
+              v-if="selectableOnPage.length > 0"
+              size="small"
+              variant="text"
+              :disabled="allSelectableOnPageSelected"
+              @click="selectAllOnPage"
+            >
+              Select all blocked on this page ({{ selectableOnPage.length }})
+            </v-btn>
+            <v-btn v-if="selectedCount > 0" size="small" variant="text" @click="clearSelection">Clear selection</v-btn>
+            <v-spacer />
+            <v-btn
+              v-if="selectedCount > 0"
+              size="small"
+              color="amber-darken-2"
+              variant="flat"
+              @click="showBatchDialog = true"
+            >
+              Request Work Past Date ({{ selectedCount }})
+            </v-btn>
+          </div>
           <v-pagination
             v-model="supplierCfdis.current_page"
             :length="supplierCfdis.last_page"
@@ -286,7 +317,7 @@
             <tbody>
               <tr
                 v-for="(cfdi, index) in supplierCfdis.data"
-                :key="`supplier-cfdi-${cfdi.id}`"
+                :key="`supplier-cfdi-${cfdi.id}-${rowsEpoch}`"
                 :class="columnClass(cfdi)"
               >
                 <template v-for="col in visibleColumns" :key="col.key">
@@ -316,6 +347,14 @@
                     <div v-else-if="isBlockedAtEntry(cfdi)" class="text-sm text-red-600 dark:text-red-300">
                       <div class="flex justify-center mb-2">
                         <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                      </div>
+                      <div v-if="canBatchSelect(cfdi)" class="flex justify-center mb-1">
+                        <v-checkbox-btn
+                          :model-value="isSelected(cfdi)"
+                          density="compact"
+                          title="Select to request the authorization together with other invoices"
+                          @update:model-value="toggleSelected(cfdi, $event)"
+                        />
                       </div>
                       <v-icon size="small">mdi-lock</v-icon>
                       <small>{{ cfdi.blocked_at_entry_reason || 'This invoice is blocked because it was entered into Factra past the deadline.' }}</small>
@@ -375,6 +414,14 @@
                       </small>
                       <div class="flex justify-center mb-2">
                         <ViewButton :item="cfdi" @click="viewSupplierCfdi(cfdi)" />
+                      </div>
+                      <div v-if="canBatchSelect(cfdi)" class="flex justify-center mb-1">
+                        <v-checkbox-btn
+                          :model-value="isSelected(cfdi)"
+                          density="compact"
+                          title="Select to request the authorization together with other invoices"
+                          @update:model-value="toggleSelected(cfdi, $event)"
+                        />
                       </div>
                       <ProcessAuthorizationWrapper
                           processName="supplier-work-past-date"
@@ -587,6 +634,13 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <SupplierCfdiBatchRequestDialog
+      v-model="showBatchDialog"
+      :items="selectedItems"
+      @remove="(id) => removeSelected(id)"
+      @done="onBatchRequested"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -904,6 +958,53 @@ const removeFolio = (index: number) => {
 
 const isTouched = (cfdi: any) => {
   return cfdi.amount_provisioned < cfdi.amount_cfdi
+}
+
+// ── Batch request of "Work Past Date / Credit Expired" ──────────────────────────
+// Selection survives pagination: it keeps what the dialog needs to list each invoice.
+interface SelectedCfdi { id: number; folio: string; supplier: string | null; total: string | null }
+const selectedCfdis = ref<Record<string, SelectedCfdi>>({})
+const showBatchDialog = ref(false)
+// Bumped after a batch request so every row reloads its own authorization state
+const rowsEpoch = ref(0)
+
+// Whoever skips approvals acts directly and never needs to request
+const canBatchRequest = computed(() => !hasPermission('approval-bypass'))
+
+const canBatchSelect = (cfdi: any): boolean =>
+  canBatchRequest.value &&
+  cfdi.deleted_at == null &&
+  !isLinkedToReqPayment(cfdi) &&
+  (isBlockedAtEntry(cfdi) || isCreditExpired(cfdi))
+
+const selectableOnPage = computed(() => (supplierCfdis.value.data || []).filter((cfdi: any) => canBatchSelect(cfdi)))
+const selectedCount = computed(() => Object.keys(selectedCfdis.value).length)
+const selectedItems = computed(() => Object.values(selectedCfdis.value))
+const allSelectableOnPageSelected = computed(() => selectableOnPage.value.every((cfdi: any) => isSelected(cfdi)))
+
+const isSelected = (cfdi: any): boolean => String(cfdi.id) in selectedCfdis.value
+
+const toggleSelected = (cfdi: any, value: boolean | null) => {
+  const key = String(cfdi.id)
+  if (value) {
+    selectedCfdis.value[key] = {
+      id: cfdi.id,
+      folio: cfdi.serie_folio || `Invoice ${cfdi.id}`,
+      supplier: cfdi.supplier?.name ?? cfdi.name_emisor ?? null,
+      total: cfdi.amount_cfdi != null ? Number(cfdi.amount_cfdi).toLocaleString(undefined, { minimumFractionDigits: 2 }) : null,
+    }
+  } else {
+    delete selectedCfdis.value[key]
+  }
+}
+
+const selectAllOnPage = () => selectableOnPage.value.forEach((cfdi: any) => toggleSelected(cfdi, true))
+const removeSelected = (id: number | string) => delete selectedCfdis.value[String(id)]
+const clearSelection = () => (selectedCfdis.value = {})
+
+const onBatchRequested = () => {
+  clearSelection()
+  rowsEpoch.value++
 }
 
 const isLinkedToReqPayment = (cfdi: any): boolean => {
