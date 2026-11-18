@@ -32,17 +32,41 @@
       </div>
 
       <div class="col-span-1">
-        <v-text-field
+        <div class="text-caption text-medium-emphasis mb-1">Arribo desde (ETA)</div>
+        <v-date-picker
           v-model="filters.startDate"
-          clearable
-          type="date"
           density="compact"
-          label="Start date"
-          hide-details
+          hide-header
+          show-adjacent-months
+          :max="filters.endDate ?? undefined"
+          :first-day-of-week="1"
+          locale="es"
+          elevation="0"
+          class="tm-border"
         />
       </div>
       <div class="col-span-1">
-        <v-text-field v-model="filters.endDate" clearable type="date" density="compact" label="End date" hide-details />
+        <div class="text-caption text-medium-emphasis mb-1">Arribo hasta (ETA)</div>
+        <v-date-picker
+          v-model="filters.endDate"
+          density="compact"
+          hide-header
+          show-adjacent-months
+          :min="filters.startDate ?? undefined"
+          :first-day-of-week="1"
+          locale="es"
+          elevation="0"
+          class="tm-border"
+        />
+      </div>
+      <div class="col-span-1 md:col-span-2 flex items-center gap-2">
+        <v-btn size="small" variant="tonal" @click="setRange('month')">Este mes</v-btn>
+        <v-btn size="small" variant="tonal" @click="setRange('90')">Últimos 90 días</v-btn>
+        <v-btn size="small" variant="tonal" @click="setRange('year')">Este año</v-btn>
+        <v-btn size="small" variant="text" prepend-icon="mdi-close" @click="setRange('clear')">Limpiar</v-btn>
+        <span v-if="filters.startDate || filters.endDate" class="text-caption text-medium-emphasis ml-auto">
+          {{ formatDate(filters.startDate) || '…' }} → {{ formatDate(filters.endDate) || '…' }}
+        </span>
       </div>
     </div>
     <!-- Botón Exportar -->
@@ -64,9 +88,30 @@ const filters = ref<any>({
   customer_id: '',
   customer_group_id: '',
   parcial_total: '',
-  startDate: '',
-  endDate: '',
+  startDate: null as Date | null,
+  endDate: null as Date | null,
 })
+
+// Fecha local (YYYY-MM-DD); toISOString() la correría un día en zonas UTC-
+const formatDate = (d: Date | null) => {
+  if (!d) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const setRange = (preset: 'month' | '90' | 'year' | 'clear') => {
+  const today = new Date()
+  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  if (preset === 'clear') {
+    filters.value.startDate = null
+    filters.value.endDate = null
+    return
+  }
+  filters.value.endDate = end
+  if (preset === 'month') filters.value.startDate = new Date(end.getFullYear(), end.getMonth(), 1)
+  else if (preset === 'year') filters.value.startDate = new Date(end.getFullYear(), 0, 1)
+  else filters.value.startDate = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 90)
+}
 
 const searchCustomerGroups = async () => {
   try {
@@ -91,7 +136,11 @@ const exportDemurragesReportXlsx = async () => {
 
     const response = (await $api.demurrages.exportXlsxReport({
       query: {
-        ...flattenArraysToCommaSeparatedString(filters.value),
+        ...flattenArraysToCommaSeparatedString({
+          ...filters.value,
+          startDate: formatDate(filters.value.startDate),
+          endDate: formatDate(filters.value.endDate),
+        }),
       },
     })) as any
 
