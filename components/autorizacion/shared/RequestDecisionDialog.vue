@@ -75,6 +75,19 @@
               </v-text-field>
             </template>
 
+            <div v-if="batchPending > 1 && selected && !selected.tm2_redirect" class="batch-apply tm-panel tm-border rounded px-3 py-2 mb-3">
+              <v-switch
+                v-model="applyToBatch"
+                color="primary"
+                density="compact"
+                hide-details
+                :label="`Apply to all ${batchPending} pending requests of this batch`"
+              />
+              <div class="text-caption text-medium-emphasis">
+                {{ batchLabels }}
+              </div>
+            </div>
+
             <v-textarea
               v-model="reason"
               :label="selected?.reason_required ? 'Comments (required)' : 'Comments'"
@@ -116,7 +129,7 @@
           :disabled="!selected || !!selected.disabled_reason"
           @click="submit"
         >
-          {{ selected?.tm2_redirect ? 'Continue' : 'Save response' }}
+          {{ selected?.tm2_redirect ? 'Continue' : batchApplies ? `Save response (${batchPending})` : 'Save response' }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -136,7 +149,13 @@
 </template>
 
 <script setup lang="ts">
-import type { IDecisionRedirect, IRequestDecision, RequestKind } from '~/repository/modules/catalogs/requestDecisions'
+import type {
+  IBatchDecisionResult,
+  IDecisionRedirect,
+  IRequestBatchSummary,
+  IRequestDecision,
+  RequestKind,
+} from '~/repository/modules/catalogs/requestDecisions'
 import RequestSummaryView from './RequestSummaryView.vue'
 
 const props = withDefaults(
@@ -145,13 +164,16 @@ const props = withDefaults(
     kind: RequestKind
     requestId: number | null
     title?: string
+    /** Set when the request was asked together with others: offers answering all of them at once. */
+    batchId?: string | null
   }>(),
-  { title: 'Respond request' },
+  { title: 'Respond request', batchId: null },
 )
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'decided', decision: IRequestDecision): void
+  (e: 'decided-batch', result: IBatchDecisionResult): void
   (e: 'redirect', payload: IDecisionRedirect): void
 }>()
 
@@ -168,6 +190,17 @@ const tempPermissionEnabled = ref(false)
 const tempValidFrom = ref<string | null>(null)
 const tempValidUntil = ref<string | null>(null)
 const showConfirm = ref(false)
+const batchSummary = ref<IRequestBatchSummary | null>(null)
+const applyToBatch = ref(true)
+
+const batchPending = computed(() => batchSummary.value?.pending ?? 0)
+const batchApplies = computed(() => batchPending.value > 1 && applyToBatch.value && !selected.value?.tm2_redirect)
+const batchLabels = computed(() =>
+  (batchSummary.value?.items ?? [])
+    .filter((item) => item.status === 'pending')
+    .map((item) => item.label || `#${item.id}`)
+    .join(', '),
+)
 
 const selected = computed(() => decision.value?.options.find((o) => o.key === selectedKey.value) ?? null)
 
@@ -211,6 +244,8 @@ function reset() {
   tempValidFrom.value = null
   tempValidUntil.value = null
   showConfirm.value = false
+  batchSummary.value = null
+  applyToBatch.value = true
 }
 
 async function load() {
@@ -223,6 +258,10 @@ async function load() {
     // Preselect only when there is a single way to approve; with several (e.g. with/without rebilling) the approver picks.
     const grants = decision.value.options.filter((o) => o.outcome === 'grant' && !o.disabled_reason)
     if (grants.length === 1) selectedKey.value = grants[0]!.key
+    if (props.batchId && decision.value.state === 'pending') {
+      // Not essential: without it the dialog answers just this request
+      batchSummary.value = await $api.requestDecisions.batchSummary(props.batchId).catch(() => null)
+    }
   } catch (e: any) {
     error.value = e?.response?._data?.message || 'Could not load the request.'
   } finally {
@@ -277,6 +316,17 @@ async function apply() {
   if (!option || !props.requestId) return
   saving.value = true
   try {
+    if (batchApplies.value && props.batchId) {
+      const batchResult = await $api.requestDecisions.decideBatch(props.batchId, {
+        option: option.key,
+        reason: reason.value || null,
+        expires_at: option.outcome === 'grant' && option.editable_window ? expiresAt.value : null,
+      })
+      showConfirm.value = false
+      emit('decided-batch', batchResult)
+      emit('update:modelValue', false)
+      return
+    }
     const result = await $api.requestDecisions.decide(props.kind, props.requestId, {
       option: option.key,
       reason: reason.value || null,

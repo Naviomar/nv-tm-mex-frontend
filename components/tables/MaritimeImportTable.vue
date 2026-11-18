@@ -232,7 +232,7 @@
             v-model="filters.source_system_id"
             density="compact"
             label="Source system"
-            :items="sourceSystems"
+            :items="sourceSystemOptions"
             item-title="name"
             item-value="id"
             hide-details
@@ -292,6 +292,16 @@
           @page-change="onPageChange"
           @per-page-change="onPerPageChange"
         />
+        <v-alert
+          v-if="legacyExcludedLabels.length"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-2"
+          icon="mdi-history"
+        >
+          TM1 references are not shown: TM1 has no data for the filter(s) {{ legacyExcludedLabels.join(', ') }}.
+        </v-alert>
         <div class="flex justify-end mb-1">
           <TableColumnsMenu :state="columnsLayout" />
         </div>
@@ -335,11 +345,24 @@
                 'bg-pink-100! dark:bg-pink-900!': isSystemTracker(item),
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
                 'tm-row-error': !item.consignee_id && !item.deleted_at,
+                'tm1-row': item.is_legacy,
+                'tm1-row--no-eta': item.is_legacy && !item.eta_date,
               }"
             >
               <template v-for="col in visibleColumns" :key="col.key">
                 <td v-if="col.key === 'actions'">
-                  <div class="flex gap-2">
+                  <div v-if="item.is_legacy" class="flex gap-2">
+                    <v-btn
+                      v-if="hasPermission('sea-import-references-view') && item.can_view !== false"
+                      variant="text"
+                      icon="mdi-eye-outline"
+                      color="green-lighten-2"
+                      density="compact"
+                      title="View details"
+                      @click="viewDetails(item)"
+                    ></v-btn>
+                  </div>
+                  <div v-else class="flex gap-2">
                     <v-btn
                       v-if="!item.deleted_at && hasPermission('sea-import-references-edit')"
                       variant="text"
@@ -646,7 +669,27 @@
                   </div>
                 </td>
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
-                  <UserInfoBadge :item="item">
+                  <div v-if="item.is_legacy" class="flex items-center gap-2 mb-1">
+                    <span class="font-bold">{{ item.reference_number }}</span>
+                    <v-chip size="x-small" class="tm1-chip" variant="flat" title="Reference from the legacy system (read-only)">TM1</v-chip>
+                  </div>
+                  <v-chip
+                    v-if="item.is_legacy && item.is_archived"
+                    size="x-small"
+                    variant="tonal"
+                    color="blue-grey"
+                    class="mb-1 font-bold"
+                    title="The paper file was archived in TM1; the reference is still valid"
+                  >
+                    FILE ARCHIVED<template v-if="item.archived_at"> · {{ formatDateOnlyString(item.archived_at) }}</template>
+                  </v-chip>
+                  <ReferenceOriginBands
+                    v-if="item.is_legacy"
+                    class="mb-1"
+                    :tracker-number="item.tracker_ref?.tracker_number"
+                    :chile-reference="item.referencia_cl?.reference_number"
+                  />
+                  <UserInfoBadge v-else :item="item">
                     <ServiceNumberLabel :service="item" />
                   </UserInfoBadge>
                   <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip><br>
@@ -717,7 +760,7 @@
                 </td>
                 <td v-else-if="col.key === 'line'">{{ item.line?.name }}</td>
                 <td v-else-if="col.key === 'arrivalNotification'">
-                  <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
+                  <v-chip v-if="!item.consignee_id && !item.is_legacy" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
                   <div v-else-if="item.arrival_notys?.length <= 0">
                     <v-chip size="small" color="error">Not sent</v-chip>
                   </div>
@@ -729,9 +772,14 @@
                       color="blue-darken-2"
                     >
                       #{{ Number(index) + 1 }} -
-                      {{ formatDateString(noty.created_at) }}
+                      {{ item.is_legacy ? formatDateOnlyString(noty.created_at) : formatDateString(noty.created_at) }}
                     </v-chip>
                   </div>
+                </td>
+                <td v-else-if="col.key === 'revalidation' && item.is_legacy">
+                  <v-chip v-if="item.revalidation?.sent_at" size="small" color="lime">Sent @ {{ formatDateOnlyString(item.revalidation.sent_at) }}</v-chip>
+                  <v-chip v-else-if="item.revalidation?.release_date" size="small" color="warning" title="Released in TM1, no electronic release mailed">Released @ {{ formatDateOnlyString(item.revalidation.release_date) }}</v-chip>
+                  <v-chip v-else size="small" color="error">Pending</v-chip>
                 </td>
                 <td v-else-if="col.key === 'revalidation'">
                   <v-chip v-if="!item.consignee_id" size="small" color="error" variant="outlined" prepend-icon="mdi-lock-outline">Blocked: no customer</v-chip>
@@ -749,6 +797,7 @@
                 <td v-else-if="col.key === 'eta'">
                   {{ item.voyage_discharge?.eta_date || item.eta_date || '-' }}
                 </td>
+                <td v-else-if="col.key === 'ata' && item.is_legacy" class="opacity-40">—</td>
                 <td v-else-if="col.key === 'ata'">
                   <div v-if="item.voyage_discharge == null">No data</div>
                   <v-chip v-if="item.voyage_discharge != null" size="small">{{
@@ -757,7 +806,7 @@
                 </td>
                 <td v-else-if="col.key === 'shipper'">{{ item.shipper?.name }}</td>
                 <td v-else-if="col.key === 'trash'">
-                  <TrashButton :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
+                  <TrashButton v-if="!item.is_legacy" :item="item" :form-deletion="formDeletion" serviceType="sea-import" @click="confirmDeletion" />
                 </td>
               </template>
             </tr>
@@ -995,15 +1044,29 @@ function splitText(text){
 const backUrl = computed(() => getFilteredUrl('/maritime/import'))
 provide('catalogBackUrl', backUrl)
 
+// TM2 Tracker rows carry source_system_id 2; TM1 rows carry the Liverpool/Suburbia number instead
+// Names of the active filters that left the TM1 references out (the backend says which)
+const legacyExcludedLabels = computed(() => {
+  const keys: string[] = (references.value as any)?.legacy_excluded_filters ?? []
+  const camel = (k: string) => k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const labels = new Set<string>()
+  for (const key of keys) {
+    const layout = filterLayoutDefs.find((d) => (filterModelKeys[d.key] || []).some((m) => camel(m) === camel(key)))
+    labels.add(layout?.label ?? key)
+  }
+  return [...labels]
+})
+
 const isSystemTracker = (item: any) => {
-  return item.source_system_id === 2
+  return item.source_system_id === 2 || (!!item.is_legacy && !!item.tracker_ref)
 }
 
 const showLiveTrackingModal = ref(false)
 const selectedReferenciaForTracking = ref<any>(null)
 
 const isLiveTrackable = (item: any) => {
-  if (!item || !item.line) return false
+  // Live tracking reads and writes TM2 data: it does not apply to the read-only TM1 references
+  if (!item || !item.line || item.is_legacy) return false
   const name = (item.line.name || '').toLowerCase()
   const comm = (item.line.commercial_name || '').toLowerCase()
   const code = (item.line.code || '').toUpperCase()
@@ -1089,6 +1152,25 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+// Series (reference years) listed by default. Searching for something specific (a full reference, a BL, a
+// container...) looks in every year instead, so the series never hides what the user is asking for.
+// A bare consecutive (2600) names no series, so the selected series still apply to it.
+const props = defineProps<{ seriesYears?: number[] }>()
+const emit = defineEmits<{ (e: 'update:series-bypassed', value: boolean): void }>()
+
+const identifierFilters = ['masterBl', 'houseBl', 'containerNumber', 'bookingNum', 'poNum', 'trackerRef', 'invoiceNumber', 'ffNoteFolio']
+const searchingByIdentifier = computed(() => {
+  const referencias: string[] = Array.isArray(filters.value.referencias) ? filters.value.referencias : []
+  const fullReference = referencias.some((reference) => !/^\d+$/.test(String(reference).trim()))
+  const other = identifierFilters.some((key) => {
+    const value = (filters.value as any)[key]
+    return Array.isArray(value) ? value.length > 0 : !!value
+  })
+  return fullReference || other
+})
+const seriesBypassed = computed(() => !!props.seriesYears?.length && searchingByIdentifier.value)
+watch(seriesBypassed, (value) => emit('update:series-bypassed', value), { immediate: true })
+
 // When an exact customer is selected, drop the free-text name search so the
 // two filters never combine into an impossible AND.
 const buildQueryParams = () => {
@@ -1096,8 +1178,22 @@ const buildQueryParams = () => {
   if (params.consignee_id) {
     delete params.consignee_name
   }
+  if (props.seriesYears?.length && !searchingByIdentifier.value) {
+    params.year = props.seriesYears.join(',')
+  }
   return params
 }
+
+// Another series selection starts again from the first page
+watch(
+  () => props.seriesYears?.join(','),
+  async (now, before) => {
+    if (before === undefined || now === before) return
+    currentPage.value = 1
+    references.value.current_page = 1
+    await getSeaImportReferences()
+  },
+)
 
 const onClickPagination = async (page: number) => {
   await onPageChange(page)
@@ -1125,6 +1221,8 @@ const getSeaImportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
+        // The main catalog also lists the TM1 references, after the TM2 ones
+        include_legacy: 1,
         ...buildQueryParams(),
       },
     })
@@ -1233,8 +1331,11 @@ const viewMaritimeReference = (item: any) => {
 }
 
 const viewDetails = (item: any) => {
-  router.push(`/maritime/import/view-details-${item.id}`)
+  router.push(item.is_legacy ? `/maritime/import/legacy/${item.id}` : `/maritime/import/view-details-${item.id}`)
 }
+
+// TM1 references can be filtered as one more source system (the backend knows it as 100)
+const sourceSystemOptions = [...sourceSystems, { id: 100, name: 'TM1 (legacy)' }]
 
 const fixMojibake = (str: any): string => {
   if (!str || typeof str !== 'string') return str || ''

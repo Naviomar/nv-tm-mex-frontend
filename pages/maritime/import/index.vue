@@ -1,7 +1,10 @@
 <template>
   <v-container fluid>
     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-      <h1 class="text-xl font-bold">Import - Maritime</h1>
+      <div class="flex flex-wrap items-center gap-3">
+        <h1 class="text-xl font-bold">Import - Maritime</h1>
+        <ReferenceSeriesFilter :series="series" prefix="IM" :bypassed="seriesBypassed" />
+      </div>
       <div class="flex md:flex-row flex-col justify-end gap-3">
         <v-menu>
           <template v-slot:activator="{ props }">
@@ -44,12 +47,16 @@
       </div>
     </div>
     <div class="pt-4">
-      <MaritimeImportTable />
+      <MaritimeImportTable :series-years="series.years" @update:series-bypassed="seriesBypassed = $event" />
     </div>
   </v-container>
 </template>
 
 <script setup lang="ts">
+// Series (IM26, IM27...) the catalog lists; by default the years in use now, and it moves with the calendar
+const series = useReferenceSeries('sea-import')
+const seriesBypassed = ref(false)
+
 definePageMeta({
   title: 'Import - Maritime',
   layout: 'default',

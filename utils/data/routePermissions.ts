@@ -142,6 +142,11 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/air/export/add', permission: 'air-export-references-create' },
   { path: '/air/import/add', permission: 'air-import-references-create' },
   { path: '/maritime/import/add', permission: 'sea-import-references-create' },
+  // referencia de TM1 (solo lectura): el backend exige el índice de referencias
+  { path: '/maritime/import/legacy/:id', permission: 'sea-import-references-index' },
+  { path: '/maritime/export/legacy/:id', permission: 'sea-export-references-index' },
+  { path: '/air/import/legacy/:id', permission: 'air-import-references-index' },
+  { path: '/air/export/legacy/:id', permission: 'air-export-references-index' },
   { path: '/maritime/export/add', permission: 'sea-export-references-create' },
 
   // captura de facturas, solicitudes de pago y pagos (la acción principal de la página)

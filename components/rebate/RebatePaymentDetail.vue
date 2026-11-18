@@ -21,11 +21,14 @@
             <v-card-text>
               <div class="grid grid-cols-2 gap-2">
                 <div>Folio:</div>
-                <div class="font-bold">{{ data.batch.folio || `#${batchId}` }}</div>
-                <div>Requested by:</div>
+                <div class="font-bold">
+                  {{ data.batch.folio || `#${batchId}` }}
+                  <v-chip v-if="data.batch.label === 'paid_history'" size="x-small" class="ml-1" prepend-icon="mdi-history">Paid outside the module</v-chip>
+                </div>
+                <div>{{ data.batch.label === 'paid_history' ? 'Loaded by:' : 'Requested by:' }}</div>
                 <div>{{ data.batch.requested_by || '—' }}</div>
                 <div>Requested at:</div>
-                <div>{{ formatDateString(data.batch.requested_at) }}</div>
+                <div>{{ data.batch.requested_at ? formatDateString(data.batch.requested_at) : '—' }}</div>
                 <div>Rebate in this request:</div>
                 <div class="font-bold">{{ formatToCurrency(data.total_visible) }} USD</div>
                 <template v-if="data.withheld > 0">

@@ -144,6 +144,9 @@
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
                 </v-btn>
+                <v-btn icon size="small" variant="text" color="secondary" title="View request data" @click="showDetails(authRequest)">
+                  <v-icon>mdi-information-outline</v-icon>
+                </v-btn>
               </div>
             </td>
             <td>
@@ -208,6 +211,16 @@
                 @update:expanded="toggleComment(authRequest.id)"
                 @truncated="(v: boolean) => setTruncated(authRequest.id, v)"
               />
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="secondary"
+                class="mt-1"
+                prepend-icon="mdi-eye-outline"
+                @click="showDetails(authRequest)"
+              >
+                View data
+              </v-btn>
             </td>
             <td>
               <div v-if="!authRequest.files?.length" class="text-caption text-disabled">No attachments</div>
@@ -308,6 +321,18 @@
         </v-card>
       </v-dialog>
 
+      <RequestDataDialog
+        v-model="showDetailsDialog"
+        kind="authorization-request"
+        :request-id="detailsRequest?.id ?? null"
+        :subtitle="detailsRequest ? getResourceName(detailsRequest.resource) : null"
+      >
+        <template #context>
+          <div class="text-body-2"><span class="text-medium-emphasis">Requested by:</span> {{ detailsRequest?.requested?.name }}</div>
+          <div class="text-body-2"><span class="text-medium-emphasis">Reason:</span> {{ detailsRequest?.request_reason || 'No comments' }}</div>
+        </template>
+      </RequestDataDialog>
+
       <InvoiceCancellationHistoryModal
         v-model="showHistoryDialog"
         :resource-data="selectedAuthRequest?.resource_data"
@@ -323,6 +348,7 @@ import InvoiceCancellationHistoryModal from './InvoiceCancellationHistoryModal.v
 import RequestDecisionDialog from './shared/RequestDecisionDialog.vue'
 import type { IDecisionRedirect, IRequestDecision } from '~/repository/modules/catalogs/requestDecisions'
 import DecisionChip from './shared/DecisionChip.vue'
+import RequestDataDialog from './shared/RequestDataDialog.vue'
 const { $api } = useNuxtApp()
 const { hasPermission, isAdminRole, user: currentUser } = useCheckUser()
 const snackbar = useSnackbar()
@@ -390,6 +416,14 @@ const authRequests = ref<any>({
 })
 
 const showGrantDialog = ref(false)
+const showDetailsDialog = ref(false)
+const detailsRequest = ref<any>(null)
+
+const showDetails = (authRequest: any) => {
+  detailsRequest.value = authRequest
+  showDetailsDialog.value = true
+}
+
 const showCancelDialog = ref(false)
 const showHistoryDialog = ref(false)
 const selectedAuthRequest = ref<any>(null)

@@ -140,7 +140,7 @@
             v-model="filters.source_system_id"
             density="compact"
             label="Source system"
-            :items="sourceSystems"
+            :items="sourceSystemOptions"
             item-title="name"
             item-value="id"
             hide-details
@@ -209,6 +209,16 @@
           @page-change="onPageChange"
           @per-page-change="onPerPageChange"
         />
+        <v-alert
+          v-if="legacyExcludedLabels.length"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-2"
+          icon="mdi-history"
+        >
+          TM1 references are not shown: TM1 has no data for the filter(s) {{ legacyExcludedLabels.join(', ') }}.
+        </v-alert>
         <div class="flex justify-end mb-1">
           <TableColumnsMenu :state="columnsLayout" />
         </div>
@@ -241,11 +251,23 @@
                 'dark:hover:bg-gray-700 hover:bg-slate-300': true,
                 'bg-pink-100': isSystemTracker(item),
                 'bg-red-100! dark:bg-red-900!': item.deleted_at,
+                'tm1-row': item.is_legacy,
               }"
             >
               <template v-for="col in visibleColumns" :key="col.key">
                 <td v-if="col.key === 'actions'">
-                  <div class="flex">
+                  <div v-if="item.is_legacy" class="flex">
+                    <v-btn
+                      v-if="hasPermission('air-export-references-view') && item.can_view !== false"
+                      variant="text"
+                      icon="mdi-eye-outline"
+                      color="green-lighten-2"
+                      density="compact"
+                      title="View details (TM1)"
+                      @click="viewDetails(item)"
+                    ></v-btn>
+                  </div>
+                  <div v-else class="flex">
                     <v-btn
                       v-if="!item.deleted_at && hasPermission('air-export-references-edit')"
                       variant="text"
@@ -265,7 +287,11 @@
                   </div>
                 </td>
                 <td v-else-if="col.key === 'reference'" class="whitespace-nowrap">
-                  <UserInfoBadge :item="item">
+                  <div v-if="item.is_legacy" class="flex items-center gap-2 mb-1">
+                    <span class="font-bold">{{ item.reference_number }}</span>
+                    <v-chip size="x-small" class="tm1-chip" variant="flat" title="Reference from the legacy system (read-only)">TM1</v-chip>
+                  </div>
+                  <UserInfoBadge v-else :item="item">
                     {{ item.reference_number }}
                   </UserInfoBadge>
                   <v-chip v-if="item.deleted_at" color="red" size="x-small" variant="elevated" class="flex items-center gap-2 mb-2 font-bold">CANCELLED</v-chip>
@@ -295,7 +321,7 @@
                 <td v-else-if="col.key === 'flightNum'">{{ getFirstRouteFlightNum(item) }}</td>
                 <td v-else-if="col.key === 'departure'">{{ getFirstRouteDeparture(item) }}</td>
                 <td v-else-if="col.key === 'trash'">
-                  <TrashButton :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
+                  <TrashButton v-if="!item.is_legacy" :item="item" :form-deletion="formDeletion" serviceType="air-export" @click="confirmDeletion" />
                 </td>
               </template>
             </tr>
@@ -497,6 +523,21 @@ function splitText(text){
 const backUrl = computed(() => getFilteredUrl('/air/export'))
 provide('catalogBackUrl', backUrl)
 
+// TM1 references can be filtered as one more source system (the backend knows it as 100)
+const sourceSystemOptions = [...sourceSystems, { id: 100, name: 'TM1 (legacy)' }]
+
+// Names of the active filters that left the TM1 references out (the backend says which)
+const legacyExcludedLabels = computed(() => {
+  const keys: string[] = (references.value as any)?.legacy_excluded_filters ?? []
+  const camel = (k: string) => k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+  const labels = new Set<string>()
+  for (const key of keys) {
+    const layout = filterLayoutDefs.find((d) => (filterModelKeys[d.key] || []).some((m) => camel(m) === camel(key)))
+    labels.add(layout?.label ?? key)
+  }
+  return [...labels]
+})
+
 const isSystemTracker = (item: any) => {
   return item.source_system_id === 2
 }
@@ -568,6 +609,8 @@ const getAirExportReferences = async () => {
       query: {
         page: currentPage.value,
         limit: perPage.value,
+        // The main catalog also lists the TM1 references, after the TM2 ones
+        include_legacy: 1,
         ...buildQueryParams(),
       },
     })
@@ -656,7 +699,7 @@ const viewReference = (item: any) => {
 }
 
 const viewDetails = (item: any) => {
-  router.push(`/air/export/view-details-${item.id}`)
+  router.push(item.is_legacy ? `/air/export/legacy/${item.id}` : `/air/export/view-details-${item.id}`)
 }
 
 const confirmDeletion = async (item: any) => {

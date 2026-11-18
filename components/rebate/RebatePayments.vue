@@ -62,8 +62,14 @@
           <tbody>
             <tr v-for="item in pageRows" :key="item.id" class="dark:hover:bg-gray-700 hover:bg-slate-300" :class="{ 'bg-red-100! dark:bg-red-900!': item.status === 'cancelled' }">
               <td><ViewButton :item="item" @click="open(item)" /></td>
-              <td class="font-bold whitespace-nowrap">{{ item.folio || `#${item.id}` }}</td>
-              <td class="whitespace-nowrap">{{ formatDateString(item.requested_at) }}</td>
+              <td class="font-bold whitespace-nowrap">
+                {{ item.folio || `#${item.id}` }}
+                <v-chip v-if="item.label === 'paid_history'" size="x-small" class="ml-1" prepend-icon="mdi-history">
+                  Paid outside
+                  <v-tooltip activator="parent" location="top">Rebate paid by hand before this module; loaded so it is not requested again.</v-tooltip>
+                </v-chip>
+              </td>
+              <td class="whitespace-nowrap">{{ item.requested_at ? formatDateString(item.requested_at) : '—' }}</td>
               <td>{{ item.requested_by }}</td>
               <td class="text-right">{{ item.rows }}</td>
               <td class="text-right whitespace-nowrap font-medium">{{ formatToCurrency(item.total) }}</td>
