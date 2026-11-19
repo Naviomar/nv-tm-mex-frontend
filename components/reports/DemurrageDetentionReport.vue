@@ -10,7 +10,7 @@
             <div class="header-text">
               <h2 class="report-title">Demurrage</h2>
               <p class="report-subtitle">
-                {{ total.toLocaleString() }} containers · {{ rangeLabel }}<template v-if="options.restricted"> · your executives and team</template>
+                {{ total.toLocaleString() }} containers · {{ rangeLabel }}
               </p>
             </div>
           </div>
@@ -162,7 +162,7 @@ const warnings = ref<string[]>([])
 const earnings = ref(true)
 const page = ref(1)
 const sort = ref<{ key: string; order: 'asc' | 'desc' }>({ key: 'etd', order: 'desc' })
-const options = reactive<{ executives: any[]; groups: any[]; restricted: boolean }>({ executives: [], groups: [], restricted: false })
+const options = reactive<{ executives: any[]; groups: any[] }>({ executives: [], groups: [] })
 const customers = ref<any[]>([])
 const customerSearch = ref('')
 const view = ref<'all' | 'pending' | 'paid' | 'no_empty_date'>('pending')
