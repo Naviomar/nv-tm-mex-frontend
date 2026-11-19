@@ -262,6 +262,7 @@ const hasAuthSlot = computed(() => !!slots.auth)
 const snackbar = useSnackbar()
 const loadingStore = useLoadingStore()
 const { getTemplate, getType, loadCatalog } = useRequestTypeCatalog()
+const { loadUserRequests, loadRecordRequests, invalidateUserRequests } = useProcessRequestLoader()
 
 const props = defineProps({
   processName: { type: String, required: true },
@@ -446,22 +447,27 @@ const { hasPending, isPolling, fetchOnce, startPolling, stopPolling } = useReque
   },
 })
 
-async function syncUserRequests() {
+// The first load of a row goes through the shared loader (one call for the whole page); anything
+// that follows a change (polling, request, withdrawal) asks for fresh data.
+async function syncUserRequests(fresh = true) {
+  if (fresh) invalidateUserRequests()
   const [allRequests, byResource] = await Promise.all([
-    ($api as any).authProcessRequests.getUserRequests(),
-    ($api as any).authProcessRequests.getRequestsByResource({
-      process_name: props.processName,
-      request_key: props.requestKey,
-    }),
+    loadUserRequests(),
+    fresh
+      ? ($api as any).authProcessRequests.getRequestsByResource({
+          process_name: props.processName,
+          request_key: props.requestKey,
+        })
+      : loadRecordRequests(props.processName, props.requestKey),
   ])
   userRequests.value = allRequests
   requestForProcess.value = byResource
 }
 
-async function fetchUserRequests() {
+async function fetchUserRequests(fresh = true) {
   try {
     loadingStore.loading = true
-    await syncUserRequests()
+    await syncUserRequests(fresh)
 
     if (hasPendingRequest.value) {
       startPolling()
@@ -621,7 +627,7 @@ const onRequestCancelAuthorizationClick = async () => {
 
 onMounted(() => {
   loadEligibility() // also loads the catalog
-  fetchUserRequests()
+  fetchUserRequests(false)
 })
 
 watch(

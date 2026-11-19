@@ -974,11 +974,12 @@ const rowsEpoch = ref(0)
 const canBatchRequest = computed(() => !hasPermission('approval-bypass'))
 
 // CFDIs that already have a pending or unused approved request: asking again would be skipped
+const { loadUserRequests, invalidateUserRequests } = useProcessRequestLoader()
 const alreadyRequestedKeys = ref<Set<string>>(new Set())
 const loadAlreadyRequested = async () => {
   if (!canBatchRequest.value) return
   try {
-    const mine: any[] = (await ($api as any).authProcessRequests.getUserRequests()) ?? []
+    const mine: any[] = await loadUserRequests()
     alreadyRequestedKeys.value = new Set(
       mine
         .filter(
@@ -1027,6 +1028,7 @@ const clearSelection = () => (selectedCfdis.value = {})
 
 const onBatchRequested = () => {
   clearSelection()
+  invalidateUserRequests()
   loadAlreadyRequested()
   rowsEpoch.value++
 }
