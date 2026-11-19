@@ -45,6 +45,14 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
     )
   }
 
+  /** Departments and people the action can be assigned to (only the service's own when the process is scoped) */
+  async getAssignees(params: { process_name: string; request_key: string }) {
+    return this.call(
+      'GET',
+      `${this.RESOURCE}/assignees?process_name=${encodeURIComponent(params.process_name)}&request_key=${encodeURIComponent(params.request_key)}`
+    )
+  }
+
   async respondRequest(id: string, data: any, fetchOptions?: FetchOptions) {
     fetchOptions = {
       body: JSON.stringify(data),

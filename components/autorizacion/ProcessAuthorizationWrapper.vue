@@ -184,16 +184,23 @@
           <!-- Who will carry the action out once it is approved (only when a person does it) -->
           <template v-if="showAssignment">
             <v-divider class="my-3" />
-            <div class="text-caption text-uppercase font-weight-bold text-disabled mb-1">Who will carry it out once approved?</div>
+            <div class="text-caption text-uppercase font-weight-bold text-disabled mb-1">
+              {{ assignmentRequired ? 'Who will carry it out once approved? *' : 'Who will carry it out once approved?' }}
+            </div>
             <div class="text-caption text-medium-emphasis mb-3">
-              You can always do it yourself. Add a department (any of its members can do it) and/or specific people.
+              <template v-if="assignmentRequired">
+                You cannot carry this out yourself. Choose the department (any of its members can do it) and/or the specific people who will.
+              </template>
+              <template v-else>
+                You can always do it yourself. Add a department (any of its members can do it) and/or specific people.
+              </template>
             </div>
             <v-autocomplete
               v-model="assignment.departmentId"
               :items="departmentOptions"
               item-title="name"
               item-value="id"
-              label="Department (optional)"
+              :label="assignmentRequired ? 'Department' : 'Department (optional)'"
               :loading="loadingAssignment"
               prepend-inner-icon="mdi-domain"
               density="compact"
@@ -206,7 +213,7 @@
               :items="userOptions"
               item-title="name"
               item-value="id"
-              label="People (optional)"
+              :label="assignmentRequired ? 'People' : 'People (optional)'"
               :loading="loadingAssignment"
               prepend-inner-icon="mdi-account-multiple-plus-outline"
               density="compact"
@@ -216,6 +223,9 @@
               clearable
               hide-details
             />
+            <div v-if="suggestedNames" class="text-caption text-medium-emphasis mt-1">
+              Suggested for this port: {{ suggestedNames }}
+            </div>
           </template>
         </v-card-text>
         <v-card-actions>
@@ -346,17 +356,29 @@ const showAssignment = computed(
 const assignment = ref<{ departmentId: number | null; userIds: number[] }>({ departmentId: null, userIds: [] })
 const departmentOptions = ref<any[]>([])
 const userOptions = ref<any[]>([])
+// The server says whether the process is scoped to its service, if assigning is mandatory for this user, and who usually does it
+const assignmentRequired = ref(false)
+const suggestedUserIds = ref<number[]>([])
 const loadingAssignment = ref(false)
+const suggestedNames = computed(() =>
+  userOptions.value.filter((u: any) => suggestedUserIds.value.includes(u.id)).map((u: any) => u.name).join(', ')
+)
 async function loadAssignmentOptions() {
-  if (!showAssignment.value || (departmentOptions.value.length && userOptions.value.length)) return
+  if (!showAssignment.value) return
   loadingAssignment.value = true
   try {
-    const [departments, users] = await Promise.all([
-      ($api as any).departments.getAllDepartments(),
-      ($api as any).users.getAllUsers(),
-    ])
-    departmentOptions.value = (departments as any[]) ?? []
-    userOptions.value = ((users as any[]) ?? []).filter((u: any) => u.id !== currentUser.value?.id)
+    const result: any = await ($api as any).authProcessRequests.getAssignees({
+      process_name: props.processName,
+      request_key: String(props.requestKey ?? ''),
+    })
+    departmentOptions.value = result?.departments ?? []
+    userOptions.value = (result?.users ?? []).filter((u: any) => u.id !== currentUser.value?.id)
+    assignmentRequired.value = !!result?.required
+    suggestedUserIds.value = result?.suggested_user_ids ?? []
+    // Pre-select whoever usually does it only when assigning is mandatory and nothing was chosen yet
+    if (assignmentRequired.value && !assignment.value.userIds.length && !assignment.value.departmentId) {
+      assignment.value.userIds = [...suggestedUserIds.value]
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -528,6 +550,11 @@ const onRequestAuthorizationClick = async () => {
     )
     if (missingField) {
       snackbar.add({ type: 'error', text: `Please fill in "${missingField.field.label}" before submitting` })
+      return
+    }
+
+    if (showAssignment.value && assignmentRequired.value && !assignment.value.departmentId && !assignment.value.userIds.length) {
+      snackbar.add({ type: 'error', text: 'Choose the department and/or the people who will carry it out' })
       return
     }
 
