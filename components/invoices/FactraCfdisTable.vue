@@ -352,7 +352,8 @@
                         <v-checkbox-btn
                           :model-value="isSelected(cfdi)"
                           density="compact"
-                          title="Select to request the authorization together with other invoices"
+                          label="Request with others"
+                          title="Select several blocked invoices and request the authorization once"
                           @update:model-value="toggleSelected(cfdi, $event)"
                         />
                       </div>
@@ -419,7 +420,8 @@
                         <v-checkbox-btn
                           :model-value="isSelected(cfdi)"
                           density="compact"
-                          title="Select to request the authorization together with other invoices"
+                          label="Request with others"
+                          title="Select several blocked invoices and request the authorization once"
                           @update:model-value="toggleSelected(cfdi, $event)"
                         />
                       </div>
@@ -971,9 +973,30 @@ const rowsEpoch = ref(0)
 // Whoever skips approvals acts directly and never needs to request
 const canBatchRequest = computed(() => !hasPermission('approval-bypass'))
 
+// CFDIs that already have a pending or unused approved request: asking again would be skipped
+const alreadyRequestedKeys = ref<Set<string>>(new Set())
+const loadAlreadyRequested = async () => {
+  if (!canBatchRequest.value) return
+  try {
+    const mine: any[] = (await ($api as any).authProcessRequests.getUserRequests()) ?? []
+    alreadyRequestedKeys.value = new Set(
+      mine
+        .filter(
+          (r) =>
+            String(r.process_name_key ?? '').startsWith('supplier-work-past-date:') &&
+            (r.status === 'pending' || (r.status === 'granted' && r.is_granted && !r.used_at)),
+        )
+        .map((r) => String(r.process_name_key).split(':')[1]),
+    )
+  } catch {
+    alreadyRequestedKeys.value = new Set()
+  }
+}
+
 const canBatchSelect = (cfdi: any): boolean =>
   canBatchRequest.value &&
   cfdi.deleted_at == null &&
+  !alreadyRequestedKeys.value.has(String(cfdi.id)) &&
   !isLinkedToReqPayment(cfdi) &&
   (isBlockedAtEntry(cfdi) || isCreditExpired(cfdi))
 
@@ -1004,6 +1027,7 @@ const clearSelection = () => (selectedCfdis.value = {})
 
 const onBatchRequested = () => {
   clearSelection()
+  loadAlreadyRequested()
   rowsEpoch.value++
 }
 
@@ -1085,6 +1109,7 @@ const getSupplierCfdis = async () => {
     })
 
     supplierCfdis.value = response as any
+    await loadAlreadyRequested()
   } catch (e) {
     console.error(e)
   } finally {
