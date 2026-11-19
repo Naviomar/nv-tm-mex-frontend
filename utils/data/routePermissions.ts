@@ -164,6 +164,7 @@ export const routePermissions: RoutePermissionRule[] = [
   { path: '/transfers/global/upload', permission: 'bank-movements-upload' },
   { path: '/transfers/global/bank-movement-:id/pay-bl-schedule', permission: 'bank-movements-apply-payments' },
   { path: '/payments/customers/register/:service/:id', permission: 'customer-payments-add' },
+  { path: '/payments/agents/soa/bulk-load', permission: 'menu-payments-ff-agents-soa' },
   { path: '/maritime/import/demurrages/register-:id-init-day', permission: 'demurrages-free-days-init' },
   // calculadora de demoras de una referencia: mismo permiso que el menú de búsqueda de demoras (el backend lo exige)
   { path: '/maritime/import/demurrages/reference-:id-demurrages', permission: 'menu-maritime-import-demurrages-search' },

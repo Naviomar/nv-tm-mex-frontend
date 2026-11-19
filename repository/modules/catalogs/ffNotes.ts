@@ -180,6 +180,34 @@ class FfNotesModule extends FetchFactory<any> {
   async exportXlsxReport(fetchOptions?: FetchOptions) {
     return this.call('POST', `${this.RESOURCE}/export-xlsx-report`, fetchOptions)
   }
+
+  async matchSoaBulk(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/soa-bulk/match`, fetchOptions)
+  }
+
+  async getSoaBulkProfiles(fetchOptions?: FetchOptions) {
+    return this.call('GET', `${this.RESOURCE}/soa-bulk/profiles`, fetchOptions)
+  }
+
+  async saveSoaBulkProfile(form: any, fetchOptions?: FetchOptions) {
+    fetchOptions = {
+      body: JSON.stringify(form),
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/soa-bulk/profiles`, fetchOptions)
+  }
+
+  async useSoaBulkProfile(id: number, fetchOptions?: FetchOptions) {
+    return this.call('POST', `${this.RESOURCE}/soa-bulk/profiles/${id}/use`, fetchOptions)
+  }
+
+  async deleteSoaBulkProfile(id: number, fetchOptions?: FetchOptions) {
+    return this.call('DELETE', `${this.RESOURCE}/soa-bulk/profiles/${id}`, fetchOptions)
+  }
 }
 
 export default FfNotesModule
