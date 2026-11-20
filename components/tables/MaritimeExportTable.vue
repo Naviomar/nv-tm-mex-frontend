@@ -753,6 +753,25 @@ const removeReferencia = (index: number) => {
   syncToUrl()
 }
 
+// Series (reference years) listed by default. Searching for something specific (a full reference, a BL/AWB,
+// a container...) looks in every year instead, so the series never hides what the user is asking for.
+// A bare consecutive (2600) names no series, so the selected series still apply to it.
+const props = defineProps<{ seriesYears?: number[] }>()
+const emit = defineEmits<{ (e: 'update:series-bypassed', value: boolean): void }>()
+
+const identifierFilters = ['masterBl', 'houseBl', 'containerNumber', 'bookingNum', 'poNum', 'invoiceNumber', 'ffNoteFolio']
+const searchingByIdentifier = computed(() => {
+  const referencias: string[] = Array.isArray(filters.value.referencias) ? filters.value.referencias : []
+  const fullReference = referencias.some((reference) => !/^\d+$/.test(String(reference).trim()))
+  const other = identifierFilters.some((key) => {
+    const value = (filters.value as any)[key]
+    return Array.isArray(value) ? value.length > 0 : !!value
+  })
+  return fullReference || other
+})
+const seriesBypassed = computed(() => !!props.seriesYears?.length && searchingByIdentifier.value)
+watch(seriesBypassed, (value) => emit('update:series-bypassed', value), { immediate: true })
+
 // When an exact customer is selected, drop the free-text name search so the
 // two filters never combine into an impossible AND.
 const buildQueryParams = () => {
@@ -760,8 +779,22 @@ const buildQueryParams = () => {
   if (params.consignee_id) {
     delete params.consignee_name
   }
+  if (props.seriesYears?.length && !searchingByIdentifier.value) {
+    params.year = props.seriesYears.join(',')
+  }
   return params
 }
+
+// Another series selection starts again from the first page
+watch(
+  () => props.seriesYears?.join(','),
+  async (now, before) => {
+    if (before === undefined || now === before) return
+    currentPage.value = 1
+    references.value.current_page = 1
+    await getSeaExportReferences()
+  },
+)
 
 const onClickFilters = async () => {
   // Add any pending reference before searching

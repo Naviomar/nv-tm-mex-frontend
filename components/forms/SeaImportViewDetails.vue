@@ -2,6 +2,13 @@
   <div>
     <CancelledReferenceBanner :deleted-at="referencia?.deleted_at" :reference-number="referencia?.reference_number" />
     <PendingConsigneeBanner :referencia="referencia" />
+    <RevalidationRequestPanel
+      v-if="canRequestRevalidation && referencia?.id"
+      kind="sea"
+      :reference-id="referencia.id"
+      :reference-number="referencia.reference_number ?? null"
+      :has-sent="!!referencia.revalidation?.sent_at"
+    />
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <v-card class="mb-4">
@@ -358,6 +365,12 @@ const props = defineProps({
 })
 
 const referencia = ref<any>({})
+
+// Whoever cannot edit the service (e.g. an executive) asks operations to revalidate from here
+const { can } = useCheckUser()
+const canRequestRevalidation = computed(
+  () => can('sea-import-revalidation-request') && !can('sea-import-references-edit')
+)
 
 const getData = async () => {
   try {

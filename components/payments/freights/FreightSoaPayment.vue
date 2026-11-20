@@ -4,6 +4,10 @@
       <v-card-title class="d-flex align-center gap-2">
         <span>Agents F.F. SOA - Credit / Debit notes</span>
         <span class="text-caption text-medium-emphasis">Check and send notes to pay</span>
+        <v-spacer />
+        <v-btn size="small" color="primary" variant="tonal" to="/payments/agents/soa/bulk-load">
+          <v-icon start>mdi-file-upload-outline</v-icon>Bulk load from agent file
+        </v-btn>
       </v-card-title>
       <v-card-text>
         <FreightSoaFilters

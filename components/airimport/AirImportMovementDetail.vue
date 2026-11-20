@@ -1,6 +1,13 @@
 <template>
   <div>
     <CancelledReferenceBanner :deleted-at="airReference?.deleted_at" :reference-number="airReference?.reference_number" />
+    <RevalidationRequestPanel
+      v-if="canRequestRevalidation && airReference?.id && airImpoExo === 'Import'"
+      kind="air"
+      :reference-id="airReference.id"
+      :reference-number="airReference.reference_number ?? null"
+      :has-sent="!!airReference.revalidation?.sent_at"
+    />
     <v-card class="mb-4">
       <v-card-title>
         <div class="flex justify-between">
@@ -268,7 +275,12 @@
 import { computed, ref } from 'vue'
 import { menuPermissions } from '~/utils/data/system'
 
-const { hasPermission, user } = useCheckUser()
+const { hasPermission, user, can } = useCheckUser()
+
+// Whoever cannot edit the service (e.g. an executive) asks operations to revalidate from here
+const canRequestRevalidation = computed(
+  () => can('air-import-revalidation-request') && !can('air-import-references-edit')
+)
 
 const canAccess = (permission: string) => {
   const hasMenuPermissionsSeeded = user.value?.permissions?.some((p: any) => p.name.startsWith('menu-')) ||

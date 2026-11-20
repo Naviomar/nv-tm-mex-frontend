@@ -32,6 +32,7 @@ export const pagePermissions: PagePermissionEntry[] = [
   { path: '/transfers', permissions: [menuPermissions.BankingTransactionsTransfers] },
 
   { path: '/payments/agents/soa', permissions: [menuPermissions.PaymentsFfAgentsSoa] },
+  { path: '/payments/agents/soa/bulk-load', permissions: [menuPermissions.PaymentsFfAgentsSoa] },
   { path: '/payments/agents/payments', permissions: [menuPermissions.PaymentsFfAgentsPending, menuPermissions.PaymentsFfAgentsPaid] },
   { path: '/payments/agents/reports', permissions: [menuPermissions.PaymentsFfAgentsReports] },
   { path: '/payments/lines/schedules/report-bls', permissions: [menuPermissions.PaymentsFreightLinesReportBls] },

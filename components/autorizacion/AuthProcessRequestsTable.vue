@@ -85,7 +85,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="(authRequest, index) in authRequests.data"
+            v-for="(authRequest, index) in visibleRows"
             :key="`authRequest-${index}`"
             :class="{
               'dark:hover:bg-gray-700! hover:bg-slate-300!': true,
@@ -119,7 +119,7 @@
                   size="small"
                   variant="text"
                   color="error"
-                  title="Cancel request"
+                    :title="authRequest._batchRows?.length > 1 ? `Cancel only request #${authRequest.id} of this batch` : 'Cancel request'"
                   @click="showFormCancel(authRequest)"
                 >
                   <v-icon>mdi-close-circle-outline</v-icon>
@@ -137,7 +137,13 @@
               </div>
             </td>
             <td>
-              <div class="cell-title">{{ authRequest.resolved_display }}</div>
+              <div class="cell-title">
+                <template v-if="authRequest._batchRows?.length > 1">{{ batchTitle(authRequest) }}</template>
+                <template v-else>{{ authRequest.resolved_display }}</template>
+              </div>
+              <div v-if="authRequest._batchRows?.length > 1" class="text-caption text-medium-emphasis">
+                {{ authRequest._batchRows.map((r: any) => r.display_name || `#${r.id}`).join(', ') }}<template v-if="authRequest._batchRows.length < authRequest.batch_size"> … and {{ authRequest.batch_size - authRequest._batchRows.length }} more on other pages</template>
+              </div>
               <v-chip
                 v-if="authRequest.batch_size > 1"
                 size="x-small"
@@ -429,6 +435,36 @@ const onDecided = async (decision: IRequestDecision) => {
   snackbar.add({ type: 'success', text: decision.state === 'granted' ? 'Request approved' : 'Request denied' })
   closeGrantDialog()
   await getAuthProcessRequests()
+}
+
+// Requests asked together are shown as one row (the first of the batch on the page): the response
+// applies to all of them, so listing each one made a single request look duplicated.
+const visibleRows = computed(() => {
+  const groups = new Map<string, any[]>()
+  const order: Array<any | string> = []
+  for (const request of authRequests.value.data ?? []) {
+    if (request.batch_id && request.batch_size > 1) {
+      if (!groups.has(request.batch_id)) {
+        groups.set(request.batch_id, [])
+        order.push(request.batch_id)
+      }
+      groups.get(request.batch_id)!.push(request)
+    } else {
+      order.push(request)
+    }
+  }
+  // The row acts on the first pending member (so "Respond" is available while any is pending)
+  return order.map((entry) => {
+    if (typeof entry !== 'string') return entry
+    const members = groups.get(entry)!
+    const rep = members.find((m) => isPendingToGrant(m)) ?? members[0]
+    return { ...rep, _batchRows: members }
+  })
+})
+
+const batchTitle = (lead: any) => {
+  const base = String(lead.resolved_display ?? '').split(' — ')[0] || 'Batch'
+  return `${base} — ${lead.batch_size} requests`
 }
 
 const onDecidedBatch = async (result: IBatchDecisionResult) => {

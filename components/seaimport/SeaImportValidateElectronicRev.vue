@@ -2,7 +2,9 @@
   <div>
     <div v-if="checklist && checklist.can_proceed === false">
       <v-alert v-if="!checklist.authorized" type="error" class="mb-4" border="start" prominent>
-        {{ checklist.message }}
+        <div class="font-bold mb-1">Revalidation checklist</div>
+        <RevalidationChecks v-if="checklist.checks?.length" :checks="checklist.checks" />
+        <template v-else>{{ checklist.message }}</template>
       </v-alert>
       <v-alert v-else type="success" class="mb-4" border="start" prominent>
         Autorización concedida. Puedes continuar con la revalidación electrónica a pesar de los temas pendientes.

@@ -29,11 +29,27 @@ class AuthProcessRequestsModule extends FetchFactory<any> {
     return this.call('GET', `${this.RESOURCE}/by-process?process_name=${params.process_name}&request_key=${params.request_key}`)
   }
 
+  /** Same as getRequestsByResource for many records of one process in a single call: { [request_key]: requests[] } */
+  async getRequestsByResourceBatch(params: { process_name: string; request_keys: string[] }) {
+    return this.call(
+      'GET',
+      `${this.RESOURCE}/by-process-batch?process_name=${encodeURIComponent(params.process_name)}&request_keys=${encodeURIComponent(params.request_keys.join(','))}`
+    )
+  }
+
   /** Same decision the server applies in the `approval:` middleware: act directly or request? */
   async getEligibility(params: { process_name: string; request_key: string }) {
     return this.call(
       'GET',
       `${this.RESOURCE}/eligibility?process_name=${encodeURIComponent(params.process_name)}&request_key=${encodeURIComponent(params.request_key)}`
+    )
+  }
+
+  /** Departments and people the action can be assigned to (only the service's own when the process is scoped) */
+  async getAssignees(params: { process_name: string; request_key: string }) {
+    return this.call(
+      'GET',
+      `${this.RESOURCE}/assignees?process_name=${encodeURIComponent(params.process_name)}&request_key=${encodeURIComponent(params.request_key)}`
     )
   }
 
