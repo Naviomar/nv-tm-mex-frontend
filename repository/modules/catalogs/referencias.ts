@@ -200,6 +200,15 @@ class ReferenciasModule extends FetchFactory<IReferenciaPagination> {
     return this.call('POST', `${this.RESOURCE}/sea-import/${id}/remove-master-bl`, fetchOptions)
   }
 
+  async saveTranshipment(id: string, form: any, fetchOptions?: FetchOptions) {
+    const body = objectToFormData(form)
+    fetchOptions = {
+      body: body,
+      ...fetchOptions,
+    }
+    return this.call('POST', `${this.RESOURCE}/sea-import/${id}/save-transhipment`, fetchOptions)
+  }
+
   async removeTranshipment(id: string, form: any, fetchOptions?: FetchOptions) {
     const body = objectToFormData(form)
     fetchOptions = {

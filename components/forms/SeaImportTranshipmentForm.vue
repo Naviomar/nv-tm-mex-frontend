@@ -35,6 +35,15 @@
             />
 
             <v-btn
+              v-if="referenciaId"
+              icon="mdi-content-save-outline"
+              size="x-small"
+              color="primary"
+              class="mt-2"
+              :disabled="!tranship.port_id"
+              @click="saveTranshipment(tranship)"
+            ></v-btn>
+            <v-btn
               icon="mdi-delete-outline"
               size="x-small"
               color="red"
@@ -124,6 +133,31 @@ const addTranshipment = () => {
     port_id: null,
     tranship_date: '',
   })
+}
+
+// Guardado propio de la seccion: no depende de la validacion del form
+// completo (ej. naviera aun no definida en cargas LCL con transbordo).
+const saveTranshipment = async (tranship: any) => {
+  if (!tranship.port_id) return
+  try {
+    loadingStore.start()
+    const api = props.isExport ? $api.referenciasExport : $api.referencias
+    const saved: any = await api.saveTranshipment(props.referenciaId!.toString(), {
+      id: tranship.id ?? '',
+      port_id: tranship.port_id,
+      tranship_date: tranship.tranship_date ?? '',
+    })
+    const row = saved?.data ?? saved
+    if (row?.id) tranship.id = row.id
+    snackbar.add({ type: 'success', text: 'Transhipment saved' })
+  } catch (e) {
+    console.error(e)
+    snackbar.add({ type: 'error', text: 'Error saving transhipment' })
+  } finally {
+    setTimeout(() => {
+      loadingStore.stop()
+    }, 250)
+  }
 }
 
 const removeTranshipment = async (index: number) => {
