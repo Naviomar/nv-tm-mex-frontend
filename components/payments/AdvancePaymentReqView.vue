@@ -374,7 +374,7 @@ const getLinkName = (serviceLink: any) => {
     return serviceLink.chargeable?.charge?.name
   }
   if (serviceLink.chargeable_type.includes('FfNote')) {
-    return `FF Note #${serviceLink.chargeable?.id} From TM Debit`
+    return `FF Note #${serviceLink.chargeable?.id} ${ffNoteOriginLabel(serviceLink.chargeable)}`
   }
   return 'Unknown'
 }

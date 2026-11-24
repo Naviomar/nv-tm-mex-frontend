@@ -256,10 +256,10 @@
                 size="small"
                 @click="statusFilter = null"
               >
-                All · {{ result.summary.rows }}
+                All · {{ statusTotal }}
               </v-chip>
               <v-chip
-                v-for="(count, status) in result.summary.by_status"
+                v-for="(count, status) in statusCounts"
                 :key="`st-${status}`"
                 :color="statusMeta(String(status)).color"
                 :variant="statusFilter === status ? 'flat' : 'outlined'"
@@ -270,18 +270,38 @@
               </v-chip>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 mb-3">
-              <span class="text-xs font-bold">Warnings:</span>
+            <div v-if="Object.keys(currencyCounts).length > 1 || currencyFilter" class="flex flex-wrap items-center gap-2 mb-3">
+              <span class="text-xs font-bold">Currency:</span>
               <v-chip
-                v-for="(count, flag) in result.summary.by_flag"
-                :key="`fl-${flag}`"
-                :color="flagMeta(String(flag)).color"
-                :variant="flagFilter === flag ? 'flat' : 'outlined'"
+                v-for="(count, cur) in currencyCounts"
+                :key="`cur-${cur}`"
+                color="primary"
+                :variant="currencyFilter === cur ? 'flat' : 'outlined'"
                 size="x-small"
-                @click="flagFilter = flagFilter === flag ? null : String(flag)"
+                @click="currencyFilter = currencyFilter === cur ? null : String(cur)"
               >
-                {{ flagMeta(String(flag)).label }} · {{ count }}
+                {{ cur }} · {{ count }}
               </v-chip>
+            </div>
+
+            <div class="mb-3">
+              <v-btn size="x-small" variant="text" @click="showWarningFilters = !showWarningFilters">
+                <v-icon start size="small">{{ showWarningFilters || flagFilter ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                {{ showWarningFilters || flagFilter ? 'Hide' : 'Show' }} warning filters
+              </v-btn>
+              <div v-if="showWarningFilters || flagFilter" class="flex flex-wrap items-center gap-2 mt-1">
+                <span class="text-xs font-bold">Warnings:</span>
+                <v-chip
+                  v-for="(count, flag) in flagCounts"
+                  :key="`fl-${flag}`"
+                  :color="flagMeta(String(flag)).color"
+                  :variant="flagFilter === flag ? 'flat' : 'outlined'"
+                  size="x-small"
+                  @click="flagFilter = flagFilter === flag ? null : String(flag)"
+                >
+                  {{ flagMeta(String(flag)).label }} · {{ count }}
+                </v-chip>
+              </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -325,7 +345,9 @@
               <v-btn color="green" size="small" variant="elevated" :disabled="!canRequestPayment" @click="confirmDialog = true">
                 Lock and request payment
               </v-btn>
-              <span v-if="currencyConflict" class="text-error text-xs">The selected notes use more than one currency.</span>
+              <span v-if="currencyConflict" class="text-error text-xs">
+                The selected notes use more than one currency ({{ selectedCurrencies.join(', ') }}). Filter by currency and select again.
+              </span>
             </div>
 
             <div class="catalog-table-wrapper" style="max-height: 62vh">
@@ -346,6 +368,7 @@
                     <th>Agent folio</th>
                     <th>Folio in the system</th>
                     <th>Agent master</th>
+                    <th>Currency</th>
                     <th class="text-right">Agent amount</th>
                     <th class="text-right">System amount</th>
                     <th class="text-right">Difference</th>
@@ -387,6 +410,7 @@
                       <span v-if="!r.notes.length && !(r.references || []).length" class="text-medium-emphasis">—</span>
                     </td>
                     <td class="max-w-[200px] whitespace-normal! break-words!">{{ r.mbl }}</td>
+                    <td>{{ rowCurrencies(r).join(' / ') }}</td>
                     <td class="text-right">{{ formatToCurrency(r.agent_amount) }}</td>
                     <td class="text-right">{{ r.system_amount === null ? '' : formatToCurrency(r.system_amount) }}</td>
                     <td class="text-right" :class="r.difference ? 'text-error' : ''">
@@ -633,13 +657,15 @@ const config = ref<any>(defaultConfig())
 
 const profiles = ref<any[]>([])
 const profileId = ref<number | null>(null)
-const rememberLayout = ref(true)
+const rememberLayout = ref(false)
 const showAdjust = ref(false)
 
 const includeMissing = ref(false)
 const result = ref<any>(null)
 const statusFilter = ref<string | null>(null)
 const flagFilter = ref<string | null>(null)
+const currencyFilter = ref<string | null>(null)
+const showWarningFilters = ref(false)
 const search = ref('')
 const page = ref(1)
 const PAGE_SIZE = 100
@@ -1067,6 +1093,7 @@ const runMatch = async () => {
     result.value = response
     statusFilter.value = null
     flagFilter.value = null
+    currencyFilter.value = null
     search.value = ''
     page.value = 1
     selectedKeys.value = []
@@ -1090,13 +1117,18 @@ const totalDifference = computed(() =>
   Math.round((result.value.summary.agent_total - result.value.summary.system_total) * 100) / 100
 )
 
-const filteredRows = computed(() => {
+const rowCurrencies = (r: any): string[] => [...new Set<string>(r.notes.map((n: any) => n.currency).filter(Boolean))]
+
+type FilterSkip = 'status' | 'flag' | null
+/** Rows that pass the tab, search and chip filters; `skip` leaves one chip group out so its own counts stay meaningful. */
+const rowsFor = (skip: FilterSkip, ignoreCurrency = false) => {
   if (!result.value) return []
   const q = (search.value ?? '').toLowerCase().trim()
   return result.value.rows.filter((r: any) => {
     if (tab.value !== 'all' && rowCategory(r) !== tab.value) return false
-    if (statusFilter.value && r.status !== statusFilter.value) return false
-    if (flagFilter.value && !r.flags.includes(flagFilter.value)) return false
+    if (skip !== 'status' && statusFilter.value && r.status !== statusFilter.value) return false
+    if (skip !== 'flag' && flagFilter.value && !r.flags.includes(flagFilter.value)) return false
+    if (!ignoreCurrency && currencyFilter.value && !rowCurrencies(r).includes(currencyFilter.value)) return false
     if (q) {
       const hay = [r.folio, r.mbl, r.counter, ...r.notes.flatMap((n: any) => [n.folio, n.reference_number])]
         .join(' ')
@@ -1105,10 +1137,28 @@ const filteredRows = computed(() => {
     }
     return true
   })
+}
+const statusCounts = computed<Record<string, number>>(() => {
+  const c: Record<string, number> = {}
+  for (const r of rowsFor('status')) c[r.status] = (c[r.status] ?? 0) + 1
+  return c
 })
+const flagCounts = computed<Record<string, number>>(() => {
+  const c: Record<string, number> = {}
+  for (const r of rowsFor('flag')) for (const f of r.flags) c[f] = (c[f] ?? 0) + 1
+  return c
+})
+const currencyCounts = computed<Record<string, number>>(() => {
+  const c: Record<string, number> = {}
+  for (const r of rowsFor(null, true)) for (const cur of rowCurrencies(r)) c[cur] = (c[cur] ?? 0) + 1
+  return c
+})
+const statusTotal = computed(() => rowsFor('status').length)
+
+const filteredRows = computed(() => rowsFor(null))
 const pageCount = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / PAGE_SIZE)))
 const pageRows = computed(() => filteredRows.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
-watch([statusFilter, flagFilter, search, tab], () => (page.value = 1))
+watch([statusFilter, flagFilter, currencyFilter, search, tab], () => (page.value = 1))
 
 const normFolio = (v: string) => String(v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
 const sameFolio = (a: string, b: string) => normFolio(a) === normFolio(b)
@@ -1221,6 +1271,7 @@ const selectedNotes = computed(() => {
 const selectedAgentBalance = computed(() =>
   Math.round(selectedNotes.value.reduce((acc, n) => acc + n.expected_agent_amount, 0) * 100) / 100
 )
+const selectedCurrencies = computed(() => [...new Set<string>(selectedNotes.value.map((n) => n.currency).filter(Boolean))])
 const currencyConflict = computed(() => new Set(selectedNotes.value.map((n) => n.currency_id)).size > 1)
 const canRequestPayment = computed(() => selectedNotes.value.length > 0 && !currencyConflict.value)
 
