@@ -9,7 +9,7 @@
       </v-card-text>
     </v-card>
     <div v-if="hasReferencesWithBuyCharges" class="py-4">
-      <div class="font-bold text-lg mb-4">Buy concepts in services & F.F. TM Debit notes</div>
+      <div class="font-bold text-lg mb-4">Buy concepts in services & payable F.F. notes</div>
       <v-expansion-panels>
         <v-expansion-panel v-for="(service, i) in services" :key="`inv-${i}`" :value="i" color="teal-lighten-4">
           <v-expansion-panel-title>
@@ -317,7 +317,7 @@ const setBuyConceptsHomogenized = () => {
         (concept: any) => (concept.supplier_invoice_links || []).length > 0
       ),
       charge: {
-        name: `F.F. Note #${ffNote.id} From TM Debit`,
+        name: `F.F. Note #${ffNote.id} ${ffNoteOriginLabel(ffNote)}`,
       },
     }))
 
