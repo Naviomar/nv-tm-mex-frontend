@@ -84,10 +84,12 @@
               <v-autocomplete
                 v-model="filters.voyage_id"
                 :items="filteredVoyages"
+                no-filter
                 @update:search="onVoyageSearch"
                 item-title="name"
                 item-value="id"
                 label="Vsl / Voyage"
+                placeholder="Vessel, voyage or ETA (e.g. 25/11/2026)"
                 density="compact"
                 hide-details
                 clearable
@@ -563,7 +565,7 @@ const ffGroups = ref<CatalogOption[]>([])
 const coloaders = ref<CatalogOption[]>([])
 
 
-const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useAutocompleteFilter(voyages, () => filters.value.voyage_id)
+const { onSearch: onVoyageSearch, filteredItems: filteredVoyages, hasMore: hasMoreVoyages, onIntersect: onVoyageIntersect } = useVoyageFilter(voyages, () => filters.value.voyage_id)
 const { onSearch: onConsigneeSearch, filteredItems: filteredConsignees, hasMore: hasMoreConsignees, onIntersect: onConsigneeIntersect } = useAutocompleteFilter(consignees, () => filters.value.consignee_id)
 const { onSearch: onConsigneeGroupSearch, filteredItems: filteredConsigneeGroups, hasMore: hasMoreConsigneeGroups, onIntersect: onConsigneeGroupIntersect } = useAutocompleteFilter(consigneeGroups, () => filters.value.consignee_group_id)
 const { onSearch: onFfSearch, filteredItems: filteredFreightForwarders, hasMore: hasMoreFreightForwarders, onIntersect: onFfIntersect } = useAutocompleteFilter(freightForwarders, () => filters.value.ff_id)
