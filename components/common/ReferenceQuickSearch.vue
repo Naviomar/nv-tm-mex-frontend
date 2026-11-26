@@ -82,7 +82,9 @@ const loading = ref(false)
 const SERIES_PREFIX: Record<QuickSearchModule, string> = { 'sea-import': 'IM', 'sea-export': 'EM', 'air-import': 'IA', 'air-export': 'EA' }
 const STORAGE_KEY = 'reference-quick-search:years'
 const currentYear = new Date().getFullYear()
-const yearOptions = Array.from({ length: currentYear - 2005 + 1 }, (_, i) => String(currentYear - i))
+// Next year included: its references are created ahead (IM27 in November 2026), like the catalog series filter
+const newestYear = currentYear + 1
+const yearOptions = Array.from({ length: newestYear - 2005 + 1 }, (_, i) => String(newestYear - i))
 const seriesOptions = yearOptions.map((year) => ({ title: `${SERIES_PREFIX[props.module]}${year.slice(-2)}`, value: year }))
 
 const readYears = (): string[] => {

@@ -210,6 +210,21 @@ export const REPORT_DEPARTMENTS: ReportDept[] = [
     ],
   },
   {
+    key: 'accounts-payable',
+    title: 'Accounts Payable',
+    icon: 'mdi-cash-fast',
+    color: 'blue-grey',
+    reports: [
+      {
+        key: 'supplier-payables',
+        title: 'Supplier Payables',
+        icon: 'mdi-account-cash-outline',
+        component: 'SupplierPayablesReport',
+        permission: 'reports-accounts-payable-suppliers-view',
+      },
+    ],
+  },
+  {
     key: 'accounting',
     title: 'Accounting',
     icon: 'mdi-calculator',
