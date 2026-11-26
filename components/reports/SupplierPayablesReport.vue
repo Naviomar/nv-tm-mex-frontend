@@ -27,10 +27,12 @@
               <v-autocomplete
                 v-model="filters.supplier"
                 :items="suppliers"
+                :loading="loadingSuppliers"
+                :no-data-text="loadingSuppliers ? 'Loading suppliers...' : 'No suppliers found'"
                 item-title="name"
                 item-value="key"
                 label="Supplier"
-                placeholder="All suppliers"
+                :placeholder="loadingSuppliers ? 'Loading suppliers...' : 'All suppliers'"
                 clearable
                 density="compact"
                 variant="outlined"
@@ -76,7 +78,7 @@
         </div>
 
         <p class="text-caption text-medium-emphasis mt-4 mb-0">
-          The Excel has four sheets: Suppliers (billed / paid / pending / overdue per currency), Documents, Payments and the filters used.
+          The Excel has two sheets, Documents and Payments, each with the applied filters on top.
           An invoice that exists in both systems is read from TM2; if only TM1 has its payment it counts as paid by TM1.
           Amounts are never added across currencies; the USD equivalent uses the exchange rate of each document date.
         </p>
@@ -90,6 +92,7 @@ const { $api } = useNuxtApp()
 const snackbar = useSnackbar()
 
 const downloading = ref(false)
+const loadingSuppliers = ref(true)
 const suppliers = ref<any[]>([])
 const tm1Info = ref<any>(null)
 
@@ -150,6 +153,8 @@ onMounted(async () => {
     tm1Info.value = response.data.tm1 ?? null
   } catch {
     snackbar.add({ type: 'error', text: 'Could not load the supplier list' })
+  } finally {
+    loadingSuppliers.value = false
   }
 })
 </script>
